@@ -1,0 +1,16 @@
+{
+  "fold": [260, 786],
+  "handHeight": 796,
+  "previousHeight": 864,
+  "widthBlend": [710, 782],
+  "surfaceBlend": [776, 786],
+  "colorBlend": [762, 795],
+  "underlapPixels": 10,
+  "boundarySource": "Existing forearm alpha contour in the neutral coffee pose; same world row and camera scale",
+  "preserve": [
+    "original fingers",
+    "original cup",
+    "existing forearm mesh and artwork",
+    "other actions"
+  ]
+}

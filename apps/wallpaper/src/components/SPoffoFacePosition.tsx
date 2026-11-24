@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createSignal} from 'solid-js'
 import {
   DEFAULT_TRACKING_OPTIONS,
@@ -34,8 +35,8 @@ export const SPoffoFacePosition = (props: SPoffoFacePositionProps) => {
     >
       <button
         type="button"
-        aria-label="얼굴 기준 조정"
-        title="얼굴 중심으로 드래그"
+        aria-label={uiText('얼굴 기준 조정')}
+        title={uiText('얼굴 중심으로 드래그')}
         disabled={props.onChange === undefined}
         class="wallpaper-tracking-handle pointer-events-auto h-8 w-8"
         style={{

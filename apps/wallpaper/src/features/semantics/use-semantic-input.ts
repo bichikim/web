@@ -8,6 +8,8 @@ import {sendSemanticInput, subscribeSemanticReady} from './channel'
 interface UseSemanticInputProps {
   readonly widgetId: Accessor<string | undefined>
   readonly text: Accessor<string>
+  /** Immediately following meaning segment; omission disables lookahead. */
+  readonly nextText?: Accessor<string | undefined>
   /** Current narration identity; omitted disables random fallback. */
   readonly readoutId?: Accessor<string | undefined>
   /** Explicit audio lifecycle; omitted preserves the existing text-only input contract. */
@@ -20,13 +22,18 @@ export const useSemanticInput = (props: UseSemanticInputProps) => {
     if (id === undefined) {
       return
     }
-    const publish = () =>
-      sendSemanticInput({
+    const publish = () => {
+      const readoutId = props.readoutId?.()
+      const narration = props.narration?.()
+      const nextText = props.nextText?.()
+      return sendSemanticInput({
         text: text(),
         widgetId: id,
-        ...(props.readoutId?.() === undefined ? {} : {readoutId: props.readoutId?.()}),
-        ...(props.narration?.() === undefined ? {} : {narration: props.narration?.()}),
+        ...(nextText === undefined ? {} : {nextText: nextText.slice(0, SEMANTIC_TEXT_LIMIT)}),
+        ...(readoutId === undefined ? {} : {readoutId}),
+        ...(narration === undefined ? {} : {narration}),
       }).catch((cause: unknown) => console.error('Semantic input delivery failed', cause))
+    }
     let disposed = false
     let stop: (() => void) | null = null
     subscribeSemanticReady(publish)

@@ -7,16 +7,20 @@ interface ReadSpeechMaskProps {
 const MAXIMUM_EDGE = 512
 
 const paint = (context: CanvasRenderingContext2D, card: HTMLElement) => {
+  if (card.inert || getComputedStyle(card).visibility !== 'visible') {
+    return
+  }
   const bubble = card.querySelector('aside > [aria-hidden="true"]')
   if (bubble === null) {
     return
   }
   const rect = bubble.getBoundingClientRect()
   const style = getComputedStyle(bubble)
-  const bounds = card.getBoundingClientRect()
+  const preview = card.firstElementChild ?? card
+  const bounds = preview.getBoundingClientRect()
   const clip = resolveClipPolygon({
     height: bounds.height,
-    value: getComputedStyle(card).clipPath,
+    value: getComputedStyle(preview).clipPath,
     width: bounds.width,
   })
   context.save()
@@ -63,6 +67,19 @@ export const readSpeechMask = (props: ReadSpeechMaskProps): HitMask => {
     props.element
       .querySelectorAll<HTMLElement>('[role="listitem"]')
       .forEach((card) => paint(context, card))
+    props.element.querySelectorAll<HTMLElement>('[popover]:popover-open').forEach((popup) => {
+      const rect = popup.getBoundingClientRect()
+      const style = getComputedStyle(popup)
+      context.beginPath()
+      context.roundRect(
+        rect.x,
+        rect.y,
+        rect.width,
+        rect.height,
+        Number.parseFloat(style.borderTopLeftRadius),
+      )
+      context.fill()
+    })
   }
   context.restore()
   const pixels = context.getImageData(0, 0, width, height)

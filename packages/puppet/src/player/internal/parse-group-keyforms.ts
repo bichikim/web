@@ -1,3 +1,4 @@
+import {isGroupDrawOrderUnit} from './group-draw-order'
 import type {PuppetParameterBinding, PuppetScene, PuppetSceneNode} from '../document'
 import {hasValidTargetIds, isPartRenderProperties} from './parse-part-properties'
 import {getSceneGroupIds} from './scene-groups'
@@ -9,14 +10,11 @@ const KEYED_PROPERTIES: ReadonlySet<string> = new Set([
   'screenColor',
 ])
 
-/** Groups that sort as one draw order unit: with a draw order, or offscreen. */
+/** Groups that sort as one draw order unit, independently of whether they composite offscreen. */
 const collectDrawOrderGroupIds = (nodes: ReadonlyArray<PuppetSceneNode>, ids: Set<string>) => {
   for (const node of nodes) {
     if (node.kind !== 'part') {
-      if (
-        node.kind === 'group' &&
-        (node.properties?.drawOrder !== undefined || node.properties?.offscreen === true)
-      ) {
+      if (node.kind === 'group' && isGroupDrawOrderUnit(node.properties)) {
         ids.add(node.id)
       }
       collectDrawOrderGroupIds(node.children, ids)

@@ -112,7 +112,7 @@ const createLifecycle = (api, document) => async (cycle) => {
     canvas,
     document: parsed.document,
     randomSeed: 42,
-    renderer: 'webgl',
+    renderer: 'pixi-webgl',
     resolution: 1,
   })
   try {

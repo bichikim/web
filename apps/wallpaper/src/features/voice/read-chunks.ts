@@ -5,6 +5,8 @@ import type {VoiceReadoutPort, VoiceStatus} from './readout'
 
 interface SpeechChunk {
   readonly completed: () => void
+  /** Invoked when this chunk's first audio starts, never when it is merely generated or queued. */
+  readonly started?: () => void
   readonly text: string
   readonly voice: PoffoVoice
 }
@@ -49,11 +51,11 @@ export const readChunks = async (options: ReadChunksOptions) => {
       throw result.cause
     }
   }
-  const schedule = (voice: PoffoVoice, audio: VoiceAudio) => {
+  const schedule = (voice: PoffoVoice, audio: VoiceAudio, started: () => void) => {
     preparing = 'idle'
     audible += 1
     const played = options.port
-      .play(audio, voice, signal)
+      .play(audio, voice, signal, started)
       .then(
         () => ({failed: false}),
         (cause: unknown) => {
@@ -70,9 +72,16 @@ export const readChunks = async (options: ReadChunksOptions) => {
   }
   const prepare = async (chunk: SpeechChunk) => {
     const playback: Promise<PlaybackResult>[] = []
+    let started = false
+    const announce = () => {
+      if (!signal.aborted && !started) {
+        started = true
+        chunk.started?.()
+      }
+    }
     const receive = (audio: VoiceAudio) => {
       signal.throwIfAborted()
-      playback.push(schedule(chunk.voice, audio))
+      playback.push(schedule(chunk.voice, audio, announce))
     }
     setPreparation('generating')
     const audio = await options.port.prepare(chunk.text, chunk.voice, signal, {

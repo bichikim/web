@@ -1,0 +1,13 @@
+{
+  "crop": {
+    "left": 360,
+    "top": 500,
+    "width": 480,
+    "height": 640
+  },
+  "coordinateSpace": "Registered reference image, sourceToGenerated in ../registration.json",
+  "generatorRole": "Repair the original palm and wrist in place while keeping the existing forearm in view",
+  "shapeReference": "../generated.png",
+  "sourceArtwork": "../reference.png",
+  "postGenerationMeshWarp": false
+}

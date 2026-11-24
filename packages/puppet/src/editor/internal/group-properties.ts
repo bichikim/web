@@ -1,3 +1,4 @@
+import {isGroupDrawOrderUnit} from '../../player/internal/group-draw-order'
 import {mapBindingKeyforms} from '../../deformation'
 import {
   getDocumentScene,
@@ -43,14 +44,10 @@ const removeKeyedDrawOrders = (document: PuppetDocument, groupId: string) =>
     })),
   )
 
-/** Whether the group sorts as one draw order unit, so its draw order can be keyed. */
-const isDrawOrderUnit = (properties: PuppetGroupRenderProperties) =>
-  properties.drawOrder !== undefined || properties.offscreen === true
-
 /**
  * Merges `properties` into a group's render properties. Without `offscreen` the compositing
  * properties are dropped, since only an isolated layer can use them; a group left without a
- * draw order or `offscreen` also loses its keyed draw orders.
+ * draw order, `isolateOrder` or `offscreen` also loses its keyed draw orders.
  */
 export const setGroupRenderProperties = (
   document: PuppetDocument,
@@ -68,7 +65,7 @@ export const setGroupRenderProperties = (
       : Object.fromEntries(Object.entries(merged).filter(([key]) => !OFFSCREEN_PROPERTIES.has(key)))
   return {
     ...document,
-    parameterBindings: isDrawOrderUnit(next)
+    parameterBindings: isGroupDrawOrderUnit(next)
       ? document.parameterBindings
       : removeKeyedDrawOrders(document, groupId),
     scene: {
@@ -81,7 +78,7 @@ export const setGroupRenderProperties = (
 
 /**
  * Makes a group a draw order group at the default draw order, or plain again. Turning it off
- * also drops its keyed draw orders unless the group stays a draw-order unit (offscreen).
+ * also drops its keyed draw orders unless the group stays a draw-order unit (isolated or offscreen).
  */
 export const setDrawOrderGroup = (
   document: PuppetDocument,
@@ -96,8 +93,8 @@ export const setDrawOrderGroup = (
   const next = enabled ? {...properties, drawOrder: PUPPET_DEFAULT_DRAW_ORDER} : properties
   return {
     ...document,
-    // An offscreen group stays a draw-order unit, so its keyed draw orders stay valid.
-    parameterBindings: isDrawOrderUnit(next)
+    // Isolation or offscreen compositing keeps the keyed order valid.
+    parameterBindings: isGroupDrawOrderUnit(next)
       ? document.parameterBindings
       : removeKeyedDrawOrders(document, groupId),
     scene: {

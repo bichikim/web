@@ -54,7 +54,7 @@ pub struct GlueKeyform {
 }
 
 #[derive(Debug, Clone, PartialEq, Default, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PartKeyformProperties {
     #[serde(default)]
     pub draw_order: Option<f64>,
@@ -465,6 +465,20 @@ pub struct GlueTarget {
     pub edge: Option<GlueEdge>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum GlueMode {
+    Vertex,
+    Translate,
+    Rigid,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+pub struct GlueRotation {
+    pub first: usize,
+    pub second: usize,
+}
+
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Glue {
     pub id: String,
@@ -473,6 +487,12 @@ pub struct Glue {
     /// The second endpoint's share of the joined position.
     pub weight: f64,
     pub strength: f64,
+    /// Omitted connections move only the anchors; the other modes move complete parts.
+    #[serde(default)]
+    pub mode: Option<GlueMode>,
+    /// Direction vertices measured from each anchor, required for rigid mode.
+    #[serde(default)]
+    pub rotation: Option<GlueRotation>,
     /// Lets this connection share moving vertices with other sequential connections, even
     /// without the document-wide `glueComposition`. Only validation reads it.
     #[serde(default)]

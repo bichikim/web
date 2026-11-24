@@ -1,0 +1,12 @@
+{
+  "shape": "Original ChatGPT generated wrist contour; no narrowing or local mesh warp",
+  "placement": {
+    "translationX": 10,
+    "translationY": 0,
+    "scale": 1
+  },
+  "forearmAttachmentImageY": 920,
+  "handOwnershipEndImageY": 760,
+  "sourceHandAndCup": "Original parts, translated together by 10 image pixels",
+  "materialGeneration": "ComfyUI denoising only inside the seed silhouette; native edge pixels protected"
+}

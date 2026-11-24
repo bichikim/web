@@ -1,0 +1,292 @@
+{
+  "sha256": "b824a9ea198e8c7122bbdbc1905a6fb30ca88d7fb647fa56eba65d58658b956d",
+  "results": [
+    {
+      "name": "neutral",
+      "sides": [
+        {
+          "side": "left",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "rest",
+      "sides": [
+        {
+          "side": "left",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 1.0729195309977513e-12,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 6.323830348264892e-13,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "up",
+      "sides": [
+        {
+          "side": "left",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 6.750155989720952e-13,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 6.892264536872972e-13,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "down",
+      "sides": [
+        {
+          "side": "left",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 6.359357485052897e-13,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 7.034373084024992e-13,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "left",
+      "sides": [
+        {
+          "side": "left",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 8.171241461241152e-13,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 5.755396159656812e-13,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "right",
+      "sides": [
+        {
+          "side": "left",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 7.389644451905042e-13,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 7.247535904753022e-13,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "up-again",
+      "sides": [
+        {
+          "side": "left",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 1.1368683772161603e-12,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 4.973799150320701e-13,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "fade-0.25",
+      "sides": [
+        {
+          "side": "left",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "fade-0.5",
+      "sides": [
+        {
+          "side": "left",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "fade-0.75",
+      "sides": [
+        {
+          "side": "left",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "physics--1",
+      "sides": [
+        {
+          "side": "left",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 6.963318810448982e-13,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 5.968558980384842e-13,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "physics-1",
+      "sides": [
+        {
+          "side": "left",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 9.805489753489383e-13,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "driverError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "basisError": 0,
+          "rigidityError": 5.115907697472721e-13,
+          "newFoldovers": 0
+        }
+      ]
+    }
+  ],
+  "expressions": 28,
+  "coatStates": 2,
+  "visiblePartsCompared": 28651,
+  "allTexturesUnchanged": true,
+  "handsAndFingersUnchanged": true,
+  "rightArmHandAndCuffUnchanged": true,
+  "chainSeamsMaintained": true,
+  "originalPhysicsDriversUnchanged": true,
+  "otherActionsAndCoatOnUnchanged": true,
+  "newEmptyControls": 0,
+  "newSkinParts": 0
+}

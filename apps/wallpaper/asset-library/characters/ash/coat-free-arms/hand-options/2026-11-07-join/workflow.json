@@ -1,0 +1,87 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source.png"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "keep.png"
+    }
+  },
+  "3": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["2", 0],
+      "channel": "red"
+    }
+  },
+  "4": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["1", 1]
+    }
+  },
+  "5": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["4", 0],
+      "source": ["3", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "6": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["5", 0]
+    }
+  },
+  "7": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "stroke.png"
+    }
+  },
+  "8": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["7", 0],
+      "channel": "red"
+    }
+  },
+  "9": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "ink.png"
+    }
+  },
+  "10": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["9", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["8", 0]
+    }
+  },
+  "11": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["10", 0],
+      "alpha": ["6", 0]
+    }
+  },
+  "12": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["11", 0],
+      "filename_prefix": "ash-hand-join/hand"
+    }
+  }
+}

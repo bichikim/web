@@ -104,6 +104,7 @@ export const SCharacterWidget = (props: SCharacterWidgetProps) => {
           classList={{'opacity-0': props.preview.phase() !== 'ready'}}
         >
           <SPuppetCharacter
+            coatOff={props.preview.coatOff()}
             expressionId={expressionId()}
             motionId={motionId()}
             playing={playing()}

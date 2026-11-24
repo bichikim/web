@@ -1,4 +1,4 @@
-//! Web-written `.poffo` files (Poffo v1 container, `packages/puppet/src/player/poffo-file`).
+//! Web-written `.poffo` files (v1/v2, `packages/puppet/src/player/poffo-file`).
 //!
 //! Layout (little endian): a 64-byte header, then a JSON index, the metadata value and the
 //! assets the index lists. Each section is stored raw (codec 0) or as an independent Brotli
@@ -10,6 +10,7 @@
 //! index, checksum or length mismatches, missing or trailing bytes) and anything that would
 //! expand past [`DECODED_BUDGET`] bytes.
 
+pub(crate) mod packed;
 mod value;
 
 use std::io::Read;
@@ -27,7 +28,6 @@ pub const MAGIC: &[u8; 8] = b"POFFO\r\n\x1a";
 pub const MIME_TYPE: &str = "application/vnd.poffo";
 /// File extension the web uses for these files.
 pub const EXTENSION: &str = "poffo";
-const VERSION: u16 = 1;
 const HEADER_BYTES: usize = 64;
 /// Most bytes one file may expand to: decompressed sections, restored data URLs, the text
 /// copied for every string reference and the decoded storage of every array element and object
@@ -94,6 +94,7 @@ struct Section {
 }
 
 struct Header {
+    version: u16,
     index_length: usize,
     index_sha256: [u8; 32],
     metadata_codec: Codec,
@@ -120,8 +121,9 @@ fn header(bytes: &[u8]) -> Result<Header, FormatError> {
     let header = bytes
         .get(..HEADER_BYTES)
         .filter(|header| is_container(header))
-        .ok_or_else(|| corrupt("not a Poffo v1 file"))?;
-    if u16_at(header, 8) != VERSION || u16_at(header, 10) != 0 {
+        .ok_or_else(|| corrupt("not a Poffo file"))?;
+    let version = u16_at(header, 8);
+    if !matches!(version, 1 | 2) || u16_at(header, 10) != 0 {
         return Err(corrupt("unsupported version or flags"));
     }
     let codec =
@@ -130,6 +132,7 @@ fn header(bytes: &[u8]) -> Result<Header, FormatError> {
     let mut index_sha256 = [0; 32];
     index_sha256.copy_from_slice(&header[32..64]);
     Ok(Header {
+        version,
         index_length: length(12),
         index_sha256,
         metadata_codec: codec,
@@ -270,6 +273,15 @@ fn decode_section(
 /// `decodeFile`: the document's JSON value tree, after checking every offset, checksum and
 /// length.
 pub fn decode(bytes: &[u8]) -> Result<Value, FormatError> {
+    decode_sections(bytes, false).map(|data| data.value)
+}
+
+/// Validates the header and reads only the model section. Texture decoding stays with the renderer.
+pub(crate) fn decode_runtime_section(bytes: &[u8]) -> Result<packed::Data, FormatError> {
+    decode_sections(bytes, true)
+}
+
+fn decode_sections(bytes: &[u8], numerical: bool) -> Result<packed::Data, FormatError> {
     let header = header(bytes)?;
     let mut budget = Budget(DECODED_BUDGET);
     let truncated = || corrupt("truncated file");
@@ -290,7 +302,12 @@ pub fn decode(bytes: &[u8]) -> Result<Value, FormatError> {
     let expected = assets.iter().try_fold(metadata_end, |end, asset| {
         end.checked_add(asset.section.encoded)
     });
-    if expected != Some(bytes.len()) {
+    let required = if numerical {
+        Some(metadata_end)
+    } else {
+        expected
+    };
+    if required != Some(bytes.len()) {
         return Err(corrupt("truncated or trailing asset bytes"));
     }
     let metadata = Section {
@@ -301,6 +318,16 @@ pub fn decode(bytes: &[u8]) -> Result<Value, FormatError> {
     };
     let stored = checked(&bytes[index_end..metadata_end], &metadata.sha256)?;
     let metadata = decode_section(stored, metadata, &mut budget)?;
+    if numerical {
+        let placeholders = vec![String::from("__host_texture__"); assets.len()];
+        let (value, arrays) =
+            value::decode_mode(&metadata, placeholders, &mut budget, header.version, true)?;
+        return Ok(packed::Data {
+            value,
+            bytes: metadata,
+            arrays,
+        });
+    }
     let mut offset = metadata_end;
     let mut urls = Vec::with_capacity(assets.len());
     // One asset at a time, so only its decoded bytes and data URL are held together.
@@ -314,5 +341,46 @@ pub fn decode(bytes: &[u8]) -> Result<Value, FormatError> {
         urls.push(url);
         offset = end;
     }
-    value::decode(&metadata, urls, &mut budget)
+    Ok(packed::Data {
+        value: value::decode(&metadata, urls, &mut budget, header.version)?,
+        bytes: Vec::new(),
+        arrays: Vec::new(),
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reads_v1_web_interoperability_fixtures() {
+        for bytes in [
+            &include_bytes!("../../../../src/player/poffo-file/__tests__/fixtures/raw.poffo")[..],
+            &include_bytes!(
+                "../../../../src/player/poffo-file/__tests__/fixtures/compressed.poffo"
+            )[..],
+        ] {
+            let value = decode(bytes).expect("v1 web fixture");
+            assert_eq!(value["format"], "winter-love-poffo");
+            assert_eq!(value["authoring"]["uint8"], serde_json::json!([0, 255]));
+        }
+    }
+
+    #[test]
+    fn reads_the_v2_web_fixture_and_preserves_referenced_signed_zero() {
+        let bytes =
+            include_bytes!("../../../../src/player/poffo-file/__tests__/fixtures/referenced.poffo");
+        let value = decode(bytes).expect("v2 web fixture");
+        let original = &value["authoring"]["float32"];
+        let copied = &value["authoring"]["copiedCoordinates"];
+        assert_eq!(original, copied);
+        assert!(
+            copied[1]
+                .as_f64()
+                .is_some_and(|v| v == 0.0 && v.is_sign_negative())
+        );
+        let mut invalid = bytes.to_vec();
+        invalid[8] = 1;
+        assert!(decode(&invalid).is_err());
+    }
 }

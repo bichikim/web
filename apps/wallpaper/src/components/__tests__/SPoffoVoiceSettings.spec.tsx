@@ -39,6 +39,7 @@ it('should choose ChatGPT settings and preserve the previous local model, voice 
 it('should keep each widgets voice settings when enabling narration and changing volume', () => {
   const [value, setValue] = createSignal<PoffoVoice>({
     ...DEFAULT_POFFO_VOICE,
+    enabled: false,
     speed: 1.4,
     voice: 'Hana',
   })

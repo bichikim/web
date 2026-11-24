@@ -1,3 +1,5 @@
+import {localizeMessage, text as uiText} from '../features/localization'
+
 import {createSignal, Show} from 'solid-js'
 import {SDialog} from './SDialog'
 
@@ -31,16 +33,16 @@ export const SAlbumDeleteDialog = (props: SAlbumDeleteDialogProps) => {
     }
   }
   return (
-    <SDialog title="앨범에서 삭제" onClose={handleClose}>
+    <SDialog title={uiText('앨범에서 삭제')} onClose={handleClose}>
       <div class="grid gap-2 p-4">
         <p class="m-0 break-all text-sm font-medium">{props.name}</p>
         <p class="m-0 text-xs text-stone-600">
-          앱에 저장된 사본을 삭제합니다. 원본 파일은 유지됩니다.
+          {uiText('앱에 저장된 사본을 삭제합니다. 원본 파일은 유지됩니다.')}
         </p>
         <Show when={props.error}>
           {(error) => (
             <p role="alert" class="m-0 text-xs text-red-700">
-              {error()}
+              {localizeMessage(error() ?? '')}
             </p>
           )}
         </Show>
@@ -51,7 +53,7 @@ export const SAlbumDeleteDialog = (props: SAlbumDeleteDialogProps) => {
             disabled={deleting()}
             onClick={handleClose}
           >
-            취소
+            {uiText('취소')}
           </button>
           <button
             type="button"
@@ -59,7 +61,7 @@ export const SAlbumDeleteDialog = (props: SAlbumDeleteDialogProps) => {
             disabled={deleting()}
             onClick={handleDelete}
           >
-            삭제
+            {uiText('삭제')}
           </button>
         </div>
       </div>

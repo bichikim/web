@@ -1,0 +1,110 @@
+{
+  "source": "Actual restarted Wallpaper app Worker frames matched against the complete scene and glue evaluation",
+  "pointerInputUsed": false,
+  "poses": [
+    {
+      "name": "controller-rest",
+      "contacts": [
+        {
+          "side": "left",
+          "boundaryColumns": 29,
+          "maximumBoundaryError": 0.00009457751612963985
+        },
+        {
+          "side": "right",
+          "boundaryColumns": 30,
+          "maximumBoundaryError": 0.00012242324579691505
+        }
+      ],
+      "maximumVertexError": 0.0006147106901153165,
+      "visibleConnectionParts": [
+        "coat-free:gamepad-left:ArtMesh900",
+        "coat-free:gamepad-left:hand",
+        "coat-free:gamepad-right:ArtMesh994",
+        "coat-free:gamepad-right:hand"
+      ],
+      "head": 0,
+      "body": 0,
+      "physics": [0, 0, 0],
+      "buttons": [0, 0]
+    },
+    {
+      "name": "controller-left",
+      "contacts": [
+        {
+          "side": "left",
+          "boundaryColumns": 29,
+          "maximumBoundaryError": 0.00008203329316295228
+        },
+        {
+          "side": "right",
+          "boundaryColumns": 30,
+          "maximumBoundaryError": 0.0001300486435453706
+        }
+      ],
+      "maximumVertexError": 0.0004938996876262536,
+      "visibleConnectionParts": [
+        "coat-free:gamepad-left:ArtMesh900",
+        "coat-free:gamepad-left:hand",
+        "coat-free:gamepad-right:ArtMesh994",
+        "coat-free:gamepad-right:hand"
+      ],
+      "head": -30,
+      "body": -10,
+      "physics": [-0.014895564224067442, -0.010639688731476743, -0.014895564224067442],
+      "buttons": [0, 0]
+    },
+    {
+      "name": "controller-right",
+      "contacts": [
+        {
+          "side": "left",
+          "boundaryColumns": 29,
+          "maximumBoundaryError": 0.00012184454343338944
+        },
+        {
+          "side": "right",
+          "boundaryColumns": 30,
+          "maximumBoundaryError": 0.00012566603409088886
+        }
+      ],
+      "maximumVertexError": 0.000622915602662033,
+      "visibleConnectionParts": [
+        "coat-free:gamepad-left:ArtMesh900",
+        "coat-free:gamepad-left:hand",
+        "coat-free:gamepad-right:ArtMesh994",
+        "coat-free:gamepad-right:hand"
+      ],
+      "head": 30,
+      "body": 10,
+      "physics": [0.027030800698926948, 0.01930771478494782, 0.027030800698926948],
+      "buttons": [0, 0]
+    },
+    {
+      "name": "controller-buttons",
+      "contacts": [
+        {
+          "side": "left",
+          "boundaryColumns": 29,
+          "maximumBoundaryError": 0.0001209637864604637
+        },
+        {
+          "side": "right",
+          "boundaryColumns": 30,
+          "maximumBoundaryError": 0.00011197095609795976
+        }
+      ],
+      "maximumVertexError": 0.0006740673311469436,
+      "visibleConnectionParts": [
+        "coat-free:gamepad-left:ArtMesh900",
+        "coat-free:gamepad-left:hand",
+        "coat-free:gamepad-right:ArtMesh994",
+        "coat-free:gamepad-right:hand"
+      ],
+      "head": 0,
+      "body": 0,
+      "physics": [-0.005535365722218252, -0.003953832658727323, -0.005535365722218252],
+      "buttons": [1, 1]
+    }
+  ]
+}

@@ -88,3 +88,15 @@ test('should release an active camera when its inference worker fails', async ()
   expect(fixture.stopTrack).toHaveBeenCalledOnce()
   expect(onError).toHaveBeenCalledWith(expect.objectContaining({message: 'Model failed'}))
 })
+
+test('should request pose inference only when a rotation tracking consumer needs it', () => {
+  const fixture = setup()
+  const session = createCameraSession({
+    onError: vi.fn(),
+    onPoint: vi.fn(),
+    pose: true,
+    video: fixture.video,
+  })
+  expect(fixture.worker.postMessage).toHaveBeenCalledWith({pose: true, type: 'start'})
+  session.stop()
+})

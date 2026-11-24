@@ -1,0 +1,42 @@
+{
+  "expression": {
+    "울먹이는 눈": "Tearful Eyes",
+    "필기 동작": "Writing",
+    "작아지기": "Shrink",
+    "얼굴 그림자": "Face Shadow",
+    "커피 들기": "Hold Coffee",
+    "눈의 하이라이트 끄기": "Hide Eye Highlights",
+    "화남": "Anger",
+    "노트 들기": "Hold Notes",
+    "게임패드 들기": "Hold Game Controller",
+    "수갑 찬 손": "Handcuffed Hands",
+    "안경": "Glasses",
+    "반짝이는 눈": "Starry Eyes",
+    "손하트": "Finger Heart",
+    "땀방울": "Sweat Drop",
+    "컵라면 들기": "Hold Instant Noodles",
+    "눈물": "Tears",
+    "엄지 척": "Thumbs Up",
+    "하트 눈": "Heart Eyes",
+    "목줄 동작": "Leash Pose",
+    "고양이 손": "Cat Paws",
+    "홍조": "Blush",
+    "마이크 들기": "Hold Microphone",
+    "긴장": "Nervous",
+    "왼손 버튼 누르기": "Left Hand Button Press",
+    "오른손 버튼 누르기": "Right Hand Button Press",
+    "칼 들기": "Hold Knife",
+    "주먹 쥐기": "Make a Fist",
+    "외투 벗기": "Remove Coat"
+  },
+  "motion": {
+    "Idle:0": "Idle",
+    "Walk:0": "Walk Forward"
+  },
+  "namedMotions": {
+    "ambient": {
+      "리본 · 꽃 · 반짝이": "Ribbons, flowers and sparkles",
+      "거리의 바람": "Street breeze"
+    }
+  }
+}

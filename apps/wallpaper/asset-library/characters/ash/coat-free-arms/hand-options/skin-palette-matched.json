@@ -1,0 +1,67 @@
+{
+  "method": "Imagegen-authored wrist-open sprite, followed by skin-only rank-based color matching to actual original left-hand and left-forearm texture pixels. No geometry, ink, pen, nails or alpha transformation.",
+  "sourceSha256": "2b3d26f3ccff5c1f8fe0f3b08db707331fa1a750c8a0de5a0cde8765630b7f5c",
+  "changedPixels": 182323,
+  "alphaChanges": 0,
+  "protectedChanges": 0,
+  "hand": {
+    "reference": {
+      "light": {
+        "rgb": [255, 249, 244],
+        "hex": "#fff9f4"
+      },
+      "mid": {
+        "rgb": [254, 244, 239],
+        "hex": "#fef4ef"
+      },
+      "shade": {
+        "rgb": [243, 218, 213],
+        "hex": "#f3dad5"
+      }
+    },
+    "output": {
+      "light": {
+        "rgb": [255, 249, 244],
+        "hex": "#fff9f4"
+      },
+      "mid": {
+        "rgb": [254, 244, 239],
+        "hex": "#fef4ef"
+      },
+      "shade": {
+        "rgb": [243, 218, 213],
+        "hex": "#f3dad5"
+      }
+    }
+  },
+  "wrist": {
+    "reference": {
+      "light": {
+        "rgb": [255, 250, 249],
+        "hex": "#fffaf9"
+      },
+      "mid": {
+        "rgb": [252, 245, 243],
+        "hex": "#fcf5f3"
+      },
+      "shade": {
+        "rgb": [248, 224, 223],
+        "hex": "#f8e0df"
+      }
+    },
+    "output": {
+      "light": {
+        "rgb": [255, 250, 249],
+        "hex": "#fffaf9"
+      },
+      "mid": {
+        "rgb": [252, 245, 243],
+        "hex": "#fcf5f3"
+      },
+      "shade": {
+        "rgb": [248, 224, 223],
+        "hex": "#f8e0df"
+      }
+    }
+  }
+}

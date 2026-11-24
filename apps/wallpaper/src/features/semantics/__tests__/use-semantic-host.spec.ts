@@ -17,6 +17,174 @@ import {useSemanticHost} from '../use-semantic-host'
 
 vi.mock('../model', () => ({createSemanticModel: vi.fn()}))
 afterEach(() => vi.resetAllMocks())
+
+const segmentedWidget = (id: string): PoffoWidget => ({
+  assetId: 'ash',
+  id,
+  speech: {
+    enabled: true,
+    semanticBindings: [
+      {
+        action: {id: 'smile', kind: 'expression'},
+        enabled: true,
+        id: 'happy',
+        mode: 'toggle',
+        parameterId: null,
+        text: 'happy',
+        threshold: 0.8,
+      },
+    ],
+    x: 0,
+    y: 0,
+  },
+  x: null,
+  y: null,
+})
+
+it('should cache exactly one following segment without publishing it or blocking a newer segment', async () => {
+  const pending = Promise.withResolvers<number[][]>()
+  const embed = vi
+    .fn(async (texts: readonly string[]) =>
+      texts.map((text) => (text.endsWith('happy') ? [1, 0] : [0, 1])),
+    )
+    .mockImplementationOnce(async (texts: readonly string[]) => texts.map(() => [1, 0]))
+    .mockImplementationOnce(() => pending.promise)
+  vi.mocked(createSemanticModel).mockReturnValue({dispose: vi.fn(), embed})
+  const scope = createRoot((cleanup) => ({
+    cleanup,
+    host: useSemanticHost({
+      widgets: () => [segmentedWidget('segments')],
+    }),
+  }))
+  const narration = {phase: 'playing' as const, readoutId: 'reply'}
+  try {
+    await sendSemanticInput({narration, nextText: 'Second', text: 'First', widgetId: 'segments'})
+    await waitFor(() => expect(embed).toHaveBeenCalledTimes(2), {interval: 1, timeout: 100})
+    expect(scope.host.score('segments', 'happy')).toBe(1)
+    expect(embed.mock.calls.map(([texts]) => texts[0])).toEqual([
+      'task: classification | query: First',
+      'task: classification | query: Second',
+    ])
+    await sendSemanticInput({narration, nextText: 'Third', text: 'Second', widgetId: 'segments'})
+    expect(scope.host.score('segments', 'happy')).toBe(1)
+    pending.resolve([
+      [0, 1],
+      [1, 0],
+    ])
+    await waitFor(() => expect(embed).toHaveBeenCalledTimes(3), {interval: 1, timeout: 100})
+    expect(scope.host.score('segments', 'happy')).toBe(0)
+    await sendSemanticInput({narration, nextText: 'Second', text: 'First', widgetId: 'segments'})
+    await waitFor(() => expect(scope.host.score('segments', 'happy')).toBe(1), {
+      interval: 1,
+      timeout: 100,
+    })
+    expect(embed).toHaveBeenCalledTimes(3)
+  } finally {
+    scope.cleanup()
+  }
+})
+
+it('should analyze preparation without applying it and discard a late successor after narration ends', async () => {
+  const pending = Promise.withResolvers<number[][]>()
+  const embed = vi
+    .fn(async (texts: readonly string[]) => texts.map(() => [1, 0]))
+    .mockImplementationOnce(async (texts: readonly string[]) => texts.map(() => [1, 0]))
+    .mockImplementationOnce(() => pending.promise)
+  vi.mocked(createSemanticModel).mockReturnValue({dispose: vi.fn(), embed})
+  const frames: SemanticFrame[] = []
+  const stop = await subscribeSemanticFrame((frame) => frames.push(frame))
+  const scope = createRoot((cleanup) => ({
+    cleanup,
+    host: useSemanticHost({
+      widgets: () => [segmentedWidget('preparing')],
+    }),
+  }))
+  try {
+    await sendSemanticInput({
+      narration: {phase: 'preparing'},
+      nextText: 'Second',
+      text: 'First',
+      widgetId: 'preparing',
+    })
+    await waitFor(() => expect(embed).toHaveBeenCalledTimes(2), {interval: 1, timeout: 100})
+    expect(scope.host.score('preparing', 'happy')).toBeUndefined()
+    await sendSemanticInput({narration: {phase: 'ended'}, text: '', widgetId: 'preparing'})
+    pending.resolve([
+      [1, 0],
+      [1, 0],
+    ])
+    await waitFor(() => expect(scope.host.busy()).toBe(false), {interval: 1, timeout: 100})
+    expect(frames.at(-1)).toMatchObject({narration: {phase: 'ended'}, scores: {}})
+  } finally {
+    scope.cleanup()
+    stop()
+  }
+})
+it('should share manual state and semantic previews and clear removed state bindings', async () => {
+  const embed = vi.fn(async () => [[1, 0]])
+  vi.mocked(createSemanticModel).mockReturnValue({dispose: vi.fn(), embed})
+  const [widgets, setWidgets] = createStore<PoffoWidget[]>([
+    {
+      assetId: 'character',
+      id: 'state-widget',
+      speech: {
+        agentBindings: {working: {actions: [{id: 'notes', kind: 'expression'}], parameterId: null}},
+        enabled: true,
+        semanticBindings: [
+          {
+            action: {id: 'smile', kind: 'expression'},
+            enabled: true,
+            id: 'happy',
+            mode: 'toggle',
+            parameterId: null,
+            text: '기쁨',
+            threshold: 0.75,
+          },
+        ],
+        x: 0.9,
+        y: 0.05,
+      },
+      x: null,
+      y: null,
+    },
+  ])
+  const frames: SemanticFrame[] = []
+  const stop = await subscribeSemanticFrame((frame) => frames.push(frame))
+  const scope = createRoot((cleanup) => ({
+    cleanup,
+    host: useSemanticHost({widgets: () => widgets}),
+  }))
+  try {
+    scope.host.previewAgent?.('state-widget', 'working')
+    expect(frames.at(-1)?.agentPreview).toBe('working')
+    expect(embed).not.toHaveBeenCalled()
+    await requestSemanticFrame('state-widget')
+    expect(frames.at(-1)?.agentPreview).toBe('working')
+    scope.host.preview('state-widget', 'happy')
+    expect(scope.host.previewingAgent?.('state-widget', 'working')).toBe(false)
+    expect(frames.at(-1)?.agentPreview).toBeUndefined()
+    scope.host.previewAgent?.('state-widget', null)
+    expect(frames.at(-1)?.previewId).toBe('happy')
+    scope.host.previewAgent?.('state-widget', 'working')
+    expect(scope.host.previewing('state-widget', 'happy')).toBe(false)
+    setWidgets(
+      reconcile(
+        widgets.map((widget) => ({
+          ...widget,
+          speech: {...widget.speech!, agentBindings: {}},
+        })),
+      ),
+    )
+    expect(scope.host.previewingAgent?.('state-widget', 'working')).toBe(false)
+    expect(frames.at(-1)?.agentPreview).toBeUndefined()
+    const count = frames.length
+    scope.host.previewAgent?.('missing-widget', 'working')
+    expect(frames).toHaveLength(count)
+  } finally {
+    scope.cleanup()
+    stop()
+  }
+})
 it('should retain manual previews during analysis, replay them and clear invalid selections', async () => {
   const embed = vi.fn(async (texts: readonly string[]) => texts.map(() => [1, 0]))
   vi.mocked(createSemanticModel).mockReturnValue({dispose: vi.fn(), embed})
@@ -394,7 +562,7 @@ it('should publish fallback only for an unmatched playing narration and clear it
       text: '다른 일반 문장',
       widgetId: 'random-widget',
     })
-    await waitFor(() => expect(embed).toHaveBeenCalledTimes(3), {interval: 1})
+    await waitFor(() => expect(embed).toHaveBeenCalledTimes(2), {interval: 1})
     expect(random).toHaveBeenCalledTimes(draws)
     await sendSemanticInput({text: '', widgetId: 'random-widget'})
     expect(frames.at(-1)?.fallbackId).toBeUndefined()
@@ -485,3 +653,35 @@ it('should retain actions through preparation, clear at next playback and reject
     stop()
   }
 })
+
+it.each([
+  {assetId: 'builtin:ash', expected: 1},
+  {assetId: 'custom-character', expected: 1},
+])(
+  'should apply saved language examples for any character ($assetId)',
+  async ({assetId, expected}) => {
+    const {builtinConnectionProfile} = await import('../../connection-profiles/builtin-profile')
+    const binding = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings![0]!
+    const embed = vi.fn(async (texts: readonly string[]) =>
+      texts.map((text) => (text.includes('기쁘고 행복해서') ? [1, 0] : [0, 1])),
+    )
+    vi.mocked(createSemanticModel).mockReturnValue({dispose: vi.fn(), embed})
+    const widget: PoffoWidget = {
+      assetId,
+      id: 'bilingual',
+      speech: {enabled: true, semanticBindings: [binding], x: 0, y: 0},
+      x: null,
+      y: null,
+    }
+    const scope = createRoot((cleanup) => ({
+      cleanup,
+      host: useSemanticHost({widgets: () => [widget]}),
+    }))
+    try {
+      scope.host.test(widget.id, '기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!')
+      await waitFor(() => expect(scope.host.score(widget.id, binding.id)).toBe(expected))
+    } finally {
+      scope.cleanup()
+    }
+  },
+)

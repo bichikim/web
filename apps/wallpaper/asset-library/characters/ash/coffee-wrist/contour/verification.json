@@ -1,0 +1,153 @@
+{
+  "modelSha256": "5676ced34f7f9ac1ce64a82ebc83edb2e2bdce36c5e19275279905fdfb0562c1",
+  "bytes": 20355751,
+  "shape": {
+    "reference": "../generated.png",
+    "localWidthWarp": false,
+    "placement": {
+      "matrix": [
+        [0.9983005874484481, -0.05827466945494763, 54.58030897586991],
+        [0.05827466945494763, 0.9983005874484481, -3.8560222989468684]
+      ],
+      "rotationDegrees": 3.3407852842610013,
+      "scale": 1,
+      "sourceAttachment": {
+        "points": [
+          [379.45652173913044, 977.5434782608696],
+          [526.1521739130435, 1071.8478260869565]
+        ],
+        "axis": [0.5407575913134987, -0.8411784753765534],
+        "center": [452.804347826087, 1024.695652173913],
+        "width": 174.39301702084651
+      },
+      "targetAttachment": {
+        "points": [
+          [376.54651162790697, 994.2267441860465],
+          [517.2561983471074, 1096.7438016528927]
+        ],
+        "axis": [0.588858018680659, -0.8082364962283556],
+        "center": [446.9013549875072, 1045.4852729194695],
+        "width": 174.09469552021446,
+        "y": 1039,
+        "error": 0.2983215006320563
+      },
+      "sourceEdges": 471,
+      "ownershipFoldImageY": 760,
+      "contourGuide": "Original ChatGPT generated silhouette; RGBA extraction; original finger and cup pixels translated together by 7 pixels",
+      "material": "ComfyUI local Qwen-Image-2.1-Turbo masked material generation",
+      "colour": "Harmonic boundary RGB offsets, original alpha preserved",
+      "noLocalWidthWarp": true
+    },
+    "neutralVertexError": 9.094947017729282e-13,
+    "comparison": "comparison-final.png"
+  },
+  "artwork": {
+    "originalFingersAndCupRetained": true,
+    "forearmMeshesRetained": true,
+    "originalPhysicsRetained": true,
+    "comfyWorkflow": "material.json",
+    "partSeparation": "separate.json",
+    "alphaGuide": "Original image_gen contour with source part masks; hand and arm overlap at the fold",
+    "colourCleanup": "strip-matching.json"
+  },
+  "checks": [
+    {
+      "model": "99edb7eb3bc7c11a45ea5f4c4538875b4e15f1611a53d9d5363413d9dd37c6b2",
+      "files": 5,
+      "passed": 10,
+      "log": "/private/tmp/coffee-contour-final-tests.log"
+    },
+    {
+      "model": "0c4184bf033aafa647b13532d68cde8452fd35ca81b6791e3d2a82a48a661c6a",
+      "files": 1,
+      "passed": 2,
+      "geometryAndAlphaUnchanged": true,
+      "log": "/private/tmp/coffee-contour-colour-tests.log"
+    }
+  ],
+  "native": {
+    "appPid": 91350,
+    "resource": {
+      "bytes": 20355751,
+      "sha256": "5676ced34f7f9ac1ce64a82ebc83edb2e2bdce36c5e19275279905fdfb0562c1"
+    },
+    "partCount": 1025,
+    "expandedHandMeshSha256": "528151fe4d6045f6ebc9d1b6165d7bdb56d91af5702e6059465d1f674c18ee02",
+    "resourceMatched": true,
+    "meshMatched": true,
+    "pose": "ash:coffee",
+    "coatRemoved": true,
+    "pointerInputUsed": false,
+    "capture": "lines/applied.png",
+    "detailCapture": "lines/applied-detail.png",
+    "review": "Both marked duplicate contour stubs removed; cup and single hand outline retained"
+  },
+  "cupRestoration": {
+    "sourceModelSha256": "0c4184bf033aafa647b13532d68cde8452fd35ca81b6791e3d2a82a48a661c6a",
+    "modelSha256": "4d3b7185cc43713a64229cb6f564e22c88a8a6a13d3e85ab41bfa75a85dc993f",
+    "bytes": 20355911,
+    "promptId": "dc8ee48a-6d19-4de7-bc55-9da63724a2d4",
+    "method": "Restore original combined hand/cup paint order above image row 690 and the 388 pixels of original cup base with local ComfyUI compositing",
+    "alphaUnchanged": true,
+    "wristRgbaOutsideOriginalCupUnchanged": true,
+    "riggingUnchanged": true,
+    "otherPartsUnchanged": true,
+    "maximumOpaqueRgbError": 0,
+    "originalCupSamples": [
+      {
+        "x": 626,
+        "y": 644,
+        "rgb": [145, 106, 113]
+      },
+      {
+        "x": 662,
+        "y": 648,
+        "rgb": [167, 137, 136]
+      },
+      {
+        "x": 670,
+        "y": 584,
+        "rgb": [121, 175, 188]
+      },
+      {
+        "x": 622,
+        "y": 584,
+        "rgb": [190, 148, 138]
+      },
+      {
+        "x": 590,
+        "y": 588,
+        "rgb": [194, 155, 147]
+      },
+      {
+        "x": 646,
+        "y": 608,
+        "rgb": [195, 154, 147]
+      },
+      {
+        "x": 610,
+        "y": 616,
+        "rgb": [199, 163, 155]
+      },
+      {
+        "x": 682,
+        "y": 616,
+        "rgb": [200, 165, 156]
+      }
+    ]
+  },
+  "lineCleanup": {
+    "sourceModelSha256": "4d3b7185cc43713a64229cb6f564e22c88a8a6a13d3e85ab41bfa75a85dc993f",
+    "modelSha256": "5676ced34f7f9ac1ce64a82ebc83edb2e2bdce36c5e19275279905fdfb0562c1",
+    "bytes": 20355751,
+    "promptId": "4cb02ddf-2edc-4804-ab62-806ce85a2e0d",
+    "changedPixels": 1560,
+    "editRange": [690, 736],
+    "method": "Match duplicate interior contour strokes to intact hand and lower wrist RGB profiles; local ComfyUI compositing",
+    "alphaUnchanged": true,
+    "cupRgbaUnchanged": true,
+    "outsideMaskRgbaUnchanged": true,
+    "riggingUnchanged": true,
+    "otherPartsUnchanged": true
+  }
+}

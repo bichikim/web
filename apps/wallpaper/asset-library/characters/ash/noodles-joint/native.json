@@ -1,0 +1,11 @@
+{
+  "frames": 60,
+  "maximumSurfaceGap": 0,
+  "wristPhysicsRange": [0.005944610119287855, 0.019239042629322085],
+  "loadedVertices": 92338,
+  "expectedVertices": 92338,
+  "modelSha256": "826f2f2968448d7874672d720a4755dcc9d2305812a073c95e1c8effaaabfe9e",
+  "pointerInputUsed": false,
+  "previewRestored": true,
+  "observerRemoved": true
+}

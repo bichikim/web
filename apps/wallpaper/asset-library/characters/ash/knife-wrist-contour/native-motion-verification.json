@@ -1,0 +1,343 @@
+{
+  "sha256": "bb8715f612b470cb2eef22e3887ae7ecfe3635729195c147b53c98117c8399e9",
+  "source": "Actual Wallpaper Worker vertices matched against the original and corrected model",
+  "pointerInputUsed": false,
+  "mode": "motion",
+  "frames": 33,
+  "maximumArmDifference": 0.0005099994882584724,
+  "maximumFingerDifference": 0.0006587954876522417,
+  "maximumAttachmentDifference": 0.0005824563286296325,
+  "maximumSharedSeamError": 0,
+  "results": [
+    {
+      "name": "neutral",
+      "elapsed": 209,
+      "head": [0, 0],
+      "sourceError": 0.00029706754776270827,
+      "armError": 0.00029706754776270827,
+      "fingerError": 0.00021395745670815813,
+      "anchorError": 0.0001618089695512026,
+      "seamError": 0
+    },
+    {
+      "name": "neutral",
+      "elapsed": 249,
+      "head": [0, 0],
+      "sourceError": 0.00030433841629928793,
+      "armError": 0.00029868215074202453,
+      "fingerError": 0.00030433841629928793,
+      "anchorError": 0.000271232023351331,
+      "seamError": 0
+    },
+    {
+      "name": "neutral",
+      "elapsed": 274,
+      "head": [0, 0],
+      "sourceError": 0.0004978392034900025,
+      "armError": 0.0003337238267704379,
+      "fingerError": 0.0004978392034900025,
+      "anchorError": 0.0004248572986398358,
+      "seamError": 0
+    },
+    {
+      "name": "neutral",
+      "elapsed": 300,
+      "head": [0, 0],
+      "sourceError": 0.0004035923720948631,
+      "armError": 0.00015985402842488838,
+      "fingerError": 0.0004035923720948631,
+      "anchorError": 0.0003349489052197896,
+      "seamError": 0
+    },
+    {
+      "name": "up",
+      "elapsed": 325,
+      "head": [0, 0],
+      "sourceError": 0.00026192993982476764,
+      "armError": 0.00026192993982476764,
+      "fingerError": 0.0002208359160249529,
+      "anchorError": 0.00021355553394641902,
+      "seamError": 0
+    },
+    {
+      "name": "up",
+      "elapsed": 427,
+      "head": [0, 30],
+      "sourceError": 0.0005553635560318071,
+      "armError": 0.00042656040568544995,
+      "fingerError": 0.0005550698051592917,
+      "anchorError": 0.00041836825403152034,
+      "seamError": 0
+    },
+    {
+      "name": "up",
+      "elapsed": 468,
+      "head": [0, 30],
+      "sourceError": 0.000250763328949688,
+      "armError": 0.000250763328949688,
+      "fingerError": 0.0001938339382832055,
+      "anchorError": 0.0001338445154033252,
+      "seamError": 0
+    },
+    {
+      "name": "up",
+      "elapsed": 492,
+      "head": [0, 30],
+      "sourceError": 0.00030450188296526903,
+      "armError": 0.00030450188296526903,
+      "fingerError": 0.0002362283944421506,
+      "anchorError": 0.00022207185020306497,
+      "seamError": 0
+    },
+    {
+      "name": "up",
+      "elapsed": 517,
+      "head": [0, 30],
+      "sourceError": 0.00033957072173507186,
+      "armError": 0.00033957072173507186,
+      "fingerError": 0.0002808018214182084,
+      "anchorError": 0.00019075144291491597,
+      "seamError": 0
+    },
+    {
+      "name": "down",
+      "elapsed": 541,
+      "head": [0, 30],
+      "sourceError": 0.00030897372926119715,
+      "armError": 0.0002693519577405823,
+      "fingerError": 0.00030897372926119715,
+      "anchorError": 0.00021813621515320847,
+      "seamError": 0
+    },
+    {
+      "name": "down",
+      "elapsed": 647,
+      "head": [0, -30],
+      "sourceError": 0.00041417674901822465,
+      "armError": 0.00041417674901822465,
+      "fingerError": 0.0003324003432680911,
+      "anchorError": 0.0003006252813975152,
+      "seamError": 0
+    },
+    {
+      "name": "down",
+      "elapsed": 683,
+      "head": [0, -30],
+      "sourceError": 0.0004224292374601646,
+      "armError": 0.00035776313006863347,
+      "fingerError": 0.0004224292374601646,
+      "anchorError": 0.00032443910731672077,
+      "seamError": 0
+    },
+    {
+      "name": "down",
+      "elapsed": 707,
+      "head": [0, -30],
+      "sourceError": 0.00040705052742850967,
+      "armError": 0.0003872716933983611,
+      "fingerError": 0.00040705052742850967,
+      "anchorError": 0.0001977937554329401,
+      "seamError": 0
+    },
+    {
+      "name": "down",
+      "elapsed": 732,
+      "head": [0, -30],
+      "sourceError": 0.0004043569147142989,
+      "armError": 0.0003709013490151847,
+      "fingerError": 0.0004043569147142989,
+      "anchorError": 0.0004043569147142989,
+      "seamError": 0
+    },
+    {
+      "name": "up-reversal",
+      "elapsed": 841,
+      "head": [0, 30],
+      "sourceError": 0.0002461709077579144,
+      "armError": 0.0002461709077579144,
+      "fingerError": 0.00021745141475548735,
+      "anchorError": 0.00017348732217215002,
+      "seamError": 0
+    },
+    {
+      "name": "up-reversal",
+      "elapsed": 857,
+      "head": [0, 30],
+      "sourceError": 0.0003308765012661752,
+      "armError": 0.0003308765012661752,
+      "fingerError": 0.0003289991232122702,
+      "anchorError": 0.00022576724040845875,
+      "seamError": 0
+    },
+    {
+      "name": "up-reversal",
+      "elapsed": 884,
+      "head": [0, 30],
+      "sourceError": 0.00037001769760536263,
+      "armError": 0.00037001769760536263,
+      "fingerError": 0.00022914647843208513,
+      "anchorError": 0.00022914647843208513,
+      "seamError": 0
+    },
+    {
+      "name": "up-reversal",
+      "elapsed": 908,
+      "head": [0, 30],
+      "sourceError": 0.00044621867300520535,
+      "armError": 0.00044621867300520535,
+      "fingerError": 0.0003666639217954071,
+      "anchorError": 0.00024474441079291864,
+      "seamError": 0
+    },
+    {
+      "name": "left",
+      "elapsed": 933,
+      "head": [0, 30],
+      "sourceError": 0.0006587954876522417,
+      "armError": 0.0005099994882584724,
+      "fingerError": 0.0006587954876522417,
+      "anchorError": 0.0005824563286296325,
+      "seamError": 0
+    },
+    {
+      "name": "left",
+      "elapsed": 1042,
+      "head": [-30, 0],
+      "sourceError": 0.0003914259914381546,
+      "armError": 0.0003914259914381546,
+      "fingerError": 0.0002530525639485859,
+      "anchorError": 0.00017639926136325812,
+      "seamError": 0
+    },
+    {
+      "name": "left",
+      "elapsed": 1082,
+      "head": [-30, 0],
+      "sourceError": 0.00033472498171249754,
+      "armError": 0.00033472498171249754,
+      "fingerError": 0.0003295302976766834,
+      "anchorError": 0.0002062872299575247,
+      "seamError": 0
+    },
+    {
+      "name": "left",
+      "elapsed": 1106,
+      "head": [-30, 0],
+      "sourceError": 0.0002996084567712387,
+      "armError": 0.0002996084567712387,
+      "fingerError": 0.00026924172379949596,
+      "anchorError": 0.00009202363526128465,
+      "seamError": 0
+    },
+    {
+      "name": "left",
+      "elapsed": 1130,
+      "head": [-30, 0],
+      "sourceError": 0.00037019896922174667,
+      "armError": 0.00037019896922174667,
+      "fingerError": 0.00032370463350162026,
+      "anchorError": 0.00028439194920792943,
+      "seamError": 0
+    },
+    {
+      "name": "right",
+      "elapsed": 1154,
+      "head": [-30, 0],
+      "sourceError": 0.0005057966504864453,
+      "armError": 0.00044569290048457333,
+      "fingerError": 0.0004242678869559313,
+      "anchorError": 0.0003939563880521746,
+      "seamError": 0
+    },
+    {
+      "name": "right",
+      "elapsed": 1253,
+      "head": [30, 0],
+      "sourceError": 0.0003078475338043063,
+      "armError": 0.0002573586289145169,
+      "fingerError": 0.0003078475338043063,
+      "anchorError": 0.0001404867616656702,
+      "seamError": 0
+    },
+    {
+      "name": "right",
+      "elapsed": 1281,
+      "head": [30, 0],
+      "sourceError": 0.0003139082064080867,
+      "armError": 0.0003139082064080867,
+      "fingerError": 0.0002305551865902089,
+      "anchorError": 0.0001249552763056272,
+      "seamError": 0
+    },
+    {
+      "name": "right",
+      "elapsed": 1305,
+      "head": [30, 0],
+      "sourceError": 0.0003096271734648326,
+      "armError": 0.0002670591657079058,
+      "fingerError": 0.00030725544684173656,
+      "anchorError": 0.00030725544684173656,
+      "seamError": 0
+    },
+    {
+      "name": "right",
+      "elapsed": 1330,
+      "head": [30, 0],
+      "sourceError": 0.00035602908883447526,
+      "armError": 0.00024747944098635344,
+      "fingerError": 0.00035602908883447526,
+      "anchorError": 0.00019342663290444762,
+      "seamError": 0
+    },
+    {
+      "name": "return",
+      "elapsed": 1354,
+      "head": [30, 0],
+      "sourceError": 0.0003093609443567402,
+      "armError": 0.00029082696710247546,
+      "fingerError": 0.0003093609443567402,
+      "anchorError": 0.0001807732419365493,
+      "seamError": 0
+    },
+    {
+      "name": "return",
+      "elapsed": 1452,
+      "head": [0, 0],
+      "sourceError": 0.00024313972062373068,
+      "armError": 0.00024313972062373068,
+      "fingerError": 0.0002312119440830429,
+      "anchorError": 0.00017637919472690555,
+      "seamError": 0
+    },
+    {
+      "name": "return",
+      "elapsed": 1481,
+      "head": [0, 0],
+      "sourceError": 0.0003416807362555119,
+      "armError": 0.0003416807362555119,
+      "fingerError": 0.0002065945079721132,
+      "anchorError": 0.00012681082739618432,
+      "seamError": 0
+    },
+    {
+      "name": "return",
+      "elapsed": 1505,
+      "head": [0, 0],
+      "sourceError": 0.0003127903114545916,
+      "armError": 0.0003127903114545916,
+      "fingerError": 0.000257369547853159,
+      "anchorError": 0.0002423977327907778,
+      "seamError": 0
+    },
+    {
+      "name": "return",
+      "elapsed": 1529,
+      "head": [0, 0],
+      "sourceError": 0.00033309427271888126,
+      "armError": 0.00032477342210768256,
+      "fingerError": 0.00033309427271888126,
+      "anchorError": 0.0003010074622125103,
+      "seamError": 0
+    }
+  ]
+}

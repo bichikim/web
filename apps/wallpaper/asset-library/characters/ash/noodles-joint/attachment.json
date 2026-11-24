@@ -1,0 +1,314 @@
+{
+  "beforeSha256": "5676ced34f7f9ac1ce64a82ebc83edb2e2bdce36c5e19275279905fdfb0562c1",
+  "sha256": "826f2f2968448d7874672d720a4755dcc9d2305812a073c95e1c8effaaabfe9e",
+  "removed": [
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh900:36",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh900:2",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh900:3",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh900:37",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh900:4",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh900:35",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh900:38",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh900:5",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh900:64",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh900:32",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh900:65",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh900:33",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh900:66",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh901:0",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh901:1",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh901:17",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh901:2",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh901:18",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh901:31",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh901:15",
+    "coat-free:noodles-left:joint:wrist:coat-free:noodles-left:ArtMesh901:16"
+  ],
+  "followers": [
+    "ArtMesh44",
+    "ArtMesh45",
+    "ArtMesh46",
+    "ArtMesh48",
+    "ArtMesh49",
+    "ArtMesh50",
+    "ArtMesh51",
+    "ArtMesh47"
+  ],
+  "hand": "ArtMesh49",
+  "arm": "coat-free:noodles-left:ArtMesh900",
+  "reference": "coat-free:noodles-left:joint:hand",
+  "target": "coat-free:noodles-left:joint:wrist",
+  "textureAndGeometryUnchanged": true,
+  "notesUnchanged": true,
+  "bytes": 20355577,
+  "wristPhysics": {
+    "parameter": "Param28",
+    "degrees": 3.151267873219528,
+    "rotationOnly": true,
+    "disabledElasticWarps": ["Warp177@Part12", "Warp179@Part12"]
+  },
+  "surface": {
+    "hand": "ArtMesh49",
+    "edge": [11, 8],
+    "bandDepth": 30,
+    "links": [
+      {
+        "id": "coat-free:noodles-left:wrist-face:coat-free:noodles-left:ArtMesh900:36",
+        "composition": "sequential",
+        "first": {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 36
+        },
+        "second": {
+          "partId": "coat-free:noodles-left:wrist-face:surface",
+          "vertexIndex": 0
+        },
+        "weight": 1,
+        "strength": 0.8778726690673918
+      },
+      {
+        "id": "coat-free:noodles-left:wrist-face:coat-free:noodles-left:ArtMesh900:2",
+        "composition": "sequential",
+        "first": {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 2
+        },
+        "second": {
+          "partId": "coat-free:noodles-left:wrist-face:surface",
+          "vertexIndex": 1
+        },
+        "weight": 1,
+        "strength": 1
+      },
+      {
+        "id": "coat-free:noodles-left:wrist-face:coat-free:noodles-left:ArtMesh900:35",
+        "composition": "sequential",
+        "first": {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 35
+        },
+        "second": {
+          "partId": "coat-free:noodles-left:wrist-face:surface",
+          "vertexIndex": 2
+        },
+        "weight": 1,
+        "strength": 1
+      },
+      {
+        "id": "coat-free:noodles-left:wrist-face:coat-free:noodles-left:ArtMesh900:33",
+        "composition": "sequential",
+        "first": {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 33
+        },
+        "second": {
+          "partId": "coat-free:noodles-left:wrist-face:surface",
+          "vertexIndex": 3
+        },
+        "weight": 1,
+        "strength": 1
+      },
+      {
+        "id": "coat-free:noodles-left:wrist-face:coat-free:noodles-left:ArtMesh900:66",
+        "composition": "sequential",
+        "first": {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 66
+        },
+        "second": {
+          "partId": "coat-free:noodles-left:wrist-face:surface",
+          "vertexIndex": 4
+        },
+        "weight": 1,
+        "strength": 1
+      },
+      {
+        "id": "coat-free:noodles-left:wrist-face:coat-free:noodles-left:ArtMesh901:0",
+        "composition": "sequential",
+        "first": {
+          "partId": "coat-free:noodles-left:ArtMesh901",
+          "vertexIndex": 0
+        },
+        "second": {
+          "partId": "coat-free:noodles-left:wrist-face:surface",
+          "vertexIndex": 5
+        },
+        "weight": 1,
+        "strength": 1
+      },
+      {
+        "id": "coat-free:noodles-left:wrist-face:coat-free:noodles-left:ArtMesh901:1",
+        "composition": "sequential",
+        "first": {
+          "partId": "coat-free:noodles-left:ArtMesh901",
+          "vertexIndex": 1
+        },
+        "second": {
+          "partId": "coat-free:noodles-left:wrist-face:surface",
+          "vertexIndex": 6
+        },
+        "weight": 1,
+        "strength": 1
+      },
+      {
+        "id": "coat-free:noodles-left:wrist-face:coat-free:noodles-left:ArtMesh901:17",
+        "composition": "sequential",
+        "first": {
+          "partId": "coat-free:noodles-left:ArtMesh901",
+          "vertexIndex": 17
+        },
+        "second": {
+          "partId": "coat-free:noodles-left:wrist-face:surface",
+          "vertexIndex": 7
+        },
+        "weight": 1,
+        "strength": 1
+      },
+      {
+        "id": "coat-free:noodles-left:wrist-face:coat-free:noodles-left:ArtMesh901:2",
+        "composition": "sequential",
+        "first": {
+          "partId": "coat-free:noodles-left:ArtMesh901",
+          "vertexIndex": 2
+        },
+        "second": {
+          "partId": "coat-free:noodles-left:wrist-face:surface",
+          "vertexIndex": 8
+        },
+        "weight": 1,
+        "strength": 1
+      },
+      {
+        "id": "coat-free:noodles-left:wrist-face:coat-free:noodles-left:ArtMesh901:18",
+        "composition": "sequential",
+        "first": {
+          "partId": "coat-free:noodles-left:ArtMesh901",
+          "vertexIndex": 18
+        },
+        "second": {
+          "partId": "coat-free:noodles-left:wrist-face:surface",
+          "vertexIndex": 9
+        },
+        "weight": 1,
+        "strength": 0.8778726690673918
+      },
+      {
+        "id": "coat-free:noodles-left:wrist-face:coat-free:noodles-left:ArtMesh901:31",
+        "composition": "sequential",
+        "first": {
+          "partId": "coat-free:noodles-left:ArtMesh901",
+          "vertexIndex": 31
+        },
+        "second": {
+          "partId": "coat-free:noodles-left:wrist-face:surface",
+          "vertexIndex": 10
+        },
+        "weight": 1,
+        "strength": 1
+      },
+      {
+        "id": "coat-free:noodles-left:wrist-face:coat-free:noodles-left:ArtMesh901:15",
+        "composition": "sequential",
+        "first": {
+          "partId": "coat-free:noodles-left:ArtMesh901",
+          "vertexIndex": 15
+        },
+        "second": {
+          "partId": "coat-free:noodles-left:wrist-face:surface",
+          "vertexIndex": 11
+        },
+        "weight": 1,
+        "strength": 1
+      },
+      {
+        "id": "coat-free:noodles-left:wrist-face:coat-free:noodles-left:ArtMesh901:16",
+        "composition": "sequential",
+        "first": {
+          "partId": "coat-free:noodles-left:ArtMesh901",
+          "vertexIndex": 16
+        },
+        "second": {
+          "partId": "coat-free:noodles-left:wrist-face:surface",
+          "vertexIndex": 12
+        },
+        "weight": 1,
+        "strength": 1
+      }
+    ]
+  },
+  "activation": ["Param49", "Param85"],
+  "verification": {
+    "rows": [
+      {
+        "pose": {
+          "Param28": -1
+        },
+        "contact": 5.084229945850415e-13,
+        "armMovement": [0, 0]
+      },
+      {
+        "pose": {
+          "Param28": 1
+        },
+        "contact": 0,
+        "armMovement": [0, 0]
+      },
+      {
+        "pose": {
+          "ParamBodyAngleX": -10,
+          "ParamAngleX": -30
+        },
+        "contact": 0,
+        "armMovement": [44.27341144874981, 43.27250935546499]
+      },
+      {
+        "pose": {
+          "ParamBodyAngleX": 10,
+          "ParamAngleX": 30
+        },
+        "contact": 2.2737367544323206e-13,
+        "armMovement": [117.16153705510987, 115.93861787511469]
+      },
+      {
+        "pose": {
+          "ParamBodyAngleY": -10
+        },
+        "contact": 4.547473508864641e-13,
+        "armMovement": [490.1974212260775, 490.1972638083521]
+      },
+      {
+        "pose": {
+          "ParamBodyAngleY": 10
+        },
+        "contact": 0,
+        "armMovement": [151.86267120411662, 151.86227672884638]
+      }
+    ],
+    "artworkPreserved": true,
+    "notesAndThumbPreserved": true,
+    "coatPreserved": true,
+    "physicsDefinitionsPreserved": true
+  },
+  "noodleContact": {
+    "part": "ArtMesh59",
+    "cup": "ArtMesh47",
+    "preservesUpperChopstickContact": true
+  },
+  "activationThreshold": 0.0001,
+  "nativeVerification": "native.json",
+  "nativeScreenshot": "native.png",
+  "regression": {
+    "armActions": {
+      "bufferingFalse": "passed",
+      "bufferingTrue": "passed"
+    },
+    "covers": [
+      "pose transitions",
+      "live physics",
+      "wrist surfaces",
+      "forearm core preservation",
+      "notes and thumbs-up appearance",
+      "coat-on appearance"
+    ]
+  }
+}

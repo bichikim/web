@@ -1,4 +1,14 @@
-import {createEffect, createMemo, createSignal, createUniqueId, type JSX, on, Show} from 'solid-js'
+import {text as uiText} from '../features/localization'
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  createUniqueId,
+  type JSX,
+  on,
+  Show,
+  useContext,
+} from 'solid-js'
 import type {PointBounds} from '../features/tracking/use-point-drag'
 import type {
   PoffoTrackingBindings,
@@ -8,9 +18,13 @@ import {type PoffoCalibrationOptions, SPoffoTrackingPreview} from './SPoffoTrack
 import {type CalibrationSection, SPoffoTrackingAdjustment} from './SPoffoTrackingAdjustment'
 import {SPoffoTrackingBindings} from './SPoffoTrackingBindings'
 import {type ParameterSource, useParameters} from '../features/tracking/use-parameters'
+import {SettingsNavigationContext} from '../features/settings-navigation'
 
 interface SPoffoCalibrationPreviewProps extends PoffoCalibrationOptions {
   readonly adjustments?: boolean
+  /** Starts only the preview folded when true; omission keeps it visible. */
+  readonly collapsible?: boolean
+  readonly preview?: (scene: JSX.Element) => JSX.Element
   /** Reuse the editor metadata across tracking, voice and behavior settings. */
   readonly source?: ParameterSource
   readonly controls?: JSX.Element
@@ -23,6 +37,7 @@ interface SPoffoCalibrationPreviewProps extends PoffoCalibrationOptions {
   readonly view?: PointBounds
 }
 export const SPoffoCalibrationPreview = (props: SPoffoCalibrationPreviewProps) => {
+  const navigation = useContext(SettingsNavigationContext)
   const [draft, setDraft] = createSignal<PoffoTrackingOptions | null>(null)
   const options = createMemo(() => draft() ?? props.value)
   const [handles, setHandles] = createSignal(false)
@@ -49,6 +64,12 @@ export const SPoffoCalibrationPreview = (props: SPoffoCalibrationPreviewProps) =
       setSection('position')
     }),
   )
+  createEffect(
+    on(mode, () => {
+      setDraft(null)
+      setHandles(false)
+    }),
+  )
   const handleToggle = () => {
     setDraft(null)
     setHandles((value) => !value)
@@ -65,8 +86,8 @@ export const SPoffoCalibrationPreview = (props: SPoffoCalibrationPreviewProps) =
         hover:bg-white aria-pressed:bg-blue-50 aria-pressed:text-blue-700
         focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-blue-700
         focus-visible:outline-offset-2 disabled:cursor-default disabled:opacity-50"
-      aria-label={handles() ? '위치 핸들 숨기기' : '위치 핸들 표시'}
-      title={handles() ? '위치 핸들 숨기기' : '위치 핸들 표시'}
+      aria-label={handles() ? uiText('위치 핸들 숨기기') : uiText('위치 핸들 표시')}
+      title={handles() ? uiText('위치 핸들 숨기기') : uiText('위치 핸들 표시')}
       aria-pressed={handles()}
       aria-controls={preview}
       disabled={props.onChange === undefined}
@@ -87,40 +108,57 @@ export const SPoffoCalibrationPreview = (props: SPoffoCalibrationPreviewProps) =
       </svg>
     </button>
   )
+  const scene = (
+    <figure
+      id={preview}
+      aria-label={props.label ?? uiText('Poffo 미리보기')}
+      class="relative m-0 w-full overflow-hidden rounded-xl bg-stone-200"
+      classList={{
+        '[aspect-ratio:var(--preview-aspect)]':
+          mode() !== 'camera' && props.screenAspect !== undefined,
+        'h-52': mode() !== 'camera' && props.screenAspect === undefined,
+      }}
+      style={{'--preview-aspect': props.screenAspect}}
+    >
+      <SPoffoTrackingPreview
+        {...props}
+        mode={mode()}
+        value={options()}
+        actions={
+          props.adjustments !== false &&
+          props.onChange !== undefined &&
+          mode() === 'camera' &&
+          section() === 'position'
+            ? action
+            : undefined
+        }
+        calibrating={positioning()}
+        view={props.view}
+        children={props.children}
+      />
+    </figure>
+  )
   return (
     <div class="grid w-full gap-3">
-      <figure
-        id={preview}
-        aria-label={props.label ?? 'Poffo 미리보기'}
-        class="relative m-0 w-full overflow-hidden rounded-xl bg-stone-200"
-        classList={{
-          '[aspect-ratio:var(--preview-aspect)]':
-            mode() !== 'camera' && props.screenAspect !== undefined,
-          'h-52': mode() !== 'camera' && props.screenAspect === undefined,
-        }}
-        style={{'--preview-aspect': props.screenAspect}}
+      <Show
+        when={props.preview}
+        fallback={
+          <Show when={props.collapsible} fallback={scene}>
+            <details aria-label={uiText('미리보기')} class="wallpaper-disclosure-panel">
+              <summary class="wallpaper-disclosure">{uiText('미리보기')}</summary>
+              <div class="wallpaper-disclosure-content">{scene}</div>
+            </details>
+          </Show>
+        }
       >
-        <SPoffoTrackingPreview
-          {...props}
-          mode={mode()}
-          value={options()}
-          actions={
-            props.adjustments !== false &&
-            props.onChange !== undefined &&
-            mode() === 'camera' &&
-            section() === 'position'
-              ? action
-              : undefined
-          }
-          calibrating={positioning()}
-          view={props.view}
-          children={props.children}
-        />
-      </figure>
+        {(render) => render()(scene)}
+      </Show>
       {props.controls}
       <Show when={props.adjustments !== false && props.onChange !== undefined}>
-        <section aria-label="시선 보정 설정" class="grid gap-3">
-          <h3 class="m-0 text-[13px] font-medium text-stone-700">시선 보정</h3>
+        <section aria-label={uiText('시선 보정 설정')} class="grid gap-3">
+          <Show when={navigation === undefined}>
+            <h3 class="m-0 text-[13px] font-medium text-stone-700">{uiText('시선 보정')}</h3>
+          </Show>
           {props.profiles?.(source())}
           <SPoffoTrackingAdjustment
             mode={mode()}
@@ -131,6 +169,7 @@ export const SPoffoCalibrationPreview = (props: SPoffoCalibrationPreviewProps) =
             onChange={props.onChange}
           >
             <SPoffoTrackingBindings
+              mode={mode()}
               source={source()}
               disclosure={false}
               assetId={props.assetId()}

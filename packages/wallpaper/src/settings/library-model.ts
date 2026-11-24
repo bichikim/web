@@ -1,11 +1,18 @@
 import {type RandomActionSettings, randomActionSettingsSchema} from './random-actions'
 import {type SemanticBinding, semanticBindingsSchema} from './semantics'
 import {z} from 'zod'
-import {type PoffoVoice, poffoVoiceSchema} from './voice'
-import {type PoffoLipSync, poffoLipSyncSchema} from './lipsync'
+import {DEFAULT_POFFO_VOICE, type PoffoVoice, poffoVoiceSchema} from './voice'
+import {DEFAULT_POFFO_LIPSYNC, type PoffoLipSync, poffoLipSyncSchema} from './lipsync'
 import {type AgentStateBindings, agentStateBindingsSchema} from './agent-state'
 import {backgroundWebsiteUrlSchema} from '../model'
-import type {PoffoTracking, PoffoTrackingBindings, PoffoTrackingOptions} from './tracking'
+import type {
+  PoffoTracking,
+  PoffoTrackingBindings,
+  PoffoTrackingOptions,
+  PoffoTrackingProfiles,
+} from './tracking'
+import {type PoffoConversation, poffoConversationSchema} from './conversation'
+import {type PoffoTouch, poffoTouchSchema} from './touch'
 
 export interface WebsiteVisit {
   readonly url: string
@@ -23,7 +30,11 @@ export interface PoffoWidget {
   readonly size?: WidgetSize
   readonly tracking?: PoffoTracking
   readonly trackingBindings?: PoffoTrackingBindings
+  /** Applied builtin tracking-default revision; omission identifies an unmigrated widget. */
+  readonly trackingBindingsVersion?: number
   readonly trackingOptions?: PoffoTrackingOptions
+  /** Separate calibration and rig connections for each tracking input. */
+  readonly trackingProfiles?: PoffoTrackingProfiles
   readonly speech?: PoffoSpeech
   readonly motionId?: string | null
 }
@@ -34,23 +45,48 @@ export interface PoffoSpeechPosition {
   readonly y: number
 }
 export interface PoffoSpeech extends PoffoSpeechPosition {
+  readonly touch?: PoffoTouch
+  /** Last applied builtin touch-default revision; omission identifies an unmigrated widget. */
+  readonly touchBindingsVersion?: number
+  readonly conversation?: PoffoConversation
   readonly randomActions?: RandomActionSettings
   readonly semanticBindings?: readonly SemanticBinding[]
+  /** Last applied builtin action-default revision; omission identifies an unmigrated widget. */
+  readonly semanticBindingsVersion?: number
   readonly agentBindings?: AgentStateBindings
+  /** Last applied builtin state-default revision; omission identifies an existing unmigrated widget. */
+  readonly agentBindingsVersion?: number
   readonly lipsync?: PoffoLipSync
   readonly wrap?: boolean
+  /** Displays the character conversation; omission keeps it visible. */
+  readonly showCharacter?: boolean
+  /** Displays Codex chat notifications; omission keeps them visible. */
+  readonly showCodex?: boolean
   readonly voice?: PoffoVoice
   readonly enabled: boolean
 }
-export const DEFAULT_POFFO_SPEECH: PoffoSpeech = {enabled: true, x: 0.9, y: 0.05}
+export const DEFAULT_POFFO_SPEECH: PoffoSpeech = {
+  enabled: true,
+  lipsync: DEFAULT_POFFO_LIPSYNC,
+  voice: DEFAULT_POFFO_VOICE,
+  x: 0.9,
+  y: 0.05,
+}
 export const POFFO_SPEECH_BOUNDS = {maxX: 2, maxY: 1.5, minX: -1, minY: -0.5}
 export const poffoSpeechSchema = z.object({
   agentBindings: agentStateBindingsSchema.optional(),
+  agentBindingsVersion: z.number().int().positive().optional(),
   anchor: z.enum(['top', 'bottom']).optional(),
+  conversation: poffoConversationSchema.optional(),
   enabled: z.boolean(),
   lipsync: poffoLipSyncSchema.optional(),
   randomActions: randomActionSettingsSchema.optional(),
   semanticBindings: semanticBindingsSchema.optional(),
+  semanticBindingsVersion: z.number().int().positive().optional(),
+  showCharacter: z.boolean().optional(),
+  showCodex: z.boolean().optional(),
+  touch: poffoTouchSchema.optional(),
+  touchBindingsVersion: z.number().int().positive().optional(),
   voice: poffoVoiceSchema.optional(),
   wrap: z.boolean().optional(),
   x: z.number().finite().min(POFFO_SPEECH_BOUNDS.minX).max(POFFO_SPEECH_BOUNDS.maxX),

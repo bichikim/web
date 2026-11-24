@@ -1,0 +1,63 @@
+{
+  "group": "gamepad-left",
+  "sourceModelSha256": "404a5a884fa552f548f09973ca7e37d008f81388e27fdb9c438f946880efa927",
+  "wristSha256": "39cd4997ebf86619191bc44b15961fc4df44473ed9861ce5007c01d1db404773",
+  "placement": {
+    "action": "gamepad",
+    "expression": "게임패드 들기",
+    "group": "gamepad-left",
+    "wrist": [2023.1355726359575, 1799.5448457352652],
+    "elbow": [1805.2360496654103, 2112.582279898218],
+    "axis": [0.5713018406952535, -0.8207400360761107],
+    "normal": [0.8207400360761107, 0.5713018406952535],
+    "box": {
+      "x": 1857,
+      "y": 1503,
+      "width": 480,
+      "height": 448,
+      "scale": 2
+    },
+    "referenceSize": [960, 896],
+    "arm": "coat-free:gamepad-left:ArtMesh900",
+    "armIds": ["coat-free:gamepad-left:ArtMesh900", "coat-free:gamepad-left:ArtMesh901"],
+    "followers": [
+      "ArtMesh29",
+      "ArtMesh30",
+      "ArtMesh31",
+      "ArtMesh32",
+      "ArtMesh33",
+      "ArtMesh886",
+      "ArtMesh885",
+      "ArtMesh884",
+      "ArtMesh883",
+      "ArtMesh882",
+      "ArtMesh39",
+      "ArtMesh41",
+      "ArtMesh42",
+      "ArtMesh43",
+      "ArtMesh887"
+    ],
+    "hand": {
+      "partId": "ArtMesh884",
+      "triangle": [33, 56, 32],
+      "weights": [0.2154741202289609, 0.029002702301535312, 0.7555231774695037]
+    },
+    "actualHand": "ArtMesh884",
+    "selected": ["ArtMesh884"],
+    "generationOffset": {
+      "x": 12,
+      "y": 113
+    },
+    "wristGeneration": {
+      "x": 1863.1355726359575,
+      "y": 1559.5448457352652,
+      "width": 320,
+      "height": 384,
+      "scale": 2
+    }
+  },
+  "generatedPixelsUsed": "Short wrist only. Original fingers and nails remain on the original parts. Forearm geometry and physics are unchanged.",
+  "method": "Local Qwen Image 2.1 Turbo 8-step wrist repair; original skin and ink palette; forearm outline registered in the new wrist mesh; barycentric surface contacts at both ends; original cuff drawing with coat on.",
+  "referenceModelSha256": "7c81a99a94605bd34078b0cccdeef99af18446ea0e769953a5ecd3ed0ac39813",
+  "execution": "Local ComfyUI; no hosted model"
+}

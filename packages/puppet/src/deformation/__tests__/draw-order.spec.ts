@@ -1,8 +1,14 @@
+import {
+  constantOrderChannels,
+  createOrderDocument,
+  orderInputs,
+} from '../../player/internal/__tests__/fixtures/draw-order'
 import {expect, test} from 'vitest'
 import {
   PUPPET_DEFAULT_DRAW_ORDER,
   PUPPET_DOCUMENT_FORMAT,
   type PuppetDocument,
+  type PuppetParameterBinding2D,
   type PuppetSceneGroupNode,
 } from '../../player/document'
 import {composeParameterGroupDrawOrder, composeParameterPartDrawOrder} from '../draw-order'
@@ -116,41 +122,49 @@ test('should retain group identity, cubism rounding, clamping and ordered additi
   ).toBe(1000)
 })
 
-test('should preserve triangulated constant-channel arithmetic for part and group orders', () => {
-  const keyed = {
-    ...document,
+test.each(constantOrderChannels)(
+  'should keep exact rest orders in triangulated %s channels',
+  (channel) => {
+    for (const rest of [500, 500.125]) {
+      const partDocument = createOrderDocument(channel, 'part', rest)
+      const groupDocument = createOrderDocument(channel, 'group', rest)
+      const group = groupDocument.scene!.roots[1]!
+      if (group.kind !== 'group') {
+        throw new Error('Expected a draw-order group')
+      }
+      for (const values of orderInputs) {
+        expect(composeParameterPartDrawOrder(partDocument, 'keyed', values)).toBe(rest)
+        expect(composeParameterGroupDrawOrder(groupDocument, group, values)).toBe(rest)
+      }
+    }
+  },
+)
+
+test('should preserve authored fractional multiaxis orders and constant non-rest offsets', () => {
+  const source = createOrderDocument('changing')
+  expect(composeParameterPartDrawOrder(source, 'keyed', {x: 0.02, y: 0.17})).toBeCloseTo(499.77, 10)
+  expect(composeParameterPartDrawOrder(source, 'keyed', {x: 0.5001, y: 0.17})).toBeCloseTo(
+    500.2501,
+    10,
+  )
+  const binding = source.parameterBindings![0]!
+  const constant = {
+    ...source,
     parameterBindings: [
       {
-        id: 'triangles',
-        keyforms: (
-          [
-            [0, 0],
-            [1, 0],
-            [0, 1],
-          ] as const
-        ).map((values) => ({
-          groups: [{groupId: 'group', properties: {opacity: 0.5}}],
-          parts: [{partId: 'part', properties: {opacity: 0.5}, vertices: []}],
-          values,
+        ...binding,
+        keyforms: binding.keyforms.map((form) => ({
+          ...form,
+          parts: form.parts.map((part) => ({...part, properties: {drawOrder: 600.125}})),
+          values: [form.values[0], form.values[1]!],
         })),
-        parameterIds: ['x', 'y'] as const,
-        targetGroupIds: ['group'],
-        targetPartIds: ['part'],
-      },
+        parameterIds: ['x', 'y'],
+      } satisfies PuppetParameterBinding2D,
     ],
-    parameters: ['x', 'y'].map((id) => ({defaultValue: 0, id, maximum: 1, minimum: 0, name: id})),
-    parts: document.parts.map((part) => ({...part, properties: {drawOrder: 500}})),
   }
-  const values = {x: 0.02, y: 0.17}
-  const group: PuppetSceneGroupNode = {
-    children: [],
-    id: 'group',
-    kind: 'group',
-    locked: false,
-    name: 'Group',
-    properties: {drawOrder: 500},
-    visible: true,
-  }
-  expect(composeParameterPartDrawOrder(keyed, 'part', values)).toBe(499.99999999999994)
-  expect(composeParameterGroupDrawOrder(keyed, group, values)).toBe(499.99999999999994)
+
+  expect(composeParameterPartDrawOrder(constant, 'keyed', {x: 0.02, y: 0.17})).toBeCloseTo(
+    600.125,
+    10,
+  )
 })

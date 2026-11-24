@@ -1,0 +1,12 @@
+{
+  "samples": 12,
+  "maximumOriginalVertexChange": 0,
+  "maximumMaskError": 1.1641532182693481e-10,
+  "maximumWristError": 0,
+  "minimumHandArea": 6.925370591424429,
+  "originalArmTexturesAndShapesPreserved": true,
+  "originalPhysicsMotionsExpressionsPreserved": true,
+  "existingHandArtworkUnchanged": true,
+  "allMeshCoordinatesUnchanged": true,
+  "redundantBareWristCapHidden": true
+}

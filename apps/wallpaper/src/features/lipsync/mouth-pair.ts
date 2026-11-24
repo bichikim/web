@@ -11,6 +11,9 @@ export interface MouthPair {
   readonly opening: TrackingParameter
   readonly form: TrackingParameter
 }
+interface MouthPairOptions extends Partial<PoffoLipSync> {
+  readonly openingWeights?: LipSyncWeights
+}
 /** Only recognizes the complete canonical pair; a lone opening parameter is not a vowel pose. */
 export const resolveMouthPair = (
   parameters: readonly TrackingParameter[],
@@ -44,12 +47,14 @@ export const mouthPairValues = (
   pair: MouthPair,
   shape: LipSyncShape | LipSyncWeights | null,
   level: number,
-  options: Partial<PoffoLipSync>,
+  options: MouthPairOptions,
 ): Readonly<Record<string, number>> => {
   const amount = Number.isFinite(level) ? Math.max(0, Math.min(1, level * (options.gain ?? 1))) : 0
   const weights = typeof shape === 'object' && shape !== null ? shape : {[shape ?? 'closed']: 1}
   const pose = blendedPose(weights, options)
-  const open = pose.open * amount
+  const opening =
+    options.openingWeights === undefined ? pose : blendedPose(options.openingWeights, options)
+  const open = opening.open * amount
   const fraction = Math.min(1, open / FORM_OPENING)
   const deformation = fraction * fraction * (DEFORMATION_CURVE - 2 * fraction)
   const form = amount === 0 ? 0 : pose.form * deformation

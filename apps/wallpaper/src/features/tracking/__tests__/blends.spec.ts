@@ -6,6 +6,14 @@ const parameters = [
   {defaultValue: 0.2, id: 'gaze-x', maximum: 1, minimum: -1},
 ]
 
+test('should add body tracking to the existing animated body pose', () => {
+  const blend = createTrackingBlends(
+    [{defaultValue: 2, id: 'ParamBodyAngleX', maximum: 10, minimum: -10}],
+    {bodyX: {blend: 'add', parameterId: 'ParamBodyAngleX'}},
+  )
+  expect(blend({ParamBodyAngleX: 5})).toEqual({ParamBodyAngleX: {mode: 'add', value: 3}})
+})
+
 test('should default to overwrite and add only the input displacement from the model default', () => {
   const blend = createTrackingBlends(parameters, {eyeX: {blend: 'add'}})
   const input = {'face-x': 10, 'gaze-x': 0.5}

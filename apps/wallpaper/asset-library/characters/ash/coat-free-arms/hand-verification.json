@@ -1,0 +1,599 @@
+{
+  "textureSha256": "ed874e0eab0df8a73df23ec396183961240de804ba7db5e699f3df9aba316bf1",
+  "preservedOriginalFingerAndPenParts": {
+    "ArtMesh136": true,
+    "ArtMesh137": true,
+    "ArtMesh139": true
+  },
+  "originalColourReference": {
+    "hand": ["ArtMesh125"],
+    "forearm": ["coat-free:notes-right:ArtMesh994", "coat-free:notes-right:ArtMesh995"]
+  },
+  "image": {
+    "dimensions": [1254, 1254],
+    "outsideEditRgbMaxDelta": 0,
+    "outsideEditAlphaMaxDelta": 1,
+    "belowCutAlphaPixels": 0,
+    "comfyPromptId": "9d2f3474-690b-41b2-b763-fc5c26c25990",
+    "nativeOutputMatchesAppliedTexture": true
+  },
+  "assembly": {
+    "removedGeneratedWristRows": 130,
+    "removedWorldLength": 66.34907869079585
+  },
+  "physicsChainsUnchanged": true,
+  "excludedForearmPhysicsBindings": [
+    "coat-free:notes-left:moc3:Rotation55@ArtMesh70_Skinning",
+    "coat-free:notes-left:moc3:Rotation68@ArtMesh70_Skinning",
+    "coat-free:notes-left:moc3:blend:Warp92@ArtMesh70_Skinning:3",
+    "coat-free:notes-left:moc3:blend:Warp92@ArtMesh70_Skinning:4",
+    "coat-free:notes-left:moc3:blend:Warp92@ArtMesh70_Skinning:5"
+  ],
+  "modelSha256": "7ed8bd78a1f9df44e6f7d0e242fd3d1b06f5498892121b33a93f404d0795b088",
+  "beforeModelSha256": "a7eab0e42ac6e4af8644e1bb123bcf24d33dbbf923b777bb3004b02be128f172",
+  "upperArm": {
+    "status": "Original rig retained with a local elbow contour finish",
+    "sourceModelSha256": "d48a4a85108e59c8e5165b14d9db3b76936dedd4663538b594a9634f31c4bcbe",
+    "removedContactCount": 108,
+    "nativeMeshAndArtworkUnchanged": true,
+    "nativeHierarchyAndBindingsUnchanged": true,
+    "placementOverrideRemoved": true,
+    "reconnection": "Painted thickness centers connected",
+    "seamVertexIndex": 13
+  },
+  "review": {
+    "browsers": ["Chromium", "WebKit"],
+    "buffering": [false, true],
+    "originalUpperArmPoseSamples": 16,
+    "maximumAllowedOriginalVertexError": 0.01,
+    "upperArmImage": "upper-arm-restored.png",
+    "contourImage": "hand-lines.png",
+    "contourWritingImage": "hand-lines-writing.png",
+    "contourPhysicsImage": "hand-lines-physics.png",
+    "elbowContactImage": "elbow-center.png",
+    "elbowContactContext": "elbow-center-context.png",
+    "elbowContactPhysics": "elbow-center-physics.png",
+    "elbowCentersImage": "elbow-centers.png",
+    "elbowFinish": "elbow-finish-detail.png"
+  },
+  "checks": {
+    "geometrySamplesPassed": 65,
+    "coveredActiveSamples": 59,
+    "chromiumWebkitTestsPassed": 16,
+    "candidateChromiumPoseReviewPassed": true,
+    "wallpaperTypecheckPassed": true,
+    "wallpaperBuildPassed": true,
+    "oxlintPassed": true,
+    "oxfmtPassed": true
+  },
+  "join": {
+    "translationLinks": 2,
+    "wristLinks": 30,
+    "elbowLinks": 1,
+    "bitmapChanged": true,
+    "upperLowerConnection": "Painted thickness centers connected"
+  },
+  "previousChecks": {
+    "originalUpperArmTestsPassed": 4,
+    "handAndCoatTestsPassed": 12,
+    "wallpaperTypecheckPassed": true,
+    "wallpaperBuildPassed": true
+  },
+  "contourRepair": {
+    "modelSha256": "4d6b9adbac59396856c3705bbd88a6cac149b2b6b69a5af48ab85427fb42e47e",
+    "beforeModelSha256": "c1d1f4fe1a96fd363502b6e5399b01a89c3dec66c6b2c3124e99e3c8e59bd5a3",
+    "textureSha256": "ed874e0eab0df8a73df23ec396183961240de804ba7db5e699f3df9aba316bf1",
+    "modelBytes": 9761044,
+    "changedParts": ["coat-free:notes-left:hand"],
+    "nativeFingerAndPenPartsUnchanged": ["ArtMesh136", "ArtMesh137", "ArtMesh139"],
+    "allMeshesBindingsSceneGluePhysicsUnchanged": true,
+    "image": {
+      "dimensions": [1254, 1254],
+      "outsideEditRgbMaxDelta": 0,
+      "outsideEditAlphaMaxDelta": 1,
+      "belowCutAlphaPixels": 0
+    },
+    "comfyPromptId": "9d2f3474-690b-41b2-b763-fc5c26c25990",
+    "imageReview": "hand-lines.png",
+    "writingReview": "hand-lines-writing.png"
+  },
+  "previousImage": {
+    "dimensions": [1254, 1254],
+    "removedVisiblePixels": 49363,
+    "belowCutAlphaPixels": 0,
+    "nonBinaryAlphaMaskPixels": 0,
+    "keptAlphaMaxDelta": 1,
+    "protectedRgbMaxDelta": 0,
+    "comfyPromptId": "5045b00e-3eec-498a-8669-07acfda1e389",
+    "nativeOutputMatchesAppliedTexture": true
+  },
+  "elbowContact": {
+    "scope": {
+      "allTexturesAndMeshesUnchanged": true,
+      "allExistingBindingsAndGluesUnchanged": true,
+      "changedRenderedVertex": {
+        "partId": "ArtMesh1001",
+        "index": 13
+      },
+      "maximumOtherVertexChange": 0,
+      "maximumCenterGap": 0
+    },
+    "geometry": {
+      "samples": 65,
+      "maximumContactGap": 0,
+      "maximumUpperArmVertexChange": 0,
+      "maximumAssemblyShapeChange": 4.547473508864641e-13,
+      "maximumInactiveVertexChange": 0,
+      "neutralTranslation": [-22.55677526794784, 62.35590806969685],
+      "midWritingTranslation": [-51.54061370079171, 62.48315020958307]
+    },
+    "landmarks": {
+      "definition": {
+        "upper": "Middle of the actual painted terminal cap of the upper arm",
+        "lower": "Middle of the painted forearm thickness, slightly toward the wrist from the elbow tip"
+      },
+      "upper": {
+        "partId": "ArtMesh1001",
+        "triangle": [14, 15, 41],
+        "weights": [0.34149293749241355, 0.21168786437015283, 0.44681919813743354],
+        "world": [1870.4442905641954, 2135.880534947454],
+        "uv": [0.6982656979298374, 0.5215554657237821],
+        "surfaceAlpha": 200,
+        "capEnds": [
+          [1796.5, 2098.5],
+          [1952, 2150.5]
+        ]
+      },
+      "lower": {
+        "partId": "coat-free:notes-left:ArtMesh900",
+        "triangle": [49, 54, 55],
+        "weights": [0.501249639331376, 0.24933055295334577, 0.24941980771527822],
+        "world": [1893.0010658321432, 2073.5246268777573],
+        "uv": [0.5495512076820668, 0.2204132669370293],
+        "surfaceAlpha": 255,
+        "sectionEnds": [
+          [1821.2120957369941, 2050.5521564473097],
+          [1964.7900359272924, 2096.4970973082054]
+        ],
+        "elbowTip": [1869.5, 2160.5],
+        "distanceFromTip": 90.09448165675887
+      },
+      "frame": {
+        "x": 1700,
+        "y": 1700,
+        "width": 550,
+        "height": 550
+      }
+    }
+  },
+  "elbowSeam": {
+    "beforeModelSha256": "a7eab0e42ac6e4af8644e1bb123bcf24d33dbbf923b777bb3004b02be128f172",
+    "modelSha256": "473c9ee9bec1c900a24cbb8331ba71a3ffdfc9a680c829c525080233e879b6d6",
+    "modelBytes": 9764747,
+    "bindingId": "coat-free:notes-left:elbow-seam",
+    "partId": "ArtMesh1001",
+    "vertexIndex": 13,
+    "worldShift": [17.534218313244416, 0],
+    "localDelta": [0.0076227649853060075, 3.642578016993525e-9],
+    "paintedEndShift": [9.943224732052158, 0],
+    "overlapInset": 4,
+    "activation": ["Param49", "Param89"],
+    "texturesAndMeshesUnchanged": true,
+    "existingBindingsAndCenterConstraintsUnchanged": true,
+    "geometry": {
+      "samples": 65,
+      "maximumVertexChangeOutsideSeam": 0,
+      "maximumContactGap": 0,
+      "maximumInactiveVertexChange": 0,
+      "maximumSeamControlShift": 17.534444660515486,
+      "allTexturesMeshesAndExistingBindingsUnchanged": true,
+      "tip": {
+        "triangle": [13, 14, 40],
+        "weights": [0.5670754495249768, 0.024448223112353458, 0.40847632736266976]
+      },
+      "coverage": [
+        {
+          "sample": 0,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 1,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 2,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 3,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 4,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 5,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 6,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 7,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 8,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 9,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 10,
+          "writing": 0.5,
+          "before": 0,
+          "after": 253
+        },
+        {
+          "sample": 11,
+          "writing": 1,
+          "before": 0,
+          "after": 231
+        },
+        {
+          "sample": 12,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 13,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 14,
+          "writing": 1,
+          "before": 0,
+          "after": 231
+        },
+        {
+          "sample": 15,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 16,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 17,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 18,
+          "writing": 0,
+          "before": 178,
+          "after": 255
+        },
+        {
+          "sample": 19,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 20,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 21,
+          "writing": 0,
+          "before": 63,
+          "after": 255
+        },
+        {
+          "sample": 22,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 23,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 24,
+          "writing": 0,
+          "before": 63,
+          "after": 255
+        },
+        {
+          "sample": 25,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 26,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 27,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 28,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 29,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 30,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 31,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 32,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 33,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 34,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 35,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 36,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 37,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 38,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 39,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 40,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 41,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 42,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 43,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 44,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 45,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 46,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 47,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 48,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 49,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 50,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 51,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 52,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 53,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 54,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 55,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 56,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 57,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 62,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        }
+      ]
+    }
+  },
+  "notebookArm": {
+    "record": "notebook-arm.json",
+    "beforeModelSha256": "473c9ee9bec1c900a24cbb8331ba71a3ffdfc9a680c829c525080233e879b6d6",
+    "mechanism": "Painted thickness center attachment; rigid forearm, hand and notebook translation; local upper-arm contour finish"
+  },
+  "notebookWrist": {
+    "record": "notebook-wrist.json",
+    "replacedModelSha256": "f2fe486c72ceacfff8fe054a73b5571e01e90db33b1a37207f6d8996d4759cf0",
+    "mechanism": "Only translate the original hand and notebook together. Restore all original forearm vertices and remove every added local wrist deformation. Put the forearm behind the hand using the existing parts order."
+  },
+  "notebookHandRetouch": {
+    "record": "notebook-hand.json",
+    "beforeModelSha256": "fcda2ff70725fb031c15dc29684b5cac7949c7b0732968007e9f91c1dc98cddf",
+    "scope": "Retouch only the bottom of the original notebook-supporting hand; preserve fingers, upper hand, forearm, wrist length and all rigging."
+  },
+  "atlasCleanup": {
+    "record": "../texture-atlas/cleanup.json",
+    "scope": "Unused notice pixels cleared; all part UV artwork and rigging unchanged"
+  },
+  "notebookWristContour": {
+    "record": "notebook-wrist-contour.json",
+    "scope": "Only the protruding outer wrist contour; all rigging and other artwork unchanged"
+  },
+  "notebookTransition": {
+    "record": "notebook-transition.json",
+    "scope": "Keep contact active independently of notebook action opacity; retain the coat parameter."
+  },
+  "notebookPose": {
+    "record": "notebook-pose.json",
+    "scope": "Shrink only the notebook about its grip; rotate the screen-left forearm, hand and pen about the elbow. Preserve all artwork, arm/hand length, existing glue and authored physics."
+  },
+  "notebookLayer": {
+    "record": "notebook-layer.json",
+    "scope": "Notebook in front of the pen; retain the original hand and forearm layers."
+  },
+  "penPhysics": {
+    "record": "pen-physics.json",
+    "scope": "Reuse the authored body pendulum for visible wrist rotation; preserve rigid forearm geometry and the original wrist contacts."
+  },
+  "handBalance": {
+    "record": "hand-balance.json",
+    "scope": "Match both hands across body and secondary physics while writing; finish only the two contour registrations. Preserve all artwork, mesh vertices and joints."
+  },
+  "armActions": {
+    "record": "arm-actions.json",
+    "scope": "Connect all other bare-arm hand gestures; preserve the accepted notebook parts, hand balance, artwork and existing notebook joints."
+  }
+}

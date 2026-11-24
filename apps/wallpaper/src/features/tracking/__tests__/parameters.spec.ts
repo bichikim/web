@@ -1,6 +1,66 @@
 import {expect, test} from 'vitest'
 import {createTrackingParameters, resolveTrackingParameter} from '../parameters'
 
+test('should map independent head, eye and body directions to their own parameters', () => {
+  const map = createTrackingParameters(
+    [
+      {defaultValue: 0, id: 'ParamAngleX', maximum: 30, minimum: -30},
+      {defaultValue: 0, id: 'ParamEyeBallX', maximum: 1, minimum: -1},
+      {defaultValue: 0, id: 'ParamBodyAngleX', maximum: 10, minimum: -10},
+    ],
+    {bodyX: {parameterId: 'ParamBodyAngleX'}},
+    {bodyScale: 1},
+    'cursor',
+  )
+  expect(map({x: 0.25, y: 0}, {x: 0, y: 0}, {x: 0.5, y: 0}, {x: 0.75, y: 0})).toEqual({
+    ParamAngleX: 7.5,
+    ParamBodyAngleX: 5,
+    ParamEyeBallX: 0.75,
+  })
+})
+
+test('should tune body rotation without changing head movement or exceeding the body rig', () => {
+  const parameters = [
+    {defaultValue: 0, id: 'ParamAngleX', maximum: 30, minimum: -30},
+    {defaultValue: 0, id: 'ParamBodyAngleX', maximum: 10, minimum: -10},
+  ]
+  const bindings = {bodyX: {parameterId: 'ParamBodyAngleX'}}
+  const map = (bodyScale: number) =>
+    createTrackingParameters(parameters, bindings, {bodyScale}, 'cursor')
+  expect(map(0)({x: 1, y: 0})).toEqual({ParamAngleX: 30, ParamBodyAngleX: 0})
+  expect(map(0.6)({x: 1, y: 0})).toEqual({ParamAngleX: 30, ParamBodyAngleX: 6})
+  expect(map(1)({x: -1, y: 0})).toEqual({ParamAngleX: -30, ParamBodyAngleX: -10})
+})
+
+test('should follow horizontal gaze with a smaller, independently smoothed body turn only when connected', () => {
+  const parameters = [
+    {defaultValue: 0, id: 'ParamAngleX', maximum: 30, minimum: -30},
+    {defaultValue: 0, id: 'ParamBodyAngleX', maximum: 10, minimum: -10},
+  ]
+  const point = {x: 1, y: 0}
+  expect(createTrackingParameters(parameters, {}, {}, 'cursor')(point)).toEqual({ParamAngleX: 30})
+  const bindings = {bodyX: {blend: 'add' as const, parameterId: 'ParamBodyAngleX'}}
+  const map = createTrackingParameters(parameters, bindings, {bodyScale: 0.3}, 'cursor')
+  expect(map(point)).toEqual({ParamAngleX: 30, ParamBodyAngleX: 3})
+  expect(map(point, {x: 0, y: 0}, {x: 0.25, y: 0})).toEqual({
+    ParamAngleX: 30,
+    ParamBodyAngleX: 0.75,
+  })
+  expect(map({x: -1, y: 0})).toEqual({ParamAngleX: -30, ParamBodyAngleX: -3})
+  expect(
+    createTrackingParameters(parameters, {bodyX: {parameterId: null}}, {}, 'cursor')(point),
+  ).not.toHaveProperty('ParamBodyAngleX')
+  const reversed = createTrackingParameters(
+    parameters,
+    {
+      bodyX: {inverted: true, parameterId: 'ParamBodyAngleX'},
+    },
+    {bodyScale: 0.3},
+    'cursor',
+  )
+  expect(reversed(point).ParamBodyAngleX).toBe(-3)
+})
+
 test('should scale the cursor curve to each configured endpoint and respect the model range', () => {
   const parameters = [
     {defaultValue: 0, id: 'face-x', maximum: 30, minimum: -30},
@@ -344,4 +404,49 @@ test('should allow a movement interval entirely on one side of zero', () => {
   )
   expect(map({x: -1, y: 0})['face-x']).toBe(2)
   expect(map({x: 1, y: 0})['face-x']).toBe(8)
+})
+
+test('should copy camera rotation at default gains and keep tilt exclusive to pose tracking', () => {
+  const parameters = [
+    {defaultValue: 0, id: 'FaceX', maximum: 30, minimum: -30},
+    {defaultValue: 0, id: 'FaceY', maximum: 30, minimum: -30},
+    {defaultValue: 0, id: 'FaceZ', maximum: 30, minimum: -30},
+    {defaultValue: 0, id: 'GazeX', maximum: 1, minimum: -1},
+    {defaultValue: 0, id: 'GazeY', maximum: 1, minimum: -1},
+  ]
+  const pose = createTrackingParameters(parameters, {}, {}, 'camera-pose')
+  expect(pose({x: 0.5, y: -0.5, z: 0.25}, {x: 0, y: 0}, undefined, {x: -0.5, y: 0.5})).toEqual({
+    FaceX: 15,
+    FaceY: -15,
+    FaceZ: 7.5,
+    GazeX: -0.5,
+    GazeY: 0.5,
+  })
+  expect(createTrackingParameters(parameters, {}, {}, 'camera')({x: 0.5, y: 0})).not.toHaveProperty(
+    'FaceZ',
+  )
+  expect(
+    createTrackingParameters(parameters, {}, {headLimitZ: 5}, 'camera-pose')({x: 0, y: 0, z: 1})
+      .FaceZ,
+  ).toBe(5)
+})
+
+test('should keep observed body rotation independent from head calibration and scale it with body controls', () => {
+  const parameters = [{defaultValue: 2, id: 'BodyX', maximum: 22, minimum: -18}]
+  const bindings = {bodyX: {parameterId: 'BodyX'}}
+  const map = createTrackingParameters(
+    parameters,
+    bindings,
+    {bodyScale: 0.5, headCenterX: 10, headLimitX: 0, headScale: 0},
+    'camera-pose',
+  )
+  expect(map({x: 1, y: 0}, undefined, {x: -0.5, y: 0}).BodyX).toBe(-3)
+  expect(map({x: -1, y: 0}, undefined, {x: 0, y: 0}).BodyX).toBe(2)
+  const inverted = createTrackingParameters(
+    parameters,
+    {bodyX: {...bindings.bodyX, inverted: true}},
+    {bodyScale: 1},
+    'camera-pose',
+  )
+  expect(inverted({x: 0, y: 0}, undefined, {x: 1, y: 0}).BodyX).toBe(-18)
 })

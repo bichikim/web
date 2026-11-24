@@ -1,5 +1,8 @@
+import {localizeMessage, text as uiText} from '../features/localization'
+
 import {createMemo, For, Show} from 'solid-js'
 import {
+  DEFAULT_POFFO_LIPSYNC,
   type LipSyncShape,
   type LipSyncSource,
   MAXIMUM_LIPSYNC_GAIN,
@@ -10,8 +13,11 @@ import type {PoffoTrackingBinding} from '@winter-love/wallpaper/settings/trackin
 import {SPoffoLipSyncBinding} from './SPoffoLipSyncBinding'
 import {SSelect} from './SSelect'
 import {SNumberInput} from './SNumberInput'
+import {SPoffoMicrophoneSettings} from './SPoffoMicrophoneSettings'
 
 interface SPoffoLipSyncSettingsProps {
+  /** Existing widget for microphone level and retry; omission keeps input configuration available. */
+  readonly widgetId?: string
   readonly source?: ParameterSource
   readonly assetId: string | null
   readonly load: (id: string) => Promise<string | Blob>
@@ -19,15 +25,45 @@ interface SPoffoLipSyncSettingsProps {
   readonly onChange?: (value: PoffoLipSync) => void | Promise<void>
 }
 const SHAPES: readonly {readonly value: LipSyncShape; readonly label: string}[] = [
-  {label: '아', value: 'a'},
-  {label: '이', value: 'i'},
-  {label: '우', value: 'u'},
-  {label: '에', value: 'e'},
-  {label: '오', value: 'o'},
-  {label: '닫힘', value: 'closed'},
+  {
+    get label() {
+      return uiText('아')
+    },
+    value: 'a',
+  },
+  {
+    get label() {
+      return uiText('이')
+    },
+    value: 'i',
+  },
+  {
+    get label() {
+      return uiText('우')
+    },
+    value: 'u',
+  },
+  {
+    get label() {
+      return uiText('에')
+    },
+    value: 'e',
+  },
+  {
+    get label() {
+      return uiText('오')
+    },
+    value: 'o',
+  },
+  {
+    get label() {
+      return uiText('닫힘')
+    },
+    value: 'closed',
+  },
 ]
 export const SPoffoLipSyncSettings = (props: SPoffoLipSyncSettingsProps) => {
-  const value = () => props.value ?? {source: 'off' as const}
+  const value = (): PoffoLipSync => props.value ?? DEFAULT_POFFO_LIPSYNC
   const own = useParameters({
     assetId: () => props.assetId,
     enabled: () => props.source === undefined && value().source !== 'off',
@@ -39,26 +75,42 @@ export const SPoffoLipSyncSettings = (props: SPoffoLipSyncSettingsProps) => {
   const handleBinding = (shape: LipSyncShape, binding: PoffoTrackingBinding) =>
     update({shapes: {...value().shapes, [shape]: binding}})
   const handleGain = (gain: number) => update({gain})
+  const handleMicrophone = (microphone: NonNullable<PoffoLipSync['microphone']>) =>
+    update({microphone})
   return (
-    <section
-      aria-label="립싱크 연결"
-      class="grid gap-2 border-0 border-t border-solid border-stone-200 pt-3 text-[13px]"
-    >
-      <h3 class="m-0 font-medium text-stone-700">립싱크</h3>
-      <div class="grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2">
-        <span>입력</span>
+    <section aria-label={uiText('립싱크 연결')} class="grid gap-2 text-[13px]">
+      <h3 class="m-0 font-semibold text-stone-800">{uiText('립싱크')}</h3>
+      <div class="grid grid-cols-[4rem_minmax(0,1fr)] items-center gap-3">
+        <span class="text-stone-600">{uiText('입력')}</span>
         <SSelect
-          label="립싱크 입력"
+          label={uiText('립싱크 입력')}
           value={value().source}
           options={[
-            {label: '끄기', value: 'off'},
-            {label: '음성', value: 'voice'},
-            {label: '말풍선', value: 'speech'},
+            {
+              label: uiText('끄기'),
+              value: 'off',
+            },
+            {
+              label: uiText('읽어주는 음성'),
+              value: 'voice',
+            },
+            {
+              label: uiText('말풍선 글'),
+              value: 'speech',
+            },
+            {label: uiText('마이크'), value: 'microphone'},
           ]}
           disabled={props.onChange === undefined}
           onChange={handleSource}
         />
       </div>
+      <Show when={value().source === 'microphone'}>
+        <SPoffoMicrophoneSettings
+          widgetId={props.widgetId}
+          value={value().microphone}
+          onChange={props.onChange === undefined ? undefined : handleMicrophone}
+        />
+      </Show>
       <Show when={value().source !== 'off'}>
         <For each={SHAPES}>
           {(shape) => (
@@ -72,25 +124,25 @@ export const SPoffoLipSyncSettings = (props: SPoffoLipSyncSettingsProps) => {
             />
           )}
         </For>
-        <div class="flex items-center justify-between gap-3">
-          <span>움직임 배율</span>
-          <div class="flex items-center gap-2">
+        <div class="grid grid-cols-[4rem_minmax(0,1fr)] items-center gap-3">
+          <span class="whitespace-nowrap text-stone-600">{uiText('움직임 배율')}</span>
+          <div class="flex min-w-0 items-center gap-2">
             <SNumberInput
-              label="립싱크 움직임 배율"
-              value={value().gain ?? 1}
+              label={uiText('립싱크 움직임 배율')}
+              value={value().gain ?? DEFAULT_POFFO_LIPSYNC.gain}
               min={0}
               max={MAXIMUM_LIPSYNC_GAIN}
               step={0.1}
               disabled={props.onChange === undefined}
               onChange={handleGain}
             />
-            <span>×</span>
+            <span class="text-xs text-stone-500">×</span>
           </div>
         </div>
         <Show when={parameters().error()}>
           {(message) => (
             <p role="alert" class="m-0 text-xs text-red-700">
-              {message()}
+              {localizeMessage(message() ?? '')}
             </p>
           )}
         </Show>

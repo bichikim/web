@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {DEFAULT_POFFO_PLACEMENT, type PoffoPlacement} from '@winter-love/wallpaper/settings/model'
 import type {WallpaperController} from '../features/settings'
 import {SNumberInput} from './SNumberInput'
@@ -34,25 +35,31 @@ export const SPoffoPositionSettings = (props: SPoffoPositionSettingsProps) => {
     }
   }
   return (
-    <section aria-label="위치·크기">
-      <h3 class="m-0 text-[13px] font-medium text-stone-700">위치·크기</h3>
+    <section aria-label={uiText('위치·크기')}>
+      <h3 class="m-0 text-[13px] font-medium text-stone-700">{uiText('위치·크기')}</h3>
       <div class="wallpaper-row">
-        <span>표시 방식</span>
+        <span>{uiText('표시 방식')}</span>
         <SSelect
-          label="Poffo 표시 방식"
+          label={uiText('Poffo 표시 방식')}
           options={[
-            {label: '전체 보기', value: 'contain'},
-            {label: '화면 채우기', value: 'cover'},
+            {
+              label: uiText('전체 보기'),
+              value: 'contain',
+            },
+            {
+              label: uiText('화면 채우기'),
+              value: 'cover',
+            },
           ]}
           value={fit()}
           onChange={handleFit}
         />
       </div>
       <div class="wallpaper-row">
-        <span>가로 위치</span>
+        <span>{uiText('가로 위치')}</span>
         <span class="flex items-center justify-end gap-2">
           <SNumberInput
-            label="Poffo 가로 위치 (%)"
+            label={uiText('Poffo 가로 위치 (%)')}
             value={Math.round(placement().x * PERCENT)}
             min={0}
             max={100}
@@ -62,10 +69,10 @@ export const SPoffoPositionSettings = (props: SPoffoPositionSettingsProps) => {
         </span>
       </div>
       <div class="wallpaper-row">
-        <span>세로 위치</span>
+        <span>{uiText('세로 위치')}</span>
         <span class="flex items-center justify-end gap-2">
           <SNumberInput
-            label="Poffo 세로 위치 (%)"
+            label={uiText('Poffo 세로 위치 (%)')}
             value={Math.round(placement().y * PERCENT)}
             min={0}
             max={100}
@@ -75,10 +82,10 @@ export const SPoffoPositionSettings = (props: SPoffoPositionSettingsProps) => {
         </span>
       </div>
       <div class="wallpaper-row">
-        <span>크기</span>
+        <span>{uiText('크기')}</span>
         <span class="flex items-center justify-end gap-2">
           <SNumberInput
-            label="Poffo 크기 (%)"
+            label={uiText('Poffo 크기 (%)')}
             value={Math.round(placement().scale * PERCENT)}
             min={10}
             max={200}
@@ -93,7 +100,7 @@ export const SPoffoPositionSettings = (props: SPoffoPositionSettingsProps) => {
         class="wallpaper-file-button mt-2"
         onClick={() => change(DEFAULT_POFFO_PLACEMENT)}
       >
-        위치 초기화
+        {uiText('위치 초기화')}
       </button>
     </section>
   )

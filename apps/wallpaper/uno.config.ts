@@ -1,5 +1,9 @@
 import {defineConfig, presetWind3} from 'unocss'
-import {COVERED_HEIGHT, COVERED_OVERLAP} from './src/features/speech/constants'
+import {
+  COVERED_HEIGHT,
+  COVERED_OVERLAP,
+  MAXIMUM_SPEECH_HEIGHT,
+} from './src/features/speech/constants'
 
 export default defineConfig({
   presets: [presetWind3()],
@@ -58,6 +62,8 @@ export default defineConfig({
           `${COVERED_OVERLAP}px * (1 - var(--speech-reveal,1))) 0 round`,
           '.75rem)',
         ].join(' '),
+        'max-height': `min(var(--speech-limit,${MAXIMUM_SPEECH_HEIGHT}px),${MAXIMUM_SPEECH_HEIGHT}px)`,
+        'min-height': `min(var(--speech-minimum-height,0px),${MAXIMUM_SPEECH_HEIGHT}px)`,
         transform: 'translateY(calc(100% - var(--speech-painted-height)))',
       },
     ],
@@ -85,14 +91,57 @@ export default defineConfig({
     ],
   ],
   shortcuts: {
+    'theme-action': [
+      'inline-flex min-h-9 items-center justify-center rounded-full border border-solid px-4 py-1.5',
+      'cursor-pointer text-sm font-semibold [font-family:inherit]',
+      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700',
+      'disabled:cursor-default disabled:opacity-45',
+    ].join(' '),
+    'theme-field': [
+      'min-h-9 min-w-0 w-full box-border rounded-2 border border-solid border-stone-300 bg-white px-2.5',
+      'text-sm text-stone-900 [font-family:inherit] focus-visible:outline-violet-700',
+    ].join(' '),
+    'theme-primary':
+      'theme-action border-violet-900 bg-violet-900 text-white hover:enabled:bg-violet-800',
+    'theme-secondary': 'theme-action border-violet-200 bg-white text-violet-950 hover:bg-violet-50',
+    'wallpaper-breadcrumb-arrow': [
+      'wallpaper-breadcrumb-control w-6 shrink-0 border-transparent bg-transparent p-0 text-stone-500',
+      'hover:bg-stone-200 hover:text-stone-900',
+    ],
+    'wallpaper-breadcrumb-control': [
+      'box-border inline-flex min-h-8 min-w-0 max-w-full cursor-pointer items-center justify-center gap-2',
+      'rounded-md border border-solid text-left text-[13px] [font-family:inherit]',
+      '[anchor-name:var(--wallpaper-anchor)] appearance-none',
+      'focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-blue-700',
+      'aria-disabled:cursor-default aria-disabled:opacity-50',
+    ],
+    'wallpaper-breadcrumb-select': [
+      'wallpaper-breadcrumb-control border-stone-300 bg-white px-2 py-1 font-medium text-stone-900',
+      'hover:border-stone-400 hover:bg-stone-50',
+    ],
     'wallpaper-button': [
       'min-h-10 rounded-lg bg-stone-800 px-4 py-2 text-sm text-white hover:bg-stone-700',
       'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700 disabled:opacity-50',
     ],
+    'wallpaper-chain-action': [
+      'h-6 w-6 cursor-pointer rounded border-0 bg-transparent text-stone-500 hover:bg-stone-100',
+      'focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-blue-700',
+      'disabled:opacity-30 disabled:cursor-default',
+    ],
     'wallpaper-disclosure': [
-      'cursor-pointer rounded py-2 text-[13px] text-stone-700',
-      'focus-visible:outline-solid',
-      'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700',
+      'flex min-h-10 box-border cursor-pointer list-none items-center gap-2 rounded-lg px-3 py-2',
+      'border-0 border-b border-solid border-transparent text-[13px] font-medium leading-5 text-stone-700',
+      'select-none hover:bg-stone-100/80 [&::-webkit-details-marker]:hidden',
+      'focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-[-2px]',
+      'focus-visible:outline-blue-700',
+      "after:content-[''] after:ml-auto after:block after:h-1.5 after:w-1.5 after:shrink-0",
+      'after:border-0 after:border-b-2 after:border-r-2 after:border-solid after:border-stone-500 after:rotate-45',
+    ],
+    'wallpaper-disclosure-content': 'grid min-w-0 gap-3 p-3',
+    'wallpaper-disclosure-panel': [
+      'min-w-0 rounded-lg border border-solid border-stone-200 bg-stone-50/60',
+      '[&[open]>summary]:rounded-b-none [&[open]>summary]:border-b-stone-200',
+      '[&[open]>summary]:after:rotate-225',
     ],
     'wallpaper-field': [
       'box-border min-h-8 min-w-0 w-full rounded-md border border-solid border-stone-300 bg-white',
@@ -152,6 +201,26 @@ export default defineConfig({
       'wallpaper-field flex items-center gap-3 text-left appearance-none [font-family:inherit]',
       '[anchor-name:var(--wallpaper-anchor)] cursor-pointer hover:border-stone-400',
       'aria-disabled:cursor-default aria-disabled:opacity-50',
+    ],
+    'wallpaper-settings-link': [
+      'flex min-h-10 min-w-0 flex-1 cursor-pointer items-center justify-between gap-3',
+      'rounded-md border-0 bg-transparent px-3 py-2 text-left text-[13px] text-stone-800 [font-family:inherit]',
+      'hover:bg-stone-100 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-blue-700',
+      'disabled:cursor-default disabled:opacity-40',
+    ],
+    'wallpaper-speech-action': [
+      'relative inline-flex h-6 min-w-6 shrink-0 cursor-pointer items-center justify-center appearance-none',
+      'rounded-md border-0 bg-transparent p-0 leading-none transition-colors duration-150 hover:bg-black/5',
+      'focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-blue-700',
+      'disabled:cursor-default disabled:opacity-50 motion-reduce:transition-none',
+    ],
+    'wallpaper-speech-preview': [
+      'pointer-events-none visible opacity-100 [translate:0_0]',
+      '[transition-property:opacity,translate,visibility] duration-240',
+      '[transition-timing-function:cubic-bezier(.22,.8,.25,1)] motion-reduce:transition-none',
+      '[[data-preview-hidden=true]_&]:invisible [[data-preview-hidden=true]_&]:opacity-0',
+      '[[data-preview-hidden=true]_&]:[translate:0_12px]',
+      '[[data-anchor=top][data-preview-hidden=true]_&]:[translate:0_-12px]',
     ],
     'wallpaper-step': [
       'grid place-items-center appearance-none border-0 bg-transparent p-0 text-stone-600',

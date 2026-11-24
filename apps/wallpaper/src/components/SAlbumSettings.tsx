@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createSignal, For, Show} from 'solid-js'
 import type {WallpaperController} from '../features/settings'
 import {isBuiltinMedia} from '../features/builtin-assets'
@@ -13,14 +14,59 @@ const TRANSITIONS: readonly {
   readonly label: string
   readonly value: AlbumWallpaper['transition']
 }[] = [
-  {label: '페이드', value: 'fade'},
-  {label: '와이프', value: 'directional-wipe'},
-  {label: '워프', value: 'cross-warp'},
-  {label: '원형', value: 'circle-open'},
+  {
+    get label() {
+      return uiText('페이드')
+    },
+    value: 'fade',
+  },
+  {
+    get label() {
+      return uiText('와이프')
+    },
+    value: 'directional-wipe',
+  },
+  {
+    get label() {
+      return uiText('워프')
+    },
+    value: 'cross-warp',
+  },
+  {
+    get label() {
+      return uiText('원형')
+    },
+    value: 'circle-open',
+  },
   {label: 'RGB', value: 'rgb-kinetic'},
-  {label: '랜덤', value: 'random'},
-  {label: '없음', value: 'none'},
+  {
+    get label() {
+      return uiText('랜덤')
+    },
+    value: 'random',
+  },
+  {
+    get label() {
+      return uiText('없음')
+    },
+    value: 'none',
+  },
 ]
+
+const PLAYBACK_ORDERS = [
+  {
+    get label() {
+      return uiText('순차')
+    },
+    value: 'sequential',
+  },
+  {
+    get label() {
+      return uiText('랜덤')
+    },
+    value: 'random',
+  },
+] as const
 
 interface SAlbumSettingsProps {
   readonly controller: WallpaperController
@@ -56,7 +102,7 @@ export const SAlbumSettings = (props: SAlbumSettingsProps) => {
           <div
             class="-m-1 flex min-w-0 gap-2 overflow-x-auto p-1"
             role="group"
-            aria-label="앨범에 표시할 파일"
+            aria-label={uiText('앨범에 표시할 파일')}
           >
             <For each={props.controller.items()}>
               {(item) => (
@@ -77,7 +123,7 @@ export const SAlbumSettings = (props: SAlbumSettingsProps) => {
               class="wallpaper-file-button justify-self-end"
               onClick={props.controller.restoreBuiltinMedia}
             >
-              기본 배경 복원
+              {uiText('기본 배경 복원')}
             </button>
           </Show>
           <Show when={removing()}>
@@ -92,59 +138,71 @@ export const SAlbumSettings = (props: SAlbumSettingsProps) => {
           </Show>
           <div>
             <div class="wallpaper-row">
-              <span>표시 방식</span>
+              <span>{uiText('표시 방식')}</span>
               <SSelect
-                label="사진·동영상 표시 방식"
+                label={uiText('사진·동영상 표시 방식')}
                 options={[
-                  {label: '전체 보기', value: 'contain'},
-                  {label: '화면 채우기', value: 'cover'},
+                  {
+                    label: uiText('전체 보기'),
+                    value: 'contain',
+                  },
+                  {
+                    label: uiText('화면 채우기'),
+                    value: 'cover',
+                  },
                 ]}
                 value={current().fit ?? 'contain'}
                 onChange={handleFit}
               />
             </div>
             <div class="wallpaper-row">
-              <span>재생 순서</span>
+              <span>{uiText('재생 순서')}</span>
               <SSelect
-                label="재생 순서"
-                options={[
-                  {label: '순차', value: 'sequential'},
-                  {label: '랜덤', value: 'random'},
-                ]}
+                label={uiText('재생 순서')}
+                options={PLAYBACK_ORDERS}
                 value={current().order}
                 onChange={handleOrder}
               />
             </div>
             <div class="wallpaper-row">
-              <span>사진 표시 시간</span>
+              <span>{uiText('사진 표시 시간')}</span>
               <span class="flex items-center justify-end gap-2">
                 <SNumberInput
-                  label="사진 표시 시간 (초)"
+                  label={uiText('사진 표시 시간 (초)')}
                   min={1}
                   max={300}
                   value={current().photoSeconds}
                   onChange={handleSeconds}
                 />
-                <span class="text-stone-600">초</span>
+                <span class="text-stone-600">{uiText('초')}</span>
               </span>
             </div>
             <div class="wallpaper-row">
-              <span>전환 효과</span>
+              <span>{uiText('전환 효과')}</span>
               <SSelect
-                label="전환 효과"
+                label={uiText('전환 효과')}
                 options={TRANSITIONS}
                 value={current().transition}
                 onChange={handleTransition}
               />
             </div>
             <div class="wallpaper-row">
-              <span>동영상 재생</span>
+              <span>{uiText('동영상 재생')}</span>
               <SSelect
-                label="동영상 재생"
+                label={uiText('동영상 재생')}
                 options={[
-                  {label: '끝나면 다음', value: 'end'},
-                  {label: '끝난 화면 유지', value: 'hold'},
-                  {label: '반복', value: 'loop'},
+                  {
+                    label: uiText('끝나면 다음'),
+                    value: 'end',
+                  },
+                  {
+                    label: uiText('끝난 화면 유지'),
+                    value: 'hold',
+                  },
+                  {
+                    label: uiText('반복'),
+                    value: 'loop',
+                  },
                 ]}
                 value={current().videoMode}
                 onChange={handleVideo}

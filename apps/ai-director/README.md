@@ -15,7 +15,7 @@ Windows/Linux 영역 캡처는 미지원입니다. macOS 화면 기록 권한이
 SPAN-F는 CPU 2스레드, 128px 타일로 처리합니다. 작업마다 별도 Rust 프로세스를 실행하고 종료하며,
 런타임 Python/Node와 모델 다운로드가 필요하지 않습니다. 원본은 세션 동안 유지하며 재확대는 원본에서 시작합니다.
 출력은 최대 4천만 픽셀로 제한합니다. 미리보기는 최대 1600px로 줄여 보내며 저장 파일은 전체 해상도입니다.
-모델 출처와 변환 정보는 [models/README.md](src-tauri/models/README.md)에 있습니다.
+모델 바이너리는 Git 대신 OS 공용 `io.winterlove.models/spanf` 캐시에 보관합니다. 빌드할 때 캐시에 없거나 손상된 파일만 [고정 명세](spanf-model.json)에서 다운로드·검증해 실행 파일에 포함합니다. 모델 출처와 변환 정보는 [models/README.md](src-tauri/models/README.md)에 있습니다.
 
 ## 실행
 

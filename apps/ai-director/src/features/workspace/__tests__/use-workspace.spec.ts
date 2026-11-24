@@ -13,7 +13,7 @@ const setup = () =>
   })
 afterEach(() => {
   disposers.splice(0).forEach((dispose) => dispose())
-  delete globalThis.__TAURI__
+  delete globalThis.window.__TAURI__
 })
 
 describe('useWorkspace', () => {
@@ -23,7 +23,7 @@ describe('useWorkspace', () => {
       .mockResolvedValueOnce(original)
       .mockResolvedValueOnce(result)
       .mockResolvedValueOnce(result)
-    globalThis.__TAURI__ = {core: {invoke}}
+    globalThis.window.__TAURI__ = {core: {invoke}}
     const workspace = setup()
     expect(workspace.method()).toBe('lanczos')
     await workspace.open(false)
@@ -44,7 +44,7 @@ describe('useWorkspace', () => {
       .mockResolvedValueOnce(original)
       .mockResolvedValueOnce(result)
       .mockResolvedValueOnce(null)
-    globalThis.__TAURI__ = {core: {invoke}}
+    globalThis.window.__TAURI__ = {core: {invoke}}
     const workspace = setup()
     await workspace.open(false)
     await workspace.upscale()
@@ -65,7 +65,7 @@ describe('useWorkspace', () => {
         .mockResolvedValueOnce(original)
         .mockReturnValueOnce(upscale.promise)
         .mockReturnValueOnce(cancel.promise)
-      globalThis.__TAURI__ = {core: {invoke}}
+      globalThis.window.__TAURI__ = {core: {invoke}}
       const workspace = setup()
       await workspace.open(false)
       const processing = workspace.upscale()
@@ -84,7 +84,7 @@ describe('useWorkspace', () => {
 
   it('should recover from native errors without replacing the original', async () => {
     const invoke = vi.fn().mockResolvedValueOnce(original).mockRejectedValueOnce('upscale_failed')
-    globalThis.__TAURI__ = {core: {invoke}}
+    globalThis.window.__TAURI__ = {core: {invoke}}
     const workspace = setup()
     await workspace.open(false)
     await workspace.upscale()
@@ -95,7 +95,7 @@ describe('useWorkspace', () => {
   })
 
   it('should tell the user to open or capture an image when the native operation has no input', async () => {
-    globalThis.__TAURI__ = {core: {invoke: vi.fn().mockRejectedValueOnce('no_image')}}
+    globalThis.window.__TAURI__ = {core: {invoke: vi.fn().mockRejectedValueOnce('no_image')}}
     const workspace = setup()
 
     await workspace.upscale()

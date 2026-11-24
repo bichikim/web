@@ -14,6 +14,7 @@ export default mergeConfig(baseConfig, {
           // 브라우저 전용 테스트는 각 브라우저 프로젝트에서 실행한다.
           exclude: [
             ...configDefaults.exclude,
+            '**/.cache/**',
             '**/visual/**',
             'apps/wallpaper-web/src/**/*.integration.tsx',
           ],

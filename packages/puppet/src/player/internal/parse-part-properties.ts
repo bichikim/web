@@ -52,7 +52,7 @@ export const isGroupRenderProperties = (
   partIds: ReadonlySet<string>,
 ): value is PuppetGroupRenderProperties =>
   isRecord(value) &&
-  (value.offscreen === undefined || typeof value.offscreen === 'boolean') &&
+  hasBooleanFlags(value, ['offscreen', 'isolateOrder']) &&
   (value.offscreen === true ||
     (value.alphaBlendMode === undefined &&
       value.blendMode === undefined &&

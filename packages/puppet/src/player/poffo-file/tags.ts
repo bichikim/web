@@ -1,4 +1,4 @@
-/** Poffo v1 wire tags. Existing assignments must not change within this format version. */
+/** Poffo wire tags; numeric array references require container v2. Existing assignments stay fixed. */
 export const VALUE_TAG = {
   array: 9,
   asset: 10,
@@ -9,6 +9,7 @@ export const VALUE_TAG = {
   int32: 15,
   null: 0,
   number: 5,
+  numberReference: 16,
   object: 11,
   reference: 4,
   string: 3,

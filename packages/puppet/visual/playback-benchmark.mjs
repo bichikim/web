@@ -121,7 +121,7 @@ try {
                 state.published += 1
               },
               randomSeed: options.randomSeed,
-              renderer: 'webgl',
+              renderer: 'pixi-webgl',
               resizeTo: document.documentElement,
               resolution: options.resolution,
             })

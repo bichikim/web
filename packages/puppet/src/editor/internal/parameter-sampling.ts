@@ -1,3 +1,4 @@
+import {isGroupDrawOrderUnit} from '../../player/internal/group-draw-order'
 import {composeParameterGlue, sampleParameterGlue} from '../../deformation/parameter-glue'
 import {
   composeParameterGroupDrawOrder,
@@ -39,8 +40,7 @@ const samplePreviewNodes = (
     if (node.kind !== 'group') {
       return {...node, children}
     }
-    const drawOrderGroup =
-      node.properties?.drawOrder !== undefined || node.properties?.offscreen === true
+    const drawOrderGroup = isGroupDrawOrderUnit(node.properties)
     const {multiplyColor, opacity, screenColor} = composeParameterGroupProperties({
       document: options.document,
       group: node,

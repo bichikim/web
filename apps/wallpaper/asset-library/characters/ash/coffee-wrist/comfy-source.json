@@ -1,0 +1,17 @@
+{
+  "crop": {
+    "left": 440,
+    "top": 100,
+    "width": 576,
+    "height": 1056
+  },
+  "sourceBox": {
+    "x": 1740,
+    "y": 1100,
+    "width": 820,
+    "height": 1160,
+    "scale": 1.5
+  },
+  "invariants": ["original fingers", "original nails", "original cup", "existing forearm shape"],
+  "generationScope": "Extend original palm only to the wrist flexion crease"
+}

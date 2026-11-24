@@ -1,0 +1,118 @@
+{
+  "beforeModelSha256": "c05475121d05704207b5e9d1a3accdaa49d012af137fdaf514b4ae14c50c6feb",
+  "modelSha256": "3cccf8763e2820499b32ef4e06c9d632559b67bcb65f48353bb10ed60840f83e",
+  "modelBytes": 18189998,
+  "handTextureSha256": "ed874e0eab0df8a73df23ec396183961240de804ba7db5e699f3df9aba316bf1",
+  "changedHorizontalUvs": 63,
+  "maxTexturePixelShift": 3.9999999999999742,
+  "allArtworkAndMeshVerticesUnchanged": true,
+  "sceneGluePhysicsMotionsExpressionsParametersAndAllOtherBindingsUnchanged": true,
+  "physics": {
+    "bodyBinding": "coat-free:notes-left:wrist-physics",
+    "secondaryBinding": "coat-free:notes-left:wrist-secondary-physics",
+    "rotationDeformer": "Rotation@Part27",
+    "bodyDriver": "Param57",
+    "secondaryDrivers": ["Param25", "Param28"],
+    "writingDriver": "Param93",
+    "activation": "Param49",
+    "mechanism": "Sum native rotation channels to match the notebook hand direction and angular response. Calibrate body and shared secondary signals independently at writing 0, 0.5 and 1. Keep the forearm rigid and retain the existing local wrist contacts.",
+    "measurements": [
+      {
+        "pen": [-0.4599359596014578, 0.7926630993253709],
+        "writing": 0,
+        "driver": "body",
+        "notebook": [-0.471473843187698, 0.8030212158856957],
+        "rangeRatio": 0.9828198626658591
+      },
+      {
+        "pen": [4.466340151014717, -5.306803871696317],
+        "writing": 0,
+        "driver": "swayX",
+        "notebook": [4.527477728339919, -5.359599432377321],
+        "rangeRatio": 0.9884765602458451
+      },
+      {
+        "pen": [-0.1123101917306095, 1.759892216152221],
+        "writing": 0,
+        "driver": "swayY",
+        "notebook": [-0.10529875156955079, 1.7820370280035676],
+        "rangeRatio": 0.9919816220017242
+      },
+      {
+        "pen": [-0.4683223076153189, 0.6628273926740752],
+        "writing": 0.5,
+        "driver": "body",
+        "notebook": [-0.4810772259294471, 0.6613229857836325],
+        "rangeRatio": 0.9901518650746618
+      },
+      {
+        "pen": [4.455682555847116, -5.161678685604502],
+        "writing": 0.5,
+        "driver": "swayX",
+        "notebook": [4.462124296505853, -5.219266817441754],
+        "rangeRatio": 0.9933862942068581
+      },
+      {
+        "pen": [-0.2317243087960012, 1.5100387584909825],
+        "writing": 0.5,
+        "driver": "swayY",
+        "notebook": [-0.23448412948071798, 1.5106826593087899],
+        "rangeRatio": 0.9980496296833123
+      },
+      {
+        "pen": [-0.31937398056630045, 0.40329342647628974],
+        "writing": 1,
+        "driver": "body",
+        "notebook": [-0.3185182393909725, 0.3965957210388807],
+        "rangeRatio": 1.0105625774781362
+      },
+      {
+        "pen": [4.395120783625137, -5.018248236498584],
+        "writing": 1,
+        "driver": "swayX",
+        "notebook": [4.398322990624454, -5.047767163634402],
+        "rangeRatio": 0.9965360129322519
+      },
+      {
+        "pen": [-0.31548455962101196, 1.1563165282345855],
+        "writing": 1,
+        "driver": "swayY",
+        "notebook": [-0.31203664942835463, 1.150038451227267],
+        "rangeRatio": 1.0066521803124988
+      }
+    ],
+    "maximumControlledRelativeRangeError": 0.01718013733414092
+  },
+  "junctions": {
+    "partId": "coat-free:notes-left:hand",
+    "mechanism": "Adjust horizontal UV registration only around the original-finger/palm and palm/forearm contour endpoints. Keep texture bytes, mesh geometry, vertical UVs and all other parts unchanged.",
+    "upperImage": "hand-junction-upper.png",
+    "lowerImage": "hand-junction-lower.png",
+    "writingImages": [
+      "hand-junction-rest.png",
+      "hand-junction-writing-mid.png",
+      "hand-junction-writing-end.png"
+    ]
+  },
+  "checks": {
+    "browsers": ["Chromium", "WebKit"],
+    "buffering": [false, true],
+    "passed": 18,
+    "failed": 0,
+    "writingStates": [0, 0.5, 1],
+    "isolatedDrivers": ["body", "swayX", "swayY"],
+    "isolatedSignals": [-0.8, 0.8],
+    "maximumAllowedWristAndElbowContactError": 0.01,
+    "maximumAllowedForearmShapeError": 0.01,
+    "scope": "Paired hand amplitude and direction, pen movement, actual head physics reversals, rigid forearm, wrist/elbow contact, coat-on rig preservation, original artwork, notebook pose/layer and interrupted action transitions.",
+    "liveImage": "hand-balance-live.png",
+    "oxlint": "passed",
+    "oxfmt": "passed",
+    "nativeApp": {
+      "restarted": true,
+      "processId": 8101,
+      "servedModelSha256": "3cccf8763e2820499b32ef4e06c9d632559b67bcb65f48353bb10ed60840f83e",
+      "verification": "Native process startup and served model hash. Visible motion and contour checks used the actual player in Chromium and WebKit."
+    }
+  }
+}

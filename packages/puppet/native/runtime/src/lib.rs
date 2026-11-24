@@ -9,6 +9,7 @@
 mod apply;
 mod chain;
 mod compose;
+mod deferred;
 mod deform;
 mod delaunay;
 mod draw_order;
@@ -16,10 +17,14 @@ mod effects;
 mod expression;
 mod geometry;
 mod geometry_cache;
+mod geometry_frame;
+mod glue_cache;
+pub use geometry_frame::GeometryFinalizer;
 mod grid_keyform;
 mod hit;
 mod influence;
 mod keyform;
+mod keyform_coordinates;
 mod layers;
 mod look;
 mod model;
@@ -30,7 +35,12 @@ mod physics;
 mod plan;
 mod playback;
 mod player;
+#[cfg(feature = "parallel")]
+pub fn parallel_threads() -> usize {
+    rayon::current_num_threads()
+}
 mod pose;
+mod pose_cache;
 mod sound;
 mod spatial;
 mod viewport;
@@ -57,6 +67,7 @@ pub use playback::{
     FiredMotionEvent, PlaybackError, PlaybackHandle, PlaybackOptions, PlaybackState, PlaybackStatus,
 };
 pub use player::{Completions, Frame, MotionSelection, Player, SoundingMotion};
+pub use poffo_format::document::BlendMode;
 pub use sound::{MOTION_SOUND_WINDOW, Sound, WavError, decode_wav, motion_sound_window};
 pub use spatial::SpatialPartPose;
 pub use viewport::{Framing, ViewportFit, fit_framing};

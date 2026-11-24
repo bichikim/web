@@ -6,12 +6,16 @@ it('should display translated action names without changing the IDs used by save
   const actions = modelActions({
     ...createDemoDocument(),
     expressions: [
-      {id: '노트 들기', name: 'Hold Notes', parameters: []},
+      {
+        id: '노트 들기',
+        name: 'Hold Notes',
+        parameters: [{blend: 'add', parameterId: 'note', value: 1}],
+      },
       {id: 'Legacy', parameters: []},
     ],
   })
   expect(actions.slice(0, 2)).toEqual([
-    {action: {id: '노트 들기', kind: 'expression'}, label: 'Hold Notes'},
-    {action: {id: 'Legacy', kind: 'expression'}, label: 'Legacy'},
+    {action: {id: '노트 들기', kind: 'expression'}, label: 'Hold Notes', parameterIds: ['note']},
+    {action: {id: 'Legacy', kind: 'expression'}, label: 'Legacy', parameterIds: []},
   ])
 })

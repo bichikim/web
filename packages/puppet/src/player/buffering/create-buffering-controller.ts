@@ -1,3 +1,4 @@
+import {createBufferWorker} from './create-buffer-worker'
 import type {PlayerRuntime} from '../create-player-runtime'
 import type {PlayerRuntimeState} from '../player-runtime-types'
 import type {RendererController} from '../rendering/create-renderer-controller'
@@ -16,12 +17,16 @@ import {
   type PlayerBufferingInfo,
   type PlayerBufferingStatus,
   type PlayerInputChange,
+  type PlayerWorkerRuntime,
   type RuntimeInputs,
 } from './types'
 
 interface CreateBufferingControllerOptions {
   /** Owns validated controls and the most recently presented checkpoint. */
   readonly runtime: PlayerRuntime
+  readonly workerRuntime?: PlayerWorkerRuntime
+  /** Limits Rust geometry to rendered parts and dependencies. Omitted, evaluates all parts. */
+  readonly renderGeometryOnly?: boolean
   /** GPU resources retained exclusively by the host. */
   readonly renderer: RendererController
   /** Reports requested and actual ownership; omitted, query status explicitly. */
@@ -59,8 +64,14 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
   let waiters: InputWaiter[] = []
   const info = (): PlayerBufferingInfo => ({
     enabled,
-    framesAhead: status === 'active' ? PLAYER_BUFFER_FRAMES : 0,
+    framesAhead:
+      status === 'active' && options.renderer.nativePlayback === undefined
+        ? PLAYER_BUFFER_FRAMES
+        : 0,
     status,
+    ...((status === 'active' || status === 'idle') && options.workerRuntime !== undefined
+      ? {workerRuntime: options.workerRuntime}
+      : {}),
   })
   const publish = (next: PlayerBufferingStatus) => {
     status = next
@@ -102,6 +113,7 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
   }
   const fallback = (next: PlayerBufferingStatus) => {
     epoch += 1
+    options.renderer.cancelPresentation?.()
     disposeSession()
     const {settle} = mailbox.snapshot()
     const wasOwned = owned
@@ -124,23 +136,28 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
     presenting = true
     const request = epoch
     let submitted = false
-    try {
+    const commit = () => {
+      if (disposed || !owned || request !== epoch) {
+        return false
+      }
       mailbox.acknowledge(frame.inputRevision)
       appliedRevision = frame.inputRevision
       presentedState = frame.state
       options.runtime.restore(frame.state)
-      options.renderer.applyPreparedFrame(frame.computed)
       query.update(source, frame.state, options.runtime.player.getExpression())
       options.runtime.syncAudio()
       options.runtime.restore(applyRuntimeInputs(presentedState, mailbox.snapshot().patch))
-      options.renderer.redraw()
+      return true
+    }
+    const notify = () => {
       submitted = true
       resolveApplied()
       options.runtime.notifyEffects(frame.state.notices)
       if (!disposed && request === epoch) {
         options.runtime.notifyFrame(frame.playback)
       }
-    } finally {
+    }
+    const finish = () => {
       presenting = false
       if (submitted && !disposed && owned && request === epoch) {
         resolveApplied()
@@ -149,6 +166,32 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
           publish(next)
         }
       }
+    }
+    const submit = options.renderer.presentFrame
+    if (submit !== undefined) {
+      return submit(frame.computed)
+        .then(
+          (result) => {
+            if (result === 'presented' && commit()) {
+              notify()
+            }
+          },
+          () => {
+            if (!disposed && owned && request === epoch) {
+              fallback('error')
+            }
+          },
+        )
+        .finally(finish)
+    }
+    try {
+      options.renderer.applyPreparedFrame(frame.computed)
+      if (commit()) {
+        options.renderer.redraw()
+        notify()
+      }
+    } finally {
+      finish()
     }
   }
 
@@ -185,19 +228,45 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
     enterWorker()
     try {
       if (session === undefined) {
+        const {nativePlayback} = options.renderer
         const owner = createBufferSession({
           acknowledged: options.runtime.acknowledgedNotices,
           audio: options.runtime.audio(),
+          async connectGeometry() {
+            const connection = await options.renderer.connectGeometry?.()
+            connection?.closed.then(() => {
+              if (owner === session && !disposed && enabled) {
+                epoch += 1
+                disposeSession()
+                initialize()
+              }
+            })
+            return connection
+          },
+          ...(nativePlayback === undefined
+            ? {}
+            : {
+                createWorker: (onError: (cause: Error) => void) =>
+                  createBufferWorker(onError, 'rust', undefined, nativePlayback),
+                presentDuringPlayback: true,
+              }),
           document: source,
-          input: () => {
-            if (!mailbox.pending()) {
+          input: (base) => {
+            const revision = base?.revision ?? appliedRevision
+            if (!mailbox.pending(revision)) {
               return undefined
             }
-            const input = mailbox.snapshot()
+            const input = mailbox.snapshot(revision)
+            const checkpoint = base?.state ?? presentedState
+            const adjustmentBase =
+              input.patch.adjustments !== undefined && Object.keys(input.patch).length === 1
+                ? checkpoint
+                : undefined
             return {
+              adjustmentBase,
               revision: input.revision,
               settle: input.settle,
-              state: applyRuntimeInputs(presentedState, input.patch),
+              state: applyRuntimeInputs(checkpoint, input.patch),
             }
           },
           onError: () => {
@@ -206,7 +275,11 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
             }
           },
           onFrame: present,
+          prepareFrame: (frame) => options.renderer.prepareFrame?.(frame.computed),
+          releaseFrame: (frame) => options.renderer.releasePreparedFrame?.(frame.computed),
+          renderGeometryOnly: options.renderGeometryOnly,
           running: () => options.runtime.running(),
+          workerRuntime: options.workerRuntime,
         })
         session = owner
       }
@@ -229,6 +302,13 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
     initializing = {epoch, promise}
     return promise
   }
+  const unsubscribe = options.renderer.subscribeChange?.(() => {
+    if (session !== undefined && !disposed && enabled) {
+      epoch += 1
+      disposeSession()
+      initialize()
+    }
+  })
   const schedule = () => {
     if (queued || disposed || !owned) {
       return
@@ -271,12 +351,17 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
           ? {...changed, history: options.runtime.capture().history}
           : changed
       const {settle} = options.runtime.takeEvaluation()
-      mailbox.add(patch, settle)
+      const previousRevision = mailbox.revision()
+      const revision = mailbox.add(patch, settle)
       beforeInputs = undefined
+      if (command === 'patchParameterBlends' && revision === previousRevision) {
+        return
+      }
     }
     const document = options.runtime.document()
     if (document !== source) {
       epoch += 1
+      options.renderer.cancelPresentation?.()
       disposeSession()
       source = document
       presentedState = options.runtime.capture()
@@ -295,6 +380,7 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
       return
     }
     epoch += 1
+    options.renderer.cancelPresentation?.()
     session?.invalidate()
     initializing = undefined
     if (hidden) {
@@ -309,6 +395,7 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
     }
     disposed = true
     epoch += 1
+    options.renderer.cancelPresentation?.()
     disposeSession()
     mailbox.clear()
     query.clearGeometry()
@@ -316,6 +403,7 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
     options.runtime.setDeferred(false)
     globalThis.document?.removeEventListener('visibilitychange', visibilityChanged)
     try {
+      unsubscribe?.()
       options.runtime.player.destroy()
     } finally {
       publish('destroyed')
@@ -350,8 +438,9 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
       }
       configurationRevision += 1
       const revision = configurationRevision
-      enabled = configuration.enabled
+      ;({enabled} = configuration)
       epoch += 1
+      options.renderer.cancelPresentation?.()
       initializing = undefined
       session?.invalidate()
       if (!enabled) {
@@ -380,7 +469,10 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
         return Promise.resolve('destroyed')
       }
       if (!owned || (appliedRevision >= mailbox.revision() && !mailbox.pending())) {
-        return Promise.resolve('applied')
+        return (
+          options.renderer.flush?.().then(() => (disposed ? 'destroyed' : 'applied')) ??
+          Promise.resolve('applied')
+        )
       }
       const promise = new Promise<PlayerInputChange>((resolve) => {
         waiters.push({resolve, revision: mailbox.revision()})
@@ -420,7 +512,8 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
         return
       }
       nativeRunning()
-      if (owned) {
+      // A buffered command decides whether to wake the Worker after diffing its controls.
+      if (owned && beforeInputs === undefined) {
         schedule()
       }
     },

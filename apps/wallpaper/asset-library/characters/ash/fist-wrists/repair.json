@@ -1,0 +1,26 @@
+{
+  "action": "Make a Fist",
+  "sourceSha256": "88cf0d741c97549f28864b26efe407a444a885d60287df2f7da94f918366e5d5",
+  "runtimeSha256": "364da2c71673f01304aa07f639fef8be8795d37e5ae7908e275c77140aa6ca00",
+  "referenceGenerator": "Built-in ChatGPT image generation with original fist and forearm as separate references",
+  "scope": "Original fist artwork, finger pixels and forearm rest shape retained; whole forearms and hands attach through rigid rotation and translation",
+  "surfacesPerWrist": ["Original forearm", "Original fist with repaired palm base"],
+  "intermediateWristSkinPartAdded": false,
+  "originalFingerPixelError": 0,
+  "liveApplicationProof": "rigid/native-verification.json",
+  "applicationResource": "rigid/app-resource.json",
+  "coatOnComparison": "comparison-coat.png",
+  "comparison": "wrist-comparison.png",
+  "motionRepair": {
+    "cause": "Blending independently moving hand and forearm vertex fields stretched the wrist despite matching contact points",
+    "method": "Keep each visible hand and forearm rigid. Use original physics only as a moving attachment frame; apply forearm attachment first, then hand attachment.",
+    "skinPartsPerSide": 2,
+    "allowScale": false,
+    "allowDistributedWristBlend": false,
+    "validation": "Measure every visible mesh edge length and contact separation during continuous live physics, including reversals and return",
+    "input": "Temporary before-physics gaze values and cursor events in the actual app; original physics retained; no system pointer events",
+    "application": "rigid/application.json",
+    "structuralVerification": "rigid/verification.json",
+    "video": "rigid/app-wrists.mp4"
+  }
+}

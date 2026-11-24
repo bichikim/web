@@ -3,11 +3,20 @@ import {fileURLToPath} from 'node:url'
 import solid from 'vite-plugin-solid'
 import UnoCSS from 'unocss/vite'
 import {defineConfig} from 'vitest/config'
+import {viteStaticCopy} from 'vite-plugin-static-copy'
+import {dictationAssets} from './scripts/dictation-assets.mjs'
+import {prepareTrackingAssets, trackingAssets} from './scripts/prepare-tracking-assets.mjs'
 import uno from './uno.config'
 
+await prepareTrackingAssets()
+
 export default defineConfig({
-  optimizeDeps: {include: ['@tauri-apps/api/webviewWindow']},
+  optimizeDeps: {
+    exclude: ['es-toolkit'],
+    include: ['@tauri-apps/api/webviewWindow', '@mediapipe/tasks-vision'],
+  },
   plugins: [
+    viteStaticCopy({targets: [...dictationAssets, ...trackingAssets]}),
     UnoCSS({
       ...uno,
       content: {
@@ -41,7 +50,7 @@ export default defineConfig({
       provider: playwright(),
     },
     exclude: ['**/*.memory.integration.tsx'],
-    include: ['visual/__tests__/**/*.integration.tsx'],
+    include: ['visual/__tests__/**/*.integration.tsx', 'src/**/*.browser.ts'],
     name: 'wallpaper-visual',
   },
 })

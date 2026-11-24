@@ -1,0 +1,104 @@
+{
+  "poses": [
+    {
+      "pose": "rest",
+      "id": "coat-free:cuffs-left:hand",
+      "folded": 0
+    },
+    {
+      "pose": "rest",
+      "id": "coat-free:cuffs-left:ArtMesh900",
+      "folded": 0
+    },
+    {
+      "pose": "rest",
+      "id": "coat-free:cuffs-right:hand",
+      "folded": 0
+    },
+    {
+      "pose": "rest",
+      "id": "coat-free:cuffs-right:ArtMesh994",
+      "folded": 0
+    },
+    {
+      "pose": "left",
+      "id": "coat-free:cuffs-left:hand",
+      "folded": 0
+    },
+    {
+      "pose": "left",
+      "id": "coat-free:cuffs-left:ArtMesh900",
+      "folded": 0
+    },
+    {
+      "pose": "left",
+      "id": "coat-free:cuffs-right:hand",
+      "folded": 0
+    },
+    {
+      "pose": "left",
+      "id": "coat-free:cuffs-right:ArtMesh994",
+      "folded": 0
+    },
+    {
+      "pose": "right",
+      "id": "coat-free:cuffs-left:hand",
+      "folded": 0
+    },
+    {
+      "pose": "right",
+      "id": "coat-free:cuffs-left:ArtMesh900",
+      "folded": 0
+    },
+    {
+      "pose": "right",
+      "id": "coat-free:cuffs-right:hand",
+      "folded": 0
+    },
+    {
+      "pose": "right",
+      "id": "coat-free:cuffs-right:ArtMesh994",
+      "folded": 0
+    },
+    {
+      "pose": "up",
+      "id": "coat-free:cuffs-left:hand",
+      "folded": 0
+    },
+    {
+      "pose": "up",
+      "id": "coat-free:cuffs-left:ArtMesh900",
+      "folded": 0
+    },
+    {
+      "pose": "up",
+      "id": "coat-free:cuffs-right:hand",
+      "folded": 0
+    },
+    {
+      "pose": "up",
+      "id": "coat-free:cuffs-right:ArtMesh994",
+      "folded": 0
+    },
+    {
+      "pose": "down",
+      "id": "coat-free:cuffs-left:hand",
+      "folded": 0
+    },
+    {
+      "pose": "down",
+      "id": "coat-free:cuffs-left:ArtMesh900",
+      "folded": 0
+    },
+    {
+      "pose": "down",
+      "id": "coat-free:cuffs-right:hand",
+      "folded": 0
+    },
+    {
+      "pose": "down",
+      "id": "coat-free:cuffs-right:ArtMesh994",
+      "folded": 0
+    }
+  ]
+}

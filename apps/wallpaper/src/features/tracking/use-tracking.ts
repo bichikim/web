@@ -3,12 +3,16 @@ import {invoke, isTauri} from '@tauri-apps/api/core'
 import {getCurrentWebview} from '@tauri-apps/api/webview'
 import type {Player} from '@winter-love/puppet/player'
 import {
+  DEFAULT_TRACKING_OPTIONS,
   type PoffoTracking,
   type PoffoTrackingBindings,
   type PoffoTrackingOptions,
 } from '@winter-love/wallpaper/settings/tracking'
-import {createTrackingCenters, createTrackingParameters} from './parameters'
-import {smoothTrackingPoint} from '@winter-love/wallpaper/tracking/smooth-point'
+import {
+  createTrackingCenters,
+  createTrackingParameters,
+  resolveTrackingParameter,
+} from './parameters'
 import type {
   CameraSurface,
   CursorPosition,
@@ -21,6 +25,7 @@ import {canvasCameraSurface} from './canvas-camera-surface'
 import {useViewport} from './use-viewport'
 import {createTrackingBlends} from './blends'
 import {createCursorTarget} from './cursor-target'
+import {createTrackingFollower} from './create-tracking-follower'
 
 interface UseTrackingProps {
   readonly mode: Accessor<PoffoTracking>
@@ -32,10 +37,6 @@ interface UseTrackingProps {
   readonly canvas: Accessor<HTMLCanvasElement | null>
   readonly onError: (cause: unknown) => void
 }
-const bounded = (value: number) => (Number.isFinite(value) ? Math.max(-1, Math.min(1, value)) : 0)
-const FRAMES_PER_SECOND = 60
-const FRAME_SECONDS = 1 / FRAMES_PER_SECOND
-const MILLISECONDS_PER_SECOND = 1000
 
 export const useTracking = (props: UseTrackingProps) => {
   const viewport = useViewport(
@@ -50,7 +51,7 @@ export const useTracking = (props: UseTrackingProps) => {
     const reference = props.cameraSurface?.()
     const parameters = props.parameters()
     const bindings = props.bindings()
-    const source = mode === 'cursor' ? 'cursor' : 'camera'
+    const source = mode === 'off' ? 'camera' : mode
     const map = createTrackingParameters(parameters, bindings, options, source)
     if (player === null) {
       return
@@ -77,57 +78,47 @@ export const useTracking = (props: UseTrackingProps) => {
     }
     let disposed = false
     let origin: TrackingPoint = {x: 0, y: 0}
-    let target: TrackingPoint | null = null
-    let current: TrackingPoint = {x: 0, y: 0}
-    let frame = 0
-    let previous: number | null = null
     let stop: (() => void) | null = null
-    const step = (timestamp: number) => {
-      frame = 0
-      if (disposed || target === null) {
-        return
-      }
-      const seconds =
-        previous === null ? FRAME_SECONDS : (timestamp - previous) / MILLISECONDS_PER_SECOND
-      previous = timestamp
-      current = smoothTrackingPoint(current, target, seconds)
-      apply(map(current, origin))
-      if (current.x !== target.x || current.y !== target.y) {
-        frame = requestAnimationFrame(step)
-      } else {
-        previous = null
-      }
-    }
-    const follow = (point: TrackingPoint) => {
-      if (disposed) {
-        return
-      }
-      const next = {x: bounded(point.x), y: bounded(point.y)}
-      if (next.x === target?.x && next.y === target?.y) {
-        return
-      }
-      target = next
-      if (frame === 0) {
-        frame = requestAnimationFrame(step)
-      }
-    }
+    const follower = createTrackingFollower({
+      body:
+        resolveTrackingParameter(parameters, 'bodyX', bindings?.bodyX?.parameterId) !== undefined,
+      bodySpeed: options?.bodyFollowSpeed ?? DEFAULT_TRACKING_OPTIONS.bodyFollowSpeed,
+      eyeSpeed: options?.eyeFollowSpeed ?? DEFAULT_TRACKING_OPTIONS.eyeFollowSpeed,
+      headSpeed: options?.headFollowSpeed ?? DEFAULT_TRACKING_OPTIONS.headFollowSpeed,
+      onChange: (head, body, eyes) => apply(map(head, origin, body, eyes)),
+    })
     const cursor = (position: CursorPosition) => {
-      follow(
+      const surface = {
+        bounds: canvas.getBoundingClientRect(),
+        options,
+        point: position,
+        viewport: {height: innerHeight, width: innerWidth},
+      }
+      follower.follow(
+        createCursorTarget(surface),
         createCursorTarget({
-          bounds: canvas.getBoundingClientRect(),
-          options,
-          point: position,
-          viewport: {height: innerHeight, width: innerWidth},
+          ...surface,
+          reach: options?.eyeCursorReach ?? DEFAULT_TRACKING_OPTIONS.eyeCursorReach,
         }),
       )
     }
     const camera = (point: FacePosition) => {
+      if (mode === 'camera-pose') {
+        const pose = point.detected === false ? null : point.pose
+        origin = {x: 0, y: 0}
+        follower.follow(
+          pose?.head ?? {x: 0, y: 0, z: 0},
+          pose?.eyes ?? {x: 0, y: 0},
+          point.body ?? {x: 0, y: 0},
+        )
+        return
+      }
       const surface =
         reference ??
         canvasCameraSurface({bounds: canvas.getBoundingClientRect(), viewport: viewport()})
       if (surface === null) {
         origin = {x: 0, y: 0}
-        follow(point)
+        follower.follow(point)
         return
       }
       const {origin: cameraOrigin, target: cameraTarget} = cameraTrackingPoints({
@@ -136,7 +127,7 @@ export const useTracking = (props: UseTrackingProps) => {
         surface,
       })
       origin = cameraOrigin
-      follow(cameraTarget)
+      follower.follow(cameraTarget)
     }
 
     const subscription = crypto.randomUUID()
@@ -178,7 +169,7 @@ export const useTracking = (props: UseTrackingProps) => {
     onCleanup(() => {
       disposed = true
       stop?.()
-      cancelAnimationFrame(frame)
+      follower.dispose()
       release(parameterIds)
       if (isTauri() && mode === 'cursor') {
         invoke('subscribe_poffo_cursor', {enabled: false, subscription}).catch(props.onError)

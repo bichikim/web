@@ -21,3 +21,10 @@ it.each([
   expect(runtime.env.wasm).toEqual({numThreads: 1, wasmPaths: SUPERTONIC_ORT_WASM_URL})
   expect(expectedRuntime.env.wasm).toBe(runtime.env.wasm)
 })
+
+it('should use caller-supplied bundled execution files without changing the default for other callers', async () => {
+  const runtime = await loadSupertonicRuntime('wasm', '/voice-runtime/')
+  expect(runtime.env.wasm.wasmPaths).toBe('/voice-runtime/')
+  const restored = await loadSupertonicRuntime('wasm')
+  expect(restored.env.wasm.wasmPaths).toBe(SUPERTONIC_ORT_WASM_URL)
+})

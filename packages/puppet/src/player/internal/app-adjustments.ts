@@ -38,6 +38,7 @@ export const createAppAdjustments = (): AppAdjustments => {
   const blends: Record<ParameterBlendStage, Map<string, PuppetParameterBlend>> = {
     'after-physics': new Map(),
     'before-physics': new Map(),
+    interaction: new Map(),
   }
   let physicsOptions: PuppetPhysicsOptions | undefined
   return {
@@ -48,6 +49,7 @@ export const createAppAdjustments = (): AppAdjustments => {
     restore(state) {
       blends['before-physics'] = new Map(state.blends['before-physics'])
       blends['after-physics'] = new Map(state.blends['after-physics'])
+      blends.interaction = new Map(state.blends.interaction)
       physicsOptions = state.physicsOptions
     },
     setParameterBlend(document, parameterId, blend, stage = 'before-physics') {

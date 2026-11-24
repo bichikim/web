@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {children, createEffect, createMemo, createSignal, type JSX, on, Show} from 'solid-js'
 import {
   DEFAULT_TRACKING_OPTIONS,
@@ -79,7 +80,7 @@ export const SPoffoCameraPosition = (props: SPoffoCameraPositionProps) => {
   const handleView = () => setOutside((value) => !value)
   return (
     <section
-      aria-label={enabled() ? '카메라 위치 미리보기' : undefined}
+      aria-label={enabled() ? uiText('카메라 위치 미리보기') : undefined}
       class="relative box-border w-full"
       classList={{'h-full': !enabled(), 'p-5': calibrating()}}
     >
@@ -104,15 +105,15 @@ export const SPoffoCameraPosition = (props: SPoffoCameraPositionProps) => {
             '--screen-top': `${position(0)}%`,
           }}
         >
-          <Show when={content()} fallback={<span aria-hidden="true">모니터</span>}>
+          <Show when={content()} fallback={<span aria-hidden="true">{uiText('모니터')}</span>}>
             {content()}
           </Show>
         </div>
         <Show when={calibrating()}>
           <button
             type="button"
-            aria-label="카메라 위치 조정"
-            title="카메라 설치 위치로 드래그"
+            aria-label={uiText('카메라 위치 조정')}
+            title={uiText('카메라 설치 위치로 드래그')}
             disabled={props.onChange === undefined}
             class="wallpaper-tracking-handle h-9 w-9"
             style={{
@@ -146,7 +147,7 @@ export const SPoffoCameraPosition = (props: SPoffoCameraPositionProps) => {
             aria-pressed={outside()}
             onClick={handleView}
           >
-            화면 밖 보기
+            {uiText('화면 밖 보기')}
           </button>
         </Show>
         {props.actions}

@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createSignal, Show} from 'solid-js'
 
 interface SVideoPreviewProps {
@@ -57,7 +58,7 @@ export const SVideoPreview = (props: SVideoPreviewProps) => {
             border-0 bg-stone-900/75 p-0 text-white hover:bg-stone-900
             focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2
             focus-visible:outline-blue-700"
-          aria-label={playing() ? '미리보기 일시정지' : '미리보기 재생'}
+          aria-label={playing() ? uiText('미리보기 일시정지') : uiText('미리보기 재생')}
           onClick={handleToggle}
         >
           <svg aria-hidden="true" viewBox="0 0 24 24" class="h-4 w-4 fill-current">

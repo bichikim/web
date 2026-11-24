@@ -1,5 +1,6 @@
 import {DEFAULT_POFFO_SPEECH, type PoffoWidget} from './library-model'
 import type {PoffoConnections} from './connections'
+import {mergeTrackingProfiles} from './merge-tracking-profiles'
 import {poffoTrackingOptionsSchema} from './tracking'
 
 export type ConnectionUpdateMode = 'merge' | 'replace' | 'missing'
@@ -27,12 +28,24 @@ export const mergeConnections = (options: MergeConnectionsOptions): PoffoWidget 
     speech: {
       ...speech,
       agentBindings: assign(speech.agentBindings, connections.agentBindings),
+      agentBindingsVersion: assign(speech.agentBindingsVersion, connections.agentBindingsVersion),
       lipsync: assign(speech.lipsync, connections.lipsync),
       randomActions: assign(speech.randomActions, connections.randomActions),
       semanticBindings: assign(speech.semanticBindings, connections.semanticBindings),
+      semanticBindingsVersion: assign(
+        speech.semanticBindingsVersion,
+        connections.semanticBindingsVersion,
+      ),
+      touch: assign(speech.touch, connections.touch),
+      touchBindingsVersion: assign(speech.touchBindingsVersion, connections.touchBindingsVersion),
     },
     tracking: assign(widget.tracking, connections.tracking),
     trackingBindings: assign(widget.trackingBindings, connections.trackingBindings),
+    trackingBindingsVersion: assign(
+      widget.trackingBindingsVersion,
+      connections.trackingBindingsVersion,
+    ),
     trackingOptions,
+    trackingProfiles: mergeTrackingProfiles({current: widget, incoming: connections, mode}),
   }
 }

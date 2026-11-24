@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createSignal, Show} from 'solid-js'
 import {useCodexNotifications} from '../features/codex'
 import {SCodexConnectionManager} from './SCodexConnectionManager'
@@ -7,19 +8,23 @@ export const SCodexConnection = () => {
   const [open, setOpen] = createSignal(false)
   const status = () => {
     if (!connection.available) {
-      return '데스크톱 앱에서 연결 가능'
+      return uiText('데스크톱 앱에서 연결 가능')
     }
     if (connection.loading()) {
-      return '확인 중…'
+      return uiText('확인 중…')
     }
     if (connection.busy()) {
-      return '설정 중…'
+      return uiText('설정 중…')
     }
     if (connection.error() !== null) {
-      return '연결 확인 필요'
+      return uiText('연결 확인 필요')
     }
     const value = connection.snapshot()
-    return value.registered ? (value.received ? '연결됨' : '등록됨 · 수신 대기') : '연결 안 됨'
+    return value.registered
+      ? value.received
+        ? uiText('연결됨')
+        : uiText('등록됨 · 수신 대기')
+      : uiText('연결 안 됨')
   }
   const handleOpen = async () => {
     setOpen(true)
@@ -33,8 +38,8 @@ export const SCodexConnection = () => {
   }
   return (
     <>
-      <section aria-label="AI 에이전트 연결" class="grid gap-2">
-        <h3 class="m-0 text-[13px] font-medium text-stone-700">AI 에이전트 연결</h3>
+      <section aria-label={uiText('AI 에이전트 연결')} class="grid gap-2">
+        <h3 class="m-0 text-[13px] font-medium text-stone-700">{uiText('AI 에이전트 연결')}</h3>
         <div class="flex items-center gap-3 rounded-lg border border-solid border-stone-200 px-3 py-2">
           <span
             aria-hidden="true"
@@ -56,11 +61,13 @@ export const SCodexConnection = () => {
           <button
             type="button"
             class="wallpaper-file-button"
-            aria-label={connection.snapshot().registered ? 'Codex 관리' : 'Codex 연결'}
+            aria-label={
+              connection.snapshot().registered ? uiText('Codex 관리') : uiText('Codex 연결')
+            }
             disabled={!connection.available || connection.loading() || connection.busy()}
             onClick={handleOpen}
           >
-            {connection.snapshot().registered ? '관리' : '연결'}
+            {connection.snapshot().registered ? uiText('관리') : uiText('연결')}
           </button>
         </div>
       </section>

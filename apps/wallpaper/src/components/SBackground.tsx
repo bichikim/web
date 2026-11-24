@@ -1,9 +1,11 @@
+import {text as uiText} from '../features/localization'
 import {Match, Switch} from 'solid-js'
 import {emitTo} from '@tauri-apps/api/event'
 import type {AlbumWallpaper, PuppetWallpaper} from '@winter-love/wallpaper/settings/model'
 import {useBackgroundSettings} from '../features/background/use-background-settings'
 import {SAlbumBackground} from './SAlbumBackground'
 import {SPositionedPoffo} from './SPositionedPoffo'
+import {trackingProfile} from '@winter-love/wallpaper/settings/tracking-profile'
 
 interface SBackgroundProps {
   readonly monitorId: string
@@ -11,9 +13,11 @@ interface SBackgroundProps {
 
 const report = (cause: unknown) => {
   console.error('Wallpaper renderer failed', cause)
-  emitTo('manager', 'wallpaper-error', {message: '배경 파일을 표시하지 못했어요.'}).catch(
-    (error: unknown) => console.error('Wallpaper error notification failed', error),
-  )
+  emitTo('manager', 'wallpaper-error', {
+    get message() {
+      return uiText('배경 파일을 표시하지 못했어요.')
+    },
+  }).catch((error: unknown) => console.error('Wallpaper error notification failed', error))
 }
 
 export const SBackground = (props: SBackgroundProps) => {
@@ -27,7 +31,7 @@ export const SBackground = (props: SBackgroundProps) => {
     return content?.mode === 'puppet' ? content : null
   }
   return (
-    <main class="fixed inset-0 overflow-hidden bg-stone-950" aria-label="Wallpaper 배경">
+    <main class="fixed inset-0 overflow-hidden bg-stone-950" aria-label={uiText('Wallpaper 배경')}>
       <Switch>
         <Match when={album()}>
           {(content) => (
@@ -48,8 +52,8 @@ export const SBackground = (props: SBackgroundProps) => {
               onError={report}
               placement={() => content().placement}
               tracking={() => content().tracking}
-              trackingBindings={() => content().trackingBindings}
-              trackingOptions={() => content().trackingOptions}
+              trackingBindings={() => trackingProfile(content()).bindings}
+              trackingOptions={() => trackingProfile(content()).options}
               onChange={(placement) => background.movePoffo(placement).catch(report)}
             />
           )}

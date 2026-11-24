@@ -7,6 +7,10 @@ import ashActions from './ash-actions.json'
 import ash from './ash.json'
 import previous from './legacy-bindings.json'
 import revisions from './previous-bindings.json'
+import names from './previous-names.json'
+import previousExamples from './examples/ko.json'
+import previousThresholds from './previous-thresholds.json'
+import {migrateSemanticExamples} from './migrate-semantic-examples'
 
 const actions = new Map(
   Object.entries(ashActions).map(([id, action]) => [id, semanticActionSchema.parse(action)]),
@@ -21,6 +25,50 @@ const legacy = [
   ...semanticBindingsSchema.parse(revisions),
 ]
 const ids = [...actions.keys()].toSorted((first, second) => second.length - first.length)
+const groups = new Map(Object.entries(names.groups))
+const menus = new Map(Object.entries(names.menus))
+const examples = new Map(previousExamples.map((example) => [example.id, example]))
+const thresholds = new Map(Object.entries(previousThresholds))
+
+const translateExamples = (binding: SemanticBinding): SemanticBinding => {
+  const previous = examples.get(binding.id)
+  const replacement = defaults.get(binding.id)
+  if (previous === undefined || replacement === undefined) {
+    return binding
+  }
+  const text = binding.text === previous.text ? replacement.text : binding.text
+  const excludeText =
+    binding.excludeText === previous.excludeText ? replacement.excludeText : binding.excludeText
+  const unchanged =
+    (binding.text === previous.text || binding.text === replacement.text) &&
+    (binding.excludeText === previous.excludeText ||
+      binding.excludeText === replacement.excludeText)
+  const threshold =
+    unchanged && binding.threshold === thresholds.get(binding.id)
+      ? replacement.threshold
+      : binding.threshold
+  return text === binding.text &&
+    excludeText === binding.excludeText &&
+    threshold === binding.threshold
+    ? binding
+    : {...binding, excludeText, text, threshold}
+}
+
+const renameDefault = (binding: SemanticBinding): SemanticBinding => {
+  const group = groups.get(binding.exclusiveGroup ?? '') ?? binding.exclusiveGroup
+  const menu =
+    menus.get(binding.id) === binding.menuLabel
+      ? (defaults.get(binding.id)?.menuLabel ?? binding.menuLabel)
+      : binding.menuLabel
+  if (group === binding.exclusiveGroup && menu === binding.menuLabel) {
+    return binding
+  }
+  return {
+    ...binding,
+    ...(group === binding.exclusiveGroup ? {} : {exclusiveGroup: group}),
+    ...(menu === binding.menuLabel ? {} : {menuLabel: menu}),
+  }
+}
 
 const refreshDefault = (binding: SemanticBinding, key = binding.id): SemanticBinding => {
   const replacement = defaults.get(key)
@@ -31,13 +79,16 @@ const refreshDefault = (binding: SemanticBinding, key = binding.id): SemanticBin
     binding.action.id === originalAction?.id &&
     binding.action.kind === originalAction?.kind
   ) {
-    const original = legacy.find(
-      (item) =>
-        item.id === key &&
-        item.text === binding.text &&
-        item.excludeText === binding.excludeText &&
-        (item.text !== replacement.text || item.excludeText !== replacement.excludeText),
-    )
+    const original =
+      binding.examples === undefined
+        ? legacy.find(
+            (item) =>
+              item.id === key &&
+              item.text === binding.text &&
+              item.excludeText === binding.excludeText &&
+              (item.text !== replacement.text || item.excludeText !== replacement.excludeText),
+          )
+        : undefined
     const patch = {
       ...binding,
       ...(replacement.actions === undefined
@@ -125,5 +176,12 @@ export const migrateSemanticActions = (
       ),
     ]
   })
-  return changed ? result : bindings
+  const translated = result.map((binding) =>
+    binding.examples === undefined
+      ? migrateSemanticExamples(translateExamples(renameDefault(binding)))
+      : binding,
+  )
+  return changed || translated.some((binding, index) => binding !== result[index])
+    ? translated
+    : bindings
 }

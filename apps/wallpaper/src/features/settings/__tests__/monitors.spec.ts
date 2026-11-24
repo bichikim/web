@@ -3,6 +3,7 @@ import {invoke, isTauri} from '@tauri-apps/api/core'
 import {listen} from '@tauri-apps/api/event'
 import {afterEach, expect, it, vi} from 'vitest'
 import {listWallpaperMonitors, subscribeWallpaperMonitors} from '../monitors'
+import {interfaceLanguage, nativeLanguage} from '../../localization'
 
 vi.mock('@tauri-apps/api/core', () => ({invoke: vi.fn(), isTauri: vi.fn()}))
 vi.mock('@tauri-apps/api/event', () => ({listen: vi.fn()}))
@@ -45,4 +46,21 @@ it('should retain the browser preview without accessing native events', async ()
   stop()
   expect(invoke).not.toHaveBeenCalled()
   expect(listen).not.toHaveBeenCalled()
+})
+
+it('should update the browser preview label with the UI language while retaining its identity', async () => {
+  vi.mocked(isTauri).mockReturnValue(false)
+  const save = vi.spyOn(nativeLanguage, 'save').mockResolvedValue(undefined)
+  const previous = interfaceLanguage.language()
+  try {
+    const monitors = await listWallpaperMonitors()
+    await interfaceLanguage.change('en')
+    expect(monitors).toEqual([{id: 'browser-preview', name: 'Preview display'}])
+    await interfaceLanguage.change('ko')
+    expect(monitors).toEqual([{id: 'browser-preview', name: '미리보기 화면'}])
+    expect(invoke).not.toHaveBeenCalled()
+  } finally {
+    await interfaceLanguage.change(previous)
+    save.mockRestore()
+  }
 })

@@ -1,4 +1,4 @@
-import {cleanup, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, expect, test} from 'vitest'
 import {SCodexSpeechStack} from '../../src/components/SCodexSpeechStack'
 import {readSpeechMask} from '../../src/features/speech/read-speech-mask'
@@ -16,7 +16,7 @@ const paint = () =>
   new Promise<void>((resolve) => {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
   })
-const mount = () => {
+const mount = async () => {
   render(() => (
     <main class="w-[272px] p-12">
       <SCodexSpeechStack
@@ -33,15 +33,22 @@ const mount = () => {
       />
     </main>
   ))
+  const list = screen.getByRole('list')
+  fireEvent.pointerEnter(list)
+  list.getBoundingClientRect()
+  const animations = Array.from(list.children).flatMap((card) =>
+    card.firstElementChild!.getAnimations(),
+  )
+  animations.forEach((animation) => animation.finish())
+  await Promise.allSettled(animations.map((animation) => animation.finished))
+  await paint()
   return screen.getByRole('main')
 }
 
 test('should retain headers and controls while transparent margins and rounded corners pass through', async () => {
-  const root = mount()
+  const root = await mount()
   const canvas = document.createElement('canvas')
-  await expect
-    .poll(() => screen.getByRole('list').getBoundingClientRect().height)
-    .toBeGreaterThan(400)
+  await expect.poll(() => screen.getByRole('list').getBoundingClientRect().height).toBe(322)
   const mask = readSpeechMask({canvas, element: root})
   expect(hit(mask, 12, 100)).toBe(false)
   for (const card of screen.getAllByRole('listitem')) {
@@ -59,7 +66,7 @@ test('should retain headers and controls while transparent margins and rounded c
 })
 
 test('should match browser hit testing for clipped bodies and update from actual animation frames', async () => {
-  const root = mount()
+  const root = await mount()
   const canvas = document.createElement('canvas')
   const check = () => {
     const mask = readSpeechMask({canvas, element: root})
@@ -100,9 +107,7 @@ test('should match browser hit testing for clipped bodies and update from actual
       }
     }
   }
-  await expect
-    .poll(() => screen.getByRole('list').getBoundingClientRect().height)
-    .toBeGreaterThan(400)
+  await expect.poll(() => screen.getByRole('list').getBoundingClientRect().height).toBe(322)
   check()
   const outgoing = screen
     .getAllByRole('listitem')

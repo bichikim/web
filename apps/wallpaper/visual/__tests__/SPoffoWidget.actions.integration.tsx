@@ -82,7 +82,7 @@ test('should toggle a widget pose and retain it through speech and remount', asy
   try {
     const player = await ready.promise
     const menu = openMenu()
-    const toggle = screen.getByRole('menuitemcheckbox', {name: '귀엽게 작아지기'})
+    const toggle = screen.getByRole('menuitemcheckbox', {name: 'Shrink'})
     expect(toggle).toHaveAttribute('aria-checked', 'false')
     const bounds = menu.getBoundingClientRect()
     expect(bounds.right).toBeLessThanOrEqual(innerWidth)
@@ -108,7 +108,7 @@ test('should toggle a widget pose and retain it through speech and remount', asy
     const reopened = await ready.promise
     await expect.poll(() => reopened.getParameterValue('Param95'), {timeout: 3000}).toBeCloseTo(1)
     openMenu()
-    const checked = screen.getByRole('menuitemcheckbox', {name: '귀엽게 작아지기'})
+    const checked = screen.getByRole('menuitemcheckbox', {name: 'Shrink'})
     expect(checked).toHaveAttribute('aria-checked', 'true')
     await userEvent.click(checked)
     await expect.poll(() => reopened.getParameterValue('Param95'), {timeout: 3000}).toBeCloseTo(0)

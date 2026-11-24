@@ -9,6 +9,7 @@ export default defineConfig({
   ],
   testMatch: [
     '**/album.e2e.ts',
+    '**/character-renderer.e2e.ts',
     '**/diagonal.e2e.ts',
     '**/navigation.e2e.ts',
     '**/speech-menu.e2e.ts',

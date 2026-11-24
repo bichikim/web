@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {useNumberInput} from '../features/number-input'
 import {SChevron} from './SChevron'
 
@@ -65,7 +66,7 @@ export const SNumberInput = (props: SNumberInputProps) => {
           type="button"
           tabindex="-1"
           class="wallpaper-step"
-          aria-label={`${props.label ?? '값'} 늘리기`}
+          aria-label={uiText('{value0} 늘리기', {value0: String(props.label ?? '값')})}
           disabled={props.disabled || (props.max !== undefined && input.value() >= props.max)}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => input.step(1)}
@@ -76,7 +77,7 @@ export const SNumberInput = (props: SNumberInputProps) => {
           type="button"
           tabindex="-1"
           class="wallpaper-step"
-          aria-label={`${props.label ?? '값'} 줄이기`}
+          aria-label={uiText('{value0} 줄이기', {value0: String(props.label ?? '값')})}
           disabled={props.disabled || (props.min !== undefined && input.value() <= props.min)}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => input.step(-1)}

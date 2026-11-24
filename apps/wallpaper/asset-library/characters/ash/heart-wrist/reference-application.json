@@ -1,0 +1,19 @@
+{
+  "reference": "wrist-reference.png",
+  "runtimeSha256": "88cf0d741c97549f28864b26efe407a444a885d60287df2f7da94f918366e5d5",
+  "previousRejectedSha256": "cf21e4cd33be40f1259843727b05ef02ab8bfcc328068706fdced7da40a754a0",
+  "connectionSurfaces": ["coat-free:heart-right:hand", "coat-free:heart-right:ArtMesh994"],
+  "intermediateSkinPartAdded": false,
+  "forearmCoordinatesAndAlphaPreserved": true,
+  "forearmWidth": 113.82054745795428,
+  "handFingerPixelError": 0,
+  "handFingerUvError": 0,
+  "materialMethod": "Completed ChatGPT/Qwen anatomy reference used only for lower palm. Original finger and nail pixels packed without resizing. Original forearm remains undeformed. RGB at the short forearm endpoint is cleaned with its own original color profile; alpha stays unchanged.",
+  "jointDeformationRange": 35,
+  "texturePaddingBeyondMeshBoundary": 4,
+  "packaging": "Pure RGBA channel assembly and lossless atlas copy at Poffo serialization boundary",
+  "unusedEncodingJobCancelled": "0085b14a-fecf-459b-94c5-b3c5769f91bb",
+  "actualAppResource": "app-resource.json",
+  "runtimeMotionProof": "native-verification.json",
+  "widthComparison": "wrist-width-comparison.png"
+}

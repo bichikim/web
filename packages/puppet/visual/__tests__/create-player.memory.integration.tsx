@@ -38,7 +38,12 @@ test('should release mask-only texture images after repeated player lifetimes', 
   const source = fixture()
   const cycle = async () => {
     const canvas = document.createElement('canvas')
-    const player = await createPlayer({canvas, document: source, renderer: 'webgl', resolution: 1})
+    const player = await createPlayer({
+      canvas,
+      document: source,
+      renderer: 'pixi-webgl',
+      resolution: 1,
+    })
     player.destroy()
   }
   await session.send('HeapProfiler.enable')
@@ -100,7 +105,12 @@ test('should invalidate native GPU buffers, textures and programs when its conte
   const canvas = document.createElement('canvas')
   let player: Player | undefined
   try {
-    player = await createPlayer({canvas, document: fixture(), renderer: 'webgl', resolution: 1})
+    player = await createPlayer({
+      canvas,
+      document: fixture(),
+      renderer: 'pixi-webgl',
+      resolution: 1,
+    })
     player.redraw()
     expect(buffers.some(({gl, value}) => gl.isBuffer(value))).toBe(true)
     expect(textures.some(({gl, value}) => gl.isTexture(value))).toBe(true)
@@ -142,7 +152,7 @@ test('should release decoded image resources held by retired render batches', as
     player = await createPlayer({
       canvas: document.createElement('canvas'),
       document: fixture(),
-      renderer: 'webgl',
+      renderer: 'pixi-webgl',
       resolution: 1,
     })
     player.redraw()
@@ -174,10 +184,15 @@ test('should preserve another live player when a player with identical shaders i
     first = await createPlayer({
       canvas: document.createElement('canvas'),
       document: fixture(),
-      renderer: 'webgl',
+      renderer: 'pixi-webgl',
       resolution: 1,
     })
-    second = await createPlayer({canvas, document: fixture(), renderer: 'webgl', resolution: 1})
+    second = await createPlayer({
+      canvas,
+      document: fixture(),
+      renderer: 'pixi-webgl',
+      resolution: 1,
+    })
     first.stop()
     second.stop()
     first.redraw()

@@ -1,0 +1,205 @@
+{
+  "modelSha256": "22cda189d4ca0313ed3d74e5da27287335e3359996a155efddaaf063654a1739",
+  "modelBytes": 22602143,
+  "newWristCount": 14,
+  "nativePoseCount": 14,
+  "nativePoses": [
+    {
+      "pose": "coffee",
+      "previewId": "ash:coffee",
+      "readyFrame": 1794201626313.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    },
+    {
+      "pose": "microphone",
+      "previewId": "ash:microphone",
+      "readyFrame": 1794201791943.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    },
+    {
+      "pose": "knife",
+      "previewId": "ash:knife",
+      "readyFrame": 1794201796264.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    },
+    {
+      "pose": "heart",
+      "previewId": "ash:finger-heart",
+      "readyFrame": 1794201802197.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    },
+    {
+      "pose": "paws",
+      "previewId": "ash:cat-paws",
+      "readyFrame": 1794201807433.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    },
+    {
+      "pose": "fists",
+      "previewId": "ash:fists",
+      "readyFrame": 1794201850675.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    },
+    {
+      "pose": "gamepad",
+      "previewId": "ash:controller",
+      "readyFrame": 1794201854172.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    },
+    {
+      "pose": "cuffs",
+      "previewId": "ash:handcuffs",
+      "readyFrame": 1794201858594.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    },
+    {
+      "pose": "noodles",
+      "previewId": "ash:noodles",
+      "readyFrame": 1794202085041.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    },
+    {
+      "pose": "notes",
+      "previewId": "ash:notes",
+      "readyFrame": 1794202116713.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    },
+    {
+      "pose": "thumb",
+      "previewId": "ash:thumbs-up",
+      "readyFrame": 1794202122259.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    },
+    {
+      "pose": "press-left",
+      "previewId": "ash:press-left",
+      "readyFrame": 1794202127101.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    },
+    {
+      "pose": "press-right",
+      "previewId": "ash:press-right",
+      "readyFrame": 1794202131903.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    },
+    {
+      "pose": "writing",
+      "previewId": "ash:notes-detail",
+      "readyFrame": 1794202136650.3335,
+      "capture": {
+        "height": 1878,
+        "pid": 40672,
+        "pointerInputUsed": false,
+        "width": 2314,
+        "window": 623
+      }
+    }
+  ],
+  "pointerInputUsed": false,
+  "sourceRigVerification": {
+    "poseCount": 9,
+    "statesPerPose": 6,
+    "coatOnMaximumVertexError": 0,
+    "forearmMaximumVertexError": 0,
+    "handShapeMaximumVertexError": 4.547473508864641e-13,
+    "pointerInputUsed": false
+  },
+  "browserTests": {
+    "passed": 10,
+    "files": [
+      "ash-wrists.integration.tsx",
+      "ash-arm-actions.integration.tsx",
+      "ash-thumb-coat.integration.tsx",
+      "ash-coat.integration.tsx",
+      "ash-notebook-transition.integration.tsx"
+    ],
+    "bufferingModes": [false, true]
+  },
+  "nativeBuild": "Wallpaper debug app; app restarted; loaded resource SHA256 and coffee wrist mesh SHA256 matched the final model",
+  "nativeModelPartCount": 1085,
+  "nativeProcessId": 40672,
+  "cleanup": {
+    "previewCleared": true,
+    "observerRemoved": true,
+    "pointerInputUsed": false
+  },
+  "nativeModelFingerprintVerified": true
+}

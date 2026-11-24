@@ -54,7 +54,7 @@ pub(crate) async fn open_poffo_widget(
         return Err("Invalid Poffo widget size".to_owned());
     }
     let window = WebviewWindowBuilder::new(&app, &label, WebviewUrl::App(path.into()))
-        .title("Poffo 위젯")
+        .title(crate::locale::text(&app, "Poffo 위젯"))
         .inner_size(
             size.width.clamp(160.0, 4096.0),
             size.height.clamp(210.0, 4096.0),
@@ -94,6 +94,9 @@ pub(crate) async fn open_poffo_widget(
     } else {
         window.center().map_err(|error| error.to_string())?;
     }
+    window
+        .set_ignore_cursor_events(true)
+        .map_err(|error| error.to_string())?;
     window.show().map_err(|error| error.to_string())?;
     Ok(label)
 }

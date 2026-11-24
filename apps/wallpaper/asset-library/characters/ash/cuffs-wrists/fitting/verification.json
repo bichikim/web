@@ -1,0 +1,279 @@
+{
+  "sha256": "f3460b472098071cd9604afe7028e4d38a2c486c604165a5e691505b7989c9b9",
+  "scope": "Handcuffed Hands coat-free wrist curves and cuff fit",
+  "results": [
+    {
+      "name": "neutral",
+      "oldLinkError": 0,
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "rest",
+      "oldLinkError": 0,
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "up",
+      "oldLinkError": 0,
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "down",
+      "oldLinkError": 0,
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "left",
+      "oldLinkError": 0,
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "right",
+      "oldLinkError": 0,
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "up-again",
+      "oldLinkError": 0,
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "fade-0.25",
+      "oldLinkError": 0,
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "fade-0.5",
+      "oldLinkError": 0,
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "fade-0.75",
+      "oldLinkError": 0,
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "physics--1",
+      "oldLinkError": 0,
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "physics-1",
+      "oldLinkError": 0,
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    }
+  ],
+  "rotations": [
+    {
+      "side": "left",
+      "degrees": 24.25992687022206,
+      "maximumRotationError": 9.374856803373542e-13
+    },
+    {
+      "side": "right",
+      "degrees": 3.689580608291476,
+      "maximumRotationError": 9.374856803373542e-13
+    }
+  ],
+  "expressions": 28,
+  "coatStates": 2,
+  "visiblePartsCompared": 28650,
+  "allTexturesUnchanged": true,
+  "handsAndFingersUnchanged": true,
+  "forearmBodyUnchanged": true,
+  "otherActionsAndCoatOnUnchanged": true,
+  "chainAndCuffSeamsChecked": 126,
+  "newSkinParts": 0
+}

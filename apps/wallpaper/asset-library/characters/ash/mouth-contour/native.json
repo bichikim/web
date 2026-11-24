@@ -1,0 +1,135 @@
+{
+  "appPid": 50942,
+  "source": "voice",
+  "pointerInputUsed": false,
+  "resource": {
+    "sha256": "59e3549794559f45f8a36a072c99692ee3c253404dccea54a146364915ffe0b5",
+    "bytes": 20758355
+  },
+  "results": [
+    {
+      "shape": "i",
+      "form": 0.9,
+      "opening": 0.55,
+      "candidateError": 0.00012033320763293887,
+      "originalError": 3.333990521582109,
+      "deltas": {
+        "ArtMesh389": {
+          "candidate": 0.0001200117608277651,
+          "original": 3.2972693967901705
+        },
+        "ArtMesh382": {
+          "candidate": 0.0001148779633695085,
+          "original": 3.2939905621142316
+        },
+        "ArtMesh638": {
+          "candidate": 0.0001181265979539603,
+          "original": 3.2755221627433
+        },
+        "ArtMesh381": {
+          "candidate": 0.00012033320763293887,
+          "original": 3.333990521582109
+        },
+        "ArtMesh378": {
+          "candidate": 0.00012033320763293887,
+          "original": 3.1618655380946166
+        }
+      }
+    },
+    {
+      "shape": "a",
+      "form": 0,
+      "opening": 0.9,
+      "candidateError": 0.00012250276404301985,
+      "originalError": 1.844914863798067,
+      "deltas": {
+        "ArtMesh389": {
+          "candidate": 0.00012178425322417752,
+          "original": 1.2887828471070861
+        },
+        "ArtMesh382": {
+          "candidate": 0.00012250276404301985,
+          "original": 1.844914863798067
+        },
+        "ArtMesh638": {
+          "candidate": 0.00012250276404301985,
+          "original": 1.844914863798067
+        },
+        "ArtMesh381": {
+          "candidate": 0.0001223446142830653,
+          "original": 1.6284204093988137
+        },
+        "ArtMesh378": {
+          "candidate": 0.0001223446142830653,
+          "original": 1.6284204093988137
+        }
+      }
+    },
+    {
+      "shape": "e",
+      "form": 0.45,
+      "opening": 0.65,
+      "candidateError": 0.00012250047120687668,
+      "originalError": 2.6102165845607033,
+      "deltas": {
+        "ArtMesh389": {
+          "candidate": 0.00011426106766521116,
+          "original": 2.1096664475751368
+        },
+        "ArtMesh382": {
+          "candidate": 0.00012250047120687668,
+          "original": 2.6102165845607033
+        },
+        "ArtMesh638": {
+          "candidate": 0.00012250047120687668,
+          "original": 2.6102165845607033
+        },
+        "ArtMesh381": {
+          "candidate": 0.00012119536495447392,
+          "original": 1.6659588404741044
+        },
+        "ArtMesh378": {
+          "candidate": 0.0001198083086819679,
+          "original": 1.6659588404741044
+        }
+      }
+    },
+    {
+      "shape": "closed",
+      "form": 0,
+      "opening": 0,
+      "candidateError": 0.00012153027910244418,
+      "originalError": 0.00012153027910244418,
+      "deltas": {
+        "ArtMesh389": {
+          "candidate": 0.00010324264303562813,
+          "original": 0.00010324264303562813
+        },
+        "ArtMesh382": {
+          "candidate": 0.00012000923970845179,
+          "original": 0.00012000924016319914
+        },
+        "ArtMesh638": {
+          "candidate": 0.00012153027910244418,
+          "original": 0.00012153027910244418
+        },
+        "ArtMesh381": {
+          "candidate": 0.00011671269885482616,
+          "original": 0.00011671269840007881
+        },
+        "ArtMesh378": {
+          "candidate": 0.00011623834689089563,
+          "original": 0.00011623834643614828
+        }
+      }
+    }
+  ],
+  "restored": {
+    "restored": true,
+    "form": 0,
+    "open": 0,
+    "observerRemoved": true,
+    "pointerInputUsed": false
+  },
+  "screenshots": ["native-i.png", "native-a.png", "native-e.png"]
+}

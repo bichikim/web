@@ -1,4 +1,6 @@
 export * from './native'
 export * from './parameters'
+export * from './select-actions'
+export * from './use-agent-selection'
 export * from './use-agent-signals'
 export * from './use-agent-state'

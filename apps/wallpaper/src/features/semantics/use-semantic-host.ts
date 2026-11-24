@@ -8,7 +8,8 @@ import {
   type SemanticInput,
 } from '@winter-love/wallpaper/settings/semantics'
 import {createSemanticModel} from './model'
-import {classifySemantics} from './classify'
+import {createSemanticAnalysis} from './create-semantic-analysis'
+import {analyzeSemanticWindow} from './analyze-semantic-window'
 import {
   announceSemantics,
   sendSemanticFrame,
@@ -38,6 +39,7 @@ const stopSubscription = (subscription: Promise<() => void>) =>
 
 export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime => {
   const model = createSemanticModel()
+  const analyze = createSemanticAnalysis(model.embed)
   const [inputs, setInputs] = createSignal<ReadonlyMap<string, SemanticInput>>(new Map())
   const draws = createRandomDraws(() => Math.random())
   const [busy, setBusy] = createSignal(false)
@@ -55,9 +57,10 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
   const pending = new Map<string, {signature: string; input: SemanticInput}>()
   const signatures = new Map<string, string>()
   let disposed = false
+  const isCurrent = (id: string, signature: string) => !disposed && signatures.get(id) === signature
   const publish = async (frame: SemanticFrame) => {
     if (!disposed) {
-      const value = {...frame, previewId: manual.selection(frame.widgetId)}
+      const value = {...frame, ...manual.selection(frame.widgetId)}
       setFrames((values) => new Map(values).set(frame.widgetId, value))
       await sendSemanticFrame(value)
     }
@@ -75,19 +78,18 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
           props.widgets().find((widget) => widget.id === id)?.speech?.semanticBindings ?? []
         try {
           // oxlint-disable-next-line no-await-in-loop -- One shared model processes the newest pending text per widget in order.
-          const scores = await classifySemantics({
+          await analyzeSemanticWindow({
+            analyze,
             bindings,
-            embed: model.embed,
-            text: job.input.text,
+            current: () => isCurrent(id, job.signature),
+            input: job.input,
+            publish: async (scores) => {
+              const settings = props.widgets().find((item) => item.id === id)?.speech?.randomActions
+              const fallbackId = draws.select({bindings, input: job.input, scores, settings})
+              await publish(analysisFrame(job.input, scores, fallbackId))
+              setError(null)
+            },
           })
-          if (signatures.get(id) === job.signature) {
-            const settings = props.widgets().find((widget) => widget.id === id)
-              ?.speech?.randomActions
-            const fallbackId = draws.select({bindings, input: job.input, scores, settings})
-            // oxlint-disable-next-line no-await-in-loop -- Publish this completed widget before processing the next.
-            await publish(analysisFrame(job.input, scores, fallbackId))
-            setError(null)
-          }
         } catch (cause) {
           if (!disposed && signatures.get(id) === job.signature) {
             console.error('Local semantic analysis failed', cause)
@@ -113,10 +115,6 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
         }),
       )
     }
-  }
-  const test = (widgetId: string, text: string) => {
-    signatures.delete(widgetId)
-    accept({text, widgetId})
   }
   const subscriptions = [
     subscribeSemanticInput(accept),
@@ -183,9 +181,11 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
   return {
     busy,
     error,
-    preview: manual.preview,
-    previewing: manual.previewing,
+    ...manual.runtime,
     score: (widgetId, id) => frames().get(widgetId)?.scores[id],
-    test,
+    test: (widgetId: string, text: string) => {
+      signatures.delete(widgetId)
+      accept({text, widgetId})
+    },
   }
 }

@@ -61,6 +61,29 @@ fn clamped(parameter: &Parameter, value: f64) -> f64 {
     parameter.bound(finite_or(value, parameter.default_value))
 }
 
+/// Seeds a held output in the existing solver before interaction blending is removed.
+pub(crate) fn release(
+    pendulum: &Pendulum,
+    input: &Parameter,
+    output: &Parameter,
+    (input_value, base_output, held): (f64, f64, f64),
+) -> Option<PendulumState> {
+    if !held.is_finite() || pendulum.output_scale == 0.0 {
+        return None;
+    }
+    let target = (clamped(input, input_value) - input.default_value) * pendulum.input_scale;
+    Some(PendulumState {
+        accumulator: 0.0,
+        position: (clamped(output, held) - clamped(output, base_output)) / pendulum.output_scale
+            + if pendulum.output_mode == Some(OutputMode::Lag) {
+                target
+            } else {
+                0.0
+            },
+        velocity: 0.0,
+    })
+}
+
 /// Frame timing for [`evaluate`]. With `settle`, outputs jump to their static equilibrium.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct PhysicsStep {

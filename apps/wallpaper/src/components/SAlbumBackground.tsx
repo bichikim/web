@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {type Accessor, createSignal} from 'solid-js'
 import type {AlbumWallpaper} from '@winter-love/wallpaper/settings/model'
 import type {BackgroundMedia} from '@winter-love/wallpaper/model'
@@ -23,7 +24,7 @@ export const SAlbumBackground = (props: SAlbumBackgroundProps) => {
     <canvas
       ref={setCanvas}
       class="block h-full w-full"
-      aria-label={album.current()?.name ?? '앨범 배경'}
+      aria-label={album.current()?.name ?? uiText('앨범 배경')}
     />
   )
 }

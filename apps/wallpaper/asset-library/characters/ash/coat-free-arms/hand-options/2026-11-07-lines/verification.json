@@ -1,0 +1,16 @@
+{
+  "modelSha256": "4d6b9adbac59396856c3705bbd88a6cac149b2b6b69a5af48ab85427fb42e47e",
+  "beforeModelSha256": "c1d1f4fe1a96fd363502b6e5399b01a89c3dec66c6b2c3124e99e3c8e59bd5a3",
+  "textureSha256": "ed874e0eab0df8a73df23ec396183961240de804ba7db5e699f3df9aba316bf1",
+  "modelBytes": 9761044,
+  "changedParts": ["coat-free:notes-left:hand"],
+  "nativeFingerAndPenPartsUnchanged": ["ArtMesh136", "ArtMesh137", "ArtMesh139"],
+  "allMeshesBindingsSceneGluePhysicsUnchanged": true,
+  "image": {
+    "dimensions": [1254, 1254],
+    "outsideEditRgbMaxDelta": 0,
+    "outsideEditAlphaMaxDelta": 1,
+    "belowCutAlphaPixels": 0
+  },
+  "comfyPromptId": "9d2f3474-690b-41b2-b763-fc5c26c25990"
+}

@@ -2,6 +2,7 @@ import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import {activeMenuBindings} from '@winter-love/wallpaper/settings/active-menu-bindings'
 import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
 import type {ContextAction} from './types'
+import {actionName} from './action-name'
 
 export const menuActions = (bindings: readonly SemanticBinding[]): readonly ContextAction[] => {
   const checked = new Set(activeMenuBindings(bindings).map((binding) => binding.id))
@@ -16,7 +17,7 @@ export const menuActions = (bindings: readonly SemanticBinding[]): readonly Cont
       label:
         binding.menuLabel?.trim() ||
         semanticTargets(binding)
-          .map((action) => action.id)
+          .map((action) => actionName(action))
           .join(' + '),
     }))
 }

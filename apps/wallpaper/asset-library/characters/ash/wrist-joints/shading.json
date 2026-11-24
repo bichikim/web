@@ -1,0 +1,114 @@
+[
+  {
+    "group": "coffee-left",
+    "adjusted": 3605,
+    "maximumChannelChange": 65,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  },
+  {
+    "group": "microphone-left",
+    "adjusted": 3681,
+    "maximumChannelChange": 86,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  },
+  {
+    "group": "knife-left",
+    "adjusted": 3888,
+    "maximumChannelChange": 76,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  },
+  {
+    "group": "heart-right",
+    "adjusted": 3991,
+    "maximumChannelChange": 81,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  },
+  {
+    "group": "paws-right",
+    "adjusted": 3511,
+    "maximumChannelChange": 84,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  },
+  {
+    "group": "paws-left",
+    "adjusted": 3412,
+    "maximumChannelChange": 82,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  },
+  {
+    "group": "fists-right",
+    "adjusted": 3105,
+    "maximumChannelChange": 83,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  },
+  {
+    "group": "fists-left",
+    "adjusted": 4517,
+    "maximumChannelChange": 80,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  },
+  {
+    "group": "gamepad-right",
+    "adjusted": 4626,
+    "maximumChannelChange": 76,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  },
+  {
+    "group": "gamepad-left",
+    "adjusted": 4600,
+    "maximumChannelChange": 77,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  },
+  {
+    "group": "cuffs-right",
+    "adjusted": 3121,
+    "maximumChannelChange": 68,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  },
+  {
+    "group": "cuffs-left",
+    "adjusted": 3067,
+    "maximumChannelChange": 85,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  },
+  {
+    "group": "noodles-right",
+    "adjusted": 3268,
+    "maximumChannelChange": 81,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  },
+  {
+    "group": "noodles-left",
+    "adjusted": 3019,
+    "maximumChannelChange": 73,
+    "blendLength": 55,
+    "handArtworkUnchanged": true,
+    "forearmAlphaAndOutlinePreserved": true
+  }
+]

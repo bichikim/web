@@ -1,6 +1,7 @@
 import {EditorCheckbox, EditorNumberField} from '../../../design-system'
 import {Show} from 'solid-js'
 import {PUPPET_MAXIMUM_DRAW_ORDER, type PuppetSceneGroupNode} from '../../../player'
+import {isGroupDrawOrderUnit} from '../../../player/internal/group-draw-order'
 import type {GroupPropertiesController} from './types'
 
 interface GroupDrawOrderFieldsProps {
@@ -12,7 +13,7 @@ interface GroupDrawOrderFieldsProps {
 
 /**
  * Whether the group sorts as one draw order unit (Cubism's grouped part), and its draw order.
- * Offscreen groups always do.
+ * Isolated and offscreen groups remain ordering units without an explicit rest order.
  */
 export const GroupDrawOrderFields = (props: GroupDrawOrderFieldsProps) => {
   const grouped = () => props.group.properties?.drawOrder !== undefined
@@ -27,7 +28,7 @@ export const GroupDrawOrderFields = (props: GroupDrawOrderFieldsProps) => {
           onChange={props.controller.toggleDrawOrderGroup}
         />
       </div>
-      <Show when={grouped() || props.controller.properties().offscreen}>
+      <Show when={isGroupDrawOrderUnit(props.group.properties)}>
         <label>
           그리기 순서
           <EditorNumberField

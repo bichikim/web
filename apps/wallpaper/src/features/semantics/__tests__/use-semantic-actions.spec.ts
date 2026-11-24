@@ -1,8 +1,64 @@
 /** @vitest-environment jsdom */
-import {createRoot} from 'solid-js'
+import {createRoot, createSignal} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 import {sendSemanticFrame} from '../channel'
 import {useSemanticActions} from '../use-semantic-actions'
+
+it('should defer conflicting bundles to states while retaining unrelated expressions', async () => {
+  const player = {
+    resetMotionHistory: vi.fn(),
+    setExpressionLayer: vi.fn(),
+    startMotion: vi.fn(),
+  }
+  const [reserved, setReserved] = createSignal<ReadonlySet<string>>(new Set())
+  const bindings = ['hand', 'eyes'].map((id) => ({
+    actions: (id === 'hand' ? ['hand', 'detail'] : [id]).map((actionId) => ({
+      id: actionId,
+      kind: 'expression' as const,
+    })),
+    enabled: true,
+    exclusiveGroup: id,
+    id,
+    mode: 'toggle' as const,
+    parameterId: null,
+    text: id,
+    threshold: 0.8,
+  }))
+  const dispose = createRoot((cleanup) => {
+    useSemanticActions({
+      actions: () =>
+        bindings.flatMap((binding) =>
+          binding.actions.map((action) => ({
+            action,
+            label: action.id,
+            parameterIds: [action.id],
+          })),
+        ),
+      bindings: () => bindings,
+      player: () => player,
+      reservedParameters: reserved,
+      widgetId: () => 'state-priority',
+    })
+    return cleanup
+  })
+  try {
+    await sendSemanticFrame({scores: {eyes: 1, hand: 1}, widgetId: 'state-priority'})
+    const hand = player.setExpressionLayer.mock.calls.find(([, id]) => id === 'hand')![0]
+    const detail = player.setExpressionLayer.mock.calls.find(([, id]) => id === 'detail')![0]
+    const eyes = player.setExpressionLayer.mock.calls.find(([, id]) => id === 'eyes')![0]
+    player.setExpressionLayer.mockClear()
+    setReserved(new Set(['hand']))
+    expect(player.setExpressionLayer).toHaveBeenCalledWith(hand)
+    expect(player.setExpressionLayer).toHaveBeenCalledWith(detail)
+    expect(player.setExpressionLayer).toHaveBeenCalledTimes(2)
+    expect(player.setExpressionLayer).not.toHaveBeenCalledWith(eyes)
+    setReserved(new Set<string>())
+    expect(player.setExpressionLayer).toHaveBeenCalledWith(hand, 'hand')
+    expect(player.setExpressionLayer).toHaveBeenLastCalledWith(detail, 'detail')
+  } finally {
+    dispose()
+  }
+})
 
 it('should execute character presets, keep manual actions during analysis and release at speech end', async () => {
   let expression: string | undefined

@@ -6,7 +6,17 @@ import type {PoffoTracking} from '@winter-love/wallpaper/settings/tracking'
 import {usePuppet} from '../../features/background/use-puppet'
 import {SPoffoTrackingPreview} from '../SPoffoTrackingPreview'
 
-vi.mock('../../features/background/use-puppet', () => ({usePuppet: vi.fn()}))
+vi.mock('../../features/background/use-puppet', () => ({
+  usePuppet: vi.fn(() => ({
+    cancel: vi.fn(),
+    canvasKey: () => document,
+    finish: vi.fn(),
+    lostCapture: vi.fn(),
+    move: vi.fn(),
+    ready: () => true,
+    start: vi.fn(),
+  })),
+}))
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()

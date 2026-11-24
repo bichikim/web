@@ -1,7 +1,8 @@
 /** @vitest-environment jsdom */
 import {cleanup, renderHook, waitFor} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
-import {createPlayer, preparePuppetDocument} from '@winter-love/puppet/player'
+import {createPlayer, type Player, preparePuppetDocument} from '@winter-love/puppet/player'
 import {useCharacterPreview} from '..'
 import {connectCharacterBlink} from '../blink'
 
@@ -12,9 +13,11 @@ const player = vi.hoisted(() => ({
   patchParameterBlends: vi.fn(),
   patchParameterValues: vi.fn(),
   pause: vi.fn(),
+  pickPart: vi.fn<Player['pickPart']>(),
   resume: vi.fn(),
   setBreath: vi.fn(),
   setExpression: vi.fn(),
+  setExpressionLayer: vi.fn(),
   setEyeBlink: vi.fn(),
   setMotion: vi.fn(),
   setPhysicsPreview: vi.fn(),
@@ -99,6 +102,7 @@ test('should pass the native Poffo download to its validation Worker without gzi
   const text = vi.spyOn(Response.prototype, 'text')
   const hook = setup()
   await waitFor(() => expect(createPlayer).toHaveBeenCalledOnce(), {interval: 1})
+  expect(createPlayer).toHaveBeenCalledWith(expect.objectContaining({buffering: true}))
   const options = vi.mocked(preparePuppetDocument).mock.calls[0]![0]
   expect(fetch).toHaveBeenCalledWith('/models/white-cat/model.poffo', expect.any(Object))
   expect(text).not.toHaveBeenCalled()
@@ -111,6 +115,59 @@ test('should pass the native Poffo download to its validation Worker without gzi
   hook.cleanup()
   expect(player.destroy).toHaveBeenCalledOnce()
   expect(releaseBlink).toHaveBeenCalledOnce()
+})
+
+test('should keep clothing separate from the selected expression', async () => {
+  const [coatOff, setCoatOff] = createSignal(false)
+  const [expressionId, setExpression] = createSignal<string | null>('손하트')
+  const canvas = document.createElement('canvas')
+  const hook = renderHook(() =>
+    useCharacterPreview({canvas: () => canvas, coatOff, expressionId, playing: () => true}),
+  )
+  await waitFor(() => expect(createPlayer).toHaveBeenCalledOnce(), {interval: 1})
+  setCoatOff(true)
+  expect(player.setExpressionLayer).toHaveBeenLastCalledWith('outfit', '외투 벗기')
+  expect(player.setExpression).toHaveBeenLastCalledWith('손하트')
+  setExpression('커피 들기')
+  expect(player.setExpressionLayer).toHaveBeenLastCalledWith('outfit', '외투 벗기')
+  setCoatOff(false)
+  expect(player.setExpressionLayer).toHaveBeenLastCalledWith('outfit', undefined)
+  expect(player.setExpression).toHaveBeenLastCalledWith('커피 들기')
+  hook.cleanup()
+})
+
+test('should announce a rendered character only after its input connections are ready', async () => {
+  const pending = Promise.withResolvers<typeof player>()
+  vi.mocked(createPlayer, {partial: true}).mockReturnValueOnce(pending.promise)
+  const ready = vi.fn()
+  const canvas = document.createElement('canvas')
+  const hook = renderHook(() =>
+    useCharacterPreview({canvas: () => canvas, onReady: ready, playing: () => true}),
+  )
+  await waitFor(() => expect(createPlayer).toHaveBeenCalledOnce(), {interval: 1})
+  vi.mocked(createPlayer).mock.calls[0]![0].onFrame?.({duration: 0, motionId: null, time: 0})
+  expect(ready).not.toHaveBeenCalled()
+  pending.resolve(player)
+  await waitFor(() => expect(ready).toHaveBeenCalledOnce(), {interval: 1})
+  vi.mocked(createPlayer).mock.calls[0]![0].onFrame?.({duration: 0, motionId: null, time: 0})
+  expect(ready).toHaveBeenCalledOnce()
+  hook.cleanup()
+})
+
+test('should hit only a painted part using canvas-local pointer coordinates', async () => {
+  const canvas = document.createElement('canvas')
+  vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 50, 480, 600))
+  const hook = renderHook(() => useCharacterPreview({canvas: () => canvas, playing: () => true}))
+  await waitFor(() => expect(player.setPhysicsPreview).toHaveBeenCalledWith(true), {interval: 1})
+  vi.mocked(player.pickPart).mockReturnValue('body')
+  expect(hook.result.hitTest({clientX: 340, clientY: 350})).toBe(true)
+  expect(player.pickPart).toHaveBeenLastCalledWith({x: 240, y: 300})
+  vi.mocked(player.pickPart).mockReturnValue(undefined)
+  expect(hook.result.hitTest({clientX: 110, clientY: 60})).toBe(false)
+  player.pickPart.mockClear()
+  expect(hook.result.hitTest({clientX: 99, clientY: 350})).toBe(false)
+  expect(player.pickPart).not.toHaveBeenCalled()
+  hook.cleanup()
 })
 
 test('should not create a player when unmounted while its Blob is being prepared', async () => {

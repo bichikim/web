@@ -1,8 +1,8 @@
+import {text as uiText} from '../features/localization'
 import {createMemo, createSignal, Match, Show, Switch} from 'solid-js'
 import type {WallpaperController} from '../features/settings'
 import type {WallpaperContent} from '@winter-love/wallpaper/settings/model'
 import {SAlbumSettings} from './SAlbumSettings'
-import {SAMPLE_PUPPET_ID} from '../features/background/constants'
 import {SSegmentedControl} from './SSegmentedControl'
 import {SWallpaperPreview} from './SWallpaperPreview'
 import {SPoffoAssetPicker} from './SPoffoAssetPicker'
@@ -13,8 +13,18 @@ import {SPoffoTrackingSettings} from './SPoffoTrackingSettings'
 import type {PoffoTracking} from '@winter-love/wallpaper/settings/tracking'
 
 const MODES: readonly {readonly value: WallpaperContent['mode']; readonly label: string}[] = [
-  {label: '앨범', value: 'album'},
-  {label: '웹사이트', value: 'website'},
+  {
+    get label() {
+      return uiText('앨범')
+    },
+    value: 'album',
+  },
+  {
+    get label() {
+      return uiText('웹사이트')
+    },
+    value: 'website',
+  },
   {label: 'Poffo', value: 'puppet'},
 ]
 interface SWallpaperContentProps {
@@ -58,8 +68,12 @@ export const SWallpaperContent = (props: SWallpaperContentProps) => {
     })
   }
   const assets = createMemo(() => [
-    {label: '선택해 주세요', value: ''},
-    {label: 'Poffo 샘플', value: SAMPLE_PUPPET_ID},
+    {
+      get label() {
+        return uiText('선택해 주세요')
+      },
+      value: '',
+    },
     ...props.controller.puppets().map((puppet) => ({label: puppet.name, value: puppet.id})),
   ])
   const asset = () => {
@@ -77,12 +91,13 @@ export const SWallpaperContent = (props: SWallpaperContentProps) => {
     }
   }
   return (
-    <section aria-label="배경" class="grid gap-4">
+    <section aria-label={uiText('배경')} class="grid gap-4">
       <Show when={content().mode !== 'puppet'}>
         <SWallpaperPreview controller={props.controller} item={preview()} />
       </Show>
       <SSegmentedControl
-        label="배경 종류"
+        deferred
+        label={uiText('배경 종류')}
         options={MODES}
         value={content().mode}
         onChange={handleMode}
@@ -100,13 +115,13 @@ export const SWallpaperContent = (props: SWallpaperContentProps) => {
             disabled={props.controller.busy()}
           />
           <section
-            aria-label="Poffo 배경 조정"
+            aria-label={uiText('Poffo 배경 조정')}
             class="grid gap-3 border-0 border-t border-solid border-stone-200 pt-4"
           >
             <div class="flex items-center justify-between gap-3">
-              <h3 class="m-0 text-[13px] font-medium text-stone-700">배경 조정</h3>
+              <h3 class="m-0 text-[13px] font-medium text-stone-700">{uiText('배경 조정')}</h3>
               <div class="flex items-center gap-2 text-[13px] text-stone-700">
-                <span class="shrink-0">트래킹 입력</span>
+                <span class="shrink-0">{uiText('트래킹 입력')}</span>
                 <SPoffoTrackingSettings value={tracking()} onChange={handleTracking} />
               </div>
             </div>

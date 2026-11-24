@@ -1,0 +1,12 @@
+{
+  "sourceSha256": "7b3b8114c06175ad0be3456479c73f6c423e57066e0781cc47516e431cef320d",
+  "modelSha256": "c90d6279f0c3fe7e7a0906929d10ef0124e922042779b3ac91105551bee4f3a6",
+  "modelBytes": 19454037,
+  "originalPartsUnchanged": 1021,
+  "handAndArmShapeUnchanged": true,
+  "cupNoodlesUnchanged": true,
+  "addedStrokePart": "coat-free:coffee-left:wrist-outline",
+  "sourceTextureUnchanged": true,
+  "colorFromOriginalForearm": [127, 39, 35],
+  "opacity": 0.82
+}

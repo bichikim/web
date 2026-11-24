@@ -1,0 +1,107 @@
+{
+  "beforeModelSha256": "fcda2ff70725fb031c15dc29684b5cac7949c7b0732968007e9f91c1dc98cddf",
+  "modelSha256": "7d0b9642d2986c85e820f1830a13f9798f6651dbd6480799dd01d8d97e3ac337",
+  "modelBytes": 15576210,
+  "textureSha256": "b38a5a18df9393a2a4484d226d7185c61f4e4b19da39d4fea1885d7a725ec63d",
+  "changedPart": "ArtMesh125",
+  "geometryBindingsSceneGluePhysicsUnchanged": true,
+  "tool": "Local ComfyUI MCP",
+  "model": "Qwen-Image-2.1-Turbo-Q4_K_S.gguf",
+  "generationPromptId": "43745149-3a59-4547-8bdf-67c102b00c48",
+  "compositionPromptId": "2ca48abd-d351-4fff-be11-52cd4946d679",
+  "sourceReference": "hand-options/2026-11-07-wrist/reference.png",
+  "generation": "hand-options/2026-11-07-wrist/generation.json",
+  "composition": "hand-options/2026-11-07-wrist/composition.json",
+  "prompt": "hand-options/2026-11-07-wrist/prompt.txt",
+  "texture": "notebook-hand-atlas.png",
+  "handPreview": "notebook-hand.png",
+  "scope": "Retouch only the bottom of the original notebook-supporting hand; preserve fingers, upper hand, forearm, wrist length and all rigging.",
+  "postprocessing": {
+    "input": "Lossless WebP to PNG conversion; decoded RGBA maximum difference 0, avoiding the live loader WebP colour conversion",
+    "registration": {
+      "worldFrame": [2350, 1300, 700, 700],
+      "generatedSize": [768, 768],
+      "worldCropOrigin": [2334.5727605791485, 1382.5831057279545],
+      "crop": [0, 83, 433, 448],
+      "paste": [15, 0],
+      "resize": [224, 224]
+    },
+    "boundary": "Generated alpha clipped to original hand alpha inside the binary UV edit mask",
+    "colourTransition": "Eight native pixels of RGB blending inside the edit region; the silhouette uses the hard edit mask"
+  },
+  "imageVerification": {
+    "dimensions": [4096, 4096],
+    "channels": 4,
+    "editableAtlasRegion": {
+      "x": 2480,
+      "y": 1280,
+      "width": 224,
+      "height": 224,
+      "mask": "hand-edit.png"
+    },
+    "outsideEditRgbMaxDelta": 0,
+    "outsideEditAlphaMaxDelta": 0,
+    "maximumAlphaIncrease": 0,
+    "editedPixels": 3118,
+    "trimmedPixels": 223,
+    "opaqueEditedSkinPixels": 2017,
+    "textureSha256": "b38a5a18df9393a2a4484d226d7185c61f4e4b19da39d4fea1885d7a725ec63d"
+  },
+  "structureVerification": {
+    "changedTextures": ["ArtMesh125"],
+    "originalFingersOutsideEditUnchanged": true,
+    "allMeshesUvsIndicesUnchanged": true,
+    "allSceneBindingsGluePhysicsMotionsExpressionsUnchanged": true,
+    "originalForearmTextureUnchanged": true
+  },
+  "review": {
+    "detail": "notebook-hand-detail.png",
+    "context": "notebook-hand-context.png",
+    "turn": "notebook-hand-turn.png",
+    "physics": "notebook-hand-physics.png",
+    "live": "notebook-hand-live.png"
+  },
+  "discardedAttempts": [
+    {
+      "promptId": "7087645b-06f8-49a0-901c-72b3a9952b96",
+      "reason": "VAE warm-start roundtrip did not preserve original colour"
+    },
+    {
+      "promptId": "51f013b5-6e0b-4f0b-bbfa-48268bb8d3e9",
+      "reason": "The multi-image output followed the reference composition and retained the rounded wrist cap"
+    }
+  ],
+  "checks": {
+    "raster": "Strict zero difference outside the edit selection and no alpha extent increase",
+    "structure": "All geometry, UVs, scene, glues, physics, motions and expressions unchanged",
+    "playerReview": "Before/after static poses, head turns and live physics in the actual browser player",
+    "browser": {
+      "engines": ["chromium", "webkit"],
+      "fullRun": {
+        "passed": 21,
+        "failed": 1,
+        "total": 22,
+        "failure": "Existing pen-side live-physics movement assertion: buffering=true, movement 0.8403884186 < required 1; all new notebook-side tests passed"
+      },
+      "focusedRecheck": {
+        "files": 2,
+        "passed": 8,
+        "failed": 0,
+        "test": "ash-hand.integration.tsx",
+        "assertionsUnchanged": true
+      },
+      "result": "Every targeted case passed; the original full run retained one recorded timing-sensitive failure."
+    },
+    "oxlint": "passed for the new regression test",
+    "format": "pnpm format completed",
+    "typecheck": "Wallpaper passed",
+    "build": "Wallpaper passed; existing dynamic import and bundle size warnings remain",
+    "desktop": {
+      "restarted": true,
+      "pid": 88339,
+      "servedModelSha256": "7d0b9642d2986c85e820f1830a13f9798f6651dbd6480799dd01d8d97e3ac337",
+      "nativeUiVisuallyInspected": false,
+      "visualEvidence": "Actual browser player comparison and live physics captures"
+    }
+  }
+}

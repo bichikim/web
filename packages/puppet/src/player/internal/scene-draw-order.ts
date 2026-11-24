@@ -1,3 +1,4 @@
+import {isGroupDrawOrderUnit} from './group-draw-order'
 import {
   composeParameterGroupDrawOrder,
   composeParameterPartDrawOrder,
@@ -19,14 +20,13 @@ interface SortContext {
 }
 
 const isDrawOrderGroup = (node: PuppetSceneNode) =>
-  node.kind === 'group' &&
-  (node.properties?.drawOrder !== undefined || node.properties?.offscreen === true)
+  node.kind === 'group' && isGroupDrawOrderUnit(node.properties)
 
 const hasGroupOrder = (nodes: ReadonlyArray<PuppetSceneNode>): boolean =>
   nodes.some(
     (node) =>
       node.kind !== 'part' &&
-      ((node.kind === 'group' && node.properties?.drawOrder !== undefined) ||
+      ((node.kind === 'group' && isGroupDrawOrderUnit(node.properties)) ||
         hasGroupOrder(node.children)),
   )
 
@@ -149,24 +149,21 @@ const getOrderParameters = (document: PuppetDocument): ReadonlyArray<string> => 
   )
   const groupOrders = new Map(getGroupOrders(getDocumentScene(document).roots))
   return (document.parameterBindings ?? [])
-    .filter(
-      (binding) =>
-        // Legacy triangulated channels can change an equal rest order through rounding alone.
-        (binding.interpolation !== 'grid' && binding.parameterIds.length > 1) ||
-        binding.keyforms.some(
-          (form) =>
-            // Constant rest channels are omitted by the draw-order sampler as well.
-            form.parts.some(
-              (part) =>
-                part.properties?.drawOrder !== undefined &&
-                part.properties.drawOrder !== partOrders.get(part.partId),
-            ) ||
-            form.groups?.some(
-              (group) =>
-                group.properties.drawOrder !== undefined &&
-                group.properties.drawOrder !== groupOrders.get(group.groupId),
-            ),
-        ),
+    .filter((binding) =>
+      binding.keyforms.some(
+        (form) =>
+          // Constant rest channels are omitted by the draw-order sampler as well.
+          form.parts.some(
+            (part) =>
+              part.properties?.drawOrder !== undefined &&
+              part.properties.drawOrder !== partOrders.get(part.partId),
+          ) ||
+          form.groups?.some(
+            (group) =>
+              group.properties.drawOrder !== undefined &&
+              group.properties.drawOrder !== groupOrders.get(group.groupId),
+          ),
+      ),
     )
     .flatMap((binding) => [
       ...binding.parameterIds,

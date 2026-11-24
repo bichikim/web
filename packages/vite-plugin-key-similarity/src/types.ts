@@ -103,7 +103,7 @@ export interface KeySimilarityOptions {
   /** Selects imported calls and the argument containing each key. */
   readonly keyDetector: KeyDetector
   readonly modelIdentifier?: string
-  /** Overrides the q8 multilingual E5 model included with the package. */
+  /** Overrides the q8 multilingual E5 model prepared in the OS shared cache. */
   readonly modelPath?: string
   readonly modelRevision?: string
   /** Selects files when the CLI scans the project without a Vite module graph. */

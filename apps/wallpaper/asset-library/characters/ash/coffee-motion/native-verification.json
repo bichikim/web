@@ -1,0 +1,42 @@
+{
+  "source": "Actual Wallpaper Worker frames during vertical gaze reversal; same coherent hand/cup rendered through live physics",
+  "pointerInputUsed": false,
+  "poses": [
+    {
+      "name": "coffee-rest",
+      "headY": 0,
+      "physicsY": [0.054428727529633805, 0.01497752019418437],
+      "anchorError": 0,
+      "foldedTriangles": 0,
+      "maximumVertexError": 0.00043370546563892276,
+      "originalCupOpacity": 0
+    },
+    {
+      "name": "coffee-up",
+      "headY": 30,
+      "physicsY": [0.01046229030883631, -0.11878538539440404],
+      "anchorError": 0,
+      "foldedTriangles": 0,
+      "maximumVertexError": 0.00042109751211683033,
+      "originalCupOpacity": 0
+    },
+    {
+      "name": "coffee-down",
+      "headY": -30,
+      "physicsY": [0.06366407227875873, 0.5776630684837257],
+      "anchorError": 0,
+      "foldedTriangles": 0,
+      "maximumVertexError": 0.00039462374024878955,
+      "originalCupOpacity": 0
+    },
+    {
+      "name": "coffee-up-again",
+      "headY": 30,
+      "physicsY": [-0.2903564127524906, 0.7437770805446215],
+      "anchorError": 0,
+      "foldedTriangles": 0,
+      "maximumVertexError": 0.0005780375249742065,
+      "originalCupOpacity": 0
+    }
+  ]
+}

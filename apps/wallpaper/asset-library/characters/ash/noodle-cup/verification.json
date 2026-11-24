@@ -1,0 +1,218 @@
+{
+  "sourceSha256": "4141d54d32b7a9f3c6937c469f2c732793a67592f71ae1872d990ca5665eab36",
+  "sha256": "eb1b2ff4be261a9b934a436beef1dec2306480a4ebce7180114c84d906a52da2",
+  "bytes": 20787106,
+  "frontId": "ArtMesh47",
+  "rearId": "ArtMesh62",
+  "anchor": 38,
+  "removedIndependentLinks": [
+    "coat-free:noodles:joints:prepare:ArtMesh62",
+    "coat-free:noodles:joints:follow:ArtMesh62"
+  ],
+  "allTexturesPreserved": true,
+  "otherPartDataPreserved": true,
+  "physicsPreserved": true,
+  "method": "Reparent the original cup back to the cup front deformation branch, retain the original unglued cup shape, and follow the final front translation after wrist glue.",
+  "poses": [
+    {
+      "name": "rest",
+      "anchorError": 0,
+      "coherentError": 0,
+      "folded": 0,
+      "otherPartError": 0,
+      "frontOrder": 778,
+      "rearOrder": 758
+    },
+    {
+      "name": "up",
+      "anchorError": 0,
+      "coherentError": 0,
+      "folded": 0,
+      "otherPartError": 0,
+      "frontOrder": 778,
+      "rearOrder": 758
+    },
+    {
+      "name": "down",
+      "anchorError": 0,
+      "coherentError": 0,
+      "folded": 0,
+      "otherPartError": 0,
+      "frontOrder": 778,
+      "rearOrder": 758
+    },
+    {
+      "name": "left",
+      "anchorError": 0,
+      "coherentError": 0,
+      "folded": 0,
+      "otherPartError": 0,
+      "frontOrder": 778,
+      "rearOrder": 758
+    },
+    {
+      "name": "right",
+      "anchorError": 0,
+      "coherentError": 0,
+      "folded": 0,
+      "otherPartError": 0,
+      "frontOrder": 778,
+      "rearOrder": 758
+    },
+    {
+      "name": "opposed",
+      "anchorError": 0,
+      "coherentError": 0,
+      "folded": 0,
+      "otherPartError": 0,
+      "frontOrder": 778,
+      "rearOrder": 758
+    },
+    {
+      "name": "reverse",
+      "anchorError": 0,
+      "coherentError": 0,
+      "folded": 0,
+      "otherPartError": 0,
+      "frontOrder": 778,
+      "rearOrder": 758
+    }
+  ],
+  "otherActions": [
+    {
+      "expression": "울먹이는 눈",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "필기 동작",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "작아지기",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "얼굴 그림자",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "커피 들기",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "눈의 하이라이트 끄기",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "화남",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "노트 들기",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "게임패드 들기",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "수갑 찬 손",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "안경",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "반짝이는 눈",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "손하트",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "땀방울",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "눈물",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "엄지 척",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "하트 눈",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "목줄 동작",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "고양이 손",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "홍조",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "마이크 들기",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "긴장",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "왼손 버튼 누르기",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "오른손 버튼 누르기",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "칼 들기",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "주먹 쥐기",
+      "otherPartError": 0,
+      "rearHidden": true
+    },
+    {
+      "expression": "외투 벗기",
+      "otherPartError": 0,
+      "rearHidden": true
+    }
+  ]
+}

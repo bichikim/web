@@ -65,12 +65,22 @@ export const installNative = async (page: Page, label = 'manager') => {
       },
       unexpected: [],
     }
+    const commandsWithoutResponse = new Set([
+      'clear_widget_hit_region',
+      'configure_poffo_speech',
+      'select_poffo_speech',
+      'set_widget_hit_region',
+      'subscribe_poffo_cursor',
+    ])
     Object.assign(globalThis, {
       __TAURI_EVENT_PLUGIN_INTERNALS__: {
         unregisterListener: (_event: string, id: number) => listeners.delete(id),
       },
       __TAURI_INTERNALS__: {
         async invoke(command: string, args: Record<string, unknown> = {}) {
+          if (commandsWithoutResponse.has(command)) {
+            return
+          }
           switch (command) {
             case 'plugin:event|listen':
               identifier += 1
@@ -91,6 +101,16 @@ export const installNative = async (page: Page, label = 'manager') => {
               return
             case 'list_wallpaper_monitors':
               return state.monitors
+            case 'pending_storage_copy':
+              return null
+            case 'interface_language':
+              return 'ko'
+            case 'plugin:window|is_visible':
+              return true
+            case 'take_theme_request':
+              return new ArrayBuffer(0)
+            case 'open_poffo_widget':
+              return `poffo-widget-${(args.options as {id: string}).id}`
             case 'codex_bridge_status':
               return state.snapshot
             case 'poffo_speech_target':
@@ -99,9 +119,6 @@ export const installNative = async (page: Page, label = 'manager') => {
               return {}
             case 'codex_thread_title':
               return null
-            case 'set_widget_hit_region':
-            case 'clear_widget_hit_region':
-              return
             default:
               state.unexpected.push(command)
               throw new Error(`Unexpected native command: ${command}`)

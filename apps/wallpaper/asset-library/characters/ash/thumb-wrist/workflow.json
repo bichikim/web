@@ -1,0 +1,175 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-render.png"
+    }
+  },
+  "2": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "3": {
+    "class_type": "ImageCrop",
+    "inputs": {
+      "image": ["2", 0],
+      "x": 200,
+      "y": 16,
+      "width": 384,
+      "height": 640
+    }
+  },
+  "4": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": ["3", 0],
+      "upscale_method": "lanczos",
+      "width": 768,
+      "height": 1280,
+      "crop": "disabled"
+    }
+  },
+  "5": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "wrist-mask.png"
+    }
+  },
+  "6": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["5", 0],
+      "channel": "red"
+    }
+  },
+  "7": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["4", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "8": {
+    "class_type": "SetLatentNoiseMask",
+    "inputs": {
+      "samples": ["7", 0],
+      "mask": ["6", 0]
+    }
+  },
+  "10": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+      "unet_name": "Qwen-Image-2.1-Turbo-Q4_K_S.gguf"
+    }
+  },
+  "11": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "12": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+  },
+  "13": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": ["11", 0],
+      "vae": ["12", 0],
+      "resolution": 0,
+      "prompt": "只对原图中拇指向上的手势做精确的局部修复：只补全手掌根部接到前臂的那一小段手腕。现在手掌下缘像水平剪断后直接贴在前臂上，缺少解剖上自然的掌根过渡；请把掌根的边缘连续地收窄并平顺地连到原有前臂。手腕长度和前臂长度绝对不能增加，不要画成长长的连接带，不要改变前臂的位置、宽度和弯曲。完全保留原有拇指、指甲、四个弯曲手指、手背、握拳轮廓及其像素位置；拇指方向和手势不能改变。肤色、粉淡暖灰的柔和阴影、精细红棕色轮廓线必须与这张原画的前臂和手掌完全相同，手腕轮廓线与前臂的线宽连续一致，不要变细、变粗或变深。掌根到腕部应该是同一块连续皮肤，不能留下水平接缝、描边、台阶、矩形断口或额外的皮肤补丁。画布、缩放、构图、透明背景和其余区域保持原样。输出与原图相同尺寸的透明RGBA图像。",
+      "negative_prompt": "",
+      "images.image_1": ["4", 0]
+    }
+  },
+  "16": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": ["10", 0],
+      "device": "auto",
+      "dtype": "default"
+    }
+  },
+  "18": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["24", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["18", 0],
+      "filename_prefix": "Wallpaper/thumb-wrist/generated"
+    }
+  },
+  "20": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": ["16", 0],
+      "conditioning": ["13", 0]
+    }
+  },
+  "21": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 711110
+    }
+  },
+  "22": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "23": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0.0"
+    }
+  },
+  "24": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["21", 0],
+      "guider": ["20", 0],
+      "sampler": ["22", 0],
+      "sigmas": ["23", 0],
+      "latent_image": ["8", 0]
+    }
+  },
+  "25": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["4", 0],
+      "source": ["18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["6", 0]
+    }
+  },
+  "26": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["25", 0],
+      "filename_prefix": "Wallpaper/thumb-wrist/composite"
+    }
+  },
+  "27": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["4", 0],
+      "filename_prefix": "Wallpaper/thumb-wrist/reference"
+    }
+  }
+}

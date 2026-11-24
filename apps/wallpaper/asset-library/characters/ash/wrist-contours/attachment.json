@@ -1,0 +1,42 @@
+{
+  "sourceSha256": "8c27bca4b24049bbd4cd24af7934b17dd531b93e3a75ffc3657e9a753c101f75",
+  "modelSha256": "7b3b8114c06175ad0be3456479c73f6c423e57066e0781cc47516e431cef320d",
+  "modelBytes": 19438603,
+  "changedPartIds": [
+    "coat-free:coffee-left:joint:wrist-surface",
+    "coat-free:noodles-left:joint:wrist-surface"
+  ],
+  "change": "Match the forearm tip width to the existing hand. Deformation remains limited to the authored wrist joint region.",
+  "allOriginalTexturesUnchanged": true,
+  "allBindingsGluesPhysicsAndOtherActionsUnchanged": true,
+  "forearmTipWidthScale": 0.65,
+  "rotationDegrees": 0,
+  "probes": [
+    {
+      "group": "coffee-left",
+      "handPartIds": ["ArtMesh960", "ArtMesh961", "ArtMesh962"],
+      "forearmTip": {
+        "partId": "coat-free:coffee-left:ArtMesh901",
+        "triangle": [1, 2, 18],
+        "weights": [0.29277928705270306, 0.3114959077711204, 0.39572480517617653]
+      },
+      "beforeCoverage": 0,
+      "afterCoverage": 255,
+      "rgba": [127, 39, 35, 255]
+    },
+    {
+      "group": "noodles-left",
+      "handPartIds": ["ArtMesh48", "ArtMesh49"],
+      "forearmTip": {
+        "partId": "coat-free:noodles-left:ArtMesh901",
+        "triangle": [1, 2, 18],
+        "weights": [0.2804728315208396, 0.32082765813710173, 0.3986995103420587]
+      },
+      "beforeCoverage": 0,
+      "afterCoverage": 255,
+      "rgba": [127, 39, 35, 255]
+    }
+  ],
+  "unchangedParts": 1019,
+  "changedPartsAreInvisibleGuides": true
+}

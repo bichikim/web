@@ -1,0 +1,9 @@
+{
+  "samples": 7,
+  "originalParts": 1018,
+  "maximumOriginalVertexChange": 0,
+  "maximumHandVertexChange": 0,
+  "minimumPatchArea": 113.263200294382,
+  "originalPhysicsMotionsExpressionsPreserved": true,
+  "originalHandAndOtherPartPixelsPreserved": true
+}

@@ -1,0 +1,55 @@
+{
+  "arm": "coat-free:notes-right:ArtMesh994",
+  "hand": "ArtMesh125",
+  "centers": {
+    "hand": {
+      "partId": "ArtMesh125",
+      "triangle": [12, 41, 40],
+      "weights": [0.17223591654926718, 0.36813045613156076, 0.45963362731917207],
+      "world": [2719.7, 1647.8]
+    },
+    "arm": {
+      "partId": "coat-free:notes-right:ArtMesh994",
+      "triangle": [63, 65, 35],
+      "weights": [0.1887438183780753, 0.576936685527896, 0.2343194960940287],
+      "world": [2656.5, 1692.5]
+    }
+  },
+  "contact": {
+    "id": "coat-free:notes-right:wrist:contact",
+    "composition": "sequential",
+    "mode": "translate",
+    "first": {
+      "partId": "ArtMesh125",
+      "vertexIndex": 68
+    },
+    "second": {
+      "partId": "coat-free:notes-right:wrist:arm-reference",
+      "vertexIndex": 0
+    },
+    "weight": 1,
+    "strength": 1
+  },
+  "paintedCapLandmarks": [
+    {
+      "indices": [33, 65, 64],
+      "weights": [0.3131388443614157, 0.022428525049227512, 0.6644326305893568],
+      "sourceAlpha": 255
+    },
+    {
+      "indices": [33, 65, 64],
+      "weights": [0.1725795703633811, 0.5459227311108027, 0.2814976985258162],
+      "sourceAlpha": 255
+    },
+    {
+      "indices": [34, 66, 65],
+      "weights": [0.08215881490348687, 0.07043594805853666, 0.8474052370379764],
+      "sourceAlpha": 255
+    },
+    {
+      "indices": [34, 66, 65],
+      "weights": [0.22114760849309187, 0.7566489421957381, 0.02220344931117002],
+      "sourceAlpha": 255
+    }
+  ]
+}

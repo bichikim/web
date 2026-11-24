@@ -20,12 +20,12 @@ export const poffoVoiceSchema = z.object({
 })
 export type PoffoVoice = z.infer<typeof poffoVoiceSchema>
 export const DEFAULT_POFFO_VOICE: PoffoVoice = {
-  enabled: false,
+  enabled: true,
   gpu: true,
   language: 'ko',
   model: 'int8',
   provider: 'local',
   speed: 1,
-  voice: 'Yuna',
+  voice: 'Sora',
   volume: 80,
 }

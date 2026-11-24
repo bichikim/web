@@ -135,3 +135,77 @@ it('should avoid embedding menu-only descriptions', async () => {
   ).toEqual({})
   expect(embed).not.toHaveBeenCalled()
 })
+
+it.each(['Korean', 'English'])(
+  'should retain both full language sets when matching %s input',
+  async (language) => {
+    const english = Array.from({length: 8}, (_, index) => `English ${index}`)
+    const korean = Array.from({length: 8}, (_, index) => `한국어 ${index}`)
+    const target = language === 'Korean' ? korean[0] : english[0]
+    const result = await classifySemantics({
+      bindings: [
+        {
+          ...binding,
+          examples: [
+            {language: 'en', text: english.join('\n')},
+            {language: 'ko', text: korean.join('\n')},
+          ],
+          text: english.join('\n'),
+        },
+      ],
+      embed: async (texts) =>
+        texts.map((text) => (text.endsWith(target) || text.endsWith('Input') ? [1, 0] : [0, 1])),
+      text: 'Input',
+    })
+    expect(result.happy).toBe(1)
+  },
+)
+
+it('should veto a match when an exclusion in either language is closer', async () => {
+  const result = await classifySemantics({
+    bindings: [
+      {
+        ...binding,
+        examples: [
+          {excludeText: 'I did not cry.', language: 'en', text: 'I cried.'},
+          {excludeText: '울지 않았어요.', language: 'ko', text: '울었어요.'},
+        ],
+      },
+    ],
+    embed: async (texts) =>
+      texts.map((text) =>
+        text.endsWith('울지 않았어요.')
+          ? [1, 0]
+          : text.endsWith('I did not cry.')
+            ? [0, 1]
+            : [0.8, 0.6],
+      ),
+    text: '울지 않았어요.',
+  })
+  expect(result.happy).toBe(-1)
+})
+
+it('should match all saved languages even when the first language is blank', async () => {
+  const result = await classifySemantics({
+    bindings: [
+      {
+        ...binding,
+        examples: [
+          {language: 'en', text: ''},
+          {language: 'ja', text: 'うれしいです'},
+        ],
+        text: '',
+      },
+    ],
+    embed: async (texts) => texts.map(() => [1, 0]),
+    text: 'うれしいです',
+  })
+  expect(result.happy).toBe(1)
+})
+it('should honor an explicit empty language list without reviving legacy text', async () => {
+  const embed = vi.fn()
+  expect(
+    await classifySemantics({bindings: [{...binding, examples: []}], embed, text: 'Hello'}),
+  ).toEqual({})
+  expect(embed).not.toHaveBeenCalled()
+})

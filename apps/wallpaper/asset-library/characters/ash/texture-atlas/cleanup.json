@@ -1,0 +1,55 @@
+{
+  "beforeModelSha256": "7d0b9642d2986c85e820f1830a13f9798f6651dbd6480799dd01d8d97e3ac337",
+  "modelSha256": "4ceb427b193e75e4c21c5f7e16646a7135abce35a8014ed7da92f06baaf9b869",
+  "modelBytes": 18182737,
+  "tool": "Local ComfyUI core image/mask nodes; no generation",
+  "promptId": "ff74d7a5-e0f8-43f1-a12a-544497ae5b2e",
+  "region": {
+    "x": 0,
+    "y": 0,
+    "width": 960,
+    "height": 960
+  },
+  "notice": "notice.png",
+  "workflow": "workflow.json",
+  "textures": [
+    {
+      "index": 1,
+      "width": 4096,
+      "height": 4096,
+      "outsideRgbaMaxDelta": 0,
+      "removedRegionRgbaMax": 0,
+      "bytes": 4822317,
+      "sha256": "5f30ce6e767b5bea60c786164df2d9b599799ed42d1c74954a0dc451d0fced31",
+      "sourceSha256": "465e1e615221ee3f16d99a8c5dccc66137f8f1deb4763d840a1b66b84b09c1eb",
+      "partCount": 553,
+      "uvOverlapCount": 0
+    },
+    {
+      "index": 3,
+      "width": 4096,
+      "height": 4096,
+      "outsideRgbaMaxDelta": 0,
+      "removedRegionRgbaMax": 0,
+      "bytes": 4822418,
+      "sha256": "4bc8d5c92ee189c9801da6159d16f1e82b09f1911aa1722fe0a84e275bbf9009",
+      "sourceSha256": "b38a5a18df9393a2a4484d226d7185c61f4e4b19da39d4fea1885d7a725ec63d",
+      "partCount": 1,
+      "uvOverlapCount": 0
+    }
+  ],
+  "allGeometryUvsIndicesBindingsScenePhysicsMotionsExpressionsUnchanged": true,
+  "checks": {
+    "browser": {
+      "engines": ["Chromium", "WebKit"],
+      "files": 6,
+      "passed": 10,
+      "failed": 0,
+      "testCases": "Original hand pixels, wrist length, arm contact, live physics and coat visibility"
+    },
+    "oxlint": "passed",
+    "format": "pnpm format completed",
+    "typecheck": "Wallpaper passed",
+    "build": "Wallpaper passed"
+  }
+}

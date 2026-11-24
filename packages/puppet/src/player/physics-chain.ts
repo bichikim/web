@@ -397,3 +397,104 @@ export const matchesChains = (state: ChainsState, physics: PuppetPhysics | undef
       chainState.current.length === chain.outputs.length
     )
   })
+
+/** Inverts an authored output's scale, reflection and blend at the displayed value. */
+const heldReadings = (chain: PuppetPhysicsChain, world: ChainWorld, base: Values, held: Values) =>
+  chain.outputs.flatMap((output) => {
+    const parameter = world.parameters.get(output.parameterId)
+    const value = held[output.parameterId]
+    if (
+      parameter === undefined ||
+      value === undefined ||
+      !Number.isFinite(value) ||
+      output.scale === 0 ||
+      output.weight <= 0
+    ) {
+      return []
+    }
+    const target =
+      (boundParameterValue(parameter, value) - readValue(parameter, base) * (1 - output.weight)) /
+      output.weight
+    return [{output, value: (target / output.scale) * (output.reflect === true ? -1 : 1)}]
+  })
+
+/** Keeps a segment at its authored length while honoring a positional output. */
+const positionSegment = (segment: Vector, length: number, x?: number, y?: number): Vector => {
+  if (x !== undefined && y !== undefined) {
+    return scale(unit([x, y], unit(segment, [0, 1])), length)
+  }
+  if (x !== undefined) {
+    const bounded = clamp(x, -length, length)
+    return [
+      bounded,
+      Math.sqrt(Math.max(0, length * length - bounded * bounded)) * (segment[1] < 0 ? -1 : 1),
+    ]
+  }
+  if (y !== undefined) {
+    const bounded = clamp(y, -length, length)
+    return [
+      Math.sqrt(Math.max(0, length * length - bounded * bounded)) * (segment[0] < 0 ? -1 : 1),
+      bounded,
+    ]
+  }
+  return segment
+}
+
+/** Starts existing chains at the held output pose; unrelated chains retain their inertia. */
+export const releaseChains = (options: {
+  readonly physics: PuppetPhysics | undefined
+  readonly parameters: ReadonlyMap<string, PuppetParameter>
+  readonly state: ChainsState
+  readonly baseValues: Values
+  readonly values: Values
+}): {readonly state: ChainsState; readonly parameterIds: ReadonlyArray<string>} => {
+  const world = getWorld(options.physics, options.parameters)
+  const chains = new Map(options.state.chains)
+  const parameterIds: string[] = []
+  const heldChains = (options.physics?.chains ?? []).flatMap((chain) => {
+    const previous = chains.get(chain.id)
+    const readings = heldReadings(chain, world, options.baseValues, options.values)
+    return previous === undefined || readings.length === 0 ? [] : [{chain, previous, readings}]
+  })
+  for (const {chain, previous, readings} of heldChains) {
+    const pendulums = chain.pendulums.reduce<Array<ChainPendulumState>>(
+      (placed, pendulum, index) => {
+        const at = (items: ReadonlyArray<ChainPendulumState>, index: number) =>
+          items[index]?.position ?? previous.root
+        const parent = at(placed, index - 1)
+        const reference = index === 0 ? world.gravity : subtract(parent, at(placed, index - 2))
+        const oldReference =
+          index === 0
+            ? world.gravity
+            : subtract(at(previous.pendulums, index - 1), at(previous.pendulums, index - 2))
+        const oldSegment = subtract(
+          at(previous.pendulums, index),
+          at(previous.pendulums, index - 1),
+        )
+        const outputs = readings.filter(({output}) => output.pendulumIndex === index)
+        const angle =
+          outputs.find(({output}) => output.axis === 'angle')?.value ??
+          angleBetween(oldReference, oldSegment)
+        const segment = positionSegment(
+          scale(rotate(unit(reference, world.gravity), angle), pendulum.length),
+          pendulum.length,
+          outputs.find(({output}) => output.axis === 'x')?.value,
+          outputs.find(({output}) => output.axis === 'y')?.value,
+        )
+        return [
+          ...placed,
+          {
+            gravity: previous.pendulums[index]!.gravity,
+            position: add(parent, segment),
+            velocity: [0, 0],
+          },
+        ]
+      },
+      [],
+    )
+    const current = readAll(chain, pendulums, previous.root, world)
+    chains.set(chain.id, {...previous, current, pendulums, previous: current})
+    parameterIds.push(...readings.map(({output}) => output.parameterId))
+  }
+  return {parameterIds, state: {...options.state, chains}}
+}

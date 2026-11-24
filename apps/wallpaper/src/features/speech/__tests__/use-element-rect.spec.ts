@@ -8,6 +8,21 @@ afterEach(() => {
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
+
+it('should include layout changes committed later in the same event without relying on animation frames', async () => {
+  const element = document.createElement('div')
+  const measure = vi
+    .spyOn(element, 'getBoundingClientRect')
+    .mockReturnValue(new DOMRect(0, 100, 240, 100))
+  const [layout, setLayout] = createSignal(0)
+  const {result, cleanup} = renderHook(() => useElementRect({element: () => element, layout}))
+  await Promise.resolve()
+  setLayout(1)
+  measure.mockReturnValue(new DOMRect(0, 136, 240, 100))
+  await Promise.resolve()
+  expect(result()?.y).toBe(136)
+  cleanup()
+})
 it('should track moving geometry without resize events and stop when motion ends', () => {
   let frame: FrameRequestCallback = () => undefined
   const request = vi.fn((callback: FrameRequestCallback) => {

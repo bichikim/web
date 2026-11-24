@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {Show} from 'solid-js'
 import type {RandomActionSettings} from '@winter-love/wallpaper/settings/random-actions'
 import {SSwitch} from './SSwitch'
@@ -15,23 +16,23 @@ export const SPoffoRandomActions = (props: SPoffoRandomActionsProps) => {
   const toggle = (enabled: boolean) => update({enabled})
   const probability = (percent: number) => update({probability: percent / PERCENT})
   return (
-    <section aria-label="감정·내용 미매칭 랜덤 행동" class="grid gap-3 text-[13px]">
+    <section aria-label={uiText('감정·내용 미매칭 랜덤 행동')} class="grid gap-3 text-[13px]">
       <div class="flex items-center justify-between gap-2">
         <div class="grid gap-0.5">
-          <h3 class="m-0 font-medium text-stone-800">랜덤 행동</h3>
-          <p class="m-0 text-xs text-stone-600">감정·내용 매칭이 없을 때</p>
+          <h3 class="m-0 font-medium text-stone-800">{uiText('랜덤 행동')}</h3>
+          <p class="m-0 text-xs text-stone-600">{uiText('감정·내용 매칭이 없을 때')}</p>
         </div>
         <SSwitch
-          label="랜덤 행동 사용"
+          label={uiText('랜덤 행동 사용')}
           checked={value().enabled}
           onChange={props.onChange === undefined ? undefined : toggle}
         />
       </div>
       <Show when={value().enabled}>
         <label class="grid grid-cols-[minmax(0,1fr)_7rem_auto] items-center gap-2">
-          발현 확률
+          {uiText('발현 확률')}
           <SNumberInput
-            label="랜덤 행동 확률"
+            label={uiText('랜덤 행동 확률')}
             min={0}
             max={100}
             step={5}

@@ -4,24 +4,48 @@ import type {MouthPose} from '../character-speech/types'
 import {connectCharacterBlink} from './blink'
 import {getCharacterLook} from './get-character-look'
 import {connectCharacterLook} from './look'
+import {createPartHitTest} from './create-part-hit-test'
 import geometry from '../../data/character-look.json'
-import {createCanvasHitTest} from './create-canvas-hit-test'
 import type {CharacterHitTest, CharacterPoint} from './types'
 
 export * from './blink'
 export * from './create-canvas-hit-test'
+export * from './create-part-hit-test'
 export * from './get-character-look'
 export * from './look'
 export * from './types'
 
 interface CharacterPreviewOptions {
   readonly canvas: Accessor<HTMLCanvasElement | null>
+  readonly coatOff?: Accessor<boolean>
   readonly expressionId?: Accessor<string | null>
   readonly motionId?: Accessor<string>
   readonly mouth?: Accessor<MouthPose | null>
   readonly playing: Accessor<boolean>
   readonly onReady?: () => void
   readonly onError?: () => void
+}
+
+const createReadyNotice = (onReady: (() => void) | undefined, signal: AbortSignal) => {
+  let rendered = false
+  let connected = false
+  let notified = false
+  const report = () => {
+    if (rendered && connected && !notified && !signal.aborted) {
+      notified = true
+      onReady?.()
+    }
+  }
+  return {
+    connect() {
+      connected = true
+      report()
+    },
+    render() {
+      rendered = true
+      report()
+    },
+  }
 }
 
 export const useCharacterPreview = (options: CharacterPreviewOptions) => {
@@ -53,19 +77,16 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
       if (cancellation.signal.aborted) {
         return
       }
-      let rendered = false
-      const handleRender = () => {
-        if (!rendered && !cancellation.signal.aborted) {
-          rendered = true
-          options.onReady?.()
-        }
-      }
+      const ready = createReadyNotice(options.onReady, cancellation.signal)
       const created = await createPlayer({
+        buffering: true,
         canvas,
         document: prepared.document,
         framing: 'viewport',
-        onAfterRender: handleRender,
+        onFrame: ready.render,
+        renderGeometryOnly: true,
         resolution: Math.min(devicePixelRatio, RESOLUTION_LIMIT) * RENDER_SCALE,
+        workerRuntime: 'rust',
       })
       if (cancellation.signal.aborted) {
         created.destroy()
@@ -81,11 +102,12 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
         player: created,
       })
       setLook(gaze)
-      hitTest = createCanvasHitTest({canvas, redraw: () => created.redraw()})
+      hitTest = createPartHitTest({canvas, player: created})
       created.setEyeBlink(false)
       created.setBreath(true)
       created.setPhysicsPreview(true)
       setPlayer(created)
+      ready.connect()
     }
     load().catch((cause: unknown) => {
       if (!cancellation.signal.aborted) {
@@ -111,6 +133,9 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
     const active = player()
     const expressionId = options.expressionId?.() ?? null
     active?.setExpression(expressionId ?? undefined)
+  })
+  createEffect(() => {
+    player()?.setExpressionLayer('outfit', options.coatOff?.() ? '외투 벗기' : undefined)
   })
   createEffect(() => {
     const active = player()

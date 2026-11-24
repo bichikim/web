@@ -84,7 +84,7 @@ fn spanf(image: &DynamicImage) -> Result<DynamicImage, Box<dyn std::error::Error
         .with_inter_threads(1)?
         .with_config_entry("session.intra_op.allow_spinning", "0")?
         .with_config_entry("session.inter_op.allow_spinning", "0")?
-        .commit_from_memory(include_bytes!("../../models/spanf.onnx"))?;
+        .commit_from_memory(include_bytes!(env!("SPANF_MODEL_PATH")))?;
     let mut source = image.to_rgb8();
     let alpha = if image.color().has_alpha() {
         Some(image::GrayImage::from_fn(

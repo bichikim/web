@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import '@testing-library/jest-dom/vitest'
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 import {SSegmentedControl} from '../SSegmentedControl'
@@ -62,4 +62,26 @@ it('should own selection when no value is supplied and keep radio groups indepen
   expect(websites[0]).toBeChecked()
   expect(websites[1]).not.toBeChecked()
   expect(screen.getAllByRole('radio', {name: '앨범'})[1]).toBeChecked()
+})
+
+it('should select a deferred tab immediately and commit only the latest requested value', async () => {
+  const [value, setValue] = createSignal<'album' | 'website'>('album')
+  const change = vi.fn((next: 'album' | 'website') => setValue(next))
+  render(() => (
+    <SSegmentedControl
+      deferred
+      label="배경 종류"
+      options={OPTIONS}
+      value={value()}
+      onChange={change}
+    />
+  ))
+  const website = screen.getByRole('radio', {name: '웹사이트'})
+  const album = screen.getByRole('radio', {name: '앨범'})
+  fireEvent.click(website)
+  expect(website).toBeChecked()
+  expect(change).not.toHaveBeenCalled()
+  fireEvent.click(album)
+  expect(album).toBeChecked()
+  await waitFor(() => expect(change).toHaveBeenCalledExactlyOnceWith('album'))
 })

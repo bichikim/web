@@ -4,31 +4,45 @@ import type {PoffoVoice} from '@winter-love/wallpaper/settings/voice'
 import type {VoiceAudio, VoiceOutput} from './synthesis'
 import {readChunks} from './read-chunks'
 import type {VoiceMessage} from './text'
+import type {VoicePlayback} from './types'
+import {segmentText} from '../semantics/segment-text'
 
-export type VoiceStatus = 'idle' | 'download' | 'generating' | 'playing' | 'buffering'
+export type VoiceStatus = 'idle' | 'download' | 'generating' | 'playing' | 'buffering' | 'paused'
 export interface VoiceReadoutPort {
+  readonly stop?: () => void
   readonly prepare: (
     text: string,
     voice: PoffoVoice,
     signal: AbortSignal,
     observer: VoiceOutput,
   ) => Promise<VoiceAudio>
-  readonly play: (audio: VoiceAudio, voice: PoffoVoice, signal: AbortSignal) => Promise<void>
+  /** Schedules audio; onStart fires on the playback clock and never delays playback. */
+  readonly play: (
+    audio: VoiceAudio,
+    voice: PoffoVoice,
+    signal: AbortSignal,
+    onStart?: () => void,
+  ) => Promise<void>
   readonly dispose: () => void
+  readonly setPaused: (paused: boolean) => Promise<void>
 }
 interface ReadoutOptions {
   readonly port: VoiceReadoutPort
   readonly onStatus: (status: VoiceStatus) => void
   readonly onError: (cause: unknown) => void
+  /** Reports the text actually playing and clears on stop; omitted disables position reporting. */
+  readonly onPlayback?: (playback: VoicePlayback | null) => void
 }
-interface Reading {
+interface Reading extends VoiceMessage {
   text: string
+  complete?: boolean
   offset: number
 }
 interface SpeechChunk {
   readonly reading: Reading
   readonly text: string
   readonly end: number
+  readonly start: number
 }
 const nextChunk = (
   pending: Reading[],
@@ -38,16 +52,63 @@ const nextChunk = (
   while (pending.length > 0) {
     const [reading] = pending
     const offset = reserved.get(reading) ?? reading.offset
-    const rest = reading.text.slice(offset)
+    const segment = segmentText(reading).find((item) => item.end > offset)
+    const rest = reading.text.slice(offset, segment?.end)
     const [text] = splitSpeechText(rest, getSupertonicModel(voice.model).speechPolicy)
     if (text) {
       const end = offset + Math.max(0, rest.indexOf(text)) + text.length
+      const start = end - text.length
       reserved.set(reading, end)
-      return {end, reading, text}
+      return {end, reading, start, text}
     }
     pending.shift()
   }
   return null
+}
+
+const createPlaybackControl = (options: ReadoutOptions) => {
+  let paused = false
+  let phase: VoiceStatus = 'idle'
+  let control = 0
+  const publish = (status: VoiceStatus) => {
+    phase = status
+    options.onStatus(paused ? 'paused' : status)
+  }
+  const resetPause = () => {
+    control += 1
+    const revision = control
+    if (paused) {
+      paused = false
+      options.port.setPaused(false).catch((cause: unknown) => {
+        if (control === revision) {
+          options.onError(cause)
+        }
+      })
+    }
+  }
+  return {
+    reset: () => {
+      resetPause()
+      publish('idle')
+    },
+    status: publish,
+    toggle: async () => {
+      const previous = paused
+      control += 1
+      const revision = control
+      paused = !previous
+      publish(phase)
+      try {
+        await options.port.setPaused(paused)
+      } catch (cause) {
+        if (control === revision) {
+          paused = previous
+          publish(phase)
+          throw cause
+        }
+      }
+    },
+  }
 }
 
 /** Pipelines selected-chat prose independently of ordered playback. */
@@ -58,11 +119,21 @@ export const createReadout = (options: ReadoutOptions) => {
   let active: AbortController | null = null
   const changes = new EventTarget()
   let disposed = false
+  const playback = createPlaybackControl({
+    ...options,
+    onError: (cause) => {
+      if (!disposed) {
+        options.onError(cause)
+      }
+    },
+  })
   const stop = () => {
     active?.abort()
     active = null
+    options.port.stop?.()
     changes.dispatchEvent(new Event('change'))
-    options.onStatus('idle')
+    playback.reset()
+    options.onPlayback?.(null)
   }
   const drain = async () => {
     if (active !== null || current === null || disposed) {
@@ -87,6 +158,12 @@ export const createReadout = (options: ReadoutOptions) => {
                 completed: () => {
                   chunk.reading.offset = Math.max(chunk.reading.offset, chunk.end)
                 },
+                started: () => {
+                  if (active === controller) {
+                    const {offset: _offset, ...message} = chunk.reading
+                    options.onPlayback?.({message, offset: chunk.start})
+                  }
+                },
                 text: chunk.text,
                 voice: selection.voice,
               }
@@ -94,7 +171,7 @@ export const createReadout = (options: ReadoutOptions) => {
         onError: options.onError,
         onStatus: (status) => {
           if (active === controller) {
-            options.onStatus(status)
+            playback.status(status)
           }
         },
         port: options.port,
@@ -102,7 +179,8 @@ export const createReadout = (options: ReadoutOptions) => {
     } finally {
       if (active === controller) {
         active = null
-        options.onStatus('idle')
+        playback.reset()
+        options.onPlayback?.(null)
       }
     }
   }
@@ -121,10 +199,9 @@ export const createReadout = (options: ReadoutOptions) => {
     const previous = entries.at(-1)
     const reading =
       entries.find((item) => item.text === message.text) ??
-      (previous && message.text.startsWith(previous.text)
-        ? previous
-        : {offset: 0, text: message.text})
+      (previous && message.text.startsWith(previous.text) ? previous : {...message, offset: 0})
     reading.text = message.text
+    reading.complete = message.complete
     if (!entries.includes(reading)) {
       entries.push(reading)
     }
@@ -160,6 +237,24 @@ export const createReadout = (options: ReadoutOptions) => {
         (reading) => reading.offset < reading.text.length,
       )
       drain().catch(options.onError)
+    },
+    toggle: async () => {
+      if (current === null || disposed) {
+        return
+      }
+      if (active === null) {
+        const {message} = current
+        const reading = history
+          .get(`${message.chat}:${message.id}`)
+          ?.find((item) => item.text === message.text)
+        if (reading !== undefined) {
+          reading.offset = 0
+          pending = [reading]
+          drain().catch(options.onError)
+        }
+        return
+      }
+      await playback.toggle()
     },
     update,
   }

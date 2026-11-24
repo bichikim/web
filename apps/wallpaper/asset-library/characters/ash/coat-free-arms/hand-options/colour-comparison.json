@@ -1,0 +1,59 @@
+{
+  "originalModelSha256": "63dec3ef86b5b23954705326d1b8a37b9f9388910cdb7b49298bcc4cd58fa49e",
+  "editedPngSha256": "2b3d26f3ccff5c1f8fe0f3b08db707331fa1a750c8a0de5a0cde8765630b7f5c",
+  "method": "sRGB skin samples. Original texture pixels are restricted to actual UV triangles. Mostly opaque warm skin only; outlines, blue nails, pen and transparent edge pixels excluded. Median RGB in five-percent bands around the 90th, 50th and 10th brightness percentiles. Different poses mean these are palette representatives, not pixel-corresponding lighting measurements.",
+  "originalHand": {
+    "parts": ["ArtMesh125"],
+    "pixels": 10882,
+    "bands": {
+      "light": {
+        "rgb": [255, 249, 244],
+        "hex": "#fff9f4"
+      },
+      "mid": {
+        "rgb": [254, 244, 239],
+        "hex": "#fef4ef"
+      },
+      "shade": {
+        "rgb": [243, 218, 213],
+        "hex": "#f3dad5"
+      }
+    }
+  },
+  "originalForearm": {
+    "parts": ["coat-free:notes-left:ArtMesh900", "coat-free:notes-left:ArtMesh901"],
+    "pixels": 19855,
+    "bands": {
+      "light": {
+        "rgb": [255, 250, 249],
+        "hex": "#fffaf9"
+      },
+      "mid": {
+        "rgb": [252, 245, 243],
+        "hex": "#fcf5f3"
+      },
+      "shade": {
+        "rgb": [248, 224, 223],
+        "hex": "#f8e0df"
+      }
+    }
+  },
+  "editedHand": {
+    "pixels": 181896,
+    "bands": {
+      "light": {
+        "rgb": [251, 242, 238],
+        "hex": "#fbf2ee"
+      },
+      "mid": {
+        "rgb": [249, 237, 233],
+        "hex": "#f9ede9"
+      },
+      "shade": {
+        "rgb": [238, 217, 215],
+        "hex": "#eed9d7"
+      }
+    }
+  },
+  "conclusion": "The edited skin and shadow palette does not match the original hand or forearm. This is an inspection report, not an additional image edit."
+}

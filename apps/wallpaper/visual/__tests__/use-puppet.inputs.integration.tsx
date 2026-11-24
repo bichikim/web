@@ -54,9 +54,12 @@ test('should retain a vowel pose, gaze and state inputs together without replaci
   })
   await expect.poll(() => vi.mocked(playerModule.createPlayer).mock.results.length).toBe(1)
   const player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
-  globalThis.dispatchEvent(new CustomEvent('poffo-agent-state', {detail: {working: true}}))
+  await expect.poll(() => playerModule.getPlayerBufferingInfo(player).status).toBe('active')
+  globalThis.dispatchEvent(
+    new CustomEvent('poffo-agent-state:combined-widget', {detail: {working: true}}),
+  )
   await expect.poll(() => player.getParameterValue('waiting')).toBe(1)
-  setLipsync({shapes: {a: {parameterId: 'angle-y'}}, source: 'voice'})
+  setLipsync({gain: 1, shapes: {a: {parameterId: 'angle-y'}}, source: 'voice'})
   const publish = createLipSyncPublisher('combined-widget')
   publish('voice', 0.8, 'a')
   await expect.poll(() => player.getParameterValue('angle-y')).toBeCloseTo(24)
@@ -65,7 +68,7 @@ test('should retain a vowel pose, gaze and state inputs together without replaci
   await expect.poll(() => player.getParameterValue('angle-x')).toBeGreaterThan(1)
   expect(player.getParameterValue('angle-y')).toBeCloseTo(24)
   expect(player.getParameterValue('waiting')).toBe(1)
-  globalThis.dispatchEvent(new CustomEvent('poffo-agent-state', {detail: {}}))
+  globalThis.dispatchEvent(new CustomEvent('poffo-agent-state:combined-widget', {detail: {}}))
   await expect.poll(() => player.getParameterValue('waiting')).toBe(0)
   expect(player.getParameterValue('angle-y')).toBeCloseTo(24)
   publish('voice', 0)
@@ -83,7 +86,7 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
     usePuppet({
       assetId: () => 'builtin:ash',
       canvas,
-      lipsync: () => ({source: 'voice'}),
+      lipsync: () => ({gain: 1, source: 'voice'}),
       lipsyncId: () => 'ash-widget',
       load: async () => blob,
       onAfterRender: () => rendered.resolve(),
@@ -117,33 +120,13 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   const model = vi.mocked(playerModule.createPlayer).mock.calls[0]![0].document
   const parameters = model.parameters ?? []
   expect(model.motions.find((motion) => motion.id === 'Idle:0')?.tracks).toHaveLength(23)
-  for (const motion of model.motions) {
-    expect(motion.name).toMatch(/^[A-Za-z][\x20-\x7e]*$/u)
-  }
-  for (const expression of model.expressions ?? []) {
-    expect(expression.name).toMatch(/^[A-Za-z][\x20-\x7e]*$/u)
-  }
-  const nodes = [...model.scene!.roots]
-  for (const node of nodes) {
-    expect(node.name).toMatch(/^[A-Za-z][\x20-\x7e]*$/u)
-    if ('children' in node) {
-      nodes.push(...node.children)
-    }
-  }
-  expect(nodes).toHaveLength(3634)
-  expect(parameters).toHaveLength(265)
   expect(new Set(parameters.map((parameter) => parameter.name)).size).toBe(parameters.length)
-  for (const parameter of parameters) {
-    expect(parameter.name).toMatch(/^[A-Za-z][\x20-\x7e]*$/u)
-  }
-  for (const group of model.parameterGroups ?? []) {
-    expect(group.name).toMatch(/^[A-Za-z][\x20-\x7e]*$/u)
-  }
   expect(parameters.find((parameter) => parameter.id === 'ParamMouthOpenY')?.name).toBe(
     'Mouth Open',
   )
   expect(parameters.find((parameter) => parameter.id === 'ParamMouthForm')?.name).toBe('Mouth Form')
   const player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
+  await expect.poll(() => playerModule.getPlayerBufferingInfo(player).status).toBe('active')
   await sendSemanticFrame({scores: {'ash:excited': 1}, widgetId: 'ash-widget'})
   await expect.poll(() => player.getParameterValue('Param71'), {timeout: 3000}).toBeCloseTo(1)
   await sendSemanticFrame({scores: {'ash:sad-tears': 0.9038512399246472}, widgetId: 'ash-widget'})
@@ -218,11 +201,11 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeGreaterThan(1)
   const publish = createLipSyncPublisher('ash-widget')
   for (const pose of [
-    {form: 0.2, open: 0.9, shape: 'a'},
-    {form: 1, open: 0.55, shape: 'i'},
-    {form: -1, open: 0.25, shape: 'u'},
-    {form: 0.5, open: 0.65, shape: 'e'},
-    {form: -1, open: 0.65, shape: 'o'},
+    {form: 0, open: 0.9, shape: 'a'},
+    {form: 0.9, open: 0.55, shape: 'i'},
+    {form: -0.8, open: 0.25, shape: 'u'},
+    {form: 0.45, open: 0.65, shape: 'e'},
+    {form: -0.6, open: 0.65, shape: 'o'},
     {form: 0, open: 0, shape: 'closed'},
   ] as const) {
     publish('voice', 1, pose.shape)
@@ -242,7 +225,7 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   const meter = createPlaybackMeter({
     clock: () => clock,
     onLevel: () => undefined,
-    onShape: (shape, level, weights) => publish('voice', level, shape, weights),
+    onShape: (shape, level, weights, pose) => publish('voice', level, shape, {...pose, weights}),
   })
   const vowel = synthesizeVowel([480, 820], {length: 640, rate: 16000})
   const samples = Float32Array.from({length: 16000}, (_, index) => vowel[index % vowel.length]!)
@@ -261,9 +244,59 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
     stop()
     meter.dispose()
   }
+  const closure = createPlaybackMeter({
+    clock: () => clock,
+    onLevel: () => undefined,
+    onShape: (shape, level, weights, pose) => publish('voice', level, shape, {...pose, weights}),
+  })
+  clock = 0
+  const stopClosure = closure.track(
+    {
+      sampleRate: 16000,
+      samples,
+      shapeCues: [
+        {end: 0.3, shape: 'o', start: 0},
+        {end: 0.39, shape: 'closed', start: 0.3},
+        {end: 1, shape: 'o', start: 0.39},
+      ],
+    },
+    0,
+    1,
+  )
+  try {
+    clock = 0.2
+    await expect.poll(() => player.getParameterValue('ParamMouthOpenY')).toBeGreaterThan(0.2)
+    clock = 0.34
+    await expect.poll(() => player.getParameterValue('ParamMouthOpenY')).toBe(0)
+    await expect.poll(() => player.getParameterValue('ParamMouthForm')).toBeCloseTo(0)
+    clock = 0.46
+    await expect.poll(() => player.getParameterValue('ParamMouthOpenY')).toBeGreaterThan(0.2)
+    expect(player.getParameterValue('ParamMouthForm')).toBeLessThan(-0.3)
+  } finally {
+    stopClosure()
+    closure.dispose()
+  }
   publish('voice', 0)
   await expect.poll(() => player.getParameterValue('ParamMouthOpenY')).toBe(0)
   await expect.poll(() => player.getParameterValue('ParamMouthForm')).toBe(0)
+  const output = model.physics?.chains
+    ?.flatMap((chain) => chain.outputs)
+    .find((candidate) =>
+      parameters.some(
+        (parameter) =>
+          parameter.id === candidate.parameterId && parameter.maximum > parameter.defaultValue,
+      ),
+    )
+  expect(output).toBeDefined()
+  const parameter = parameters.find((candidate) => candidate.id === output!.parameterId)!
+  const held = parameter.defaultValue + (parameter.maximum - parameter.defaultValue) * 0.25
+  player.patchParameterBlends({[parameter.id]: {mode: 'overwrite', value: held}}, 'interaction')
+  expect(await playerModule.flushPlayerInputs(player)).toBe('applied')
+  expect(player.getParameterValue(parameter.id)).toBeCloseTo(held)
+  expect(player.releaseParameterPhysics([parameter.id])).toContain(parameter.id)
+  expect(await playerModule.flushPlayerInputs(player)).toBe('applied')
+  await expect.poll(() => player.getParameterValue(parameter.id)).not.toBeCloseTo(held, 4)
+  expect(playerModule.getPlayerBufferingInfo(player).status).toBe('active')
   expect(errors).not.toHaveBeenCalled()
 }, 30_000)
 

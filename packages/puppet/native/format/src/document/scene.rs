@@ -95,10 +95,19 @@ pub struct GroupRenderProperties {
     /// Makes the group a draw order group (Cubism's grouped part) at this draw order.
     pub draw_order: Option<f64>,
     pub inverted_mask: Option<bool>,
+    /// Static ordering boundary without an offscreen render target.
+    #[serde(default, deserialize_with = "deserialize_isolate_order")]
+    pub isolate_order: Option<bool>,
     pub multiply_color: Option<[f64; 3]>,
     pub offscreen: Option<bool>,
     pub opacity: Option<f64>,
     pub screen_color: Option<[f64; 3]>,
+}
+
+fn deserialize_isolate_order<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<bool>, D::Error> {
+    bool::deserialize(deserializer).map(Some)
 }
 
 /// Opacity and colors a deformer passes to everything inside it, folded like a plain group's.

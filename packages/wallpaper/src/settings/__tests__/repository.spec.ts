@@ -1,4 +1,4 @@
-/** @vitest-environment jsdom */
+/** @vitest-environment node */
 import 'fake-indexeddb/auto'
 import Dexie from 'dexie'
 import {afterEach, expect, it} from 'vitest'
@@ -36,6 +36,22 @@ it('should persist independent monitor settings across repository reopen', async
   await repository.save(second)
   repository.close()
   expect(await openRepository().read()).toEqual([first, second])
+})
+
+it('should retain each imported character silhouette across reopen and remove it with the character', async () => {
+  const repository = openRepository()
+  const first = await repository.addPuppet('First', 'first source')
+  const second = await repository.addPuppet('Second', 'second source')
+  const silhouette = new Blob(['silhouette'], {type: 'image/png'})
+  expect(await repository.loadPuppetSilhouette(first.id)).toBeUndefined()
+  await repository.savePuppetSilhouette(first.id, silhouette)
+  repository.close()
+  const reopened = openRepository()
+  expect((await reopened.loadPuppetSilhouette(first.id))?.size).toBe(silhouette.size)
+  expect(await reopened.loadPuppetSilhouette(second.id)).toBeUndefined()
+  await reopened.removePuppet(first.id)
+  await reopened.savePuppetSilhouette(first.id, silhouette)
+  expect(await reopened.loadPuppetSilhouette(first.id)).toBeUndefined()
 })
 
 it('should reject invalid settings without replacing the previous value', async () => {

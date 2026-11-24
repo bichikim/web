@@ -1,11 +1,14 @@
-import {createSignal, onCleanup} from 'solid-js'
+import {createEffect, createSignal, onCleanup, untrack} from 'solid-js'
 import {createStore, reconcile} from 'solid-js/store'
 import {createBuiltinLibrary} from '../builtin-assets/create-builtin-library'
+import {codexConversation, resolveConversationModel, useCodexModels} from '../conversation'
 import type {
   PoffoTracking,
   PoffoTrackingBindings,
   PoffoTrackingOptions,
+  PoffoTrackingProfile,
 } from '@winter-love/wallpaper/settings/tracking'
+import {withTrackingProfile} from '@winter-love/wallpaper/settings/with-tracking-profile'
 import type {
   PoffoSpeech,
   PoffoWidget,
@@ -38,18 +41,24 @@ export const useWallpaperLibrary = () => {
   const refresh = async () => {
     revision += 1
     const request = revision
-    const snapshot = await repository.read()
-    if (!disposed && request === revision) {
-      setState('history', reconcile(snapshot.history, {key: 'url'}))
-      setState('websites', reconcile(snapshot.websites, {key: 'monitorId'}))
-      setState(
-        'widgets',
-        reconcile(
-          snapshot.widgets.map((widget) => ({...widget, ...changes.get(widget.id)?.patch})),
-          {key: 'id'},
-        ),
-      )
-      setReady(true)
+    try {
+      const snapshot = await repository.read()
+      if (!disposed && request === revision) {
+        setState('history', reconcile(snapshot.history, {key: 'url'}))
+        setState('websites', reconcile(snapshot.websites, {key: 'monitorId'}))
+        setState(
+          'widgets',
+          reconcile(
+            snapshot.widgets.map((widget) => ({...widget, ...changes.get(widget.id)?.patch})),
+            {key: 'id'},
+          ),
+        )
+        setReady(true)
+      }
+    } catch (cause) {
+      if (!disposed && request === revision) {
+        report(cause)
+      }
     }
   }
   const run = (operation: () => Promise<unknown>) => {
@@ -67,10 +76,8 @@ export const useWallpaperLibrary = () => {
       })
     return pending
   }
-  const stop = repository.subscribe(() => {
-    refresh().catch(report)
-  }, report)
-  refresh().catch(report)
+  const stop = repository.subscribe(refresh, report)
+  refresh()
   onCleanup(() => {
     disposed = true
     stop()
@@ -97,14 +104,56 @@ export const useWallpaperLibrary = () => {
       }
     })
   }
+  const configureSpeech = (id: string, speech: PoffoSpeech) =>
+    changeWidget(id, {speech}, () => repository.configureSpeech(id, speech))
+  const configureProfile = (
+    id: string,
+    profile: PoffoTrackingProfile,
+    save: (mode: PoffoTracking) => Promise<void>,
+  ) => {
+    const widget = state.widgets.find((widget) => widget.id === id)
+    const mode = widget?.tracking ?? 'off'
+    return changeWidget(
+      id,
+      {trackingProfiles: withTrackingProfile(widget ?? {}, profile, mode)},
+      () => save(mode),
+    )
+  }
+  const models = useCodexModels(
+    () =>
+      codexConversation.available() &&
+      state.widgets.some((widget) => widget.speech?.conversation?.provider === 'codex'),
+  )
+  createEffect(() => {
+    const catalog = models.models()
+    if (catalog === null || models.loading() || models.error() !== null) {
+      return
+    }
+    const updates = untrack(() =>
+      state.widgets.flatMap((widget) => {
+        const current = widget.speech?.conversation
+        if (current === undefined) {
+          return []
+        }
+        const conversation = resolveConversationModel(current, catalog)
+        return conversation === current
+          ? []
+          : [{id: widget.id, speech: {...widget.speech!, conversation}}]
+      }),
+    )
+    untrack(() => updates.forEach(({id, speech}) => configureSpeech(id, speech)))
+  })
   return {
     addWidget: (assetId: string) => run(() => repository.addWidget(assetId)),
     bindWidget: (id: string, trackingBindings: PoffoTrackingBindings) =>
-      changeWidget(id, {trackingBindings}, () => repository.bindWidget(id, trackingBindings)),
-    configureSpeech: (id: string, speech: PoffoSpeech) =>
-      changeWidget(id, {speech}, () => repository.configureSpeech(id, speech)),
+      configureProfile(id, {bindings: trackingBindings}, (mode) =>
+        repository.bindWidget(id, trackingBindings, mode),
+      ),
+    configureSpeech,
     configureTracking: (id: string, trackingOptions: PoffoTrackingOptions) =>
-      changeWidget(id, {trackingOptions}, () => repository.configureTracking(id, trackingOptions)),
+      configureProfile(id, {options: trackingOptions}, (mode) =>
+        repository.configureTracking(id, trackingOptions, mode),
+      ),
     dismissError: () => setError(null),
     error,
     history: () => state.history,

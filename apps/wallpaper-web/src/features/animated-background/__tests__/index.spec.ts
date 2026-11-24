@@ -61,7 +61,7 @@ test('should pause a retained background without fetching or preparing its scene
     }),
   )
   await waitFor(() => expect(player.resume).toHaveBeenCalledOnce(), {interval: 1})
-  vi.mocked(createPlayer).mock.calls[0]![0].onAfterRender?.()
+  vi.mocked(createPlayer).mock.calls[0]![0].onFrame?.({duration: 0, motionId: null, time: 0})
   expect(hook.result.ready()).toBe(true)
   setPlaying(false)
   expect(player.pause).toHaveBeenCalledOnce()
@@ -69,6 +69,7 @@ test('should pause a retained background without fetching or preparing its scene
   expect(player.resume).toHaveBeenCalledTimes(2)
   expect(fetch).toHaveBeenCalledOnce()
   expect(createPlayer).toHaveBeenCalledOnce()
+  expect(createPlayer).toHaveBeenCalledWith(expect.objectContaining({buffering: true}))
   expect(preparePuppetDocument).toHaveBeenCalledWith(expect.objectContaining({source}))
   expect(text).not.toHaveBeenCalled()
   hook.cleanup()

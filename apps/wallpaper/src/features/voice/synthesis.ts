@@ -1,13 +1,13 @@
-import {normalizeSpeechText} from '@winter-love/supertonic/number-speech'
-import {getSupertonicModel} from '@winter-love/supertonic/model'
 import type {SynthesisReply, SynthesisRequest} from './protocol'
 import type {PoffoVoice} from '@winter-love/wallpaper/settings/voice'
 import type {VoiceStatus} from './readout'
+import type {LipSyncCue} from '../lipsync/types'
 
 export interface VoiceAudio {
   readonly text?: string
   readonly sampleRate: number
   readonly samples: Float32Array
+  readonly shapeCues?: readonly LipSyncCue[]
 }
 export interface VoiceOutput {
   readonly status: (value: VoiceStatus) => void
@@ -96,11 +96,7 @@ export const createSynthesis = (): SynthesisClient => {
           try {
             runtime.postMessage({
               id,
-              text: normalizeSpeechText({
-                language: settings.language,
-                maximumLength: getSupertonicModel(settings.model).speechPolicy.maximumLength,
-                text,
-              }),
+              text,
               type: 'generate',
               voice: settings,
             } satisfies SynthesisRequest)
@@ -112,7 +108,7 @@ export const createSynthesis = (): SynthesisClient => {
         },
       )
       signal.throwIfAborted()
-      return audio
+      return {...audio, text}
     },
   }
 }

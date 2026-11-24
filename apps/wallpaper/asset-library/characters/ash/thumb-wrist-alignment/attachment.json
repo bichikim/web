@@ -1,0 +1,26 @@
+{
+  "method": "Hand artwork and all other textures are unchanged. Align the rigid hand and adjust only its wrist transition mesh.",
+  "reference": "reference.png",
+  "beforeSha256": "74d1138eada29d2c51d724cce50c5fad1553640afaf9eae852d19f61d2f5361d",
+  "sha256": "86fb4bee0ef7603b555c3bb18e1af91d7a662b0e04a4a2c26156a56025f2212e",
+  "bytes": 18726715,
+  "handArtworkSha256": "b941764a88b3151d40158aa810bd9a5da912e419028276292eca11da7c757ca3",
+  "changedTexturePixels": 0,
+  "changedPart": "thumb:hand",
+  "handShapePreserved": true,
+  "originalArmPreserved": true,
+  "physicsUnchanged": true,
+  "regression": {
+    "filesPassed": 1,
+    "testsPassed": 2,
+    "log": "/private/tmp/thumb-wrist-alignment-tests.log"
+  },
+  "userAcceptance": "pending",
+  "nativeReview": {
+    "frames": 160,
+    "continuousSkinFrames": 160,
+    "observedGazeDirections": ["left", "right", "center"],
+    "pointerTargetsExact": false,
+    "note": "Physical pointer input overlapped automated moves; screenshots show both gaze directions. No exact pointer-target claim."
+  }
+}

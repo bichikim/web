@@ -1,5 +1,6 @@
 import path from 'node:path'
 import {z} from 'zod'
+import {modelDirectory} from './model-cache'
 import {
   DEFAULT_SEMANTIC_THRESHOLD,
   DIAGNOSTIC_MODES,
@@ -9,9 +10,8 @@ import {
   type SimilarityThreshold,
 } from './types'
 
-const BUNDLED_MODEL_IDENTIFIER = 'Xenova/multilingual-e5-small'
-const BUNDLED_MODEL_REVISION = '761b726'
-const BUNDLED_MODEL_PATH = path.resolve(import.meta.dirname, '../assets/multilingual-e5-small')
+const DEFAULT_MODEL_IDENTIFIER = 'Xenova/multilingual-e5-small'
+const DEFAULT_MODEL_REVISION = '761b726'
 
 interface ResolveThresholdOptions {
   readonly fallback: number
@@ -58,16 +58,16 @@ export const resolveOptions = (
   }
   const customModelPath =
     parsed.modelPath === undefined ? undefined : path.resolve(root, parsed.modelPath)
-  const modelPath = customModelPath ?? BUNDLED_MODEL_PATH
+  const modelPath = customModelPath ?? modelDirectory()
 
   return {
     ...parsed,
     cacheDir: path.resolve(root, parsed.cacheDir),
     keyDetector: options.keyDetector,
-    modelIdentifier: parsed.modelIdentifier ?? customModelPath ?? BUNDLED_MODEL_IDENTIFIER,
+    modelIdentifier: parsed.modelIdentifier ?? customModelPath ?? DEFAULT_MODEL_IDENTIFIER,
     modelPath,
     modelRevision:
-      parsed.modelRevision ?? (customModelPath === undefined ? BUNDLED_MODEL_REVISION : 'local'),
+      parsed.modelRevision ?? (customModelPath === undefined ? DEFAULT_MODEL_REVISION : 'local'),
     root: path.resolve(root),
     semanticThreshold: resolveThreshold({
       fallback: DEFAULT_SEMANTIC_THRESHOLD,

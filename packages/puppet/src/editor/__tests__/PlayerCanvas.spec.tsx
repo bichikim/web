@@ -79,7 +79,7 @@ test('should ignore late frame and buffering callbacks after a pending canvas is
 describe('PlayerCanvas', () => {
   test('should recover a failed first initialization when the rendering preference changes', async () => {
     const model = createDemoDocument()
-    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgpu')
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('pixi-webgpu')
     const onStatusChange = vi.fn()
     mocks.createPlayer.mockRejectedValueOnce(new Error('WebGPU unavailable'))
     const view = render(() => (
@@ -87,18 +87,18 @@ describe('PlayerCanvas', () => {
     ))
     await waitFor(() => expect(view.getByText('WebGPU unavailable')).toBeVisible())
     expect(mocks.createPlayer).toHaveBeenCalledOnce()
-    setRenderer('webgl')
+    setRenderer('pixi-webgl')
     await waitFor(() => expect(onStatusChange).toHaveBeenLastCalledWith('ready'))
     expect(mocks.createPlayer).toHaveBeenCalledTimes(2)
     expect(mocks.createPlayer).toHaveBeenLastCalledWith(
-      expect.objectContaining({document: model, renderer: 'webgl'}),
+      expect.objectContaining({document: model, renderer: 'pixi-webgl'}),
     )
     expect(view.queryByText('WebGPU unavailable')).not.toBeInTheDocument()
   })
 
   test('should retry the latest preference when a pending first initialization fails', async () => {
     const model = createDemoDocument()
-    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgpu')
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('pixi-webgpu')
     const onStatusChange = vi.fn()
     let fail: (reason: Error) => void = () => undefined
     mocks.createPlayer.mockReturnValueOnce(
@@ -110,12 +110,12 @@ describe('PlayerCanvas', () => {
       <PlayerCanvas document={model} renderer={renderer()} onStatusChange={onStatusChange} />
     ))
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
-    setRenderer('webgl')
+    setRenderer('pixi-webgl')
     fail(new Error('Obsolete GPU failure'))
     await waitFor(() => expect(onStatusChange).toHaveBeenLastCalledWith('ready'))
     expect(mocks.createPlayer).toHaveBeenCalledTimes(2)
     expect(mocks.createPlayer).toHaveBeenLastCalledWith(
-      expect.objectContaining({renderer: 'webgl'}),
+      expect.objectContaining({renderer: 'pixi-webgl'}),
     )
     expect(onStatusChange).not.toHaveBeenCalledWith('error')
     expect(view.queryByText('Obsolete GPU failure')).not.toBeInTheDocument()
@@ -143,7 +143,7 @@ describe('PlayerCanvas', () => {
   })
 
   test('should show an applied canvas when the next requested configuration fails', async () => {
-    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgl')
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('pixi-webgl')
     let complete: (result: 'applied') => void = () => undefined
     const first = new Promise<'applied'>((resolve) => {
       complete = resolve
@@ -168,17 +168,17 @@ describe('PlayerCanvas', () => {
     ))
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
     await Promise.resolve()
-    setRenderer('webgpu')
+    setRenderer('pixi-webgpu')
     await waitFor(() => expect(configureRenderer).toHaveBeenCalledOnce())
     const applied = configureRenderer.mock.calls[0]![0].canvas
     info.renderer = 'webgpu'
     complete('applied')
-    setRenderer('webgl')
+    setRenderer('pixi-webgl')
     await waitFor(() => expect(onRenderingError).toHaveBeenCalledWith('Unavailable'))
     expect(view.getByLabelText('모델 뷰어')).toBe(applied)
   })
   test('should not configure a new compatible player because an old player still has pending work', async () => {
-    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgl')
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('pixi-webgl')
     const [model, setModel] = createSignal(createDemoDocument())
     let complete: (result: 'destroyed') => void = () => undefined
     const pending = new Promise<'destroyed'>((resolve) => {
@@ -199,7 +199,7 @@ describe('PlayerCanvas', () => {
       })
     render(() => <PlayerCanvas document={model()} renderer={renderer()} />)
     await waitFor(() => expect(player.getRenderingInfo).toHaveBeenCalled())
-    setRenderer('webgpu')
+    setRenderer('pixi-webgpu')
     await waitFor(() => expect(configurePrevious).toHaveBeenCalledOnce())
     setModel(createDemoDocument())
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledTimes(2))
@@ -209,7 +209,7 @@ describe('PlayerCanvas', () => {
     await pending
   })
   test('should supersede a pending backend request when returning to the current backend', async () => {
-    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgl')
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('pixi-webgl')
     let complete: (result: 'superseded') => void = () => undefined
     const pending = new Promise<'superseded'>((resolve) => {
       complete = resolve
@@ -220,10 +220,10 @@ describe('PlayerCanvas', () => {
       <PlayerCanvas document={createDemoDocument()} renderer={renderer()} />
     ))
     await waitFor(() => expect(player.getRenderingInfo).toHaveBeenCalled())
-    setRenderer('webgpu')
+    setRenderer('pixi-webgpu')
     await waitFor(() => expect(configureRenderer).toHaveBeenCalledOnce())
     const obsolete = configureRenderer.mock.calls[0]![0].canvas
-    setRenderer('webgl')
+    setRenderer('pixi-webgl')
     await waitFor(() => expect(configureRenderer).toHaveBeenCalledTimes(2))
     const latest = configureRenderer.mock.calls[1]![0].canvas
     complete('superseded')
@@ -233,7 +233,7 @@ describe('PlayerCanvas', () => {
     expect(mocks.createPlayer).toHaveBeenCalledOnce()
   })
   test('should change rendering resources without replacing the player or document', async () => {
-    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgl')
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('pixi-webgl')
     const configureRenderer = vi.fn(async () => 'applied' as const)
     const retained = {...player, configureRenderer, destroy: vi.fn()}
     mocks.createPlayer.mockResolvedValueOnce(retained)
@@ -242,7 +242,7 @@ describe('PlayerCanvas', () => {
     await waitFor(() => expect(view.getByLabelText('모델 뷰어')).toBeInTheDocument())
     await waitFor(() => expect(retained.getRenderingInfo).toHaveBeenCalled())
     const canvas = view.getByLabelText('모델 뷰어')
-    setRenderer('webgpu')
+    setRenderer('pixi-webgpu')
     await waitFor(() => expect(configureRenderer).toHaveBeenCalledOnce())
     await waitFor(() => expect(view.getByLabelText('모델 뷰어')).not.toBe(canvas))
     expect(mocks.createPlayer).toHaveBeenCalledOnce()
@@ -256,7 +256,7 @@ describe('PlayerCanvas', () => {
     const [surface, setSurface] = createSignal<SpatialThreeSurface>()
     const info = {antialiasing: 'msaa' as const, renderer: 'webgpu' as 'webgpu' | 'webgl'}
     const configureRenderer = vi.fn(async (options) => {
-      info.renderer = options.renderer
+      info.renderer = options.renderer === 'pixi-webgl' ? 'webgl' : 'webgpu'
       return 'applied' as const
     })
     mocks.createPlayer.mockResolvedValueOnce({
@@ -264,25 +264,48 @@ describe('PlayerCanvas', () => {
       configureRenderer,
       getRenderingInfo: () => info,
     })
-    render(() => <PlayerCanvas document={model} renderer="webgpu" spatialSurface={surface()} />)
+    render(() => (
+      <PlayerCanvas document={model} renderer="pixi-webgpu" spatialSurface={surface()} />
+    ))
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
     await Promise.resolve()
     setSurface({document: model, node: {} as SpatialThreeSurface['node']})
     await waitFor(() =>
-      expect(configureRenderer).toHaveBeenCalledWith(expect.objectContaining({renderer: 'webgl'})),
+      expect(configureRenderer).toHaveBeenCalledWith(
+        expect.objectContaining({renderer: 'pixi-webgl'}),
+      ),
     )
     await waitFor(() => expect(mocks.createSpatialThreeOverlay).toHaveBeenCalledOnce())
     setSurface(undefined)
     await waitFor(() =>
       expect(configureRenderer).toHaveBeenLastCalledWith(
-        expect.objectContaining({renderer: 'webgpu'}),
+        expect.objectContaining({renderer: 'pixi-webgpu'}),
       ),
     )
     expect(mocks.createPlayer).toHaveBeenCalledOnce()
   })
 
+  test('should try automatic selection when replacing an explicitly selected Pixi renderer', async () => {
+    const model = createDemoDocument()
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('pixi')
+    const configureRenderer = vi.fn().mockResolvedValue('applied')
+    mocks.createPlayer.mockResolvedValueOnce({...player, configureRenderer})
+    render(() => <PlayerCanvas document={model} renderer={renderer()} />)
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    await Promise.resolve()
+    expect(configureRenderer).not.toHaveBeenCalled()
+
+    setRenderer('auto')
+
+    await waitFor(() =>
+      expect(configureRenderer).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({renderer: 'auto'}),
+      ),
+    )
+  })
+
   test('should keep the existing canvas and report a renderer initialization failure', async () => {
-    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgl')
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('pixi-webgl')
     const failure = new Error('WebGPU unavailable')
     const configureRenderer = vi.fn(() => Promise.reject(failure))
     const onRenderingError = vi.fn()
@@ -296,7 +319,7 @@ describe('PlayerCanvas', () => {
     ))
     await waitFor(() => expect(player.getRenderingInfo).toHaveBeenCalled())
     const canvas = view.getByLabelText('모델 뷰어')
-    setRenderer('webgpu')
+    setRenderer('pixi-webgpu')
     await waitFor(() => expect(onRenderingError).toHaveBeenCalledExactlyOnceWith(failure.message))
     expect(view.getByLabelText('모델 뷰어')).toBe(canvas)
   })

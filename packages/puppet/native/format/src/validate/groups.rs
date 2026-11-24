@@ -44,9 +44,9 @@ pub(super) fn validate_groups(document: &Document, index: &Index) -> Check {
         .groups
         .iter()
         .filter(|g| {
-            g.properties
-                .as_ref()
-                .is_some_and(|p| p.draw_order.is_some() || p.offscreen == Some(true))
+            g.properties.as_ref().is_some_and(|p| {
+                p.draw_order.is_some() || p.offscreen == Some(true) || p.isolate_order == Some(true)
+            })
         })
         .map(|g| g.id.as_str())
         .collect();
@@ -86,6 +86,29 @@ mod tests {
     use serde_json::{Value, json};
 
     use crate::validate::test_support::{accepts, document, parameter, part_node, triangle};
+
+    #[test]
+    fn isolation_is_a_static_boolean_and_preserves_group_order_keys() {
+        assert!(valid(json!({"isolateOrder": true}), json!([])));
+        assert!(valid(json!({"isolateOrder": false}), json!([])));
+        for value in [json!(1), json!("true"), json!(null)] {
+            assert!(!valid(json!({"isolateOrder": value}), json!([])));
+        }
+        let keyed = |properties: Value| {
+            json!([{
+                "id":"order", "parameterIds":["p"], "targetPartIds":[], "targetGroupIds":["g"],
+                "keyforms":[{"values":[0], "parts":[], "groups":[{"groupId":"g", "properties":properties}]}]
+            }])
+        };
+        assert!(valid(
+            json!({"isolateOrder": true}),
+            keyed(json!({"drawOrder": 600}))
+        ));
+        assert!(!valid(
+            json!({"isolateOrder": true}),
+            keyed(json!({"isolateOrder": false}))
+        ));
+    }
 
     /// Parts `a` and `b` in group `g` with `properties`, plus `bindings`.
     fn valid(properties: Value, bindings: Value) -> bool {

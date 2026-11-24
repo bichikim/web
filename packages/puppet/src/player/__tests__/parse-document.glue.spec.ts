@@ -103,3 +103,44 @@ test('should opt imported documents into sequential shared-vertex glue without c
   expect(parseDocument(serializeDocument(sequential))).toEqual({document: sequential, ok: true})
   expect(parseDocument(JSON.stringify({...input, glueComposition: 'unknown'})).ok).toBe(false)
 })
+
+test.each(['vertex', 'translate'] as const)(
+  'should preserve %s glue mode through serialization',
+  (mode) => {
+    const source = createDocument()
+    const document = {...source, glue: source.glue!.map((glue) => ({...glue, mode}))}
+    expect(parseDocument(serializeDocument(document))).toEqual({document, ok: true})
+  },
+)
+
+test('should reject an unsupported glue movement mode', () => {
+  const source = createDocument()
+  const document = {...source, glue: source.glue!.map((glue) => ({...glue, mode: 'stretch'}))}
+  expect(parseDocument(JSON.stringify(document)).ok).toBe(false)
+})
+
+test('should preserve rigid attachment directions and reject missing or dangling directions', () => {
+  const source = createDocument()
+  const document = {
+    ...source,
+    glue: source.glue!.map((glue) => ({
+      ...glue,
+      mode: 'rigid' as const,
+      rotation: {first: 1, second: 1},
+    })),
+  }
+  expect(parseDocument(serializeDocument(document))).toEqual({document, ok: true})
+  const invalidDirections = [
+    undefined,
+    {first: -1, second: 1},
+    {first: 1.5, second: 1},
+    {first: 1, second: 999999},
+  ]
+  for (const rotation of invalidDirections) {
+    expect(
+      parseDocument(
+        JSON.stringify({...document, glue: document.glue.map((glue) => ({...glue, rotation}))}),
+      ).ok,
+    ).toBe(false)
+  }
+})

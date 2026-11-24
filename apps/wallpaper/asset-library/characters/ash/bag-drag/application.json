@@ -1,0 +1,22 @@
+{
+  "sourceSha256": "5534e361358f1ddff124e0cf71bb0ba5d16cb9fee1d9108219a9060dab56dfde",
+  "sha256": "4141d54d32b7a9f3c6937c469f2c732793a67592f71ae1872d990ca5665eab36",
+  "bytes": 20788199,
+  "parameterId": "TouchBagStrap",
+  "previousLimits": [-14, 14],
+  "limits": [-2, 2],
+  "changedBindings": [
+    "touch:touch:Rotation@Part53:0",
+    "touch:touch:Rotation@Part54:0",
+    "touch:touch:Rotation@Part55:0",
+    "touch:touch:Rotation@Part52:0",
+    "touch:touch:Rotation@Part56:0",
+    "touch:touch:Rotation@Part50:0",
+    "touch:surface:ArtMesh493",
+    "touch:surface:ArtMesh730"
+  ],
+  "allArtworkPreserved": true,
+  "otherParameterBindingsPreserved": true,
+  "physicsPreserved": true,
+  "method": "Bound shoulder-bag touch rotation to two degrees in either direction; sample the original rotation arcs and strap surfaces at the new endpoints."
+}

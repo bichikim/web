@@ -2,15 +2,14 @@ import {afterEach, expect, it, vi} from 'vitest'
 import {DEFAULT_POFFO_VOICE} from '@winter-love/wallpaper/settings/voice'
 import {loadSupertonicRuntime} from '@winter-love/supertonic/runtime'
 import type {SynthesisCommand, SynthesisReply} from '../protocol'
+import {loadModelAsset} from '../load-model-asset'
 
 const engine = vi.hoisted(() => ({generate: vi.fn(), release: vi.fn()}))
 vi.mock('@winter-love/supertonic/runtime', () => ({loadSupertonicRuntime: vi.fn(async () => ({}))}))
 vi.mock('@winter-love/supertonic/sessions', () => ({
   loadSessions: vi.fn(async () => ({ok: true, value: {}})),
 }))
-vi.mock('../model-cache', () => ({
-  createModelCache: () => ({load: vi.fn(async () => new TextEncoder().encode('{}').buffer)}),
-}))
+vi.mock('../load-model-asset', () => ({loadModelAsset: vi.fn()}))
 vi.mock('@winter-love/supertonic/engine', () => ({
   parseSupertonicConfig: vi.fn(() => ({ok: true, value: {}})),
   parseSupertonicIndexer: vi.fn(() => ({ok: true, value: []})),
@@ -26,6 +25,7 @@ interface SynthesisListener {
   (reply: SynthesisReply): void
 }
 const fixture = async () => {
+  vi.mocked(loadModelAsset).mockResolvedValue(new TextEncoder().encode('{}').buffer)
   vi.stubGlobal('navigator', {gpu: {}})
   vi.stubGlobal('onmessage', null)
   const listeners = new Map<number, SynthesisListener>()
@@ -64,7 +64,10 @@ it('should reuse GPU sessions for successive sentences', async () => {
   const test = await fixture()
   await expect(test.send(1)).resolves.toMatchObject({type: 'audio'})
   await expect(test.send(2)).resolves.toMatchObject({type: 'audio'})
-  expect(loadSupertonicRuntime).toHaveBeenCalledExactlyOnceWith('webgpu')
+  expect(loadSupertonicRuntime).toHaveBeenCalledExactlyOnceWith(
+    'webgpu',
+    new URL('/voice-runtime/', globalThis.location.href).href,
+  )
   expect(engine.release).not.toHaveBeenCalled()
 })
 it('should retry a failed GPU inference on CPU once and reuse CPU for subsequent sentences', async () => {
@@ -74,7 +77,10 @@ it('should retry a failed GPU inference on CPU once and reuse CPU for subsequent
   const test = await fixture()
   await expect(test.send(1)).resolves.toMatchObject({type: 'audio'})
   await expect(test.send(2)).resolves.toMatchObject({type: 'audio'})
-  expect(vi.mocked(loadSupertonicRuntime).mock.calls).toEqual([['webgpu'], ['wasm']])
+  expect(vi.mocked(loadSupertonicRuntime).mock.calls).toEqual([
+    ['webgpu', new URL('/voice-runtime/', globalThis.location.href).href],
+    ['wasm', new URL('/voice-runtime/', globalThis.location.href).href],
+  ])
   expect(engine.generate).toHaveBeenCalledTimes(3)
   expect(engine.release).toHaveBeenCalledOnce()
 })
@@ -97,7 +103,10 @@ it('should retain GPU sessions after cancellation without switching to CPU', asy
   await started
   scope.onmessage(new MessageEvent('message', {data: {id: 1, type: 'cancel'}}))
   await expect(test.send(2)).resolves.toMatchObject({type: 'audio'})
-  expect(loadSupertonicRuntime).toHaveBeenCalledExactlyOnceWith('webgpu')
+  expect(loadSupertonicRuntime).toHaveBeenCalledExactlyOnceWith(
+    'webgpu',
+    new URL('/voice-runtime/', globalThis.location.href).href,
+  )
   expect(engine.release).not.toHaveBeenCalled()
   expect(test.post.mock.calls.some(([reply]) => reply.id === 1 && reply.type !== 'status')).toBe(
     false,
@@ -110,6 +119,9 @@ it('should rebuild model sessions when the GPU preference changes while reusing 
   await test.send(1, true)
   await test.send(2, false)
   await test.send(3, true)
-  expect(vi.mocked(loadSupertonicRuntime).mock.calls).toEqual([['webgpu'], ['wasm']])
+  expect(vi.mocked(loadSupertonicRuntime).mock.calls).toEqual([
+    ['webgpu', new URL('/voice-runtime/', globalThis.location.href).href],
+    ['wasm', new URL('/voice-runtime/', globalThis.location.href).href],
+  ])
   expect(engine.release).toHaveBeenCalledTimes(2)
 })

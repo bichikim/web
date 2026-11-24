@@ -1,4 +1,5 @@
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {semanticExamples} from '@winter-love/wallpaper/settings/semantic-examples'
+import {cleanup, fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
@@ -88,7 +89,10 @@ test('should register and persist a character action connection, then react to t
     )
   })
   try {
-    fireEvent.click(screen.getByRole('button', {name: '연결 추가'}))
+    await userEvent.click(screen.getByRole('button', {name: '연결 추가'}))
+    await expect
+      .poll(() => screen.queryByRole('textbox', {name: '연결 1 감정·행동·내용'}))
+      .not.toBeNull()
     const description = screen.getByRole('textbox', {name: '연결 1 감정·행동·내용'})
     fireEvent.input(description, {target: {value: '기쁨과 성공을 축하하는 내용'}})
     fireEvent.click(screen.getByRole('combobox', {name: '연결 1 행동'}))
@@ -111,6 +115,7 @@ test('should register and persist a character action connection, then react to t
     await expect
       .poll(async () => (await repository.read()).widgets[0]?.speech?.semanticBindings)
       .toEqual(bindings())
+    await userEvent.click(screen.getByRole('button', {name: '행동 연결 목록으로'}))
     fireEvent.input(screen.getByRole('textbox', {name: '분석할 문장'}), {
       target: {value: '기쁨을 느껴요'},
     })
@@ -121,6 +126,9 @@ test('should register and persist a character action connection, then react to t
     await expect
       .poll(() => screen.getByRole('status', {name: '적용된 행동'}).textContent)
       .toBe('smile,ノート')
+    await userEvent.click(
+      within(screen.getByRole('region', {name: '행동 연결 목록'})).getAllByRole('button')[0]!,
+    )
     expect(screen.getByLabelText('연결 1 매칭 점수')).toHaveTextContent('1.00')
     setIncoming('슬픔을 느껴요')
     await expect
@@ -172,7 +180,7 @@ test('should register and persist a character action connection, then react to t
 })
 
 test.each([320, 496])(
-  'should organize all built-in connections into expandable groups at %spx',
+  'should search built-in connections and edit one localized description at %spx',
   async (width) => {
     const profile = builtinConnectionProfile('builtin:ash')!
     const defaults = profile.connections.semanticBindings!
@@ -189,23 +197,20 @@ test.each([320, 496])(
       </div>
     ))
     const section = screen.getByRole('region', {name: '행동 연결'})
-    const groups = Array.from(section.querySelectorAll('details')).filter(
-      (group) => group.parentElement === section,
-    )
-    expect(groups).toHaveLength(4)
-    expect(groups.every((group) => !group.open)).toBe(true)
-    for (const group of groups) {
-      // eslint-disable-next-line no-await-in-loop -- Each group must open and close before testing the next.
-      await userEvent.click(group.querySelector('summary')!)
-      expect(group.open).toBe(true)
-      expect(section.scrollWidth).toBeLessThanOrEqual(section.clientWidth)
-      // eslint-disable-next-line no-await-in-loop -- Each group must open and close before testing the next.
-      await userEvent.click(group.querySelector('summary')!)
-    }
-    await userEvent.click(groups[0].querySelector('summary')!)
+    const list = screen.getByRole('region', {name: '행동 연결 목록'})
+    const choices = within(list).getAllByRole('button')
+    expect(choices).toHaveLength(defaults.length)
+    expect(screen.queryByRole('textbox', {name: '연결 1 감정·행동·내용'})).toBeNull()
+    expect(section.scrollWidth).toBeLessThanOrEqual(section.clientWidth)
+    await userEvent.click(choices[0]!)
     const first = screen.getByRole('textbox', {name: '연결 1 감정·행동·내용'})
     await userEvent.fill(first, '축하해요! 함께 해결해서 기뻐요.')
-    expect(bindings()[0].text).toBe('축하해요! 함께 해결해서 기뻐요.')
+    expect(semanticExamples(bindings()[0]).find((example) => example.language === 'ko')?.text).toBe(
+      '축하해요! 함께 해결해서 기뻐요.',
+    )
+    expect(semanticExamples(bindings()[0]).find((example) => example.language === 'en')?.text).toBe(
+      semanticExamples(defaults[0]).find((example) => example.language === 'en')?.text,
+    )
     expect(screen.getByRole('textbox', {name: '연결 1 감정·행동·내용'})).toBe(first)
     expect(view.container.firstElementChild!.scrollWidth).toBeLessThanOrEqual(width)
   },

@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {AutoConfig, AutoModel, AutoTokenizer} from '@huggingface/transformers'
+import {AutoConfig, AutoModel, AutoTokenizer, env} from '@huggingface/transformers'
 import {afterEach, expect, it, vi} from 'vitest'
 import type {SemanticReply, SemanticRequest} from '../protocol'
 
@@ -23,15 +23,20 @@ afterEach(() => {
 })
 
 it('should embed uncached texts individually and retain duplicate order and cache hits', async () => {
+  const fetchAsset = vi.fn(async () => new Response('{}'))
+  vi.stubGlobal('fetch', fetchAsset)
   const tokenizer = vi.fn((texts: readonly string[]) => ({texts}))
   const model = vi.fn(async (tokens: {readonly texts: readonly string[]}) => ({
     sentence_embedding: {
       tolist: () => tokens.texts.map((text) => Array.from({length: 768}, () => text.length)),
     },
   }))
-  vi.mocked(AutoConfig.from_pretrained).mockResolvedValue(
-    {} as Awaited<ReturnType<typeof AutoConfig.from_pretrained>>,
-  )
+  vi.mocked(AutoConfig.from_pretrained).mockImplementation(async () => {
+    await env.fetch('/semantic-models/embeddinggemma-2/config.json', {
+      headers: {'x-model': 'local'},
+    })
+    return {} as Awaited<ReturnType<typeof AutoConfig.from_pretrained>>
+  })
   vi.mocked(AutoTokenizer.from_pretrained).mockResolvedValue(
     tokenizer as unknown as Awaited<ReturnType<typeof AutoTokenizer.from_pretrained>>,
   )
@@ -54,6 +59,10 @@ it('should embed uncached texts individually and retain duplicate order and cach
   }
   const result = await send(['long chat', 'short label', 'short label'])
   expect(result.type).toBe('vectors')
+  expect(fetchAsset).toHaveBeenCalledWith('/models/embeddinggemma-2/config.json', {
+    cache: 'no-store',
+    headers: {'x-model': 'local'},
+  })
   expect(tokenizer.mock.calls.map(([texts]) => texts)).toEqual([['long chat'], ['short label']])
   if (result.type !== 'vectors') {
     throw new Error(result.message)

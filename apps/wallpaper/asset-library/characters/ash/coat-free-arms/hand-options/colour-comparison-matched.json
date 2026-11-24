@@ -1,0 +1,78 @@
+{
+  "editedImage": "wrist-matched.png",
+  "originalModelSha256": "63dec3ef86b5b23954705326d1b8a37b9f9388910cdb7b49298bcc4cd58fa49e",
+  "editedPngSha256": "ec2c2b6c9f31a75ccb90e5b9dd2b2bb2a832a76e433fb0e92b6eac98e491e85e",
+  "method": "sRGB skin samples. Original texture pixels are restricted to actual UV triangles. Mostly opaque warm skin only; outlines, blue nails, pen and transparent edge pixels excluded. Median RGB in five-percent bands around the 90th, 50th and 10th brightness percentiles. Different poses mean these are palette representatives, not pixel-corresponding lighting measurements.",
+  "originalHand": {
+    "parts": ["ArtMesh125"],
+    "pixels": 10882,
+    "bands": {
+      "light": {
+        "rgb": [255, 249, 244],
+        "hex": "#fff9f4"
+      },
+      "mid": {
+        "rgb": [254, 244, 239],
+        "hex": "#fef4ef"
+      },
+      "shade": {
+        "rgb": [243, 218, 213],
+        "hex": "#f3dad5"
+      }
+    }
+  },
+  "originalForearm": {
+    "parts": ["coat-free:notes-left:ArtMesh900", "coat-free:notes-left:ArtMesh901"],
+    "pixels": 19855,
+    "bands": {
+      "light": {
+        "rgb": [255, 250, 249],
+        "hex": "#fffaf9"
+      },
+      "mid": {
+        "rgb": [252, 245, 243],
+        "hex": "#fcf5f3"
+      },
+      "shade": {
+        "rgb": [248, 224, 223],
+        "hex": "#f8e0df"
+      }
+    }
+  },
+  "originalLeftForearm": {
+    "parts": ["coat-free:notes-right:ArtMesh994", "coat-free:notes-right:ArtMesh995"],
+    "pixels": 19887,
+    "bands": {
+      "light": {
+        "rgb": [255, 250, 249],
+        "hex": "#fffaf9"
+      },
+      "mid": {
+        "rgb": [252, 245, 243],
+        "hex": "#fcf5f3"
+      },
+      "shade": {
+        "rgb": [248, 224, 223],
+        "hex": "#f8e0df"
+      }
+    }
+  },
+  "editedHand": {
+    "pixels": 188430,
+    "bands": {
+      "light": {
+        "rgb": [252, 243, 238],
+        "hex": "#fcf3ee"
+      },
+      "mid": {
+        "rgb": [252, 238, 235],
+        "hex": "#fceeeb"
+      },
+      "shade": {
+        "rgb": [246, 219, 216],
+        "hex": "#f6dbd8"
+      }
+    }
+  },
+  "conclusion": "The edited skin and shadow palette does not match the original hand or forearm. This is an inspection report, not an additional image edit."
+}

@@ -1,0 +1,59 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "hand-material-source.png"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-material-source.png"
+    }
+  },
+  "3": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "material-hand-weight.png",
+      "channel": "red"
+    }
+  },
+  "4": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["2", 0],
+      "source": ["1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["3", 0]
+    }
+  },
+  "5": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "material-alpha.png",
+      "channel": "red"
+    }
+  },
+  "6": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["5", 0]
+    }
+  },
+  "7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["4", 0],
+      "alpha": ["6", 0]
+    }
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["7", 0],
+      "filename_prefix": "Wallpaper/heart-wrist/material"
+    }
+  }
+}

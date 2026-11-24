@@ -2,6 +2,7 @@ import {parseDocument, type ParseDocumentResult, parseDocumentValue} from '../pa
 import type {PreparePuppetDocumentRequest} from './prepare-puppet-document-request'
 import {compactDocumentTextures} from '../texture-assets'
 import {parseDocumentBlob} from '../parse-document-blob'
+import {preparedRuntimeSection} from './prepared-document'
 
 const prepareDocument = async (
   request: PreparePuppetDocumentRequest,
@@ -23,9 +24,16 @@ const prepareDocument = async (
 self.addEventListener('message', async (event: MessageEvent<PreparePuppetDocumentRequest>) => {
   try {
     const result = await prepareDocument(event.data)
-    self.postMessage(
-      result.ok ? {document: compactDocumentTextures(result.document), ok: true} : result,
-    )
+    if (!result.ok) {
+      self.postMessage(result)
+      return
+    }
+    const runtimeSection = preparedRuntimeSection(result.document)
+    self.postMessage({
+      document: compactDocumentTextures(result.document),
+      ok: true,
+      ...(runtimeSection === undefined ? {} : {runtimeSection}),
+    })
   } catch (error) {
     self.postMessage({
       error: {message: error instanceof Error ? error.message : String(error)},

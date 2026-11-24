@@ -36,7 +36,14 @@ export default defineConfig({
     node: true,
   },
   // 수동 뷰어 검증 입력은 긴 줄과 빈 파일 자체가 검증 대상입니다.
-  ignorePatterns: ['apps/*/dist/**', 'packages/*/dist/**', 'pane-validation-files/**'],
+  ignorePatterns: [
+    'apps/*/dist/**',
+    'packages/*/dist/**',
+    'pane-validation-files/**',
+    // wasm-bindgen generates this adapter together with its WASM module.
+    'packages/puppet/src/player/rendering/wgpu/wasm/**',
+    'packages/puppet/src/player/internal/wasm/parallel/**',
+  ],
   jsPlugins: [
     {
       name: 'eslint-js',

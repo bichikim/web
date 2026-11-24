@@ -5,7 +5,7 @@
 ソースコード内の静的文字列をローカル埋め込みモデルで比較し、意味が似ているキーを検出する Vite プラグインです。翻訳文、分析イベント、権限名など、文字列キーを受け取る任意のインポート関数に適用できます。
 
 - インターネット接続や外部 API を使用しません。
-- q8 `Xenova/multilingual-e5-small` モデルをパッケージに同梱しています。
+- 固定された q8 `Xenova/multilingual-e5-small` モデルを OS 共通キャッシュで使用します。
 - どの関数の何番目の引数をキーとするかを `keyDetector` で指定できます。
 - Vite が実際に読み込んだモジュールを非同期 Worker で比較し、transform 処理への影響を抑えます。
 - 類似キーとソース位置のみを報告し、コードは自動変更しません。
@@ -232,20 +232,20 @@ group=ungrouped, semantic=0.9560–0.9843/0.9000
 
 ## 8. オプション一覧
 
-| オプション          | デフォルト                             | 説明                                                      |
-| ------------------- | -------------------------------------- | --------------------------------------------------------- |
-| `keyDetector`       | 必須                                   | 検査する import 呼び出しとキー引数を選択します。          |
-| `semanticThreshold` | `0.9`                                  | 固定値または `(key) => number` 形式のしきい値 resolver    |
-| `skipIdenticalKeys` | `false`                                | 元の key 値が完全に同じ pair をスキップします。           |
-| `serveMode`         | `warn`                                 | 開発サーバーの診断モード                                  |
-| `buildMode`         | `error`                                | 本番ビルドの診断モード                                    |
-| `exclude`           | テスト、generated、node_modules を除外 | Vite と CLI で除外する glob パターン                      |
-| `scanInclude`       | `src/**/*.{ts,tsx,js,jsx,mts,mjs}`     | CLI の全体スキャンだけで使用するファイル glob             |
-| `cacheDir`          | `node_modules/.cache/key-similarity`   | モデルキャッシュと `vectors` キャッシュの基準ディレクトリ |
-| `modelPath`         | 同梱モデル                             | 別のローカル Transformers.js モデルへのパス               |
-| `modelIdentifier`   | 同梱モデル ID または `modelPath`       | ベクトルキャッシュを区別するモデル識別子                  |
-| `modelRevision`     | 同梱 revision または `local`           | ベクトルキャッシュを区別するモデル revision               |
-| `wasmPath`          | 自動選択                               | ONNX WASM ファイルへの明示的なパス                        |
+| オプション          | デフォルト                                   | 説明                                                      |
+| ------------------- | -------------------------------------------- | --------------------------------------------------------- |
+| `keyDetector`       | 必須                                         | 検査する import 呼び出しとキー引数を選択します。          |
+| `semanticThreshold` | `0.9`                                        | 固定値または `(key) => number` 形式のしきい値 resolver    |
+| `skipIdenticalKeys` | `false`                                      | 元の key 値が完全に同じ pair をスキップします。           |
+| `serveMode`         | `warn`                                       | 開発サーバーの診断モード                                  |
+| `buildMode`         | `error`                                      | 本番ビルドの診断モード                                    |
+| `exclude`           | テスト、generated、node_modules を除外       | Vite と CLI で除外する glob パターン                      |
+| `scanInclude`       | `src/**/*.{ts,tsx,js,jsx,mts,mjs}`           | CLI の全体スキャンだけで使用するファイル glob             |
+| `cacheDir`          | `node_modules/.cache/key-similarity`         | モデルキャッシュと `vectors` キャッシュの基準ディレクトリ |
+| `modelPath`         | 共通キャッシュのモデル                       | 別のローカル Transformers.js モデルへのパス               |
+| `modelIdentifier`   | 共通キャッシュのモデル ID または `modelPath` | ベクトルキャッシュを区別するモデル識別子                  |
+| `modelRevision`     | 固定 revision または `local`                 | ベクトルキャッシュを区別するモデル revision               |
+| `wasmPath`          | 自動選択                                     | ONNX WASM ファイルへの明示的なパス                        |
 
 Vite 共通の `include` オプションはありません。Vite モジュールグラフ内の JavaScript と TypeScript ファイルを検査し、`exclude` だけを適用します。プロジェクト全体を検査する場合に限り、CLI 専用の `scanInclude` を使用します。
 
@@ -275,7 +275,7 @@ CLI は現在の作業ディレクトリをルートとして使用します。
 
 ## 10. モデルとキャッシュ
 
-デフォルトのモデルとトークナイザーは `assets/multilingual-e5-small` に含まれています。Transformers.js のリモートモデルアクセスを無効にしているため、実行時にモデルをダウンロードしません。
+デフォルトのモデルとトークナイザーは `assets/model.json` の固定リビジョンから取得し、サイズと SHA-256 を検証して OS の `io.winterlove.models` 共通キャッシュに保存します。不足または破損したファイルだけをダウンロードし、以降はオフラインで再利用します。モデルのバイナリは Git と npm パッケージに含めません。Transformers.js は準備済みのローカルファイルだけを読み込みます。
 
 正規化した文字列のベクトルは、デフォルトで `node_modules/.cache/key-similarity/vectors` に保存します。モデル ID、revision、正規化バージョン、正規化文字列が一致する場合はベクトルを再利用します。別のローカルモデルを使用するときは、以前のベクトルキャッシュと混在しないように `modelIdentifier` と `modelRevision` も指定してください。
 
@@ -319,7 +319,7 @@ Vite モードは、ビルド前にソースディレクトリ全体を glob で
 
 ## 13. 同梱している例
 
-パッケージルートで次のコマンドを実行できます。すべての例で同梱のローカルモデルを使用します。
+パッケージルートで次のコマンドを実行できます。すべての例で共通キャッシュのローカルモデルを使用します。
 
 ```bash
 npm run example:duplicate

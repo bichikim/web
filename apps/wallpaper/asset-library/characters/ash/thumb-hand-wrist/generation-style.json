@@ -1,0 +1,124 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "thumb-complete-shape.png"
+    }
+  },
+  "2": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "4": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["28", 0],
+      "alpha": ["28", 1]
+    }
+  },
+  "10": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+      "unet_name": "Qwen-Image-2.1-Turbo-Q4_K_S.gguf"
+    }
+  },
+  "11": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "12": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+  },
+  "13": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": ["11", 0],
+      "vae": ["12", 0],
+      "resolution": 0,
+      "prompt": "把图1这只已经包含自然腕关节的完整拇指点赞手重新画成图2原始角色插画的画风。图1的掌根与手腕结构保持，不要回到图2缺少手腕的断口。保持相同手指姿势、相同像素位置与手腕长度。大拇指的指甲必须改成图2原有的细长狭窄蓝色指甲，四根握拢的手指造型也沿用图2。颜色、线条和明暗只按图2：极浅象牙白肤色、极柔和暖粉色明暗渐变，轮廓是图2同样细且柔和的红棕色线，线宽与图2前臂外轮廓完全相同。不能保留图1粗硬深红轮廓、大片平涂色块、深色锐利三角阴影、黄色皮肤或卡通矢量图风格。腕关节的骨点、肌腱和掌根转折用很浅柔和的自然阴影表达，与原图细腻的皮肤质感相同，不画横向拼接线或肉管。前臂原始轮廓和长短位置保持不变。只输出同构图同大小的这一只完整手与短手腕，高质量透明RGBA，无衣服，无饰物，无光晕。",
+      "negative_prompt": "",
+      "images.image_1": ["2", 0],
+      "images.image_2": ["4", 0]
+    }
+  },
+  "16": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": ["10", 0],
+      "device": "auto",
+      "dtype": "default"
+    }
+  },
+  "18": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["24", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["18", 0],
+      "filename_prefix": "Wallpaper/thumb-hand-wrist/style-hand"
+    }
+  },
+  "20": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": ["16", 0],
+      "conditioning": ["13", 0]
+    }
+  },
+  "21": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 711311
+    }
+  },
+  "22": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "23": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0.0"
+    }
+  },
+  "24": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["21", 0],
+      "guider": ["20", 0],
+      "sampler": ["22", 0],
+      "sigmas": ["23", 0],
+      "latent_image": ["13", 2]
+    }
+  },
+  "28": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "thumb-whole-reference.png"
+    }
+  },
+  "30": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["2", 0],
+      "filename_prefix": "Wallpaper/thumb-hand-wrist/style-reference"
+    }
+  }
+}

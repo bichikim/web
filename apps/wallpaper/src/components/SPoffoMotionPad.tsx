@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createMemo, createSignal} from 'solid-js'
 import {
   DEFAULT_TRACKING_OPTIONS,
@@ -101,20 +102,20 @@ export const SPoffoMotionPad = (props: SPoffoMotionPadProps) => {
             aria-hidden="true"
             class="pointer-events-none absolute left-1/2 top-0 ml-2 text-[10px] text-stone-600"
           >
-            위
+            {uiText('위')}
           </span>
           <span
             aria-hidden="true"
             class="pointer-events-none absolute right-0 top-1/2 mt-2 text-[10px] text-stone-600"
           >
-            오른쪽
+            {uiText('오른쪽')}
           </span>
           <button
             type="button"
-            aria-label={`${props.label} 조정`}
+            aria-label={uiText('{value0} 조정', {value0: String(props.label)})}
             aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Escape"
             disabled={props.onChange === undefined}
-            title="점을 끌어 기본 방향 조정"
+            title={uiText('점을 끌어 {value0}', {value0: String(props.label)})}
             class="absolute box-border h-6 w-6 rounded-full cursor-grab active:cursor-grabbing
               -translate-x-1/2 -translate-y-1/2 touch-none
               border-2 border-solid border-white bg-blue-700 p-0 shadow-sm
@@ -126,6 +127,7 @@ export const SPoffoMotionPad = (props: SPoffoMotionPadProps) => {
         </div>
       </div>
       <SPoffoMotionCoordinates
+        label={props.label}
         fields={props.fields}
         value={props.value}
         display={values(movement.point())}

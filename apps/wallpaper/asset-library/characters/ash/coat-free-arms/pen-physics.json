@@ -1,0 +1,68 @@
+{
+  "beforeModelSha256": "06fa651ba03b727999a1bbc46aa1cbb7aa5e54649d39db20d4226d405ecfad7d",
+  "modelSha256": "c05475121d05704207b5e9d1a3accdaa49d012af137fdaf514b4ae14c50c6feb",
+  "modelBytes": 18188524,
+  "bindingId": "coat-free:notes-left:wrist-physics",
+  "deformerId": "Rotation@Part27",
+  "driver": "Param57",
+  "sourcePhysicsChain": "PhysicsSetting15",
+  "headInputs": ["ParamAngleX", "ParamAngleZ"],
+  "activation": "Param49",
+  "mechanism": "Use the existing head-driven physics output as a small rigid wrist rotation. Keep the original forearm translation and local wrist contacts; do not restore the removed forearm warp physics.",
+  "artworkMeshesUvsSceneGluePhysicsMotionsExpressionsAndAllExistingBindingsUnchanged": true,
+  "comparison": {
+    "input": "Existing body pendulum outputs at +0.8 and -0.8; remaining parameters held at the neutral notebook pose.",
+    "before": {
+      "positive": {
+        "penDegrees": 1.4668711717573357,
+        "handDegrees": 0.38005299101456874
+      },
+      "negative": {
+        "penDegrees": -0.008626295242868686,
+        "handDegrees": -0.12731856277639478
+      }
+    },
+    "after": {
+      "positive": {
+        "penDegrees": 3.8669971070996096,
+        "handDegrees": 2.780025525021495
+      },
+      "negative": {
+        "penDegrees": -2.4086746012816915,
+        "handDegrees": -2.527309501068844
+      }
+    }
+  },
+  "review": {
+    "positive": "pen-physics-positive.png",
+    "negative": "pen-physics-negative.png",
+    "liveHeadReversals": "pen-physics-live.png"
+  },
+  "maximumAddedWristAngleDegrees": 3,
+  "checks": {
+    "regression": {
+      "engines": ["Chromium", "WebKit"],
+      "buffering": [false, true],
+      "files": 8,
+      "passed": 20,
+      "failed": 0,
+      "scope": "Actual head-driven physics, pen/hand rotation in both directions, rigid forearm, wrist and elbow contacts, notebook layering, and interrupted action fades."
+    },
+    "oxlint": "passed",
+    "oxfmt": "passed",
+    "writingPhysics": {
+      "engines": ["Chromium", "WebKit"],
+      "buffering": [false, true],
+      "passed": 4,
+      "failed": 0,
+      "writingStates": [0, 0.5, 1],
+      "isolatedSignals": [-0.8, 0.8],
+      "maximumAllowedContactError": 0.01,
+      "maximumAllowedForearmShapeError": 0.01
+    },
+    "nativeApp": {
+      "restarted": true,
+      "servedModelSha256": "c05475121d05704207b5e9d1a3accdaa49d012af137fdaf514b4ae14c50c6feb"
+    }
+  }
+}

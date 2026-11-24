@@ -96,7 +96,7 @@ impl Model {
                 .and_then(|id| self.deformer_index.get(id))
                 .copied()
                 .filter(|&d| self.deformers[d].is_spatial());
-            let posed_deformer = deformer.map(|d| &posed.deformers[d]);
+            let posed_deformer = deformer.map(|d| posed.at(d));
             let pose = posed_deformer.and_then(|d| d.spatial.as_ref());
             let control_points =
                 deformer

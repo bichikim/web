@@ -12,6 +12,7 @@ export type {
   PlayerBufferingInfo,
   PlayerInputChange,
   PlayerBufferingStatus,
+  PlayerWorkerRuntime,
 } from './buffering/types'
 
 // Library entry points are built independently but can receive the same Player instance.

@@ -1,0 +1,114 @@
+{
+  "10": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+      "unet_name": "qwen-image-2.1-UC-Q4_K_M.gguf"
+    }
+  },
+  "11": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "12": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+  },
+  "13": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": ["11", 0],
+      "vae": ["12", 0],
+      "resolution": 0,
+      "prompt": "以图1原有的拇指点赞手为基础，重新绘制一只从手指、手背到腕关节都完整自然的手部插画。不是给原来的断口填缝，也不是在手与前臂中间加一段细长皮肤管。图1的大拇指姿势、原有细长的蓝色指甲、四根握拢的手指、手指排列、长宽比例和像素位置必须保留。请真正完成手掌根部的解剖体块和自然的短小腕关节，让拇指侧掌根、小指侧掌根、手背与前臂在一个完整的手部形体中连贯地转折，有与姿势相符的极柔和肌腱和骨点阴影。图2只作为完整手与腕关节体块的解剖参考，不复制图2的指甲形状、手指造型、线宽、肤色或画风。画风、颜色和线条全部严格沿用图1的原始日系角色插画：浅象牙白皮肤、原有暖粉色柔和渐变阴影、细而柔和的红棕色轮廓，不能变成平涂、深褐色粗线或整体粉红色。保留图1前臂的位置、长短、宽度、角度和原始轮廓；腕关节不能拉长、不能做成细颈、不能多一个关节或肉块。手与腕是一张完整连续的皮肤，没有拼接补丁、没有横向切线或环形腕带。透明背景，无光晕，无衣袖、无手套、无首饰。输出与图1相同构图与尺寸的高精细RGBA图像。",
+      "negative_prompt": "",
+      "images.image_1": ["2", 0],
+      "images.image_2": ["4", 0]
+    }
+  },
+  "16": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": ["10", 0],
+      "device": "auto",
+      "dtype": "default"
+    }
+  },
+  "18": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["24", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "thumb-whole-reference.png"
+    }
+  },
+  "2": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "thumb-anatomy-reference.png"
+    }
+  },
+  "4": {
+    "class_type": "ImageCrop",
+    "inputs": {
+      "image": ["3", 0],
+      "x": 475,
+      "y": 35,
+      "width": 370,
+      "height": 710
+    }
+  },
+  "24": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": ["16", 0],
+      "seed": 711310,
+      "steps": 25,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "positive": ["13", 0],
+      "negative": ["13", 1],
+      "latent_image": ["13", 2],
+      "denoise": 1
+    }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["18", 0],
+      "filename_prefix": "Wallpaper/thumb-hand-wrist/hand"
+    }
+  },
+  "27": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["2", 0],
+      "filename_prefix": "Wallpaper/thumb-hand-wrist/reference"
+    }
+  },
+  "29": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["4", 0],
+      "filename_prefix": "Wallpaper/thumb-hand-wrist/anatomy"
+    }
+  }
+}

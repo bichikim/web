@@ -1,11 +1,13 @@
+import {text as uiText} from '../features/localization'
 import type {CameraSurface} from '../features/tracking/types'
-import {type Accessor, createSignal} from 'solid-js'
+import {type Accessor, createSignal, Show} from 'solid-js'
 import {usePuppet} from '../features/background/use-puppet'
 import type {
   PoffoAgentControls,
   PoffoDisplayOptions,
   PoffoLipSyncControls,
   PoffoMotionControls,
+  PoffoTouchControls,
 } from '../features/background/types'
 import type {
   PoffoTracking,
@@ -14,7 +16,12 @@ import type {
 } from '@winter-love/wallpaper/settings/tracking'
 
 interface SPuppetBackgroundProps
-  extends PoffoDisplayOptions, PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
+  extends
+    PoffoDisplayOptions,
+    PoffoMotionControls,
+    PoffoLipSyncControls,
+    PoffoAgentControls,
+    PoffoTouchControls {
   readonly assetId: Accessor<string | null>
   readonly load: (id: string) => Promise<string | Blob>
   readonly onError: (error: unknown) => void
@@ -26,7 +33,7 @@ interface SPuppetBackgroundProps
 
 export const SPuppetBackground = (props: SPuppetBackgroundProps) => {
   const [canvas, setCanvas] = createSignal<HTMLCanvasElement | null>(null)
-  usePuppet({
+  const touch = usePuppet({
     agentBindings: () => props.agentBindings?.(),
     assetId: () => props.assetId(),
     cameraSurface: () => props.cameraSurface?.(),
@@ -39,9 +46,23 @@ export const SPuppetBackground = (props: SPuppetBackgroundProps) => {
     onError: (cause) => props.onError(cause),
     onMotions: (ids) => props.onMotions?.(ids),
     semanticBindings: () => props.semanticBindings?.(),
+    touch: () => props.touch?.(),
     tracking: () => props.tracking?.(),
     trackingBindings: () => props.trackingBindings?.(),
     trackingOptions: () => props.trackingOptions?.(),
   })
-  return <canvas ref={setCanvas} class="h-full w-full" aria-label="Poffo 배경" />
+  return (
+    <Show when={touch.canvasKey()} keyed>
+      <canvas
+        ref={setCanvas}
+        class="h-full w-full touch-none"
+        aria-label={uiText('Poffo 배경')}
+        onPointerDown={touch.start}
+        onPointerMove={touch.move}
+        onPointerUp={touch.finish}
+        onPointerCancel={touch.cancel}
+        onLostPointerCapture={touch.lostCapture}
+      />
+    </Show>
+  )
 }

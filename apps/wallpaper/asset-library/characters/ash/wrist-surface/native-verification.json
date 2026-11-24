@@ -1,0 +1,43 @@
+{
+  "source": "Actual Wallpaper Worker frames compared with complete scene and glue evaluation",
+  "pointerInputUsed": false,
+  "headInput": "temporary head parameter preview before physics",
+  "poses": [
+    {
+      "pose": "noodles-left",
+      "visibleConnectionParts": [
+        "coat-free:noodles-left:ArtMesh900",
+        "coat-free:noodles-left:hand"
+      ],
+      "maximumVertexError": 0.0006481104824160866,
+      "parts": {
+        "coat-free:noodles-left:ArtMesh900": 0.0005453979047160828,
+        "ArtMesh49": 0.0004336707538641349,
+        "ArtMesh48": 0.0004282343243176001,
+        "coat-free:noodles-left:hand": 0.0004336707538641349,
+        "coat-free:coffee-left:ArtMesh900": 0.0006481104824160866,
+        "coat-free:coffee:hand": 0.0006368262611431419
+      },
+      "head": -30,
+      "body": -10
+    },
+    {
+      "pose": "noodles-right",
+      "visibleConnectionParts": [
+        "coat-free:noodles-left:ArtMesh900",
+        "coat-free:noodles-left:hand"
+      ],
+      "maximumVertexError": 0.0005717548579013965,
+      "parts": {
+        "coat-free:noodles-left:ArtMesh900": 0.000461706581972976,
+        "ArtMesh49": 0.00017204607593157561,
+        "ArtMesh48": 0.00016883345506357728,
+        "coat-free:noodles-left:hand": 0.00028037857282470213,
+        "coat-free:coffee-left:ArtMesh900": 0.0005717548579013965,
+        "coat-free:coffee:hand": 0.0004225868483445083
+      },
+      "head": 30,
+      "body": 10
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "sourceSha256": "b824a9ea198e8c7122bbdbc1905a6fb30ca88d7fb647fa56eba65d58658b956d",
+  "sha256": "bb8715f612b470cb2eef22e3887ae7ecfe3635729195c147b53c98117c8399e9",
+  "bytes": 21818709,
+  "scope": "Hold Knife, coat off; only the lower outer wrist edge of the original hand",
+  "binding": "coat-free:knife-left:wrist-contour",
+  "maximumInset": 12,
+  "records": [
+    {
+      "id": "ArtMesh1023",
+      "locked": [18, 21, 31, 32],
+      "changed": [
+        {
+          "index": 4,
+          "amount": 8.68183146200523,
+          "point": [2239.697767916919, 1665.692296780312]
+        },
+        {
+          "index": 5,
+          "amount": 12,
+          "point": [2222.397088091574, 1708.063146174721]
+        },
+        {
+          "index": 6,
+          "amount": 9.51739262138762,
+          "point": [2196.4378376839845, 1745.3804290161295]
+        },
+        {
+          "index": 7,
+          "amount": 1.0536356006111451,
+          "point": [2158.13296352437, 1745.775433407011]
+        },
+        {
+          "index": 19,
+          "amount": 7.968539705475571,
+          "point": [2187.783756946425, 1711.3841236499186]
+        },
+        {
+          "index": 20,
+          "amount": 5.145081585807241,
+          "point": [2176.6652261008185, 1715.5460566081942]
+        }
+      ]
+    },
+    {
+      "id": "ArtMesh1024",
+      "locked": [37, 40, 63, 64],
+      "changed": [
+        {
+          "index": 12,
+          "amount": 8.68183146200523,
+          "point": [2239.697767916919, 1665.692296780312]
+        },
+        {
+          "index": 13,
+          "amount": 12,
+          "point": [2222.397088091574, 1708.063146174721]
+        },
+        {
+          "index": 14,
+          "amount": 9.51739262138762,
+          "point": [2196.4378376839845, 1745.3804290161295]
+        },
+        {
+          "index": 15,
+          "amount": 1.0536356006111451,
+          "point": [2158.13296352437, 1745.775433407011]
+        },
+        {
+          "index": 38,
+          "amount": 7.968539705475571,
+          "point": [2187.783756946425, 1711.3841236499186]
+        },
+        {
+          "index": 39,
+          "amount": 5.145081585807241,
+          "point": [2176.6652261008185, 1715.5460566081942]
+        }
+      ]
+    }
+  ],
+  "newSkinParts": 0,
+  "method": "A local inward correction of the original lower wrist vertices, gated to coat-off Hold Knife. Keep the original mesh topology, textures, finger vertices and the locked hand-to-arm attachment anchors."
+}

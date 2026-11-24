@@ -1,0 +1,433 @@
+{
+  "sha256": "f32f821cd54c98c8a925dd40418322b72db8a276a352787d623c45a7ac47236f",
+  "results": [
+    {
+      "pose": "rest",
+      "connections": [
+        {
+          "side": "left",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 2.2737367544323206e-13,
+          "contactError": 1.899836323552758e-8,
+          "flipped": 0,
+          "contactColumns": 63
+        },
+        {
+          "side": "right",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 2.9725842510199758e-8,
+          "flipped": 0,
+          "contactColumns": 54
+        }
+      ]
+    },
+    {
+      "pose": "left",
+      "connections": [
+        {
+          "side": "left",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 1.9182853779223142e-8,
+          "flipped": 0,
+          "contactColumns": 63
+        },
+        {
+          "side": "right",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 9.094947017729282e-13,
+          "contactError": 3.003871664359616e-8,
+          "flipped": 0,
+          "contactColumns": 54
+        }
+      ]
+    },
+    {
+      "pose": "right",
+      "connections": [
+        {
+          "side": "left",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 1.9175919736521716e-8,
+          "flipped": 0,
+          "contactColumns": 63
+        },
+        {
+          "side": "right",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 3.000277211479722e-8,
+          "flipped": 0,
+          "contactColumns": 54
+        }
+      ]
+    },
+    {
+      "pose": "up",
+      "connections": [
+        {
+          "side": "left",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 1.8998347448344168e-8,
+          "flipped": 0,
+          "contactColumns": 63
+        },
+        {
+          "side": "right",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 2.9726027639084816e-8,
+          "flipped": 0,
+          "contactColumns": 54
+        }
+      ]
+    },
+    {
+      "pose": "down",
+      "connections": [
+        {
+          "side": "left",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 1.899833166386887e-8,
+          "flipped": 0,
+          "contactColumns": 63
+        },
+        {
+          "side": "right",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 6.431098710768743e-13,
+          "contactError": 2.9725242025597072e-8,
+          "flipped": 0,
+          "contactColumns": 54
+        }
+      ]
+    },
+    {
+      "pose": "coat",
+      "connections": [
+        {
+          "side": "left",
+          "effectiveOpacity": 0,
+          "bodyError": 0,
+          "upperError": 9.374856803373542e-13,
+          "contactError": 1.8939827191341766e-8,
+          "flipped": 0,
+          "contactColumns": 63
+        },
+        {
+          "side": "right",
+          "effectiveOpacity": 0,
+          "bodyError": 0,
+          "upperError": 8.198074455012806e-13,
+          "contactError": 2.882917176855571e-8,
+          "flipped": 11,
+          "contactColumns": 54
+        }
+      ]
+    },
+    {
+      "pose": "left-joint",
+      "connections": [
+        {
+          "side": "left",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 2.2737367544323206e-13,
+          "contactError": 1.899836323552758e-8,
+          "flipped": 0,
+          "contactColumns": 63
+        },
+        {
+          "side": "right",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 2.9725842510199758e-8,
+          "flipped": 0,
+          "contactColumns": 54
+        }
+      ]
+    },
+    {
+      "pose": "left-motion",
+      "connections": [
+        {
+          "side": "left",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 4.547473508864641e-13,
+          "contactError": 1.9025738584294352e-8,
+          "flipped": 0,
+          "contactColumns": 63
+        },
+        {
+          "side": "right",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 2.959230799380071e-8,
+          "flipped": 0,
+          "contactColumns": 54
+        }
+      ]
+    },
+    {
+      "pose": "right-joint",
+      "connections": [
+        {
+          "side": "left",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 2.2737367544323206e-13,
+          "contactError": 1.899836323552758e-8,
+          "flipped": 0,
+          "contactColumns": 63
+        },
+        {
+          "side": "right",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 2.9725842510199758e-8,
+          "flipped": 0,
+          "contactColumns": 54
+        }
+      ]
+    },
+    {
+      "pose": "right-motion",
+      "connections": [
+        {
+          "side": "left",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 4.547473508864641e-13,
+          "contactError": 1.9025738584294352e-8,
+          "flipped": 0,
+          "contactColumns": 63
+        },
+        {
+          "side": "right",
+          "effectiveOpacity": 1,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 2.959230799380071e-8,
+          "flipped": 0,
+          "contactColumns": 54
+        }
+      ]
+    },
+    {
+      "pose": "fade-0.25",
+      "connections": [
+        {
+          "side": "left",
+          "effectiveOpacity": 0.0625,
+          "bodyError": 0,
+          "upperError": 2.2737367544323206e-13,
+          "contactError": 1.899836323552758e-8,
+          "flipped": 0,
+          "contactColumns": 63
+        },
+        {
+          "side": "right",
+          "effectiveOpacity": 0.0625,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 2.9725842510199758e-8,
+          "flipped": 0,
+          "contactColumns": 54
+        }
+      ]
+    },
+    {
+      "pose": "fade-0.5",
+      "connections": [
+        {
+          "side": "left",
+          "effectiveOpacity": 0.25,
+          "bodyError": 0,
+          "upperError": 2.2737367544323206e-13,
+          "contactError": 1.899836323552758e-8,
+          "flipped": 0,
+          "contactColumns": 63
+        },
+        {
+          "side": "right",
+          "effectiveOpacity": 0.25,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 2.9725842510199758e-8,
+          "flipped": 0,
+          "contactColumns": 54
+        }
+      ]
+    },
+    {
+      "pose": "fade-0.75",
+      "connections": [
+        {
+          "side": "left",
+          "effectiveOpacity": 0.5625,
+          "bodyError": 0,
+          "upperError": 2.2737367544323206e-13,
+          "contactError": 1.899836323552758e-8,
+          "flipped": 0,
+          "contactColumns": 63
+        },
+        {
+          "side": "right",
+          "effectiveOpacity": 0.5625,
+          "bodyError": 0,
+          "upperError": 5.084229945850415e-13,
+          "contactError": 2.9725842510199758e-8,
+          "flipped": 0,
+          "contactColumns": 54
+        }
+      ]
+    }
+  ],
+  "fingerProof": [
+    {
+      "side": "left",
+      "maximumFingerPixelError": 0,
+      "maximumFingerUvError": 1.4210854715202004e-14,
+      "forearmWidth": 110.39189167623329
+    },
+    {
+      "side": "right",
+      "maximumFingerPixelError": 0,
+      "maximumFingerUvError": 0,
+      "forearmWidth": 117.44698250174051
+    }
+  ],
+  "otherActions": [
+    {
+      "id": "울먹이는 눈",
+      "error": 0
+    },
+    {
+      "id": "필기 동작",
+      "error": 0
+    },
+    {
+      "id": "작아지기",
+      "error": 0
+    },
+    {
+      "id": "얼굴 그림자",
+      "error": 0
+    },
+    {
+      "id": "커피 들기",
+      "error": 0
+    },
+    {
+      "id": "눈의 하이라이트 끄기",
+      "error": 0
+    },
+    {
+      "id": "화남",
+      "error": 0
+    },
+    {
+      "id": "노트 들기",
+      "error": 0
+    },
+    {
+      "id": "게임패드 들기",
+      "error": 0
+    },
+    {
+      "id": "수갑 찬 손",
+      "error": 0
+    },
+    {
+      "id": "안경",
+      "error": 0
+    },
+    {
+      "id": "반짝이는 눈",
+      "error": 0
+    },
+    {
+      "id": "손하트",
+      "error": 0
+    },
+    {
+      "id": "땀방울",
+      "error": 0
+    },
+    {
+      "id": "컵라면 들기",
+      "error": 0
+    },
+    {
+      "id": "눈물",
+      "error": 0
+    },
+    {
+      "id": "엄지 척",
+      "error": 0
+    },
+    {
+      "id": "하트 눈",
+      "error": 0
+    },
+    {
+      "id": "목줄 동작",
+      "error": 0
+    },
+    {
+      "id": "고양이 손",
+      "error": 0
+    },
+    {
+      "id": "홍조",
+      "error": 0
+    },
+    {
+      "id": "마이크 들기",
+      "error": 0
+    },
+    {
+      "id": "긴장",
+      "error": 0
+    },
+    {
+      "id": "왼손 버튼 누르기",
+      "error": 0
+    },
+    {
+      "id": "오른손 버튼 누르기",
+      "error": 0
+    },
+    {
+      "id": "칼 들기",
+      "error": 0
+    },
+    {
+      "id": "외투 벗기",
+      "error": 0
+    }
+  ],
+  "originalForearmCoordinatesAndAlphaPreserved": true,
+  "originalFingerPixelsPreserved": true,
+  "intermediateWristSkinPartAdded": false,
+  "acceptedHeartRepairPreserved": true,
+  "coatOnPreserved": true
+}

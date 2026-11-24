@@ -1,0 +1,20 @@
+{
+  "tool": "Built-in ChatGPT image generation",
+  "source": "selected-reference.png",
+  "output": "wrist-open.png",
+  "inspection": "wrist-open-detail.png",
+  "maskGuide": "Skin and wrist ink editable; pen, nails and background protected by a reference mask. This was a visual mask guide, not an API-enforced inpainting mask.",
+  "generatedSource": "exec-826cb97a-7410-472f-8b3a-15b7073b9d39.png",
+  "appliedToModel": false,
+  "review": {
+    "width": 1254,
+    "height": 1254,
+    "transparentPNG": true,
+    "bottomClosingStrokeRemoved": true,
+    "bottomCenterBeforeRGBA": [144, 90, 85, 255],
+    "bottomCenterAfterRGBA": [251, 241, 237, 253],
+    "sideContoursRetained": true,
+    "whiteBackgroundCloseupInspected": true
+  },
+  "prompt": "PRECISE RETOUCH, not a new drawing.\nIMAGE 1 is the approved base sprite. IMAGE 2 is a registered 1254x1254 edit-mask GUIDE: white is editable skin/ink RGB, black is protected pen/nails/background. The hand silhouette and all alpha boundaries must remain those of IMAGE 1. Do not copy the black/white mask into the artwork. Do not recenter, rescale, lengthen or reshape the hand. Preserve the exact finger pose and pen.\nIMAGE 3 is the original character's other hand: match its pale warm-ivory skin, creamy light areas and faint soft shadows. Remove the base sprite's broad peach/pink cast and reduce shadow contrast to this original painting.\nIMAGE 4 is an actual forearm part showing the CORRECT OPEN JOIN. Notice how the two red-brown side outlines stop at a raw skin-color cut, with NO stroke across the cut.\nRetouch the base's wrist side contours to a consistent original-forearm line weight (about 3 pixels here), continuous through the wrist, neither tapering nor thickening abruptly.\nCRITICAL FIX: DELETE the curved horizontal brown closing stroke across the very bottom of the wrist. The bottom is an assembly seam, NOT a visible anatomical outline. Replace that stroke with the same pale skin RGB right to the existing alpha boundary, like IMAGE 4. Keep the existing bottom shape and length, no added wrist/arm, no cuff, no cap, no line across the bottom. The side contours remain intact; only the closing stroke disappears.\nKeep the pen and nails unchanged. Output one transparent PNG on the SAME 1254x1254 framing. Only the requested skin paint and wrist ink change."
+}

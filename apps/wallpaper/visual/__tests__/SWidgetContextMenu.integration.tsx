@@ -44,7 +44,7 @@ test.each([1, SEMANTIC_LIMIT])(
     expect(document.activeElement).toBe(entries.at(-1))
     expect(Date.now() - navigation).toBeLessThan(100)
     fireEvent.keyDown(menu, {key: 'ArrowDown'})
-    expect(document.activeElement).toBe(screen.getByRole('menuitem', {name: '크기 조정'}))
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', {name: '크기 및 위치 조정'}))
     fireEvent.keyDown(menu, {key: 'ArrowUp'})
     expect(document.activeElement).toBe(entries.at(-1))
     const updates: number[] = []
@@ -100,7 +100,7 @@ test('should return focus to sizing when the focused action is removed', () => {
   ))
   screen.getByRole('menuitemcheckbox', {name: '작아지기'}).focus()
   setActions([])
-  expect(document.activeElement).toBe(screen.getByRole('menuitem', {name: '크기 조정'}))
+  expect(document.activeElement).toBe(screen.getByRole('menuitem', {name: '크기 및 위치 조정'}))
   expect(screen.queryByRole('separator')).toBeNull()
 })
 

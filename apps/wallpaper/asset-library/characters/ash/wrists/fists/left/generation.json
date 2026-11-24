@@ -1,0 +1,103 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "reference-fists-left.png"
+    }
+  },
+  "2": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "10": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+      "unet_name": "Qwen-Image-2.1-Turbo-Q4_K_S.gguf"
+    }
+  },
+  "11": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "12": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+  },
+  "13": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": ["11", 0],
+      "vae": ["12", 0],
+      "resolution": 0,
+      "prompt": "只修复图中手掌根部与前臂相接的极短腕关节。现在前臂的斜切断面盖在手掌底部，看起来像两块纸。把这个接缝重绘成一只解剖自然、连续的手腕：掌根向前臂平顺收窄，轮廓有柔和转折，没有横切线、凸出的薄片、环形接缝或细长肉管。严格保持原手指、蓝色指甲、握姿、手背上半部、道具和前臂的形状与位置，不能重画整个手。腕长不要增加。原日系精细角色插画风格：原图同样的极浅象牙白肤色、暖粉色细腻渐变阴影、柔和红棕色外轮廓。新腕部外轮廓线与现有前臂的线色和线宽完全一致，不要变细也不要变粗。透明RGBA背景，构图尺寸与原图相同。把前臂与掌根的斜切重叠完全消除，使这只手的手腕短小且结构正确。不要在手腕留下斜向三角阴影或斜线。保留与原图同样细柔的轮廓，不能加粗。 皮肤阴影必须与原图一致的低对比柔和粉白渐变，不要提高饱和度，不要棕黄色皮肤，不要平涂或硬边阴影。保持原有线条的柔和抗锯齿与原有线宽。",
+      "negative_prompt": "",
+      "images.image_1": ["2", 0]
+    }
+  },
+  "16": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": ["10", 0],
+      "device": "auto",
+      "dtype": "default"
+    }
+  },
+  "18": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["24", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["18", 0],
+      "filename_prefix": "Wallpaper/wrists/fists-left"
+    }
+  },
+  "20": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": ["16", 0],
+      "conditioning": ["13", 0]
+    }
+  },
+  "21": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 1109107
+    }
+  },
+  "22": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "23": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0.0"
+    }
+  },
+  "24": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["21", 0],
+      "guider": ["20", 0],
+      "sampler": ["22", 0],
+      "sigmas": ["23", 0],
+      "latent_image": ["13", 2]
+    }
+  }
+}

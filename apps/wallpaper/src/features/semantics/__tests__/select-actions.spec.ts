@@ -23,6 +23,24 @@ const bindings: readonly SemanticBinding[] = [
     threshold: 0.8,
   },
 ]
+test('should retain checked appearance menus but mute automatic content during state previews', () => {
+  const menu: SemanticBinding = {
+    ...bindings[0],
+    action: {id: 'coat-off', kind: 'expression'},
+    category: 'menu',
+    exclusiveGroup: 'clothes',
+    id: 'coat',
+    menuActive: true,
+  }
+  const configured = [...bindings, menu]
+  expect(
+    selectSemanticActions({
+      actions: configured.map((binding) => ({action: binding.action!, label: binding.id})),
+      bindings: configured,
+      frame: {agentPreview: 'working', fallbackId: 'notes', scores: {happy: 1}, widgetId: 'w'},
+    }).map((item) => item.action.action.id),
+  ).toEqual(['coat-off'])
+})
 test('should draw only a behavior for unmatched narration and honor disabled and zero probability settings', () => {
   const random = vi.fn(() => 0)
   const settings = {enabled: true, probability: 1}

@@ -1,5 +1,6 @@
+import {text as uiText} from '../features/localization'
 import type {VoiceStatus} from '../features/voice/readout'
-import {createEffect, createMemo, createSignal, For, on, onCleanup, Show, untrack} from 'solid-js'
+import {createSignal, For, onCleanup, Show} from 'solid-js'
 import {
   chatTone,
   type CodexActivity,
@@ -7,26 +8,16 @@ import {
   type CodexPort,
   type CodexQuestionRequest,
 } from '../features/codex'
-import {
-  COVERED_HEIGHT,
-  type SpeechAnchor,
-  type SpeechPoint,
-  type SpeechRect,
-  useElementRect,
-  useOverlapStack,
-} from '../features/speech'
+import {type SpeechAnchor, type SpeechPoint, useSpeechStack} from '../features/speech'
 import {SCodexSpeech} from './SCodexSpeech'
-
-const FRAME_PADDING = 72
-const DEFAULT_FRAME_HEIGHT = 640
-const MINIMUM_CARD_HEIGHT = 160
-const MEASUREMENT_PRECISION = 1000
-const measuredHeight = (rect: SpeechRect | null) =>
-  rect === null
-    ? 'auto'
-    : `${Math.round(rect.height * MEASUREMENT_PRECISION) / MEASUREMENT_PRECISION}px`
+import {CHARACTER_SPEECH_ID, type useCharacterChat} from '../features/conversation'
+import {SCharacterSpeech} from './SCharacterSpeech'
+import {SSpeechOverflow} from './SSpeechOverflow'
 
 interface SCodexSpeechStackProps {
+  readonly dragging?: boolean
+  readonly character?: ReturnType<typeof useCharacterChat>
+  readonly onRecording?: (active: boolean) => void
   readonly maxHeight?: number
   readonly wrap?: boolean
   readonly anchor?: SpeechAnchor
@@ -40,113 +31,87 @@ interface SCodexSpeechStackProps {
   readonly onSelected?: (id: string | null) => void
   readonly voiceNotice?: string
   readonly voiceState?: VoiceStatus
-  readonly onVoiceRetry?: () => void
+  readonly onVoiceToggle?: () => void
   readonly onMoving?: (moving: boolean) => void
 }
 export const SCodexSpeechStack = (props: SCodexSpeechStackProps) => {
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
   const [cards, setCards] = createSignal<ReadonlyMap<string, HTMLElement>>(new Map())
-  const ids = createMemo(() => props.activities?.map((item) => item.sessionId) ?? [])
-  const [rowHeight, setRowHeight] = createSignal('auto')
-  const stack = useOverlapStack({
+  const stack = useSpeechStack({
+    activities: () => props.activities,
     anchor: () => props.anchor ?? 'bottom',
+    cards,
+    character: () => props.character,
+    dragging: () => props.dragging ?? false,
     element,
-    height: () => Number.parseFloat(rowHeight()) || COVERED_HEIGHT,
-    ids,
-  })
-  const heightLimit = createMemo(() =>
-    Math.max(
-      MINIMUM_CARD_HEIGHT,
-      (props.maxHeight ?? DEFAULT_FRAME_HEIGHT) - FRAME_PADDING - stack.offset(),
-    ),
-  )
-  const painting = createMemo(() => {
-    const ids = stack.order().toReversed()
-    const selected = stack.active()
-    return selected === null ? ids : [...ids.filter((id) => id !== selected), selected]
-  })
-  const [heightSource, setHeightSource] = createSignal<'content' | 'constraint'>('constraint')
-  const front = useElementRect({
-    element: () => cards().get(stack.order()[0]) ?? null,
-    layout: heightLimit,
-  })
-  createEffect(
-    on(
-      () => [heightLimit(), props.anchor, props.activities] as const,
-      (current, previous) => {
-        if (previous !== undefined) {
-          setHeightSource(
-            current[0] === previous[0] && current[1] === previous[1] ? 'content' : 'constraint',
-          )
-        }
-      },
-    ),
-  )
-  createEffect(() => {
-    const height = measuredHeight(front())
-    untrack(() => {
-      if (height !== rowHeight()) {
-        stack.relayout(() => setRowHeight(height))
-      }
-    })
-  })
-  createEffect(() => {
-    const moving = stack.active() !== null
-    untrack(() => props.onMoving?.(moving))
-  })
-  createEffect(() => {
-    const id = stack.active() ?? stack.order()[0] ?? null
-    untrack(() => props.onSelected?.(id))
+    layout: () => props.layout,
+    maxHeight: () => props.maxHeight,
+    onMoving: (active) => props.onMoving?.(active),
+    onRecording: (active) => props.onRecording?.(active),
+    onSelected: (id) => props.onSelected?.(id),
+    target: () => props.target,
   })
   return (
     <div
       ref={setElement}
       role="list"
-      aria-label="Codex 채팅 알림"
+      aria-label={props.character === undefined ? uiText('Codex 채팅 알림') : uiText('대화 말풍선')}
       data-moving={stack.active() !== null}
-      data-sizing={heightSource()}
-      class="isolate grid [grid-template-rows:var(--front-height)] [padding-bottom:var(--stack-offset)]
+      data-sizing={stack.heightSource()}
+      onPointerEnter={stack.enter}
+      onPointerMove={stack.move}
+      onPointerLeave={stack.leave}
+      onPointerDown={stack.press}
+      onFocusIn={stack.focus}
+      onFocusOut={stack.blur}
+      onKeyDown={stack.keyboard}
+      class="pointer-events-none isolate grid [grid-template-rows:var(--front-height)]
+      [padding-bottom:var(--stack-offset)]
       transition-[grid-template-rows] duration-200 [transition-timing-function:cubic-bezier(.22,.8,.25,1)]
       motion-reduce:transition-none data-[moving=true]:transition-none data-[sizing=constraint]:transition-none"
       style={{
-        '--front-height': rowHeight(),
-        '--speech-limit': `${heightLimit()}px`,
+        '--front-height': stack.rowHeight(),
+        '--speech-limit': `${stack.heightLimit()}px`,
         '--stack-offset': `${stack.offset()}px`,
       }}
     >
-      <For each={painting()}>
+      <For each={stack.painting()}>
         {(id) => {
-          const register = (card: HTMLDivElement) =>
-            setCards((value) => new Map(value).set(id, card))
-          onCleanup(() =>
-            setCards((value) => {
-              const next = new Map(value)
-              next.delete(id)
-              return next
-            }),
+          const selected = () => id === (stack.active() ?? stack.order()[0])
+          const covered = () => stack.active() === null && !selected()
+          const hidden = () => !selected() && (!stack.expanded() || !stack.previews().includes(id))
+          const voiceState = () => (selected() ? props.voiceState : undefined)
+          const voiceNotice = () => (selected() ? props.voiceNotice : undefined)
+          const actions = (
+            <Show when={selected() && stack.overflowItems().length > 0}>
+              <SSpeechOverflow
+                items={stack.overflowItems()}
+                onSelect={stack.selectOverflow}
+                onOpenChange={stack.browseChanged}
+              />
+            </Show>
           )
+          onCleanup(() => setCards((value) => new Map([...value].filter(([key]) => key !== id))))
           return (
             <div
-              ref={register}
+              ref={(card) => setCards((value) => new Map(value).set(id, card))}
               role="listitem"
               aria-posinset={stack.order().indexOf(id) + 1}
               aria-setsize={stack.order().length}
               data-speech-id={id}
               data-moving={stack.active() !== null}
-              data-anchor={props.anchor ?? 'bottom'}
+              data-anchor={stack.anchor()}
+              data-preview-hidden={hidden()}
+              aria-hidden={hidden() || undefined}
+              inert={hidden()}
+              hidden={!selected() && !stack.previews().includes(id)}
               class="pointer-events-none relative min-w-0 self-end data-[anchor=top]:self-start rounded-xl
               [grid-area:1/1] [transform:translateY(var(--speech-y))]
               wallpaper-speech-motion duration-200
               [transition-timing-function:cubic-bezier(.22,.8,.25,1)]
               data-[moving=true]:transition-none data-[sizing=constraint]:transition-none
               motion-reduce:transition-none data-[moving=true]:[will-change:transform,box-shadow]"
-              data-sizing={heightSource()}
-              classList={{
-                'wallpaper-speech-covered':
-                  props.anchor !== 'top' && stack.active() === null && id !== stack.order()[0],
-                'wallpaper-speech-covered-top':
-                  props.anchor === 'top' && stack.active() === null && id !== stack.order()[0],
-              }}
+              data-sizing={stack.heightSource()}
               style={{
                 '--speech-depth': `${stack.pose(id).depth}`,
                 '--speech-height': `${stack.pose(id).height}px`,
@@ -154,38 +119,59 @@ export const SCodexSpeechStack = (props: SCodexSpeechStackProps) => {
                 '--speech-y': `${stack.pose(id).y}px`,
               }}
             >
-              <Show when={props.activities?.find((item) => item.sessionId === id)}>
-                {(activity) => (
-                  <SCodexSpeech
-                    anchor={props.anchor}
-                    moving={stack.active() !== null}
-                    stacked
-                    activity={activity()}
-                    voiceState={
-                      id === (stack.active() ?? stack.order()[0]) ? props.voiceState : undefined
-                    }
-                    voiceNotice={
-                      id === (stack.active() ?? stack.order()[0]) ? props.voiceNotice : undefined
-                    }
-                    onVoiceRetry={props.onVoiceRetry}
-                    approvals={props.approvals?.filter((request) => request.sessionId === id)}
-                    questions={props.questions?.filter((request) => request.sessionId === id)}
-                    chatLabel={activity().title ?? '새 채팅'}
-                    wrap={props.wrap}
-                    tone={chatTone(id)}
-                    selected={stack.order()[0] === id}
-                    onSelect={() => stack.select(id)}
-                    onOpen={props.onOpen}
-                    onDismiss={
-                      props.onDismiss === undefined
-                        ? undefined
-                        : () => props.onDismiss?.(activity())
-                    }
-                    target={props.target}
-                    layout={(props.layout ?? 0) + stack.revision()}
-                  />
-                )}
-              </Show>
+              <div
+                class="wallpaper-speech-preview"
+                classList={{
+                  'wallpaper-speech-covered': stack.anchor() !== 'top' && covered(),
+                  'wallpaper-speech-covered-top': stack.anchor() === 'top' && covered(),
+                }}
+              >
+                <Show when={id === CHARACTER_SPEECH_ID && props.character}>
+                  {(character) => (
+                    <SCharacterSpeech
+                      chat={character()}
+                      headerActions={actions}
+                      anchor={stack.anchor()}
+                      moving={stack.active() !== null}
+                      selected={selected()}
+                      onSelect={() => stack.select(id)}
+                      onRecording={(active) => stack.record(id, active)}
+                      voiceState={voiceState()}
+                      voiceNotice={voiceNotice()}
+                      onVoiceToggle={selected() ? props.onVoiceToggle : undefined}
+                      target={props.target}
+                      wrap={props.wrap}
+                      layout={(props.layout ?? 0) + stack.revision()}
+                    />
+                  )}
+                </Show>
+                <Show when={props.activities?.find((item) => item.sessionId === id)}>
+                  {(activity) => (
+                    <SCodexSpeech
+                      onRecording={(active) => stack.record(id, active)}
+                      anchor={stack.anchor()}
+                      moving={stack.active() !== null}
+                      stacked
+                      activity={activity()}
+                      headerActions={actions}
+                      voiceState={voiceState()}
+                      voiceNotice={voiceNotice()}
+                      onVoiceToggle={selected() ? props.onVoiceToggle : undefined}
+                      approvals={props.approvals?.filter((request) => request.sessionId === id)}
+                      questions={props.questions?.filter((request) => request.sessionId === id)}
+                      chatLabel={activity().title ?? uiText('새 채팅')}
+                      wrap={props.wrap}
+                      tone={chatTone(id)}
+                      selected={selected()}
+                      onSelect={() => stack.select(id)}
+                      onOpen={props.onOpen}
+                      onDismiss={props.onDismiss && (() => props.onDismiss?.(activity()))}
+                      target={props.target}
+                      layout={(props.layout ?? 0) + stack.revision()}
+                    />
+                  )}
+                </Show>
+              </div>
             </div>
           )
         }}

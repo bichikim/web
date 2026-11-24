@@ -23,6 +23,19 @@ afterAll(() => {
 })
 afterEach(cleanup)
 
+it('should notify opening with both keyboard and pointer without notifying closing', () => {
+  const onOpen = vi.fn()
+  render(() => <SSelect label="Order" options={OPTIONS} onOpen={onOpen} />)
+  const trigger = screen.getByRole('combobox')
+  expect(onOpen).not.toHaveBeenCalled()
+  fireEvent.keyDown(trigger, {key: 'ArrowDown'})
+  expect(onOpen).toHaveBeenCalledOnce()
+  fireEvent.keyDown(trigger, {key: 'Escape'})
+  expect(onOpen).toHaveBeenCalledOnce()
+  fireEvent.click(trigger)
+  expect(onOpen).toHaveBeenCalledTimes(2)
+})
+
 it('should render a custom list and retain the committed value until a choice is saved', () => {
   const onChange = vi.fn()
   const [value, setValue] = createSignal('sequential')

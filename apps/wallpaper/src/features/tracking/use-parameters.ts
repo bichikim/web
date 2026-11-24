@@ -1,3 +1,4 @@
+import {modelTouchParameters, type TouchParameter} from '../touch'
 import {type Accessor, createResource, createSignal} from 'solid-js'
 import {modelParameters} from './model-parameters'
 import {SAMPLE_PUPPET_ID} from '../background/constants'
@@ -6,6 +7,7 @@ import {modelActions} from '../semantics/model-actions'
 import type {CharacterAction} from '../semantics/types'
 
 export interface ParameterSource {
+  readonly touchParameters?: Accessor<readonly TouchParameter[]>
   readonly actions?: Accessor<readonly CharacterAction[]>
   readonly error: Accessor<string | null>
   readonly loading: Accessor<boolean>
@@ -37,19 +39,21 @@ export const useParameters = (props: UseParametersProps): ParameterSource => {
         return {
           actions: modelActions(prepared.document),
           parameters: modelParameters(prepared.document),
+          touchParameters: modelTouchParameters(prepared.document),
         }
       } catch (cause) {
         console.error('Poffo parameters could not be loaded', cause)
         setError('파라미터를 불러올 수 없어요.')
-        return {actions: [], parameters: []}
+        return {actions: [], parameters: [], touchParameters: []}
       }
     },
-    {initialValue: {actions: [], parameters: []}},
+    {initialValue: {actions: [], parameters: [], touchParameters: []}},
   )
   return {
     actions: () => parameters().actions,
     error,
     loading: () => parameters.loading,
     parameters: () => parameters().parameters,
+    touchParameters: () => parameters().touchParameters,
   }
 }

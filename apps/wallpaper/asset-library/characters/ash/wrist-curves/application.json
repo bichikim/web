@@ -1,0 +1,2772 @@
+{
+  "sha256": "80de692f8b046fe874f6105b7f5b466006e095e4c40c7be453723a10f8df5eae",
+  "previousSha256": "d51d8a19a8b6027547eb7f7bb11deb0a436b500a42ba49df15e4a7bedee559ea",
+  "referenceSha256": "797259b9b1322bcea9eb58d17321d3b21efc4d8d936e9fb33a7e20a69135b299",
+  "bytes": 20607549,
+  "method": "Existing forearm mesh follows the original wrist contour; local surface glue follows hand rotation with smooth falloff",
+  "addedVisibleParts": 0,
+  "changedTextures": 0,
+  "rigRecords": [
+    {
+      "action": "coffee",
+      "guideId": "coat-free:coffee:arm-end-guide",
+      "handEdge": [
+        [2163.048234755074, 1697.9146275431708],
+        [2265.049730132876, 1703.449961974925]
+      ],
+      "refs": [
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 0,
+          "pixel": [208.78564453125, -23.0714111328125],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 1,
+          "pixel": [238.642822265625, -8.9285888671875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 2,
+          "pixel": [262.21435546875, 16.21429443359375],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 3,
+          "pixel": [252.78564453125, 39.78570556640625],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 4,
+          "pixel": [241.78564453125, 61.78570556640625],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 5,
+          "pixel": [229.21435546875, 85.35711669921875],
+          "weight": 0.919494483641022
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 6,
+          "pixel": [216.642822265625, 108.9285888671875],
+          "weight": 0.14548323534238516
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 29,
+          "pixel": [125.5, 104.21429443359375],
+          "weight": 0.2934622177460581
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 30,
+          "pixel": [139.642822265625, 80.64288330078125],
+          "weight": 0.968616929395794
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 31,
+          "pixel": [155.357177734375, 57.07141113281251],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 32,
+          "pixel": [163.21435546875, 33.5],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 33,
+          "pixel": [174.21435546875, 9.9285888671875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 34,
+          "pixel": [180.5, -13.64288330078125],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 35,
+          "pixel": [214.269287109375, 2.87347412109375],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 36,
+          "pixel": [232.840576171875, 18.0880126953125],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 37,
+          "pixel": [222.7216796875, 38.00726318359375],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 38,
+          "pixel": [211.39599609375, 59.68182373046876],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 39,
+          "pixel": [200.81689453125, 86.03118896484375],
+          "weight": 0.8307833013708723
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 40,
+          "pixel": [192.36474609375, 112.150390625],
+          "weight": 0.0794091188227255
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 62,
+          "pixel": [153.20703125, 105.20703124999999],
+          "weight": 0.2628027672275973
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 63,
+          "pixel": [166.564208984375, 81.63555908203125],
+          "weight": 0.9546083701333374
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 64,
+          "pixel": [182.22265625, 52.50830078125],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 65,
+          "pixel": [191.381591796875, 33.38153076171875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 66,
+          "pixel": [198.72265625, 5.36541748046875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 72,
+          "pixel": [254.69995649854738, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 73,
+          "pixel": [248.3865028696507, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 74,
+          "pixel": [256.69998757101354, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 75,
+          "pixel": [243.79037634185147, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 76,
+          "pixel": [258.7000186434797, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 77,
+          "pixel": [239.19424981405217, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 78,
+          "pixel": [260.7000497159459, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 79,
+          "pixel": [234.59812328625293, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 80,
+          "pixel": [224.24935688971, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 81,
+          "pixel": [226.78933611491428, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 82,
+          "pixel": [229.3293153401186, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 83,
+          "pixel": [231.86929456532286, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 84,
+          "pixel": [242.67849731445312, 60],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 85,
+          "pixel": [240.3539852328317, 60],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 86,
+          "pixel": [245.17849731445312, 54.99999999999999],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 87,
+          "pixel": [236.34531962369792, 54.99999999999999],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 88,
+          "pixel": [247.67849731445312, 50],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 89,
+          "pixel": [232.3366540145641, 50],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 90,
+          "pixel": [250.17849731445312, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 91,
+          "pixel": [228.3279884054303, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 92,
+          "pixel": [252.67849731445312, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 93,
+          "pixel": [224.3193227962965, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 94,
+          "pixel": [221.99820039045468, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 95,
+          "pixel": [220.7953138240372, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 96,
+          "pixel": [219.5924272576198, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 97,
+          "pixel": [218.38954069120234, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 98,
+          "pixel": [229.07126196536362, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 99,
+          "pixel": [217.18665412478492, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 100,
+          "pixel": [222.96812286196376, 10],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 101,
+          "pixel": [215.9837675583675, 10],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 102,
+          "pixel": [216.8649837585639, 5],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 103,
+          "pixel": [214.78088099195008, 5],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 104,
+          "pixel": [215.9919124646431, 60],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 105,
+          "pixel": [213.84240574982235, 54.99999999999999],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 106,
+          "pixel": [216.45507315990807, 50],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 107,
+          "pixel": [219.0677405699938, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 108,
+          "pixel": [221.68040798007948, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 109,
+          "pixel": [229.40481573562283, 85],
+          "weight": 0.9277284672381616
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 110,
+          "pixel": [228.96652056796668, 85],
+          "weight": 0.9253579411005862
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 111,
+          "pixel": [232.0714547823196, 80],
+          "weight": 0.9981867349516007
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 112,
+          "pixel": [225.4965778108018, 80],
+          "weight": 0.9846032291175104
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 113,
+          "pixel": [234.7380938290163, 75],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 114,
+          "pixel": [222.02663505363694, 75],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 115,
+          "pixel": [237.40473287571305, 70],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 116,
+          "pixel": [218.55669229647205, 70],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 117,
+          "pixel": [240.07137192240978, 65],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 118,
+          "pixel": [215.0867495393072, 65],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 119,
+          "pixel": [211.61680678214233, 60],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 120,
+          "pixel": [218.73808322486153, 105],
+          "weight": 0.25548563183271755
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 121,
+          "pixel": [213.92751119208185, 105],
+          "weight": 0.24207720747457906
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 122,
+          "pixel": [221.40476715396468, 100],
+          "weight": 0.42423126656005794
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 123,
+          "pixel": [210.47167607502234, 100],
+          "weight": 0.394390634461226
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 124,
+          "pixel": [224.07145108306787, 94.99999999999999],
+          "weight": 0.608559624042855
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 125,
+          "pixel": [207.0158409579628, 94.99999999999999],
+          "weight": 0.5583230833512858
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 126,
+          "pixel": [226.73813501217106, 90],
+          "weight": 0.7859065893883581
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 127,
+          "pixel": [203.56000584090327, 90],
+          "weight": 0.7180551895975935
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 128,
+          "pixel": [201.23091030324966, 85],
+          "weight": 0.8555339169818472
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 129,
+          "pixel": [203.23837831403475, 80],
+          "weight": 0.9515438748902888
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 130,
+          "pixel": [205.2458463248198, 75],
+          "weight": 0.9977742737472726
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 131,
+          "pixel": [207.2533143356049, 70],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 132,
+          "pixel": [209.26078234638996, 65],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 133,
+          "pixel": [211.26825035717502, 60],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 134,
+          "pixel": [208.56914081370422, 109.99999999999999],
+          "weight": 0.11892231865654679
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 135,
+          "pixel": [193.06061042366306, 109.99999999999999],
+          "weight": 0.1240156813469564
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 136,
+          "pixel": [194.6786055958496, 105],
+          "weight": 0.25388369250247245
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 137,
+          "pixel": [196.29660076803617, 100],
+          "weight": 0.4073201406983321
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 138,
+          "pixel": [197.91459594022274, 94.99999999999999],
+          "weight": 0.5686970386666493
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 139,
+          "pixel": [199.5325911124093, 90],
+          "weight": 0.7230336841462657
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 142,
+          "pixel": [214.90815262090075, 115],
+          "weight": 0.032012378345353754
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 143,
+          "pixel": [195.0951146424739, 115],
+          "weight": 0.033455195706106666
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 144,
+          "pixel": [216.33670819618484, 109.99999999999999],
+          "weight": 0.12039867333438381
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 146,
+          "pixel": [191.18566600970703, 115],
+          "weight": 0.0338695185355129
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 149,
+          "pixel": [117.59050865096096, 115],
+          "weight": 0.03576030432213462
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 150,
+          "pixel": [129.82425061001442, 115],
+          "weight": 0.03576030432213462
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 151,
+          "pixel": [121.2571632338908, 109.99999999999999],
+          "weight": 0.13132475704225288
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 152,
+          "pixel": [127.81962950136717, 109.99999999999999],
+          "weight": 0.13132475704225288
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 153,
+          "pixel": [124.92381781682062, 105],
+          "weight": 0.26911866779092486
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 154,
+          "pixel": [125.81500839271993, 105],
+          "weight": 0.26911866779092486
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 156,
+          "pixel": [163.53777407966072, 115],
+          "weight": 0.03576030432213462
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 157,
+          "pixel": [158.26320255115425, 109.99999999999999],
+          "weight": 0.13132475704225288
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 158,
+          "pixel": [180.23742006197256, 109.99999999999999],
+          "weight": 0.1289207704367854
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 159,
+          "pixel": [153.09270955046043, 105],
+          "weight": 0.26911866779092486
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 160,
+          "pixel": [147.42884188633587, 105],
+          "weight": 0.26911866779092486
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 161,
+          "pixel": [128.02857229520555, 100],
+          "weight": 0.43156734619872217
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 162,
+          "pixel": [150.3317326559196, 100],
+          "weight": 0.43156734619872217
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 163,
+          "pixel": [131.0285671164612, 94.99999999999999],
+          "weight": 0.6010961018962159
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 164,
+          "pixel": [147.5707557613788, 94.99999999999999],
+          "weight": 0.6010961018962159
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 165,
+          "pixel": [134.02856193771683, 90],
+          "weight": 0.7601302445139757
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 166,
+          "pixel": [144.80977886683797, 90],
+          "weight": 0.7601302445139757
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 167,
+          "pixel": [137.02855675897246, 85],
+          "weight": 0.891095083682574
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 168,
+          "pixel": [142.04880197229716, 85],
+          "weight": 0.891095083682574
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 170,
+          "pixel": [146.53676106388238, 115],
+          "weight": 0.03576030432213462
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 171,
+          "pixel": [149.94240360007328, 109.99999999999999],
+          "weight": 0.13132475704225288
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 172,
+          "pixel": [190.54657341133358, 109.99999999999999],
+          "weight": 0.12495522763009792
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 173,
+          "pixel": [153.32434904767993, 105],
+          "weight": 0.26911866779092486
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 174,
+          "pixel": [186.3190329326905, 105],
+          "weight": 0.2599513029302306
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 175,
+          "pixel": [156.15768453881782, 100],
+          "weight": 0.43156734619872217
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 176,
+          "pixel": [182.09149245404743, 100],
+          "weight": 0.42269303608385
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 177,
+          "pixel": [158.99102002995573, 94.99999999999999],
+          "weight": 0.6010961018962159
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 178,
+          "pixel": [177.86395197540432, 94.99999999999999],
+          "weight": 0.5959616329801958
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 179,
+          "pixel": [161.82435552109362, 90],
+          "weight": 0.7601302445139757
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 180,
+          "pixel": [173.63641149676127, 90],
+          "weight": 0.7601302445139757
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 181,
+          "pixel": [164.6576910122315, 85],
+          "weight": 0.891095083682574
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 182,
+          "pixel": [169.4088710181182, 85],
+          "weight": 0.891095083682574
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 183,
+          "pixel": [192.78141559106209, 85],
+          "weight": 0.8664112992704993
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 184,
+          "pixel": [140.07141224258572, 80],
+          "weight": 0.9764159290325809
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 185,
+          "pixel": [165.8180092064939, 80],
+          "weight": 0.9764159290325809
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 186,
+          "pixel": [143.4047542071373, 75],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 187,
+          "pixel": [163.53683273882888, 75],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 188,
+          "pixel": [146.73809617168888, 70],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 189,
+          "pixel": [161.25565627116382, 70],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 190,
+          "pixel": [150.07143813624046, 65],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 191,
+          "pixel": [158.9744798034988, 65],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 192,
+          "pixel": [153.40478010079207, 60],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 193,
+          "pixel": [156.69330333583378, 60],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 194,
+          "pixel": [167.5526862796692, 54.99999999999999],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 195,
+          "pixel": [156.04765168774875, 54.99999999999999],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 196,
+          "pixel": [157.71432698565602, 50],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 197,
+          "pixel": [179.71435546875, 50],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 198,
+          "pixel": [159.3810022835633, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 199,
+          "pixel": [174.71435546875, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 200,
+          "pixel": [161.04767758147057, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 201,
+          "pixel": [169.71435546875, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 202,
+          "pixel": [162.71435287937783, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 203,
+          "pixel": [164.71435546875, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 204,
+          "pixel": [167.44346495043047, 80],
+          "weight": 0.9764159290325809
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 205,
+          "pixel": [170.131401985892, 75],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 206,
+          "pixel": [172.8193390213536, 70],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 207,
+          "pixel": [175.50727605681516, 65],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 208,
+          "pixel": [178.1952130922767, 60],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 209,
+          "pixel": [180.88315012773825, 54.99999999999999],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 210,
+          "pixel": [200.24492193687536, 85],
+          "weight": 0.8566753551480804
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 211,
+          "pixel": [197.47155733603674, 80],
+          "weight": 0.9564476043773095
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 212,
+          "pixel": [194.69819273519815, 75],
+          "weight": 0.9995597286864032
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 213,
+          "pixel": [191.92482813435953, 70],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 214,
+          "pixel": [189.1514635335209, 65],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 215,
+          "pixel": [186.3780989326823, 60],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 216,
+          "pixel": [183.60473433184367, 54.99999999999999],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 217,
+          "pixel": [192.3559183321847, 54.99999999999999],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 218,
+          "pixel": [207.83314935665686, 54.99999999999999],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 219,
+          "pixel": [183.42376679632778, 50],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 220,
+          "pixel": [204.02817191388536, 50],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 221,
+          "pixel": [185.81803815984665, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 222,
+          "pixel": [200.22319447111389, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 223,
+          "pixel": [188.21230952336552, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 224,
+          "pixel": [196.4182170283424, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 225,
+          "pixel": [190.6065808868844, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 226,
+          "pixel": [192.6132395855709, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 227,
+          "pixel": [202.34698355540806, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 228,
+          "pixel": [164.84769001045703, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 229,
+          "pixel": [188.90635700550808, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 230,
+          "pixel": [167.18102507003846, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 231,
+          "pixel": [185.2464246172118, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 232,
+          "pixel": [169.51436012961992, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 233,
+          "pixel": [181.58649222891557, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 234,
+          "pixel": [171.84769518920135, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 235,
+          "pixel": [177.92655984061932, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 236,
+          "pixel": [174.1810302487828, 10],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 237,
+          "pixel": [174.26662745232306, 10],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 238,
+          "pixel": [192.2676545787747, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 239,
+          "pixel": [193.57780498747508, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 240,
+          "pixel": [194.88795539617544, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 241,
+          "pixel": [196.1981058048758, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 242,
+          "pixel": [197.50825621357615, 10],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 243,
+          "pixel": [220.51067175975626, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 244,
+          "pixel": [216.83455864167937, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 245,
+          "pixel": [213.15844552360247, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 246,
+          "pixel": [209.48233240552557, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 247,
+          "pixel": [205.80621928744864, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 248,
+          "pixel": [202.13010616937174, 10],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 249,
+          "pixel": [201.0024073755775, 5],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 251,
+          "pixel": [153.14294014170238, 115],
+          "weight": 0.03576030432213462
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 252,
+          "pixel": [153.1756631646864, 109.99999999999999],
+          "weight": 0.13132475704225288
+        }
+      ],
+      "maximumReferenceError": 6.821210263296962e-13,
+      "bodyCorePreserved": true,
+      "handFollow": [
+        {
+          "vertexIndex": 0,
+          "influence": 1
+        },
+        {
+          "vertexIndex": 13,
+          "influence": 0.9983072826626127
+        },
+        {
+          "vertexIndex": 14,
+          "influence": 0.9386877901972618
+        },
+        {
+          "vertexIndex": 15,
+          "influence": 0.7625973382851801
+        },
+        {
+          "vertexIndex": 16,
+          "influence": 0.5039771660879636
+        },
+        {
+          "vertexIndex": 17,
+          "influence": 0.19502602581637607
+        },
+        {
+          "vertexIndex": 18,
+          "influence": 0.01227694641954824
+        },
+        {
+          "vertexIndex": 19,
+          "influence": 0.04184325530000588
+        },
+        {
+          "vertexIndex": 20,
+          "influence": 0.24127721207316366
+        },
+        {
+          "vertexIndex": 21,
+          "influence": 0.5931595784370267
+        },
+        {
+          "vertexIndex": 22,
+          "influence": 0.8109017827125279
+        },
+        {
+          "vertexIndex": 23,
+          "influence": 0.9941813324086615
+        },
+        {
+          "vertexIndex": 29,
+          "influence": 0.8878761574074074
+        },
+        {
+          "vertexIndex": 31,
+          "influence": 0.9259259259259259
+        },
+        {
+          "vertexIndex": 32,
+          "influence": 0.7944155092592592
+        },
+        {
+          "vertexIndex": 33,
+          "influence": 0.84375
+        },
+        {
+          "vertexIndex": 34,
+          "influence": 0.8878761574074074
+        },
+        {
+          "vertexIndex": 35,
+          "influence": 0.9259259259259259
+        },
+        {
+          "vertexIndex": 41,
+          "influence": 0.6238425925925926
+        },
+        {
+          "vertexIndex": 43,
+          "influence": 0.68359375
+        },
+        {
+          "vertexIndex": 45,
+          "influence": 0.7407407407407407
+        },
+        {
+          "vertexIndex": 46,
+          "influence": 0.7944155092592592
+        },
+        {
+          "vertexIndex": 47,
+          "influence": 0.84375
+        },
+        {
+          "vertexIndex": 48,
+          "influence": 0.8878761574074074
+        },
+        {
+          "vertexIndex": 49,
+          "influence": 0.9259259259259259
+        },
+        {
+          "vertexIndex": 50,
+          "influence": 0.95703125
+        },
+        {
+          "vertexIndex": 51,
+          "influence": 0.95703125
+        },
+        {
+          "vertexIndex": 52,
+          "influence": 0.9803240740740741
+        },
+        {
+          "vertexIndex": 53,
+          "influence": 0.9803240740740741
+        },
+        {
+          "vertexIndex": 54,
+          "influence": 0.9949363425925926
+        },
+        {
+          "vertexIndex": 55,
+          "influence": 0.9949363425925926
+        },
+        {
+          "vertexIndex": 56,
+          "influence": 0.5
+        },
+        {
+          "vertexIndex": 57,
+          "influence": 0.5623553240740742
+        },
+        {
+          "vertexIndex": 58,
+          "influence": 0.6238425925925926
+        },
+        {
+          "vertexIndex": 59,
+          "influence": 0.68359375
+        },
+        {
+          "vertexIndex": 60,
+          "influence": 0.7407407407407407
+        },
+        {
+          "vertexIndex": 68,
+          "influence": 0.37615740740740733
+        },
+        {
+          "vertexIndex": 70,
+          "influence": 0.43764467592592604
+        },
+        {
+          "vertexIndex": 71,
+          "influence": 0.5
+        },
+        {
+          "vertexIndex": 75,
+          "influence": 0.07407407407407396
+        },
+        {
+          "vertexIndex": 77,
+          "influence": 0.11212384259259278
+        },
+        {
+          "vertexIndex": 79,
+          "influence": 0.15625
+        },
+        {
+          "vertexIndex": 80,
+          "influence": 0.2055844907407407
+        },
+        {
+          "vertexIndex": 81,
+          "influence": 0.2592592592592593
+        },
+        {
+          "vertexIndex": 82,
+          "influence": 0.31640625
+        },
+        {
+          "vertexIndex": 83,
+          "influence": 0.37615740740740733
+        },
+        {
+          "vertexIndex": 84,
+          "influence": 0.43764467592592604
+        },
+        {
+          "vertexIndex": 85,
+          "influence": 0.5
+        },
+        {
+          "vertexIndex": 87,
+          "influence": 0.01967592592592604
+        },
+        {
+          "vertexIndex": 88,
+          "influence": 0.04296875
+        },
+        {
+          "vertexIndex": 89,
+          "influence": 0.07407407407407396
+        },
+        {
+          "vertexIndex": 90,
+          "influence": 0.11212384259259278
+        },
+        {
+          "vertexIndex": 91,
+          "influence": 0.15625
+        },
+        {
+          "vertexIndex": 93,
+          "influence": 0.005063657407407329
+        },
+        {
+          "vertexIndex": 95,
+          "influence": 0.005063657407407329
+        },
+        {
+          "vertexIndex": 97,
+          "influence": 0.005063657407407329
+        },
+        {
+          "vertexIndex": 102,
+          "influence": 0.005063657407407329
+        },
+        {
+          "vertexIndex": 103,
+          "influence": 0.01967592592592604
+        },
+        {
+          "vertexIndex": 104,
+          "influence": 0.01967592592592604
+        },
+        {
+          "vertexIndex": 105,
+          "influence": 0.04296875
+        },
+        {
+          "vertexIndex": 106,
+          "influence": 0.04296875
+        },
+        {
+          "vertexIndex": 108,
+          "influence": 0.07407407407407396
+        },
+        {
+          "vertexIndex": 110,
+          "influence": 0.11212384259259278
+        },
+        {
+          "vertexIndex": 112,
+          "influence": 0.15625
+        },
+        {
+          "vertexIndex": 115,
+          "influence": 0.005063657407407329
+        },
+        {
+          "vertexIndex": 116,
+          "influence": 0.01967592592592604
+        },
+        {
+          "vertexIndex": 117,
+          "influence": 0.01967592592592604
+        },
+        {
+          "vertexIndex": 118,
+          "influence": 0.04296875
+        },
+        {
+          "vertexIndex": 119,
+          "influence": 0.04296875
+        },
+        {
+          "vertexIndex": 120,
+          "influence": 0.07407407407407396
+        },
+        {
+          "vertexIndex": 121,
+          "influence": 0.07407407407407396
+        },
+        {
+          "vertexIndex": 122,
+          "influence": 0.11212384259259278
+        },
+        {
+          "vertexIndex": 123,
+          "influence": 0.11212384259259278
+        },
+        {
+          "vertexIndex": 124,
+          "influence": 0.15625
+        },
+        {
+          "vertexIndex": 125,
+          "influence": 0.15625
+        },
+        {
+          "vertexIndex": 126,
+          "influence": 0.2055844907407407
+        },
+        {
+          "vertexIndex": 127,
+          "influence": 0.2055844907407407
+        },
+        {
+          "vertexIndex": 128,
+          "influence": 0.2055844907407407
+        },
+        {
+          "vertexIndex": 130,
+          "influence": 0.2592592592592593
+        },
+        {
+          "vertexIndex": 132,
+          "influence": 0.31640625
+        },
+        {
+          "vertexIndex": 134,
+          "influence": 0.37615740740740733
+        },
+        {
+          "vertexIndex": 139,
+          "influence": 0.5623553240740742
+        },
+        {
+          "vertexIndex": 142,
+          "influence": 0.6238425925925926
+        },
+        {
+          "vertexIndex": 144,
+          "influence": 0.68359375
+        },
+        {
+          "vertexIndex": 149,
+          "influence": 0.2592592592592593
+        },
+        {
+          "vertexIndex": 150,
+          "influence": 0.31640625
+        },
+        {
+          "vertexIndex": 151,
+          "influence": 0.37615740740740733
+        },
+        {
+          "vertexIndex": 152,
+          "influence": 0.43764467592592604
+        },
+        {
+          "vertexIndex": 153,
+          "influence": 0.5
+        },
+        {
+          "vertexIndex": 154,
+          "influence": 0.5623553240740742
+        },
+        {
+          "vertexIndex": 155,
+          "influence": 0.2055844907407407
+        },
+        {
+          "vertexIndex": 156,
+          "influence": 0.2592592592592593
+        },
+        {
+          "vertexIndex": 157,
+          "influence": 0.31640625
+        },
+        {
+          "vertexIndex": 158,
+          "influence": 0.37615740740740733
+        },
+        {
+          "vertexIndex": 159,
+          "influence": 0.43764467592592604
+        },
+        {
+          "vertexIndex": 160,
+          "influence": 0.5
+        },
+        {
+          "vertexIndex": 161,
+          "influence": 0.5623553240740742
+        },
+        {
+          "vertexIndex": 162,
+          "influence": 0.5623553240740742
+        },
+        {
+          "vertexIndex": 163,
+          "influence": 0.5623553240740742
+        },
+        {
+          "vertexIndex": 164,
+          "influence": 0.6238425925925926
+        },
+        {
+          "vertexIndex": 165,
+          "influence": 0.6238425925925926
+        },
+        {
+          "vertexIndex": 166,
+          "influence": 0.68359375
+        },
+        {
+          "vertexIndex": 167,
+          "influence": 0.68359375
+        },
+        {
+          "vertexIndex": 168,
+          "influence": 0.7407407407407407
+        },
+        {
+          "vertexIndex": 169,
+          "influence": 0.7407407407407407
+        },
+        {
+          "vertexIndex": 170,
+          "influence": 0.7944155092592592
+        },
+        {
+          "vertexIndex": 171,
+          "influence": 0.7944155092592592
+        },
+        {
+          "vertexIndex": 172,
+          "influence": 0.7944155092592592
+        },
+        {
+          "vertexIndex": 174,
+          "influence": 0.84375
+        },
+        {
+          "vertexIndex": 176,
+          "influence": 0.8878761574074074
+        },
+        {
+          "vertexIndex": 178,
+          "influence": 0.9259259259259259
+        },
+        {
+          "vertexIndex": 180,
+          "influence": 0.95703125
+        },
+        {
+          "vertexIndex": 183,
+          "influence": 0.84375
+        },
+        {
+          "vertexIndex": 184,
+          "influence": 0.8878761574074074
+        },
+        {
+          "vertexIndex": 185,
+          "influence": 0.9259259259259259
+        },
+        {
+          "vertexIndex": 186,
+          "influence": 0.95703125
+        },
+        {
+          "vertexIndex": 187,
+          "influence": 0.9803240740740741
+        },
+        {
+          "vertexIndex": 188,
+          "influence": 0.7944155092592592
+        },
+        {
+          "vertexIndex": 189,
+          "influence": 0.84375
+        },
+        {
+          "vertexIndex": 190,
+          "influence": 0.8878761574074074
+        },
+        {
+          "vertexIndex": 191,
+          "influence": 0.9259259259259259
+        },
+        {
+          "vertexIndex": 192,
+          "influence": 0.95703125
+        },
+        {
+          "vertexIndex": 193,
+          "influence": 0.9803240740740741
+        },
+        {
+          "vertexIndex": 194,
+          "influence": 0.9949363425925926
+        },
+        {
+          "vertexIndex": 195,
+          "influence": 0.005063657407407329
+        },
+        {
+          "vertexIndex": 196,
+          "influence": 0.01967592592592604
+        }
+      ],
+      "method": "Dense wrist-end mesh follows the approved original contour with a smooth falloff into the unchanged forearm",
+      "extent": 120,
+      "endCoordinate": 979.84
+    },
+    {
+      "action": "noodles",
+      "guideId": "coat-free:noodles:arm-end-guide",
+      "handEdge": [
+        [2153.6904964655014, 1718.2974024470223],
+        [2226.4703514997263, 1803.9099555569364]
+      ],
+      "refs": [
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 0,
+          "pixel": [208.78564453125, -23.0714111328125],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 1,
+          "pixel": [238.642822265625, -8.9285888671875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 2,
+          "pixel": [262.21435546875, 16.21429443359375],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 3,
+          "pixel": [252.78564453125, 39.78570556640625],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 4,
+          "pixel": [241.78564453125, 61.78570556640625],
+          "weight": 0.8192150961115909
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 31,
+          "pixel": [155.357177734375, 57.07141113281251],
+          "weight": 0.9127241133563011
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 32,
+          "pixel": [163.21435546875, 33.5],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 33,
+          "pixel": [174.21435546875, 9.9285888671875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 34,
+          "pixel": [180.5, -13.64288330078125],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 35,
+          "pixel": [214.269287109375, 2.87347412109375],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 36,
+          "pixel": [232.840576171875, 18.0880126953125],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 37,
+          "pixel": [222.7216796875, 38.00726318359375],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 38,
+          "pixel": [211.39599609375, 59.68182373046876],
+          "weight": 0.7352420725261222
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 64,
+          "pixel": [182.22265625, 52.50830078125],
+          "weight": 0.995421805395542
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 65,
+          "pixel": [191.381591796875, 33.38153076171875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 66,
+          "pixel": [198.72265625, 5.36541748046875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 72,
+          "pixel": [254.69995649854738, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 73,
+          "pixel": [248.3865028696507, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 74,
+          "pixel": [256.69998757101354, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 75,
+          "pixel": [243.79037634185147, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 76,
+          "pixel": [258.7000186434797, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 77,
+          "pixel": [239.19424981405217, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 78,
+          "pixel": [260.7000497159459, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 79,
+          "pixel": [234.59812328625293, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 80,
+          "pixel": [224.24935688971, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 81,
+          "pixel": [226.78933611491428, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 82,
+          "pixel": [229.3293153401186, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 83,
+          "pixel": [231.86929456532286, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 84,
+          "pixel": [242.67849731445312, 60],
+          "weight": 0.8955140220787375
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 85,
+          "pixel": [240.3539852328317, 60],
+          "weight": 0.897335037323195
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 86,
+          "pixel": [245.17849731445312, 54.99999999999999],
+          "weight": 0.9999698405512921
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 87,
+          "pixel": [236.34531962369792, 54.99999999999999],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 88,
+          "pixel": [247.67849731445312, 50],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 89,
+          "pixel": [232.3366540145641, 50],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 90,
+          "pixel": [250.17849731445312, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 91,
+          "pixel": [228.3279884054303, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 92,
+          "pixel": [252.67849731445312, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 93,
+          "pixel": [224.3193227962965, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 94,
+          "pixel": [221.99820039045468, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 95,
+          "pixel": [220.7953138240372, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 96,
+          "pixel": [219.5924272576198, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 97,
+          "pixel": [218.38954069120234, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 98,
+          "pixel": [229.07126196536362, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 99,
+          "pixel": [217.18665412478492, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 100,
+          "pixel": [222.96812286196376, 10],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 101,
+          "pixel": [215.9837675583675, 10],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 102,
+          "pixel": [216.8649837585639, 5],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 103,
+          "pixel": [214.78088099195008, 5],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 104,
+          "pixel": [215.9919124646431, 60],
+          "weight": 0.7323044551672532
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 105,
+          "pixel": [213.84240574982235, 54.99999999999999],
+          "weight": 0.9064096973224711
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 106,
+          "pixel": [216.45507315990807, 50],
+          "weight": 0.9999405656593188
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 107,
+          "pixel": [219.0677405699938, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 108,
+          "pixel": [221.68040798007948, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 113,
+          "pixel": [234.7380938290163, 75],
+          "weight": 0.10544941112457729
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 114,
+          "pixel": [222.02663505363694, 75],
+          "weight": 0.08256925149515515
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 115,
+          "pixel": [237.40473287571305, 70],
+          "weight": 0.3547511897958828
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 116,
+          "pixel": [218.55669229647205, 70],
+          "weight": 0.26766571115477533
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 117,
+          "pixel": [240.07137192240978, 65],
+          "weight": 0.6497551188513684
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 118,
+          "pixel": [215.0867495393072, 65],
+          "weight": 0.485711120499703
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 119,
+          "pixel": [211.61680678214233, 60],
+          "weight": 0.7208114909069596
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 130,
+          "pixel": [205.2458463248198, 75],
+          "weight": 0.0728303077978617
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 131,
+          "pixel": [207.2533143356049, 70],
+          "weight": 0.25341954838796976
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 132,
+          "pixel": [209.26078234638996, 65],
+          "weight": 0.48699367329468646
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 133,
+          "pixel": [211.26825035717502, 60],
+          "weight": 0.7214582841951329
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 186,
+          "pixel": [143.4047542071373, 75],
+          "weight": 0.08411467932452954
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 187,
+          "pixel": [163.53683273882888, 75],
+          "weight": 0.08411467932452954
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 188,
+          "pixel": [146.73809617168888, 70],
+          "weight": 0.2910439142448453
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 189,
+          "pixel": [161.25565627116382, 70],
+          "weight": 0.2910439142448453
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 190,
+          "pixel": [150.07143813624046, 65],
+          "weight": 0.5526655001810379
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 191,
+          "pixel": [158.9744798034988, 65],
+          "weight": 0.5526655001810379
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 192,
+          "pixel": [153.40478010079207, 60],
+          "weight": 0.8008572325531985
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 193,
+          "pixel": [156.69330333583378, 60],
+          "weight": 0.8008572325531985
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 194,
+          "pixel": [167.5526862796692, 54.99999999999999],
+          "weight": 0.9674969067814172
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 195,
+          "pixel": [156.04765168774875, 54.99999999999999],
+          "weight": 0.9674969067814172
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 196,
+          "pixel": [157.71432698565602, 50],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 197,
+          "pixel": [179.71435546875, 50],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 198,
+          "pixel": [159.3810022835633, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 199,
+          "pixel": [174.71435546875, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 200,
+          "pixel": [161.04767758147057, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 201,
+          "pixel": [169.71435546875, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 202,
+          "pixel": [162.71435287937783, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 203,
+          "pixel": [164.71435546875, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 205,
+          "pixel": [170.131401985892, 75],
+          "weight": 0.08411467932452954
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 206,
+          "pixel": [172.8193390213536, 70],
+          "weight": 0.2910439142448453
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 207,
+          "pixel": [175.50727605681516, 65],
+          "weight": 0.5499300209576454
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 208,
+          "pixel": [178.1952130922767, 60],
+          "weight": 0.7916272056106174
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 209,
+          "pixel": [180.88315012773825, 54.99999999999999],
+          "weight": 0.9579567837466444
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 212,
+          "pixel": [194.69819273519815, 75],
+          "weight": 0.07618214327329476
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 213,
+          "pixel": [191.92482813435953, 70],
+          "weight": 0.2691940045659422
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 214,
+          "pixel": [189.1514635335209, 65],
+          "weight": 0.5221012681505163
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 215,
+          "pixel": [186.3780989326823, 60],
+          "weight": 0.7728424479652243
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 216,
+          "pixel": [183.60473433184367, 54.99999999999999],
+          "weight": 0.9538524147477134
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 217,
+          "pixel": [192.3559183321847, 54.99999999999999],
+          "weight": 0.9399585978794653
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 218,
+          "pixel": [207.83314935665686, 54.99999999999999],
+          "weight": 0.9156498497999755
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 219,
+          "pixel": [183.42376679632778, 50],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 220,
+          "pixel": [204.02817191388536, 50],
+          "weight": 0.9998766867406973
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 221,
+          "pixel": [185.81803815984665, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 222,
+          "pixel": [200.22319447111389, 45],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 223,
+          "pixel": [188.21230952336552, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 224,
+          "pixel": [196.4182170283424, 40],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 225,
+          "pixel": [190.6065808868844, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 226,
+          "pixel": [192.6132395855709, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 227,
+          "pixel": [202.34698355540806, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 228,
+          "pixel": [164.84769001045703, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 229,
+          "pixel": [188.90635700550808, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 230,
+          "pixel": [167.18102507003846, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 231,
+          "pixel": [185.2464246172118, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 232,
+          "pixel": [169.51436012961992, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 233,
+          "pixel": [181.58649222891557, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 234,
+          "pixel": [171.84769518920135, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 235,
+          "pixel": [177.92655984061932, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 236,
+          "pixel": [174.1810302487828, 10],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 237,
+          "pixel": [174.26662745232306, 10],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 238,
+          "pixel": [192.2676545787747, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 239,
+          "pixel": [193.57780498747508, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 240,
+          "pixel": [194.88795539617544, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 241,
+          "pixel": [196.1981058048758, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 242,
+          "pixel": [197.50825621357615, 10],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 243,
+          "pixel": [220.51067175975626, 35],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 244,
+          "pixel": [216.83455864167937, 30],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 245,
+          "pixel": [213.15844552360247, 25],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 246,
+          "pixel": [209.48233240552557, 20],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 247,
+          "pixel": [205.80621928744864, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 248,
+          "pixel": [202.13010616937174, 10],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 249,
+          "pixel": [201.0024073755775, 5],
+          "weight": 1
+        }
+      ],
+      "maximumReferenceError": 9.374856803373542e-13,
+      "bodyCorePreserved": true,
+      "handFollow": [
+        {
+          "vertexIndex": 0,
+          "influence": 1
+        },
+        {
+          "vertexIndex": 9,
+          "influence": 0.996222279031145
+        },
+        {
+          "vertexIndex": 10,
+          "influence": 0.869753214556177
+        },
+        {
+          "vertexIndex": 11,
+          "influence": 0.5373329045344268
+        },
+        {
+          "vertexIndex": 12,
+          "influence": 0.16074795518627005
+        },
+        {
+          "vertexIndex": 13,
+          "influence": 0.27311396416267275
+        },
+        {
+          "vertexIndex": 14,
+          "influence": 0.6229638125912444
+        },
+        {
+          "vertexIndex": 15,
+          "influence": 0.9871091151776044
+        },
+        {
+          "vertexIndex": 23,
+          "influence": 0.84375
+        },
+        {
+          "vertexIndex": 24,
+          "influence": 0.59326171875
+        },
+        {
+          "vertexIndex": 25,
+          "influence": 0.68359375
+        },
+        {
+          "vertexIndex": 26,
+          "influence": 0.76806640625
+        },
+        {
+          "vertexIndex": 27,
+          "influence": 0.84375
+        },
+        {
+          "vertexIndex": 35,
+          "influence": 0.40673828125
+        },
+        {
+          "vertexIndex": 37,
+          "influence": 0.5
+        },
+        {
+          "vertexIndex": 38,
+          "influence": 0.59326171875
+        },
+        {
+          "vertexIndex": 39,
+          "influence": 0.68359375
+        },
+        {
+          "vertexIndex": 40,
+          "influence": 0.76806640625
+        },
+        {
+          "vertexIndex": 41,
+          "influence": 0.84375
+        },
+        {
+          "vertexIndex": 42,
+          "influence": 0.90771484375
+        },
+        {
+          "vertexIndex": 43,
+          "influence": 0.90771484375
+        },
+        {
+          "vertexIndex": 44,
+          "influence": 0.95703125
+        },
+        {
+          "vertexIndex": 45,
+          "influence": 0.95703125
+        },
+        {
+          "vertexIndex": 46,
+          "influence": 0.98876953125
+        },
+        {
+          "vertexIndex": 47,
+          "influence": 0.98876953125
+        },
+        {
+          "vertexIndex": 48,
+          "influence": 0.15625
+        },
+        {
+          "vertexIndex": 49,
+          "influence": 0.2319335937500001
+        },
+        {
+          "vertexIndex": 50,
+          "influence": 0.31640625
+        },
+        {
+          "vertexIndex": 51,
+          "influence": 0.40673828125
+        },
+        {
+          "vertexIndex": 52,
+          "influence": 0.5
+        },
+        {
+          "vertexIndex": 56,
+          "influence": 0.04296875
+        },
+        {
+          "vertexIndex": 58,
+          "influence": 0.09228515625
+        },
+        {
+          "vertexIndex": 59,
+          "influence": 0.15625
+        },
+        {
+          "vertexIndex": 62,
+          "influence": 0.09228515625
+        },
+        {
+          "vertexIndex": 63,
+          "influence": 0.15625
+        },
+        {
+          "vertexIndex": 75,
+          "influence": 0.31640625
+        },
+        {
+          "vertexIndex": 84,
+          "influence": 0.09228515625
+        },
+        {
+          "vertexIndex": 85,
+          "influence": 0.15625
+        },
+        {
+          "vertexIndex": 86,
+          "influence": 0.2319335937500001
+        },
+        {
+          "vertexIndex": 89,
+          "influence": 0.09228515625
+        },
+        {
+          "vertexIndex": 90,
+          "influence": 0.15625
+        },
+        {
+          "vertexIndex": 91,
+          "influence": 0.2319335937500001
+        },
+        {
+          "vertexIndex": 92,
+          "influence": 0.2319335937500001
+        },
+        {
+          "vertexIndex": 93,
+          "influence": 0.2319335937500001
+        },
+        {
+          "vertexIndex": 94,
+          "influence": 0.31640625
+        },
+        {
+          "vertexIndex": 95,
+          "influence": 0.31640625
+        },
+        {
+          "vertexIndex": 96,
+          "influence": 0.40673828125
+        },
+        {
+          "vertexIndex": 97,
+          "influence": 0.40673828125
+        },
+        {
+          "vertexIndex": 98,
+          "influence": 0.5
+        },
+        {
+          "vertexIndex": 99,
+          "influence": 0.5
+        },
+        {
+          "vertexIndex": 100,
+          "influence": 0.59326171875
+        },
+        {
+          "vertexIndex": 101,
+          "influence": 0.59326171875
+        },
+        {
+          "vertexIndex": 102,
+          "influence": 0.59326171875
+        },
+        {
+          "vertexIndex": 104,
+          "influence": 0.68359375
+        },
+        {
+          "vertexIndex": 106,
+          "influence": 0.76806640625
+        },
+        {
+          "vertexIndex": 113,
+          "influence": 0.68359375
+        },
+        {
+          "vertexIndex": 114,
+          "influence": 0.76806640625
+        },
+        {
+          "vertexIndex": 115,
+          "influence": 0.84375
+        },
+        {
+          "vertexIndex": 116,
+          "influence": 0.90771484375
+        },
+        {
+          "vertexIndex": 117,
+          "influence": 0.95703125
+        },
+        {
+          "vertexIndex": 118,
+          "influence": 0.59326171875
+        },
+        {
+          "vertexIndex": 119,
+          "influence": 0.68359375
+        },
+        {
+          "vertexIndex": 120,
+          "influence": 0.76806640625
+        },
+        {
+          "vertexIndex": 121,
+          "influence": 0.84375
+        },
+        {
+          "vertexIndex": 122,
+          "influence": 0.90771484375
+        },
+        {
+          "vertexIndex": 123,
+          "influence": 0.95703125
+        },
+        {
+          "vertexIndex": 124,
+          "influence": 0.98876953125
+        }
+      ],
+      "method": "Dense wrist-end mesh follows the approved original contour with a smooth falloff into the unchanged forearm",
+      "extent": 80,
+      "endCoordinate": -50
+    }
+  ],
+  "preservation": {
+    "partCount": 1032,
+    "addedParts": 0,
+    "changedTextures": 0,
+    "existingPhysicsAndMouthShapesPreserved": true,
+    "sha256": "80de692f8b046fe874f6105b7f5b466006e095e4c40c7be453723a10f8df5eae"
+  },
+  "validation": {
+    "renderedPoses": 12,
+    "numericPoses": 14,
+    "otherArmConnections": 13,
+    "regularRenderer": "passed",
+    "workerRenderer": "passed",
+    "nativeApp": {
+      "modelSha256": "80de692f8b046fe874f6105b7f5b466006e095e4c40c7be453723a10f8df5eae",
+      "poses": ["coffee-left", "coffee-right", "noodles-left", "noodles-right"],
+      "maximumVertexError": 0.0005581335667557141,
+      "pointerInputUsed": false,
+      "coat": "off",
+      "headInput": "temporary head parameter preview before physics",
+      "capture": "app-review.png"
+    }
+  }
+}

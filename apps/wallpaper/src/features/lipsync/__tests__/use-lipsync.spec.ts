@@ -27,6 +27,73 @@ afterEach(() => {
   vi.clearAllMocks()
   vi.unstubAllGlobals()
 })
+it('should prepare with a closed jaw, hold the rendered form and relax from that origin without drifting', async () => {
+  let receive: (frame: LipSyncFrame) => void = () => undefined
+  vi.mocked(subscribeLipSync).mockImplementation(async (_, callback) => {
+    receive = callback
+    return vi.fn(() => undefined)
+  })
+  const player = {clearParameterValues: vi.fn(), patchParameterValues: vi.fn()}
+  renderHook(() =>
+    useLipSync({
+      options: () => ({gain: 1, source: 'voice'}),
+      parameters: () => [
+        {defaultValue: 0, id: 'ParamMouthOpenY', maximum: 1, minimum: 0},
+        {defaultValue: 0, id: 'ParamMouthForm', maximum: 1, minimum: -1},
+      ],
+      player: () => player as unknown as Player,
+      widgetId: () => 'one',
+    }),
+  )
+  await Promise.resolve()
+  const frame = {
+    level: 0,
+    openingWeights: {},
+    source: 'voice' as const,
+    weights: {o: 1},
+    widgetId: 'one',
+  }
+  receive({...frame, motion: {phase: 'prepare', weight: 0.5}})
+  draw()
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({
+    ParamMouthForm: -0.3,
+    ParamMouthOpenY: 0,
+  })
+  receive({...frame, level: 1, openingWeights: {a: 1}})
+  draw()
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({
+    ParamMouthForm: -0.6,
+    ParamMouthOpenY: 0.9,
+  })
+  receive({...frame, motion: {phase: 'hold', weight: 1}})
+  draw()
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({
+    ParamMouthForm: -0.6,
+    ParamMouthOpenY: 0,
+  })
+  for (const weight of [0.5, 0.25]) {
+    receive({...frame, motion: {phase: 'release', weight}})
+    draw()
+    expect(player.patchParameterValues).toHaveBeenLastCalledWith({
+      ParamMouthForm: -0.6 * weight,
+      ParamMouthOpenY: 0,
+    })
+  }
+  receive({level: 0, source: 'voice', widgetId: 'one'})
+  draw()
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({
+    ParamMouthForm: 0,
+    ParamMouthOpenY: 0,
+  })
+  receive({...frame, motion: {phase: 'prepare', weight: 0.5}, weights: {i: 1}})
+  draw()
+  receive({...frame, motion: {phase: 'hold', weight: 1}})
+  draw()
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({
+    ParamMouthForm: 0.45,
+    ParamMouthOpenY: 0,
+  })
+})
 it('should apply only the configured input and release only its own override when disabled or rebound', async () => {
   let receive: (frame: LipSyncFrame) => void = () => undefined
   const stop = vi.fn()
@@ -47,9 +114,9 @@ it('should apply only the configured input and release only its own override whe
   await Promise.resolve()
   receive({level: 0.8, shape: 'a', source: 'speech', widgetId: 'widget'})
   expect(player.patchParameterValues).toHaveBeenLastCalledWith({'mouth-a': 0})
-  receive({level: 0.8, shape: 'a', source: 'voice', widgetId: 'widget'})
+  receive({level: 0.5, shape: 'a', source: 'voice', widgetId: 'widget'})
   draw()
-  expect(player.patchParameterValues).toHaveBeenLastCalledWith({'mouth-a': 0.8})
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({'mouth-a': 0.75})
   setSettings({...settings()})
   expect(stop).not.toHaveBeenCalled()
   expect(player.patchParameterValues).toHaveBeenCalledTimes(2)
@@ -77,13 +144,13 @@ it('should apply only the latest received pose per painted frame and ignore repe
     }),
   )
   await Promise.resolve()
-  for (const level of [0.2, 0.6, 0.8]) {
+  for (const level of [0.2, 0.6, 0.5]) {
     receive({level, shape: 'a', source: 'voice', widgetId: 'widget'})
   }
   expect(player.patchParameterValues).toHaveBeenCalledOnce()
   draw()
-  expect(player.patchParameterValues).toHaveBeenLastCalledWith({'mouth-a': 0.8})
-  receive({level: 0.8, shape: 'a', source: 'voice', widgetId: 'widget'})
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({'mouth-a': 0.75})
+  receive({level: 0.5, shape: 'a', source: 'voice', widgetId: 'widget'})
   draw()
   expect(player.patchParameterValues).toHaveBeenCalledTimes(2)
 })
@@ -150,11 +217,11 @@ it('should connect Ash open and form parameters automatically with the landing v
   )
   await Promise.resolve()
   const poses = [
-    {form: 0.2, open: 0.9, shape: 'a'},
-    {form: 1, open: 0.55, shape: 'i'},
-    {form: -1, open: 0.25, shape: 'u'},
-    {form: 0.5, open: 0.65, shape: 'e'},
-    {form: -1, open: 0.65, shape: 'o'},
+    {form: 0, open: 0.9, shape: 'a'},
+    {form: 0.9, open: 0.55, shape: 'i'},
+    {form: -0.8, open: 0.25, shape: 'u'},
+    {form: 0.45, open: 0.65, shape: 'e'},
+    {form: -0.6, open: 0.65, shape: 'o'},
     {form: 0, open: 0, shape: 'closed'},
   ] as const
   for (const pose of poses) {
@@ -206,7 +273,13 @@ it('should blend acoustic poses while preserving manual connections and explicit
   receive(frame)
   draw()
   expect(player.patchParameterValues).toHaveBeenLastCalledWith({
-    ParamMouthForm: -0.4,
+    ParamMouthForm: -0.3,
+    ParamMouthOpenY: 0.775,
+  })
+  receive({...frame, openingWeights: {a: 0.5, o: 0.5}, weights: {a: 1}})
+  draw()
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({
+    ParamMouthForm: 0,
     ParamMouthOpenY: 0.775,
   })
   setOptions({shapes: {a: {parameterId: 'manual-a'}, o: {parameterId: null}}, source: 'voice'})
@@ -214,7 +287,7 @@ it('should blend acoustic poses while preserving manual connections and explicit
   receive(frame)
   draw()
   expect(player.patchParameterValues).toHaveBeenLastCalledWith({
-    'manual-a': 0.5,
+    'manual-a': 0.75,
     ParamMouthForm: 0,
     ParamMouthOpenY: 0,
   })
@@ -231,4 +304,40 @@ it('should blend acoustic poses while preserving manual connections and explicit
     ParamMouthOpenY: 0,
   })
   hook.cleanup()
+})
+
+it('should default Ash mouth movement to 1.5 while honoring explicit gain changes including zero', async () => {
+  let receive: (frame: LipSyncFrame) => void = () => undefined
+  vi.mocked(subscribeLipSync).mockImplementation(async (_, callback) => {
+    receive = callback
+    return vi.fn(() => undefined)
+  })
+  const player = {clearParameterValues: vi.fn(), patchParameterValues: vi.fn()}
+  const [settings, setSettings] = createSignal<PoffoLipSync>({source: 'voice'})
+  renderHook(() =>
+    useLipSync({
+      options: settings,
+      parameters: () => [
+        {defaultValue: 0, id: 'ParamMouthOpenY', maximum: 1, minimum: 0},
+        {defaultValue: 0, id: 'ParamMouthForm', maximum: 1, minimum: -1},
+      ],
+      player: () => player as unknown as Player,
+      widgetId: () => 'ash',
+    }),
+  )
+  for (const [gain, opening] of [
+    [undefined, 0.54],
+    [0, 0],
+    [1, 0.36],
+    [2, 0.72],
+  ] as const) {
+    setSettings({gain, source: 'voice'})
+    // Rebinding must subscribe before the next frame reaches this mounted player.
+    // oxlint-disable-next-line no-await-in-loop
+    await Promise.resolve()
+    receive({level: 0.4, shape: 'a', source: 'voice', widgetId: 'ash'})
+    draw()
+    const values = player.patchParameterValues.mock.lastCall?.[0]
+    expect(values?.ParamMouthOpenY).toBeCloseTo(opening)
+  }
 })

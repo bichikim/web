@@ -1,0 +1,7 @@
+{
+  "runner": "Vitest Chrome, actual useTouch and Player with the current Ash profile",
+  "test": "A pointer target 2000 CSS pixels to either side stays within two degrees, and release returns toward zero",
+  "result": "passed",
+  "pointerCaptureMocked": true,
+  "physicsEnabled": true
+}

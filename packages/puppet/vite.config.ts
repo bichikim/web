@@ -10,7 +10,10 @@ const BUILD_TARGETS = {
   converter: './src/converter/index.ts',
   editor: './src/editor/index.ts',
   'editor-element': './src/editor-element/index.ts',
-  player: './src/player/index.ts',
+  player: {
+    native: './src/native/index.ts',
+    player: './src/player/index.ts',
+  },
 } as const
 
 type BuildTarget = keyof typeof BUILD_TARGETS
@@ -41,14 +44,23 @@ export default defineConfig(({command, mode}) => {
     throw new Error(`Unknown Puppet build target: ${mode}`)
   }
 
+  const entry = BUILD_TARGETS[mode]
   return {
     base: './',
     build: {
       copyPublicDir: false,
       emptyOutDir: mode === 'player',
       lib: {
-        entry: new URL(BUILD_TARGETS[mode], import.meta.url).pathname,
-        fileName: () => `${mode}.js`,
+        entry:
+          typeof entry === 'string'
+            ? new URL(entry, import.meta.url).pathname
+            : Object.fromEntries(
+                Object.entries(entry).map(([name, path]) => [
+                  name,
+                  new URL(path, import.meta.url).pathname,
+                ]),
+              ),
+        fileName: (_, name) => `${typeof entry === 'string' ? mode : name}.js`,
         formats: ['es'],
       },
       rollupOptions: {

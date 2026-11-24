@@ -1,0 +1,241 @@
+{
+  "sha256": "72245183f858df6780934194d5e899dcf123ad5d27730ea9183ebb17900d42a7",
+  "scope": "Handcuffed Hands visible wrist contours only",
+  "results": [
+    {
+      "name": "neutral",
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "rest",
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "up",
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "down",
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "left",
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "right",
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "up-again",
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "fade-0.25",
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "fade-0.5",
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "fade-0.75",
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "physics--1",
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    },
+    {
+      "name": "physics-1",
+      "sides": [
+        {
+          "side": "left",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        },
+        {
+          "side": "right",
+          "bodyError": 0,
+          "handError": 0,
+          "contactError": 0,
+          "newFoldovers": 0
+        }
+      ]
+    }
+  ],
+  "expressions": 28,
+  "coatStates": 2,
+  "visiblePartsCompared": 28659,
+  "handCuffChainAndAllTexturesUnchanged": true,
+  "forearmBodyUnchanged": true,
+  "existingFistRepairUnchanged": true,
+  "newSkinParts": 0
+}

@@ -1,0 +1,27 @@
+{
+  "sourceSha256": "143beffc3c329396f312fdb8b45cf00e1b31fd3cb01d547dbbbe20255e85b42c",
+  "sha256": "ff21b1804aaf30389d79cf294f83d318cfda15c045fc1240c5f022b4053767a3",
+  "addedParts": 0,
+  "changedTextures": 2,
+  "alphaRecords": [
+    {
+      "name": "coffee",
+      "changedAlphaPixels": 776,
+      "rgbChanged": 0,
+      "outsideWristChanged": 0
+    },
+    {
+      "name": "noodles",
+      "changedAlphaPixels": 7213,
+      "rgbChanged": 0,
+      "outsideWristChanged": 0
+    }
+  ],
+  "originalFingersAndCupsUnchanged": true,
+  "originalHandVerticesAndUvsPreserved": true,
+  "noodleSkinIndices": {
+    "before": 3600,
+    "after": 1320
+  },
+  "physicsAndMouthPreserved": true
+}

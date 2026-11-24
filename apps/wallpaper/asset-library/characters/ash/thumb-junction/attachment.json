@@ -1,0 +1,724 @@
+{
+  "beforeSha256": "7ed8bd78a1f9df44e6f7d0e242fd3d1b06f5498892121b33a93f404d0795b088",
+  "modelSha256": "295ad03460cd303f4913d5903940be358ea77a07678b7f727138d268abe8de1e",
+  "modelBytes": 18335689,
+  "promptId": "904081a9-c6e1-48ec-8b1f-f68084e1c958",
+  "generator": "Local Qwen-Image-2.1-Turbo Q4_K_S; CPU VAE",
+  "sourceCamera": {
+    "x": 1775,
+    "y": 1200,
+    "zoom": 1.2
+  },
+  "sourceCrop": {
+    "left": 200,
+    "top": 16,
+    "width": 384,
+    "height": 640,
+    "scale": 2
+  },
+  "crop": {
+    "left": 96,
+    "top": 736,
+    "width": 352,
+    "height": 224
+  },
+  "alphaSource": "Native generated RGBA; original preserved outside inpaint mask",
+  "sourceVerticesPreserved": true,
+  "originalHandAndCoatTexturesPreserved": true,
+  "editedTextures": ["coat-free:thumb-left:ArtMesh900", "coat-free:thumb-left:ArtMesh901"],
+  "addedParts": ["coat-free:thumb:hand", "coat-free:thumb:wrist", "coat-free:thumb:wrist-guide"],
+  "patchVertices": 96,
+  "guideSamples": 92,
+  "residual": 4.547473508864641e-13,
+  "removedPixels": {
+    "hand": 1748,
+    "forearm": 1407,
+    "cap": 1755
+  },
+  "samples": [
+    {
+      "triangle": [28, 29, 60],
+      "weights": [0.08062053547381587, 0.6629837057395594, 0.2563957587866247],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 0
+    },
+    {
+      "triangle": [29, 61, 60],
+      "weights": [0.31922824660467364, 0.056911675804779176, 0.6238600775905472],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 1
+    },
+    {
+      "triangle": [60, 61, 74],
+      "weights": [0.7491552480561325, 0.1632228607320039, 0.08762189121186356],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 2
+    },
+    {
+      "triangle": [60, 61, 74],
+      "weights": [0.45810808978880746, 0.03143300829692577, 0.5104589019142668],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 3
+    },
+    {
+      "triangle": [59, 74, 58],
+      "weights": [0.09662199415074862, 0.9005890981054859, 0.0027889077437653897],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 4
+    },
+    {
+      "triangle": [57, 74, 75],
+      "weights": [0.048433201142895115, 0.7875520946451603, 0.16401470421194464],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 5
+    },
+    {
+      "triangle": [57, 74, 75],
+      "weights": [0.0512181415883916, 0.5579113550495043, 0.39087050336210416],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 6
+    },
+    {
+      "triangle": [57, 74, 75],
+      "weights": [0.054003082033888185, 0.3282706154538404, 0.6177263025122715],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 7
+    },
+    {
+      "triangle": [57, 74, 75],
+      "weights": [0.05678802247938476, 0.09862987585817663, 0.8445821016624386],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 8
+    },
+    {
+      "triangle": [55, 75, 54],
+      "weights": [0.027429660958761877, 0.8454364632593987, 0.12713387578183943],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 9
+    },
+    {
+      "triangle": [75, 76, 54],
+      "weights": [0.5760150492011782, 0.09081331643296907, 0.33317163436585273],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 10
+    },
+    {
+      "triangle": [75, 76, 54],
+      "weights": [0.2978859067266202, 0.19677113657115342, 0.5053429567022264],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 11
+    },
+    {
+      "triangle": [28, 29, 60],
+      "weights": [0.5359487484484898, 0.31400344429757, 0.15004780725394018],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 12
+    },
+    {
+      "triangle": [28, 29, 60],
+      "weights": [0.4142283968847541, 0.000282905978213126, 0.5854886971370328],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 13
+    },
+    {
+      "triangle": [28, 60, 59],
+      "weights": [0.04449427738480348, 0.5013921002755464, 0.45411362233965014],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 14
+    },
+    {
+      "triangle": [60, 74, 59],
+      "weights": [0.03653856461999516, 0.335573387533055, 0.6278880478469498],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 15
+    },
+    {
+      "triangle": [59, 74, 58],
+      "weights": [0.12570271409733996, 0.5998365073662256, 0.27446077853643447],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 16
+    },
+    {
+      "triangle": [57, 74, 75],
+      "weights": [0.2909902285215994, 0.6781652031604255, 0.030844568317975107],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 17
+    },
+    {
+      "triangle": [57, 74, 75],
+      "weights": [0.29377516896709593, 0.44852446356476944, 0.2577003674681346],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 18
+    },
+    {
+      "triangle": [57, 74, 75],
+      "weights": [0.2965601094125925, 0.21888372396910558, 0.4845561666183019],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 19
+    },
+    {
+      "triangle": [56, 57, 75],
+      "weights": [0.04619485490982569, 0.2515159332511681, 0.7022892118390063],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 20
+    },
+    {
+      "triangle": [56, 75, 55],
+      "weights": [0.0812811727500878, 0.5954533278731718, 0.3232654993767403],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 21
+    },
+    {
+      "triangle": [55, 75, 54],
+      "weights": [0.3137108789823355, 0.39726756002867747, 0.289021560988987],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 22
+    },
+    {
+      "triangle": [55, 75, 54],
+      "weights": [0.1218005239854265, 0.1800616369153939, 0.6981378390991796],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 23
+    },
+    {
+      "triangle": [27, 28, 59],
+      "weights": [0.008571520876977387, 0.9582301164641883, 0.033198362658834246],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 24
+    },
+    {
+      "triangle": [27, 28, 59],
+      "weights": [0.05934644635882167, 0.556457598856454, 0.38419595478472435],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 25
+    },
+    {
+      "triangle": [27, 28, 59],
+      "weights": [0.11012137184066596, 0.15468508124871946, 0.7351935469106146],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 26
+    },
+    {
+      "triangle": [59, 74, 58],
+      "weights": [0.7054717704878799, 0.04373562803228144, 0.2507926014798387],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 27
+    },
+    {
+      "triangle": [59, 74, 58],
+      "weights": [0.15478343404393083, 0.29908391662697026, 0.546132649329099],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 28
+    },
+    {
+      "triangle": [57, 58, 74],
+      "weights": [0.32862306182401474, 0.24255132079808428, 0.42882561737790104],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 29
+    },
+    {
+      "triangle": [57, 74, 75],
+      "weights": [0.5363321963457961, 0.3391375720800364, 0.12453023157416748],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 30
+    },
+    {
+      "triangle": [57, 74, 75],
+      "weights": [0.5391171367912926, 0.10949683248437256, 0.35138603072433483],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 31
+    },
+    {
+      "triangle": [56, 57, 75],
+      "weights": [0.515945179404879, 0.007704011311358997, 0.47635080928376194],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 32
+    },
+    {
+      "triangle": [56, 75, 55],
+      "weights": [0.24860768344274628, 0.32533520141275385, 0.42605711514449984],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 33
+    },
+    {
+      "triangle": [55, 75, 54],
+      "weights": [0.7919024520028101, 0.1663045799112438, 0.041792968085946125],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 34
+    },
+    {
+      "triangle": [23, 55, 54],
+      "weights": [0.057792414891239485, 0.5227494876135985, 0.41945809749516205],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 35
+    },
+    {
+      "triangle": [27, 28, 59],
+      "weights": [0.4705142081368957, 0.47801881316144973, 0.051466978701654564],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 37
+    },
+    {
+      "triangle": [27, 28, 59],
+      "weights": [0.5212891336187401, 0.07624629555371527, 0.40246457082754467],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 38
+    },
+    {
+      "triangle": [27, 59, 58],
+      "weights": [0.29414696628209064, 0.34027389939474095, 0.36557913432316846],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 39
+    },
+    {
+      "triangle": [27, 59, 58],
+      "weights": [0.001909739429929086, 0.18130431330542907, 0.8167859472646418],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 40
+    },
+    {
+      "triangle": [57, 58, 74],
+      "weights": [0.3044844488112381, 0.5582162432325878, 0.13729930795617407],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 41
+    },
+    {
+      "triangle": [57, 58, 74],
+      "weights": [0.761586359234482, 0.020479927490069428, 0.21793371327544853],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 42
+    },
+    {
+      "triangle": [57, 74, 75],
+      "weights": [0.7816741641699928, 0.00010994099963955022, 0.21821589483036766],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 43
+    },
+    {
+      "triangle": [56, 75, 55],
+      "weights": [0.6928277301132227, 0.20762868138645862, 0.09954358850031864],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 44
+    },
+    {
+      "triangle": [56, 75, 55],
+      "weights": [0.4159341941354047, 0.05521707495233589, 0.5288487309122595],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 45
+    },
+    {
+      "triangle": [24, 56, 55],
+      "weights": [0.13712261825880584, 0.05795165799961787, 0.8049257237415762],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 46
+    },
+    {
+      "triangle": [23, 55, 54],
+      "weights": [0.3200233803587466, 0.6504555501342607, 0.029521069506992625],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 47
+    },
+    {
+      "triangle": [27, 59, 58],
+      "weights": [0.9305850631301121, 0.06695268162418916, 0.002462255245698708],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 50
+    },
+    {
+      "triangle": [37, 66, 35],
+      "weights": [0.049557905072795665, 0.8168110906795764, 0.13363100424762797],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.09017934257989432,
+      "vertexIndex": 52
+    },
+    {
+      "triangle": [37, 66, 35],
+      "weights": [0.12166786850822157, 0.41462547819800916, 0.4637066532937693],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.09017934257989432,
+      "vertexIndex": 53
+    },
+    {
+      "triangle": [37, 66, 35],
+      "weights": [0.19377783194364503, 0.012439865716455546, 0.7937823023398994],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.09017934257989432,
+      "vertexIndex": 54
+    },
+    {
+      "triangle": [35, 36, 37],
+      "weights": [0.5224837971471517, 0.42203215063125477, 0.05548405222159358],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.09017934257989432,
+      "vertexIndex": 55
+    },
+    {
+      "triangle": [24, 56, 55],
+      "weights": [0.08816047766727482, 0.8080195523185721, 0.103819970014153],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 56
+    },
+    {
+      "triangle": [24, 56, 55],
+      "weights": [0.3031836709339937, 0.40396963634908045, 0.29284669271692587],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 57
+    },
+    {
+      "triangle": [23, 24, 55],
+      "weights": [7.784814947038253e-5, 0.5181195974622371, 0.48180255438829245],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 58
+    },
+    {
+      "triangle": [23, 24, 55],
+      "weights": [0.39189009247002105, 0.29392648446957126, 0.3141834230604077],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 59
+    },
+    {
+      "triangle": [36, 2, 3],
+      "weights": [0.40971408430444134, 0.5738684136434201, 0.016417502052138544],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.09017934257989432,
+      "vertexIndex": 59
+    },
+    {
+      "triangle": [65, 33, 66],
+      "weights": [0.0073925027090994124, 0.7732393908873171, 0.2193681064035835],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.47223492353808105,
+      "vertexIndex": 61
+    },
+    {
+      "triangle": [65, 33, 66],
+      "weights": [0.11279380761648376, 0.4616744392282494, 0.42553175315526687],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.47223492353808105,
+      "vertexIndex": 62
+    },
+    {
+      "triangle": [65, 33, 66],
+      "weights": [0.21819511252386992, 0.15010948756917644, 0.6316953999069537],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.47223492353808105,
+      "vertexIndex": 63
+    },
+    {
+      "triangle": [37, 65, 66],
+      "weights": [0.1156286403877455, 0.16258001792578758, 0.721791341686467],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.47223492353808105,
+      "vertexIndex": 64
+    },
+    {
+      "triangle": [37, 66, 35],
+      "weights": [0.30732534681022655, 0.6239698067369472, 0.06870484645282615],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.47223492353808105,
+      "vertexIndex": 65
+    },
+    {
+      "triangle": [37, 66, 35],
+      "weights": [0.37943531024565, 0.22178419425539367, 0.39878049549895633],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.47223492353808105,
+      "vertexIndex": 66
+    },
+    {
+      "triangle": [35, 36, 37],
+      "weights": [0.4504983915491574, 0.1953458097819986, 0.35415579866884406],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.47223492353808105,
+      "vertexIndex": 67
+    },
+    {
+      "triangle": [35, 36, 37],
+      "weights": [0.16000528632248684, 0.6308483403351766, 0.20914637334233666],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.47223492353808105,
+      "vertexIndex": 68
+    },
+    {
+      "triangle": [3, 37, 36],
+      "weights": [0.1108212349025818, 0.043090498483864155, 0.8460882666135541],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.47223492353808105,
+      "vertexIndex": 69
+    },
+    {
+      "triangle": [23, 24, 55],
+      "weights": [0.056352142048580696, 0.836121109615199, 0.10752674833622022],
+      "partId": "ArtMesh903",
+      "strength": 1,
+      "vertexIndex": 70
+    },
+    {
+      "triangle": [36, 2, 3],
+      "weights": [0.6312856657587712, 0.13601458436218652, 0.23269974987904227],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.47223492353808105,
+      "vertexIndex": 70
+    },
+    {
+      "triangle": [36, 2, 3],
+      "weights": [0.37015383952614694, 0.3114244051773325, 0.3184217552965205],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.47223492353808105,
+      "vertexIndex": 71
+    },
+    {
+      "triangle": [32, 33, 65],
+      "weights": [0.025937656360682747, 0.7350515867863268, 0.23901075685299045],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.8737997256515775,
+      "vertexIndex": 73
+    },
+    {
+      "triangle": [65, 33, 66],
+      "weights": [0.3653607595355615, 0.454791043573357, 0.17984819689108156],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.8737997256515775,
+      "vertexIndex": 74
+    },
+    {
+      "triangle": [65, 33, 66],
+      "weights": [0.4707620644429477, 0.14322609191428404, 0.3860118436427682],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.8737997256515775,
+      "vertexIndex": 75
+    },
+    {
+      "triangle": [37, 65, 66],
+      "weights": [0.12055828265976544, 0.4082822930067666, 0.47115942433346797],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.8737997256515775,
+      "vertexIndex": 76
+    },
+    {
+      "triangle": [37, 65, 66],
+      "weights": [0.34368998003455775, 0.20296592099299318, 0.4533440989724491],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.8737997256515775,
+      "vertexIndex": 77
+    },
+    {
+      "triangle": [37, 66, 35],
+      "weights": [0.565092788547655, 0.43112852279433167, 0.0037786886580133405],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.8737997256515775,
+      "vertexIndex": 78
+    },
+    {
+      "triangle": [37, 66, 35],
+      "weights": [0.637202751983081, 0.02894291031276435, 0.3338543377041547],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.8737997256515775,
+      "vertexIndex": 79
+    },
+    {
+      "triangle": [35, 36, 37],
+      "weights": [0.08801988072449261, 0.40416199948592035, 0.507818119789587],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.8737997256515775,
+      "vertexIndex": 80
+    },
+    {
+      "triangle": [3, 37, 36],
+      "weights": [0.17195729810240729, 0.3301516806755408, 0.49789102122205187],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.8737997256515775,
+      "vertexIndex": 81
+    },
+    {
+      "triangle": [3, 37, 36],
+      "weights": [0.41866848480364777, 0.1382884683068252, 0.4430430468895271],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.8737997256515775,
+      "vertexIndex": 82
+    },
+    {
+      "triangle": [36, 2, 3],
+      "weights": [0.3305935947478525, 0.048980396711244795, 0.6204260085409028],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 0.8737997256515775,
+      "vertexIndex": 83
+    },
+    {
+      "triangle": [32, 33, 65],
+      "weights": [0.4712979880838261, 0.5022234489276312, 0.026478562988542675],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 1,
+      "vertexIndex": 84
+    },
+    {
+      "triangle": [32, 33, 65],
+      "weights": [0.26809409638383214, 0.4359072404532315, 0.29599866316293644],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 1,
+      "vertexIndex": 85
+    },
+    {
+      "triangle": [32, 33, 65],
+      "weights": [0.06489020468383819, 0.3695910319788317, 0.5655187633373301],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 1,
+      "vertexIndex": 86
+    },
+    {
+      "triangle": [65, 33, 66],
+      "weights": [0.7233290163620296, 0.1363426962593915, 0.1403282873785789],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 1,
+      "vertexIndex": 87
+    },
+    {
+      "triangle": [37, 65, 66],
+      "weights": [0.12548792493178548, 0.65398456808775, 0.22052750698046453],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 1,
+      "vertexIndex": 88
+    },
+    {
+      "triangle": [37, 65, 66],
+      "weights": [0.3486196223065778, 0.4486681960739765, 0.20271218161944565],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 1,
+      "vertexIndex": 89
+    },
+    {
+      "triangle": [37, 65, 66],
+      "weights": [0.5717513196813625, 0.24335182406021008, 0.18489685625842742],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 1,
+      "vertexIndex": 90
+    },
+    {
+      "triangle": [37, 65, 66],
+      "weights": [0.7948830170561549, 0.03803545204643666, 0.1670815308974084],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 1,
+      "vertexIndex": 91
+    },
+    {
+      "triangle": [35, 36, 37],
+      "weights": [0.016034475126497173, 0.17747565863666037, 0.8064898662368425],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 1,
+      "vertexIndex": 92
+    },
+    {
+      "triangle": [3, 37, 36],
+      "weights": [0.2330933613022338, 0.6172128628672223, 0.14969377583054388],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 1,
+      "vertexIndex": 93
+    },
+    {
+      "triangle": [3, 37, 36],
+      "weights": [0.4798045480034743, 0.4253496504985067, 0.09484580149801902],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 1,
+      "vertexIndex": 94
+    },
+    {
+      "triangle": [3, 37, 36],
+      "weights": [0.7265157347047148, 0.23348643812979109, 0.03999782716549416],
+      "partId": "coat-free:thumb-left:ArtMesh900",
+      "strength": 1,
+      "vertexIndex": 95
+    }
+  ],
+  "replacedModelSha256": "fea7158a55aba35c149f94fbefd7b1f6999c08ce9f4fa1cc49bb15fa63016aa1",
+  "scope": "ComfyUI local wrist junction only; original thumbnail, thumb, four fingers, hand colors and forearm shape retained",
+  "verification": {
+    "samples": 4,
+    "originalParts": 1018,
+    "maximumOriginalVertexChange": 0,
+    "maximumHandVertexChange": 0,
+    "minimumPatchArea": 100.28062230579889,
+    "originalPhysicsMotionsExpressionsPreserved": true,
+    "originalHandAndOtherPartPixelsPreserved": true,
+    "protectedPixelChanges": 0,
+    "editedPixels": 58548,
+    "originalHandRgbChanges": 0,
+    "originalFeatureChanges": 0,
+    "originalThumbnailThumbAndFourFingerPixelsPreserved": true,
+    "regression": {
+      "file": "apps/wallpaper/visual/__tests__/ash-arm-actions.integration.tsx",
+      "tests": 2,
+      "passed": 2,
+      "buffering": [false, true],
+      "runner": "Vitest with installed Chrome; Wallaby CLI unavailable"
+    },
+    "nativeApp": {
+      "built": true,
+      "restarted": true,
+      "embeddedAssetMatchesCanonical": true,
+      "sha256": "295ad03460cd303f4913d5903940be358ea77a07678b7f727138d268abe8de1e"
+    }
+  },
+  "uploadNames": {
+    "source.png": "junction-source.png",
+    "edit-mask.png": "junction-mask.png"
+  },
+  "maskPolarity": "White edits the wrist; black preserves original pixels",
+  "review": {
+    "comparison": "comparison.png",
+    "comparisonColumns": ["Original hand", "Only wrist repaired in local ComfyUI"],
+    "pngDimensions": [352, 224],
+    "format": "RGBA PNG"
+  }
+}

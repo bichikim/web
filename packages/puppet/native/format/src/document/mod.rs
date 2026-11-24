@@ -13,8 +13,8 @@ mod scene;
 pub use sampling::*;
 
 pub use animation::{
-    Easing, Glue, GlueEdge, GlueKeyform, GlueTarget, InfluencePoint, Keyframe,
-    LayerOrderComparison, LayerOrderCondition, LayerOrderRule, ModelTrackTarget, Motion,
+    Easing, Glue, GlueEdge, GlueKeyform, GlueMode, GlueRotation, GlueTarget, InfluencePoint,
+    Keyframe, LayerOrderComparison, LayerOrderCondition, LayerOrderRule, ModelTrackTarget, Motion,
     MotionEvent, MotionSound, OutputMode, Parameter, ParameterBinding, ParameterDeformerKeyform,
     ParameterGroupKeyform, ParameterInfluence, ParameterKeyform, ParameterOption,
     ParameterPartKeyform, PartKeyformProperties, Pendulum, Physics, Placement, SoundAnalysis,

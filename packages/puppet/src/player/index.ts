@@ -8,6 +8,7 @@ export * from './document'
 export * from './get-export-document'
 export * from './look'
 export * from './motion-timeline-rows'
+export * from './parameter-drag'
 export * from './parameter-value'
 export * from './parse-document'
 export * from './parse-document-blob'
@@ -20,6 +21,7 @@ export {
   type PlayerBufferingConfiguration,
   type PlayerBufferingInfo,
   type PlayerBufferingStatus,
+  type PlayerWorkerRuntime,
   type PlayerInputChange,
 } from './player-buffering'
 export * from './part-mask'

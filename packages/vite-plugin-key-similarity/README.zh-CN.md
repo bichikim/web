@@ -5,7 +5,7 @@
 这是一个 Vite 插件，它使用本地嵌入模型比较源代码中的静态字符串，以找出语义相似的 key。翻译文案、分析事件、权限名称等任何以字符串作为 key 的导入函数都可以使用此插件。
 
 - 不使用网络连接或外部 API。
-- 包内附带 q8 `Xenova/multilingual-e5-small` 模型。
+- 从操作系统共享缓存读取固定版本的 q8 `Xenova/multilingual-e5-small` 模型。
 - 通过 `keyDetector` 决定要检查哪个函数及其第几个参数。
 - 在异步 Worker 中比较 Vite 实际加载的模块，减少对 transform 流程的影响。
 - 只报告相似 key 及其源代码位置，不会自动修改代码。
@@ -242,9 +242,9 @@ group=ungrouped, semantic=0.9560–0.9843/0.9000
 | `exclude`           | 排除测试、generated 和 node_modules  | Vite 与 CLI 检查中排除的 glob 模式          |
 | `scanInclude`       | `src/**/*.{ts,tsx,js,jsx,mts,mjs}`   | 仅用于 CLI 全项目扫描的文件 glob            |
 | `cacheDir`          | `node_modules/.cache/key-similarity` | 模型缓存和 `vectors` 缓存的基础目录         |
-| `modelPath`         | 内置模型                             | 其他本地 Transformers.js 模型的路径         |
-| `modelIdentifier`   | 内置模型 ID 或 `modelPath`           | 用于区分向量缓存的模型标识符                |
-| `modelRevision`     | 内置 revision 或 `local`             | 用于区分向量缓存的模型 revision             |
+| `modelPath`         | 共享缓存模型                         | 其他本地 Transformers.js 模型的路径         |
+| `modelIdentifier`   | 共享缓存模型 ID 或 `modelPath`       | 用于区分向量缓存的模型标识符                |
+| `modelRevision`     | 固定 revision 或 `local`             | 用于区分向量缓存的模型 revision             |
 | `wasmPath`          | 自动选择                             | ONNX WASM 文件的显式路径                    |
 
 Vite 没有共用的 `include` 选项。Vite 会检查其模块图中的 JavaScript 和 TypeScript 文件，并只应用 `exclude`。只有在需要全项目扫描时，才使用 CLI 专用的 `scanInclude`。
@@ -275,7 +275,7 @@ CLI 使用当前工作目录作为根目录。
 
 ## 10. 模型与缓存
 
-默认模型和 tokenizer 位于 `assets/multilingual-e5-small`。Transformers.js 的远程模型访问已禁用，因此运行时不会下载模型。
+默认模型和 tokenizer 根据 `assets/model.json` 中的固定版本准备，校验大小和 SHA-256 后保存到操作系统的 `io.winterlove.models` 共享缓存。仅下载缺失或损坏的文件，之后可以离线复用。模型二进制文件不包含在 Git 和 npm 包中。Transformers.js 仅读取准备好的本地文件。
 
 标准化字符串的向量默认存储在 `node_modules/.cache/key-similarity/vectors`。模型 ID、revision、标准化版本和标准化字符串都相同时，会复用已有向量。切换到其他本地模型时，请同时设置 `modelIdentifier` 和 `modelRevision`，以免与之前的模型缓存混用。
 
@@ -319,7 +319,7 @@ Vite 模式不会在构建前使用 glob 扫描整个源代码目录。它只检
 
 ## 13. 内置示例
 
-在包根目录运行以下命令。所有示例都使用内置本地模型。
+在包根目录运行以下命令。所有示例都使用共享缓存中的本地模型。
 
 ```bash
 npm run example:duplicate

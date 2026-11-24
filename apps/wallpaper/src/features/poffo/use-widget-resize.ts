@@ -36,13 +36,40 @@ interface ResizePointer {
 }
 const KEYBOARD_STEP = 16
 
+const useAdjustmentRequest = (begin: () => Promise<void>, report: (cause: unknown) => void) => {
+  if (!isTauri()) {
+    return
+  }
+  let disposed = false
+  let stop: (() => void) | null = null
+  const handleRequest = () => {
+    if (!disposed) {
+      return begin()
+    }
+  }
+  getCurrentWebview()
+    .listen('poffo-adjustment', handleRequest)
+    .then((unlisten) => {
+      if (disposed) {
+        unlisten()
+      } else {
+        stop = unlisten
+      }
+    })
+    .catch(report)
+  onCleanup(() => {
+    disposed = true
+    stop?.()
+  })
+}
+
 /** Owns native resize mode, completion persistence, and cancellation restoration. */
 export const useWidgetResize = (props: UseWidgetResizeProps) => {
   const [state, setState] = createSignal<ResizeState>({status: 'idle'})
   const [error, setError] = createSignal<string | null>(null)
   const report = (cause: unknown) => {
     console.error('Poffo widget resize failed', cause)
-    setError('크기를 조정하지 못했어요. 다시 시도해 주세요.')
+    setError('크기와 위치를 조정하지 못했어요. 다시 시도해 주세요.')
   }
   createEffect(() => {
     if (!isTauri() || state().status !== 'editing') {
@@ -85,6 +112,7 @@ export const useWidgetResize = (props: UseWidgetResizeProps) => {
       report(cause)
     }
   }
+  useAdjustmentRequest(begin, report)
   const finish = async () => {
     const current = state()
     if (current.status !== 'editing') {

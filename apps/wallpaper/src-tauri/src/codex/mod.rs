@@ -3,11 +3,13 @@ mod app_server;
 mod approvals;
 pub mod bubble;
 pub mod chat;
+pub mod conversation;
 pub mod decision;
 mod files;
 mod hooks;
 mod progress;
 pub mod prompt;
+mod publication;
 pub mod questions;
 mod receipts;
 pub mod relay;
@@ -20,6 +22,7 @@ pub mod voice;
 
 use activity::{Activities, Activity, HookEvent};
 use hooks::Registration;
+use publication::{publish, publish_widget_signals, snapshot, widget_snapshot};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
@@ -28,9 +31,7 @@ use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
 };
-use tauri::{AppHandle, Emitter, Manager, Webview};
-
-const EVENT: &str = "poffo-codex-state";
+use tauri::{AppHandle, Manager, Webview};
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Connection {
@@ -64,6 +65,7 @@ struct Runtime {
     activities: Activities,
     recent: Vec<HookEvent>,
     widgets: BTreeMap<String, bubble::Speech>,
+    foreground: BTreeMap<String, String>,
     visibility: visibility::Visibility,
     approvals: approvals::Pending,
     decisions: receipts::Receipts,
@@ -74,87 +76,6 @@ struct Runtime {
 }
 #[derive(Clone, Default)]
 pub struct Bridge(Arc<Mutex<Runtime>>);
-
-fn snapshot(runtime: &Runtime) -> Snapshot {
-    Snapshot {
-        registered: runtime.registered,
-        received: !runtime.recent.is_empty(),
-        activity: runtime.activities.current(),
-        recent: runtime.recent.clone(),
-        sessions: runtime
-            .activities
-            .sessions()
-            .into_iter()
-            .map(|mut activity| {
-                if runtime.questions.contains_session(&activity.session_id) {
-                    activity.phase = "question".into();
-                    activity.text = "질문에 답해 주세요.".into();
-                    activity.tool = None;
-                }
-                activity
-            })
-            .collect(),
-        approvals: runtime.approvals.list(),
-        approval_enabled: runtime.approval_enabled,
-        questions: runtime.questions.list(),
-        questions_enabled: runtime.questions_enabled,
-    }
-}
-
-fn widget_snapshot(runtime: &Runtime, widget: &str) -> Snapshot {
-    let mut value = snapshot(runtime);
-    value
-        .sessions
-        .retain(|item| runtime.visibility.visible(widget, item));
-    value
-}
-
-fn publish(app: &AppHandle) {
-    let bridge = app.state::<Bridge>();
-    let Ok(mut runtime) = bridge.0.lock() else {
-        return;
-    };
-    let visible = runtime
-        .activities
-        .sessions()
-        .into_iter()
-        .filter(|activity| {
-            runtime
-                .widgets
-                .iter()
-                .any(|(id, speech)| speech.enabled && runtime.visibility.visible(id, activity))
-        })
-        .map(|activity| activity.session_id)
-        .collect();
-    runtime.approvals.retain(&visible);
-    runtime.questions.retain(&visible);
-    let snapshot = snapshot(&runtime);
-    let signals = signals::from_snapshot(&snapshot);
-    let widgets: Vec<_> = runtime
-        .widgets
-        .iter()
-        .map(|(id, speech)| (id.clone(), speech.clone(), widget_snapshot(&runtime, id)))
-        .collect();
-    drop(runtime);
-    let _ = app.emit_to("manager", EVENT, &snapshot);
-    let _ = app.emit_to("manager", signals::EVENT, &signals);
-    for (id, speech, snapshot) in widgets {
-        let _ = app.emit_to(format!("poffo-widget-{id}"), signals::EVENT, &signals);
-        if let Err(error) = bubble::synchronize(
-            app,
-            &id,
-            &speech,
-            snapshot.registered && snapshot.sessions.iter().any(|item| item.phase != "idle"),
-        ) {
-            eprintln!("Poffo speech unavailable: {error}");
-            if let Ok(mut runtime) = bridge.0.lock() {
-                runtime.approvals.clear();
-                runtime.questions.clear();
-            }
-        }
-        let _ = app.emit_to(format!("poffo-bubble-{id}"), EVENT, &snapshot);
-    }
-}
 
 fn accept(
     app: &AppHandle,
@@ -174,7 +95,11 @@ fn accept(
         runtime.approvals.cancel_session(&event.session_id);
         runtime.questions.cancel_session(&event.session_id);
     }
-    let receiver = if runtime.widgets.values().any(|speech| speech.enabled) {
+    let receiver = if runtime
+        .widgets
+        .values()
+        .any(|speech| speech.codex_visible())
+    {
         event
             .approval
             .as_ref()
@@ -578,14 +503,11 @@ pub fn configure_poffo_speech(
     let bridge = app.state::<Bridge>();
     let mut runtime = bridge.0.lock().map_err(|error| error.to_string())?;
     runtime.widgets.insert(id.clone(), speech.clone());
-    let visible = runtime.registered
-        && widget_snapshot(&runtime, &id)
-            .sessions
-            .iter()
-            .any(|item| item.phase != "idle");
     drop(runtime);
-    bubble::synchronize(&app, &id, &speech, visible)?;
-    bubble::position(&app, &id, &speech)
+    bubble::synchronize(&app, &id, &speech)?;
+    bubble::position(&app, &id, &speech)?;
+    publish(&app);
+    Ok(())
 }
 
 pub fn moved(app: &AppHandle, label: &str) {
@@ -604,12 +526,20 @@ pub fn moved(app: &AppHandle, label: &str) {
     }
 }
 pub fn removed(app: &AppHandle, label: &str) {
+    if let Some(id) = label.strip_prefix("poffo-bubble-") {
+        if let Ok(mut runtime) = app.state::<Bridge>().0.lock() {
+            runtime.foreground.remove(id);
+        }
+        publish_widget_signals(app, id, &signals::Signals::default());
+        return;
+    }
     let Some(id) = label.strip_prefix("poffo-widget-") else {
         return;
     };
     let bridge = app.state::<Bridge>();
     if let Ok(mut runtime) = bridge.0.lock() {
         runtime.widgets.remove(id);
+        runtime.foreground.remove(id);
         runtime.visibility.forget(id);
     }
     bubble::close(app, id);

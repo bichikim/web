@@ -27,7 +27,8 @@ pub(crate) fn subscribe_poffo_cursor(
     if caller.window().label() != label
         || !(label == "manager"
             || label.starts_with("wallpaper-")
-            || label.starts_with("poffo-widget-"))
+            || label.starts_with("poffo-widget-")
+            || label.starts_with("poffo-bubble-"))
     {
         return Err("Only local Poffo renderers can follow the pointer".to_owned());
     }

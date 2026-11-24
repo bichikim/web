@@ -5,7 +5,7 @@
 소스 코드의 정적 문자열을 로컬 임베딩 모델로 비교해 의미가 비슷한 key를 찾는 Vite 플러그인이다. 번역 문장, 이벤트 이름, 권한 이름처럼 문자열을 key로 사용하는 함수에 적용할 수 있다.
 
 - 인터넷이나 외부 API를 사용하지 않는다.
-- 패키지에 포함된 q8 `Xenova/multilingual-e5-small` 모델을 사용한다.
+- 고정된 q8 `Xenova/multilingual-e5-small` 모델을 OS 공용 캐시에서 사용한다.
 - 어떤 함수의 몇 번째 인수를 key로 볼지 `keyDetector`로 정한다.
 - Vite가 실제로 불러온 파일을 비동기 Worker에서 비교하므로 transform을 오래 막지 않는다.
 - 유사한 key와 소스 위치만 보고하며 코드를 자동으로 수정하지 않는다.
@@ -242,9 +242,9 @@ group=ungrouped, semantic=0.9560–0.9843/0.9000
 | `exclude`           | 테스트, generated, node_modules 제외 | Vite와 CLI에서 제외할 glob 목록                          |
 | `scanInclude`       | `src/**/*.{ts,tsx,js,jsx,mts,mjs}`   | CLI가 전체 탐색할 파일 glob. Vite에서는 사용하지 않는다. |
 | `cacheDir`          | `node_modules/.cache/key-similarity` | 모델 캐시와 `vectors` 캐시의 기준 디렉터리               |
-| `modelPath`         | 패키지 내장 모델                     | 다른 로컬 Transformers.js 모델 경로                      |
-| `modelIdentifier`   | 내장 모델 ID 또는 `modelPath`        | 벡터 캐시를 구분할 모델 식별자                           |
-| `modelRevision`     | 내장 revision 또는 `local`           | 벡터 캐시를 구분할 모델 revision                         |
+| `modelPath`         | OS 공용 캐시 모델                    | 다른 로컬 Transformers.js 모델 경로                      |
+| `modelIdentifier`   | 기본 모델 ID 또는 `modelPath`        | 벡터 캐시를 구분할 모델 식별자                           |
+| `modelRevision`     | 고정 revision 또는 `local`           | 벡터 캐시를 구분할 모델 revision                         |
 | `wasmPath`          | 자동 선택                            | ONNX WASM 파일 경로를 직접 지정할 때 사용                |
 
 Vite에는 공통 `include` 옵션이 없다. Vite 모듈 그래프에 들어온 JS/TS 파일을 검사하고 `exclude`만 적용한다. 저장소 전체를 독립적으로 검사할 때만 CLI의 `scanInclude`를 사용한다.
@@ -275,7 +275,7 @@ CLI의 기준 루트는 명령을 실행한 현재 디렉터리다.
 
 ## 10. 모델과 캐시
 
-기본 모델과 토크나이저는 패키지의 `assets/multilingual-e5-small`에 들어 있다. Transformers.js의 원격 모델 접근을 비활성화하므로 실행 중 모델을 다운로드하지 않는다.
+기본 모델과 토크나이저는 `assets/model.json`의 고정 Hugging Face 버전에서 크기·SHA-256을 확인해 준비한다. 프로젝트와 워크트리에 관계없이 OS의 `io.winterlove.models` 공용 캐시를 사용한다. 없거나 손상된 파일만 다운로드하고 이후에는 오프라인으로 재사용한다. 모델 바이너리는 Git과 npm 패키지에 포함하지 않으며 Transformers.js는 준비된 로컬 파일만 읽는다.
 
 정규화한 문자열의 벡터는 기본적으로 `node_modules/.cache/key-similarity/vectors`에 저장한다. 같은 모델 ID, revision, 정규화 버전, 문자열 조합은 다음 실행에서 재사용한다. 다른 로컬 모델로 바꿀 때는 `modelIdentifier`와 `modelRevision`도 함께 지정해야 기존 벡터와 섞이지 않는다.
 
@@ -319,7 +319,7 @@ Vite에서는 다음 순서로 처리한다.
 
 ## 13. 포함된 예제
 
-패키지 루트에서 다음 명령으로 실제 내장 모델을 사용하는 예제를 실행할 수 있다.
+패키지 루트에서 다음 명령으로 실제 공용 캐시 모델을 사용하는 예제를 실행할 수 있다.
 
 ```bash
 npm run example:duplicate

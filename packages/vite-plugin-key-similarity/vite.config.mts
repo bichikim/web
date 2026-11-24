@@ -7,6 +7,7 @@ export default createConfig({
     worker: 'src/worker.ts',
   },
   external: [
+    '@winter-love/model-cache',
     '@huggingface/transformers',
     'node:crypto',
     'node:fs',

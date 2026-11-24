@@ -1,0 +1,131 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "reference.png"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "skin-reference.png"
+    }
+  },
+  "3": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-tone.png",
+      "channel": "red"
+    }
+  },
+  "4": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["2", 0],
+      "mask": ["3", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false
+    }
+  },
+  "5": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-alpha.png",
+      "channel": "red"
+    }
+  },
+  "6": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["5", 0]
+    }
+  },
+  "7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["4", 0],
+      "alpha": ["6", 0]
+    }
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["7", 0],
+      "filename_prefix": "Wallpaper/noodles-curve/skin"
+    }
+  },
+  "10": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "hand-alpha.png",
+      "channel": "red"
+    }
+  },
+  "11": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["10", 0]
+    }
+  },
+  "12": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 64,
+      "height": 192,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "13": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["12", 0],
+      "alpha": ["11", 0]
+    }
+  },
+  "14": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["13", 0],
+      "filename_prefix": "Wallpaper/noodles-curve/hand"
+    }
+  },
+  "20": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-alpha.png",
+      "channel": "red"
+    }
+  },
+  "21": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["20", 0]
+    }
+  },
+  "22": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 64,
+      "height": 192,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "23": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["22", 0],
+      "alpha": ["21", 0]
+    }
+  },
+  "24": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["23", 0],
+      "filename_prefix": "Wallpaper/noodles-curve/arm"
+    }
+  }
+}

@@ -1,5 +1,17 @@
-import {SPoffoConnectionProfiles} from './SPoffoConnectionProfiles'
-import {type Accessor, createMemo, createSignal, Show} from 'solid-js'
+import {text as uiText} from '../features/localization'
+import {SPoffoWidgetNavigation} from './SPoffoWidgetNavigation'
+import {SPoffoDialogueSettings} from './SPoffoDialogueSettings'
+import type {PoffoTouch} from '@winter-love/wallpaper/settings/touch'
+import {
+  type Accessor,
+  createDeferred,
+  createMemo,
+  createSignal,
+  createUniqueId,
+  type JSX,
+  Show,
+  useContext,
+} from 'solid-js'
 import {
   DEFAULT_POFFO_SPEECH,
   type PoffoSpeech,
@@ -14,15 +26,16 @@ import type {WallpaperController} from '../features/settings'
 import type {WallpaperLibraryController} from '../features/library'
 import {widgetCameraSurface} from '../features/poffo/widget-camera-surface'
 import {widgetMonitorAspect} from '../features/poffo/widget-monitor-aspect'
-import {SPoffoMotionSettings} from './SPoffoMotionSettings'
-import {SPoffoLipSyncSettings} from './SPoffoLipSyncSettings'
-import type {PoffoLipSync} from '@winter-love/wallpaper/settings/lipsync'
 import {SPoffoCalibrationPreview} from './SPoffoCalibrationPreview'
-import {SPoffoTrackingSettings} from './SPoffoTrackingSettings'
 import {SPoffoSpeechSettings} from './SPoffoSpeechSettings'
 import {SPoffoBehaviorSettings} from './SPoffoBehaviorSettings'
-import {SSegmentedControl} from './SSegmentedControl'
 import {useParameters} from '../features/tracking/use-parameters'
+import {HSettingsScope} from './HSettingsScope'
+import {SettingsNavigationContext} from '../features/settings-navigation'
+import {SPreviewWindow} from './SPreviewWindow'
+import {SPoffoWidgetControls} from './SPoffoWidgetControls'
+import {SSettingsContent} from './SSettingsContent'
+import {trackingProfile} from '@winter-love/wallpaper/settings/tracking-profile'
 
 const DEFAULT_SIZE = {height: 420, width: 320}
 interface SPoffoWidgetEditorProps {
@@ -30,16 +43,41 @@ interface SPoffoWidgetEditorProps {
   readonly library: WallpaperLibraryController
   readonly widget?: PoffoWidget | null
   readonly assetId: Accessor<string | null>
+  readonly active?: boolean
 }
 
 export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
+  const navigation = useContext(SettingsNavigationContext)
   const [motions, setMotions] = createSignal<readonly string[]>([])
-  const [section, setSection] = createSignal('character')
+  const [section, setSection] = createSignal('overview')
+  const [previewOpen, setPreviewOpen] = createSignal(false)
+  const previewId = createUniqueId()
+  const contentSection = createDeferred(section)
+  const pending = () => navigation?.pending() === true || section() !== contentSection()
   const editable = () => Boolean(props.widget)
+  const visible = () => editable() && props.active !== false
+  const entered = createMemo((previous) => previous || visible(), false)
+  const previewAsset = () => (entered() ? props.assetId() : null)
+  const settled = () => section() === contentSection() && props.active !== false
+  const handleOverview = () => setSection('overview')
+  const handlePreview = () => setPreviewOpen((value) => !value)
+  const handlePreviewClose = () => setPreviewOpen(false)
+  const preview = (scene: JSX.Element) => (
+    <SPreviewWindow
+      id={previewId}
+      inline={contentSection() === 'overview'}
+      active={visible()}
+      open={previewOpen()}
+      onClose={handlePreviewClose}
+    >
+      {scene}
+    </SPreviewWindow>
+  )
   const speech = createMemo(() => props.widget?.speech)
+  const tracking = createMemo(() => trackingProfile(props.widget ?? undefined))
   const source = useParameters({
     assetId: () => props.assetId(),
-    enabled: editable,
+    enabled: () => entered() && editable(),
     load: (id) => props.controller.loadPuppet(id),
   })
   const geometry = createMemo(() => {
@@ -68,98 +106,91 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
     const widget = props.widget ?? null
     return widget === null ? undefined : props.library.setWidgetMotion(widget.id, motionId)
   }
-  const configureLipSync = (lipsync: PoffoLipSync) =>
-    configureSpeech({...DEFAULT_POFFO_SPEECH, ...speech(), lipsync})
+  const configureTouch = (touch: PoffoTouch) =>
+    configureSpeech({...DEFAULT_POFFO_SPEECH, ...speech(), touch})
   const handleInput = (mode: PoffoTracking) => {
     const widget = props.widget ?? null
     return widget === null ? undefined : props.library.trackWidget(widget.id, mode)
   }
   return (
-    <div class="grid gap-3">
-      <Show when={editable()}>
-        <SSegmentedControl
-          label="위젯 편집 항목"
-          appearance="underline"
-          options={[
-            {label: '캐릭터', value: 'character'},
-            {label: '말풍선·음성', value: 'speech'},
-            {label: '행동', value: 'behavior'},
-          ]}
-          value={section()}
-          onChange={setSection}
-        />
-      </Show>
-      <div hidden={editable() && section() === 'speech'}>
-        <SPoffoCalibrationPreview
-          label="Poffo 위젯 미리보기"
-          source={source}
-          adjustments={section() === 'character'}
-          controls={
-            <Show when={section() === 'character'}>
-              <section aria-label="Poffo 설정" class="grid gap-3">
-                <div class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 text-[13px]">
-                  <span>트래킹 입력</span>
-                  <SPoffoTrackingSettings
-                    label="트래킹 입력"
-                    value={props.widget?.tracking}
-                    onChange={editable() ? handleInput : undefined}
-                  />
-                </div>
-                <SPoffoMotionSettings
+    <SPoffoWidgetNavigation
+      visible={visible()}
+      onBack={handleOverview}
+      value={section()}
+      onChange={setSection}
+      widget={props.widget ?? undefined}
+      source={source}
+      previewId={previewId}
+      previewOpen={previewOpen()}
+      onPreview={handlePreview}
+    >
+      <HSettingsScope active={settled()}>
+        <SSettingsContent pending={pending()}>
+          <div class="grid gap-3">
+            <SPoffoCalibrationPreview
+              preview={preview}
+              label={uiText('Poffo 위젯 미리보기')}
+              source={source}
+              adjustments={contentSection() === 'gaze'}
+              controls={
+                <SPoffoWidgetControls
+                  widget={props.widget}
+                  section={contentSection()}
+                  source={source}
                   motions={motions()}
-                  value={props.widget?.motionId}
-                  onChange={editable() ? configureMotion : undefined}
+                  onTracking={editable() ? handleInput : undefined}
+                  onMotion={editable() ? configureMotion : undefined}
+                  onTouch={editable() ? configureTouch : undefined}
                 />
-              </section>
+              }
+              targetId={props.widget?.id}
+              mode={props.widget?.tracking ?? 'off'}
+              cameraSurface={geometry().surface}
+              screenAspect={geometry().aspect}
+              characterAspect={geometry().characterAspect}
+              assetId={previewAsset}
+              touch={() => speech()?.touch}
+              load={props.controller.loadPuppet}
+              lipsync={() => {
+                const value = speech()
+                return value?.lipsync?.source === 'microphone' || value?.enabled !== false
+                  ? value?.lipsync
+                  : undefined
+              }}
+              lipsyncId={() => props.widget?.id}
+              agentBindings={() => speech()?.agentBindings}
+              semanticBindings={() => speech()?.semanticBindings}
+              motionId={() => props.widget?.motionId}
+              onMotions={setMotions}
+              bindings={() => tracking().bindings}
+              value={tracking().options}
+              onChange={editable() ? configureTracking : undefined}
+              onBindingsChange={editable() ? configureBindings : undefined}
+            />
+            <Show when={editable() && contentSection() === 'speech'}>
+              <SPoffoSpeechSettings value={speech()} onChange={configureSpeech} />
             </Show>
-          }
-          targetId={props.widget?.id}
-          mode={props.widget?.tracking ?? 'off'}
-          cameraSurface={geometry().surface}
-          screenAspect={geometry().aspect}
-          characterAspect={geometry().characterAspect}
-          assetId={props.assetId}
-          load={props.controller.loadPuppet}
-          lipsync={() => (speech()?.enabled === false ? undefined : speech()?.lipsync)}
-          lipsyncId={() => props.widget?.id}
-          agentBindings={() => speech()?.agentBindings}
-          semanticBindings={() => speech()?.semanticBindings}
-          motionId={() => props.widget?.motionId}
-          onMotions={setMotions}
-          bindings={() => props.widget?.trackingBindings}
-          value={props.widget?.trackingOptions}
-          onChange={editable() ? configureTracking : undefined}
-          onBindingsChange={editable() ? configureBindings : undefined}
-        />
-      </div>
-      <Show when={editable() && section() === 'speech'}>
-        <SPoffoSpeechSettings value={speech()} onChange={configureSpeech} />
-        <SPoffoLipSyncSettings
-          source={source}
-          assetId={props.assetId()}
-          load={props.controller.loadPuppet}
-          value={speech()?.lipsync}
-          onChange={configureLipSync}
-        />
-      </Show>
-      <Show when={editable() && section() === 'behavior'}>
-        <SPoffoBehaviorSettings
-          source={source}
-          widgetId={props.widget?.id}
-          value={speech()}
-          onChange={configureSpeech}
-        />
-      </Show>
-      <Show when={editable()}>
-        <footer class="mt-2 border-0 border-t border-solid border-stone-200 pt-4">
-          <SPoffoConnectionProfiles
-            actions={source.actions?.()}
-            widget={props.widget ?? undefined}
-            parameters={source.parameters()}
-            loading={source.loading()}
-          />
-        </footer>
-      </Show>
-    </div>
+            <Show when={editable() && contentSection() === 'voice'}>
+              <SPoffoDialogueSettings
+                widgetId={props.widget?.id}
+                source={source}
+                assetId={props.assetId()}
+                load={props.controller.loadPuppet}
+                value={speech()}
+                onChange={configureSpeech}
+              />
+            </Show>
+            <Show when={editable() && contentSection() === 'behavior'}>
+              <SPoffoBehaviorSettings
+                source={source}
+                widgetId={props.widget?.id}
+                value={speech()}
+                onChange={configureSpeech}
+              />
+            </Show>
+          </div>
+        </SSettingsContent>
+      </HSettingsScope>
+    </SPoffoWidgetNavigation>
   )
 }

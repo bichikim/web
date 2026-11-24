@@ -1,0 +1,20 @@
+{
+  "sha256": "143beffc3c329396f312fdb8b45cf00e1b31fd3cb01d547dbbbe20255e85b42c",
+  "addedParts": 0,
+  "changedTextures": 2,
+  "records": [
+    {
+      "name": "coffee",
+      "changedPixels": 14114,
+      "alphaChanged": 0,
+      "outsideWristChanged": 0
+    },
+    {
+      "name": "noodles",
+      "changedPixels": 13285,
+      "alphaChanged": 0,
+      "outsideWristChanged": 0
+    }
+  ],
+  "physicsAndMouthPreserved": true
+}

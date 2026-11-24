@@ -163,3 +163,13 @@ describe('draw order editing', () => {
     expect(parseDocumentValue(ungrouped).ok).toBe(true)
   })
 })
+
+test('should preserve group order keys while isolation remains after explicit order removal', () => {
+  const document = setGroupRenderProperties(createDocument(), 'g', {isolateOrder: true})!
+  const withoutOrder = setDrawOrderGroup(document, 'g', false)!
+  expect(armKeyform(withoutOrder, 0)?.groups?.[0]?.properties.drawOrder).toBe(200)
+  expect(parseDocumentValue(withoutOrder).ok).toBe(true)
+  const plain = setGroupRenderProperties(withoutOrder, 'g', {isolateOrder: false})!
+  expect(armKeyform(plain, 0)?.groups?.[0]?.properties.drawOrder).toBeUndefined()
+  expect(parseDocumentValue(plain).ok).toBe(true)
+})

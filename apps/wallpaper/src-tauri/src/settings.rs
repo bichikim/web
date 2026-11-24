@@ -1,6 +1,7 @@
-use tauri::{AppHandle, Manager, Window, WindowEvent};
+use tauri::{AppHandle, Emitter, Manager, Window, WindowEvent};
 
 const WINDOW_LABEL: &str = "manager";
+const VISIBILITY_EVENT: &str = "wallpaper-settings-visible";
 
 pub(crate) fn show(app: &AppHandle) -> tauri::Result<()> {
     let window = app
@@ -9,6 +10,7 @@ pub(crate) fn show(app: &AppHandle) -> tauri::Result<()> {
 
     window.unminimize()?;
     window.show()?;
+    window.emit_to(WINDOW_LABEL, VISIBILITY_EVENT, true)?;
     window.set_focus()
 }
 
@@ -18,9 +20,12 @@ pub(crate) fn handle_window_event(window: &Window, event: &WindowEvent) {
     }
 
     if let WindowEvent::CloseRequested { api, .. } = event {
-        // Keep the utility alive and retain the settings window for the next tray request.
+        // Keep the widget and background host running while its settings UI is unmounted.
         api.prevent_close();
-        if let Err(error) = window.hide() {
+        if let Err(error) = window
+            .hide()
+            .and_then(|()| window.emit_to(WINDOW_LABEL, VISIBILITY_EVENT, false))
+        {
             eprintln!("Failed to hide wallpaper settings: {error}");
         }
     }

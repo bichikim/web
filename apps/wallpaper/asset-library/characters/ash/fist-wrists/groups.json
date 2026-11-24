@@ -1,0 +1,28 @@
+[
+  {
+    "side": "left",
+    "hands": ["ArtMesh1043", "ArtMesh1044", "ArtMesh1046"],
+    "arm": "coat-free:fists-left:ArtMesh900",
+    "cap": "coat-free:fists-left:ArtMesh901",
+    "box": {
+      "x": 1720,
+      "y": 1200,
+      "width": 650,
+      "height": 1100,
+      "scale": 1.5
+    }
+  },
+  {
+    "side": "right",
+    "hands": ["ArtMesh1033", "ArtMesh1034", "ArtMesh1036"],
+    "arm": "coat-free:fists-right:ArtMesh994",
+    "cap": "coat-free:fists-right:ArtMesh995",
+    "box": {
+      "x": 2300,
+      "y": 1200,
+      "width": 800,
+      "height": 1100,
+      "scale": 1.5
+    }
+  }
+]

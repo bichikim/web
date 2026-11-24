@@ -1,0 +1,22 @@
+{
+  "testsPassed": 2,
+  "buffering": [false, true],
+  "gazeAndPhysicsStates": 3,
+  "coatStates": [0, 1],
+  "allOriginalPartDataPreserved": 1021,
+  "cupNoodlesUnchanged": true,
+  "wristLineFollowsSkin": true,
+  "lineHiddenForOtherActionsAndCoat": true,
+  "runtime": {
+    "modelMatches": true,
+    "modelSha256": "c90d6279f0c3fe7e7a0906929d10ef0124e922042779b3ac91105551bee4f3a6",
+    "strokeDataAndColorMatch": true,
+    "systemPointerMoved": false
+  },
+  "cleanup": {
+    "previewCleared": true,
+    "observerRemoved": true,
+    "pointerInputUsed": false
+  },
+  "reviews": ["comparison.png", "app-review.png"]
+}

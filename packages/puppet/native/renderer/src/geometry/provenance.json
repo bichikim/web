@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/visgl/luma.gl",
+  "commit": "2a5a732d5fab9f90c6d3646f956e1304a6a22c2e",
+  "sources": [
+    "modules/shaders/src/modules/math/fp64/fp64-arithmetic-wgsl.ts",
+    "modules/shaders/src/modules/math/fp64/fp64-arithmetic-wgsl-integer.ts"
+  ],
+  "changes": "Select integer-controlled add/subtract/multiply/divide and prune unreachable functions; no arithmetic edits."
+}

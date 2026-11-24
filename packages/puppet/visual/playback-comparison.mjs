@@ -183,7 +183,7 @@ try {
             const changed = await player.configureRenderer({
               antialiasing: globalThis.playbackComparisonSettings.antialiasing,
               canvas,
-              renderer: 'webgl',
+              renderer: 'auto',
             })
             if (changed !== 'applied') {
               throw new Error(`Renderer replacement: ${changed}`)
@@ -307,6 +307,8 @@ try {
           })
         }
       }
+      // Keep old and new bundles on the same WebGL reference path.
+      Object.defineProperty(navigator, 'gpu', {value: undefined})
       const source = await (await fetch('/model')).blob()
       const entries = []
       for (const variant of ['before', 'after']) {
@@ -326,7 +328,7 @@ try {
           onBufferingChange: () => listeners.forEach((listener) => listener()),
           physicsPreview: false,
           randomSeed: 42,
-          renderer: 'webgl',
+          renderer: 'auto',
           resizeTo: document.documentElement,
           resolution: 1,
         })

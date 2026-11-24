@@ -104,9 +104,12 @@ test('should persist uniform cover sizing across preview, wallpaper and resize',
       player: await vi.mocked(playerModule.createPlayer).mock.results[index]!.value,
     })),
   )
-  for (const entry of rendered) {
-    expect(pixels(entry.canvas, entry.player).corners).toEqual([0, 0])
-  }
+  await Promise.all(
+    rendered.map(async (entry) => {
+      await playerModule.flushPlayerInputs(entry.player)
+      expect(pixels(entry.canvas, entry.player).corners).toEqual([0, 0])
+    }),
+  )
   await userEvent.click(screen.getByRole('combobox', {name: 'Poffo 표시 방식'}))
   await userEvent.click(screen.getByRole('option', {name: '화면 채우기'}))
   const repository = createSettingsRepository('wallpaper-settings')

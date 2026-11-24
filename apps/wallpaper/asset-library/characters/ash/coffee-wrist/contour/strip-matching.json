@@ -1,0 +1,6 @@
+{
+  "role": "Remove the artificial material colour boundary inside the palm; leave all alpha and edge pixels unchanged",
+  "range": [683, 717],
+  "changedPixels": 5082,
+  "method": "Continuous RGB interpolation between existing opaque skin rows; no geometry or alpha changes"
+}

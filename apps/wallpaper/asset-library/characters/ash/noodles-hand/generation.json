@@ -1,0 +1,137 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "noodles-grip-context.png"
+    }
+  },
+  "2": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "10": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+      "unet_name": "Qwen-Image-2.1-Turbo-Q4_K_S.gguf"
+    }
+  },
+  "11": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "12": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+  },
+  "13": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": ["11", 0],
+      "vae": ["12", 0],
+      "resolution": 0,
+      "prompt": "图中上方握住杯面的蓝色指甲手指是必须保留的原画，左下方完整的前臂也是必须保留的原画。现在手指底下缺少真正的手掌与极短手腕。只在这段缺失处补出自然的人体手掌根部与短手腕，连接到现有前臂最上端的斜切面。补的是手掌，不是再画一截前臂：不增加第二条胳膊，不重绘原前臂，不延长手腕，不改变前臂轮廓宽度与位置。手指、蓝色指甲、握杯姿势和杯子位置完全不变。掌根需有与这只握杯手匹配的大鱼际、小鱼际和柔和弧度，指根向掌根与腕部连续自然过渡。保持原图精细日系角色插画：同样极浅象牙粉白肤色、柔和暖粉色阴影渐变、相同柔软红棕色线条与相同线宽，不能加粗描线，不能改变肤色与阴影色。腕部在原有前臂的上端结束，不覆盖下方前臂。保留透明RGBA背景。消除手与腕之间的横切线、三角切口、尖角、双重轮廓和长肉管。",
+      "negative_prompt": "",
+      "images.image_1": ["2", 0]
+    }
+  },
+  "16": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": ["10", 0],
+      "device": "auto",
+      "dtype": "default"
+    }
+  },
+  "18": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["24", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["18", 0],
+      "filename_prefix": "Wallpaper/noodles-hand/palm"
+    }
+  },
+  "20": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": ["16", 0],
+      "conditioning": ["13", 0]
+    }
+  },
+  "21": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 1110521
+    }
+  },
+  "22": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "23": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0.0"
+    }
+  },
+  "24": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["21", 0],
+      "guider": ["20", 0],
+      "sampler": ["22", 0],
+      "sigmas": ["23", 0],
+      "latent_image": ["44", 0]
+    }
+  },
+  "40": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "noodles-grip-edit.png"
+    }
+  },
+  "41": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["40", 0],
+      "channel": "red"
+    }
+  },
+  "42": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["41", 0],
+      "value": 0.5
+    }
+  },
+  "43": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["2", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "44": {
+    "class_type": "SetLatentNoiseMask",
+    "inputs": {
+      "samples": ["43", 0],
+      "mask": ["42", 0]
+    }
+  }
+}

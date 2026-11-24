@@ -19,7 +19,7 @@ mod validate;
 
 pub use document::Document;
 pub use error::FormatError;
-pub use file::PoffoFile;
+pub use file::{PoffoFile, RuntimeSection};
 pub use texture::TextureSource;
 pub use validate::references_api::resolve_parameter_value;
 pub use validate::{ValidDocument, validate};

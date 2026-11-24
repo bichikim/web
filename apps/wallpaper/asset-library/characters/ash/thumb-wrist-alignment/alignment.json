@@ -1,0 +1,20 @@
+{
+  "beforeSha256": "74d1138eada29d2c51d724cce50c5fad1553640afaf9eae852d19f61d2f5361d",
+  "modelSha256": "86fb4bee0ef7603b555c3bb18e1af91d7a662b0e04a4a2c26156a56025f2212e",
+  "modelBytes": 18726715,
+  "method": "Frozen hand artwork. Rigid hand alignment and wrist-only mesh transition to the existing forearm.",
+  "handImageSha256": "b941764a88b3151d40158aa810bd9a5da912e419028276292eca11da7c757ca3",
+  "changedTexturePixels": 0,
+  "handAlignmentPixels": 50,
+  "handAlignmentModelUnits": 20.833333333333336,
+  "protectedVertices": 767,
+  "minimumProtectedXDisplacement": 20.833333333332803,
+  "maximumProtectedXDisplacement": 20.83333333333394,
+  "maximumProtectedYDisplacement": 4.547473508864641e-13,
+  "residual": 4.547473508864641e-13,
+  "changedParts": ["thumb:hand"],
+  "textureUnchanged": true,
+  "physicsUnchanged": true,
+  "reference": "wrist-reference.png",
+  "targetProfile": 1012
+}

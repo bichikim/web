@@ -11,6 +11,7 @@
   "include": [
     "src/global.d.ts",
     "src/player",
+    "src/native",
     "src/mesh",
     "src/editor",
     "src/editor-element",

@@ -1,0 +1,54 @@
+{
+  "sourceSha256": "f3460b472098071cd9604afe7028e4d38a2c486c604165a5e691505b7989c9b9",
+  "sha256": "616d0defc2b296f21df25970e952fab1fa479a9e4c701121ccd9401d971de8e1",
+  "bytes": 21816859,
+  "scope": "Both complete forearm contours, through the mid-forearm bend; existing hands and cuffs retained",
+  "method": "Continue both wrist edges through the mid-forearm with a single cubic profile. A hidden rigid shape guide follows the original physics driver; the existing hand-to-arm mesh blend remains local to the wrist. Preserve the fitted cuffs, hands, textures and original physics drivers.",
+  "previousRuntime": "../fitting/application.json",
+  "sides": [
+    {
+      "side": "left",
+      "hand": "coat-free:cuffs-left:hand",
+      "forearm": "coat-free:cuffs-left:ArtMesh900",
+      "shapeGuide": "coat-free:cuffs-left:forearm-shape",
+      "curves": [
+        {
+          "start": [2223.556266448356, 1676.834844970701],
+          "end": [1797.76979517853, 2010.9882201180899],
+          "c1": [2083.0332655752713, 1787.0882987258035],
+          "c2": [1932.5512010968096, 1893.7853598373038]
+        },
+        {
+          "start": [2316.7627579674163, 1730.6476379394514],
+          "end": [2005.6724686092662, 2074.059430732444],
+          "c1": [2196.460524731691, 1825.0360058669905],
+          "c2": [2123.5438947548323, 1976.6524586003748]
+        }
+      ],
+      "bodyEndTextureY": 240
+    },
+    {
+      "side": "right",
+      "hand": "coat-free:cuffs-right:hand",
+      "forearm": "coat-free:cuffs-right:ArtMesh994",
+      "shapeGuide": "coat-free:cuffs-right:forearm-shape",
+      "curves": [
+        {
+          "start": [2487.7101660156222, 1681.2173754882833],
+          "end": [2771.2904510670433, 2049.8981039632827],
+          "c1": [2574.8603754172373, 1807.5685597167314],
+          "c2": [2659.487545773981, 1944.7320870057733]
+        },
+        {
+          "start": [2569.559404296872, 1619.8304467773444],
+          "end": [3030.459109105951, 2037.0861218052153],
+          "c1": [2686.0494526876287, 1788.7188024802351],
+          "c2": [2886.1885645877182, 1891.2121417727242]
+        }
+      ],
+      "bodyEndTextureY": 240
+    }
+  ],
+  "newEmptyControls": ["coat-free:cuffs-left:forearm-shape", "coat-free:cuffs-right:forearm-shape"],
+  "newSkinParts": 0
+}

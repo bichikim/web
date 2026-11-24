@@ -45,7 +45,7 @@ const isPreview = (value: unknown): value is Preview =>
   typeof value.url === 'string'
 
 const invoke = async (command: string, payload?: Record<string, unknown>): Promise<unknown> => {
-  const bridge = globalThis.__TAURI__
+  const bridge = globalThis.window?.__TAURI__
   if (bridge === undefined) {
     throw new Error('unavailable')
   }
@@ -62,7 +62,7 @@ export const useWorkspace = () => {
   const [message, setMessage] = createSignal('영역을 캡처하거나 이미지를 열어 시작하세요.')
   const [error, setError] = createSignal<string | null>(null)
   let cancellation: Promise<boolean> | undefined
-  onMount(() => setAvailable(globalThis.__TAURI__ !== undefined))
+  onMount(() => setAvailable(globalThis.window?.__TAURI__ !== undefined))
 
   const run = async (operation: () => Promise<void>) => {
     if (busy()) {
