@@ -5,14 +5,11 @@ import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-libra
 import {createSignal, Show} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {createEditorHarness} from './fixtures/create-editor-harness'
+import type {EditorHarness} from './fixtures/types'
 
 import {usePSceneStyle} from '../../../features/focus-room-animation'
-import {
-  type DialogueEditorState,
-  type PDialogueEditorController,
-  usePDialogueEditor,
-  usePEvents,
-} from '../../../features/focus-room-dialogue'
+import {usePDialogueEditor, usePEvents} from '../../../features/focus-room-dialogue'
 import {
   type ModelDownloadController,
   type ModelDownloadResult,
@@ -78,22 +75,6 @@ interface DownloadConsentProps {
   readonly onConfirm: () => void
 }
 
-interface EditorHarness {
-  readonly controller: PDialogueEditorController
-  readonly setAudioUrl: (value: string | null) => void
-  readonly setCanGenerate: (value: boolean) => void
-  readonly setCanRegenerate: (value: boolean) => void
-  readonly setCanSave: (value: boolean) => void
-  readonly setDuration: (value: number) => void
-  readonly setProgress: (value: number) => void
-  readonly setRegeneratingIndex: (value: number | null) => void
-  readonly setSegments: PDialogueEditorController['segments'] extends () => infer Value
-    ? (value: Value) => void
-    : never
-  readonly setState: (value: DialogueEditorState) => void
-  readonly setTextValue: (value: string) => void
-}
-
 const navigate = vi.fn()
 const refreshDialogues = vi.fn().mockResolvedValue(undefined)
 const originalGetLocale = getLocale
@@ -108,64 +89,6 @@ const createModelDownload = (): ModelDownloadController => ({
   startVoiceModel: vi.fn(async (): Promise<ModelDownloadResult> => ({status: 'complete'})),
   state: () => ({status: 'idle'}),
 })
-
-const createEditorHarness = (): EditorHarness => {
-  const [audioUrl, setAudioUrl] = createSignal<string | null>(null)
-  const [canGenerate, setCanGenerate] = createSignal(true)
-  const [canRegenerateSegments, setCanRegenerate] = createSignal(false)
-  const [canSave, setCanSave] = createSignal(false)
-  const [durationMs, setDuration] = createSignal(0)
-  const [language, setLanguage] = createSignal<'ko' | 'en'>('ko')
-  const [modelId, setModelId] = createSignal<'full' | 'int8'>('full')
-  const [progress, setProgress] = createSignal(0)
-  const [regeneratingSegmentIndex, setRegeneratingIndex] = createSignal<number | null>(null)
-  const [segments, setSegments] = createSignal<ReturnType<PDialogueEditorController['segments']>>(
-    [],
-  )
-  const [state, setState] = createSignal<DialogueEditorState>({
-    message: '준비됨',
-    status: 'idle',
-  })
-  const [text, setTextValue] = createSignal('오늘도 잘할 수 있어요.')
-  const [voiceId, setVoiceId] = createSignal<'Yuna' | 'F1'>('Yuna')
-  const controller: PDialogueEditorController = {
-    audioUrl,
-    canGenerate,
-    canRegenerateSegments,
-    canSave,
-    dialogueId: () => null,
-    durationMs,
-    generate: vi.fn().mockResolvedValue(undefined),
-    language,
-    modelId,
-    progress,
-    regenerateSegment: vi.fn().mockResolvedValue(undefined),
-    regeneratingSegmentIndex,
-    save: vi.fn().mockResolvedValue(null),
-    segments,
-    setLanguage,
-    setModelId,
-    setText: vi.fn(setTextValue),
-    setVoiceId,
-    state,
-    text,
-    voiceId,
-  }
-
-  return {
-    controller,
-    setAudioUrl,
-    setCanGenerate,
-    setCanRegenerate,
-    setCanSave,
-    setDuration,
-    setProgress,
-    setRegeneratingIndex,
-    setSegments,
-    setState,
-    setTextValue,
-  }
-}
 
 const renderEditor = (harness: EditorHarness, dialogueId: string | null = null) => {
   vi.mocked(usePDialogueEditor).mockImplementation((props) => {
