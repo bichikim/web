@@ -38,3 +38,15 @@ test('should defer fitting while the host has no visible area', () => {
     getCoverCamera({screen: {height: 0, width: 0}, viewport: {height: 900, width: 1600}}),
   ).toBeNull()
 })
+
+test.each([
+  {height: 900, width: 0},
+  {height: 0, width: 1600},
+  {height: -1, width: 1600},
+  {height: 900, width: Number.MIN_VALUE},
+])(
+  'should defer fitting when viewport $width by $height cannot produce a valid camera',
+  (viewport) => {
+    expect(getCoverCamera({screen: {height: 450, width: 800}, viewport})).toBeNull()
+  },
+)

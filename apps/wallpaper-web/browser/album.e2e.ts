@@ -1,6 +1,64 @@
 import {expect, test} from 'playwright/test'
 import covers from '../public/music/ash-afternoon/covers.json' with {type: 'json'}
 
+test('advances from a decoded preload when its load event is unavailable', async ({page}) => {
+  await page.setViewportSize({height: 844, width: 390})
+  await page.route('**/models/**/*.poffo', (route) => route.abort())
+  await page.addInitScript(() => {
+    document.addEventListener(
+      'load',
+      (event) => {
+        const target = event.target
+        if (
+          target instanceof HTMLImageElement &&
+          target.alt === '' &&
+          target.src.includes('/music/')
+        ) {
+          event.stopImmediatePropagation()
+        }
+      },
+      {capture: true},
+    )
+  })
+  await page.goto('/')
+  await expect(page.getByRole('alert')).toContainText('캐릭터를 불러오지 못했어요.')
+  await page.evaluate(async (cover) => {
+    const image = new Image()
+    image.src = cover
+    await image.decode()
+  }, covers.tracks[1]!.artwork)
+  await page.keyboard.press('PageDown')
+  const visible = page.getByRole('img', {name: '노트북 앨범 배경'})
+  await expect(visible).toHaveAttribute('src', covers.tracks[0]!.artwork)
+  await expect(visible).toHaveAttribute('src', covers.tracks[1]!.artwork, {timeout: 15_000})
+})
+
+test('keeps the current artwork visible until the next cover can transition', async ({page}) => {
+  await page.setViewportSize({height: 844, width: 390})
+  await page.route('**/models/**/*.poffo', (route) => route.abort())
+  const requested = Promise.withResolvers<void>()
+  const release = Promise.withResolvers<void>()
+  await page.route(`**${covers.tracks[1]!.artwork}`, async (route) => {
+    requested.resolve()
+    await release.promise
+    await route.continue()
+  })
+  await page.goto('/')
+  await expect(page.getByRole('alert')).toContainText('캐릭터를 불러오지 못했어요.')
+  await page.keyboard.press('PageDown')
+  const artwork = page.getByRole('img', {name: '노트북 앨범 배경'})
+  const canvas = page.getByLabel('실제 Wallpaper 앱 배경 전환')
+  try {
+    await requested.promise
+    await expect(artwork).toHaveAttribute('src', covers.tracks[0]!.artwork)
+    await expect(canvas).toHaveCSS('opacity', '1')
+  } finally {
+    release.resolve()
+  }
+  await expect(artwork).toHaveAttribute('src', covers.tracks[1]!.artwork)
+  await expect(canvas).toHaveCSS('opacity', '1')
+})
+
 for (const bitmap of [true, false]) {
   test(`presents and advances album covers with bitmap decoding ${bitmap ? 'available' : 'unavailable'}`, async ({
     page,

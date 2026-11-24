@@ -61,13 +61,23 @@ describe('createVisemeTrack', () => {
       'closed',
       'narrow',
       'open',
+      'closed',
     ])
   })
 
-  it('should merge mouth cues that are too short to display', () => {
-    const cues = createVisemeTrack({durationMs: 100, text: 'aeo'})
-
-    expect(cues).toEqual([{endMs: 100, startMs: 0, viseme: 'open'}])
+  it.each([
+    {durationMs: 200, shapes: ['open', 'closed'], text: '암'},
+    {durationMs: 50, shapes: ['closed', 'open'], text: '빠'},
+    {durationMs: 100, shapes: ['rest', 'open'], text: '.a'},
+    {durationMs: 100, shapes: ['open', 'wide', 'round'], text: 'aeo'},
+  ])('should retain distinct short mouth cues for $text', ({durationMs, shapes, text}) => {
+    const cues = createVisemeTrack({durationMs, text})
+    expect(cues.map((cue) => cue.viseme)).toEqual(shapes)
+    expect(cues[0]?.startMs).toBe(0)
+    expect(cues.at(-1)?.endMs).toBe(durationMs)
+    expect(cues.slice(1).map(({startMs}) => startMs)).toEqual(
+      cues.slice(0, -1).map(({endMs}) => endMs),
+    )
   })
 })
 
@@ -94,10 +104,23 @@ describe('getCoarticulatedVisemeAtTime', () => {
   it('should expose the next mouth shape fifty milliseconds before its cue boundary', () => {
     expect(getCoarticulatedVisemeAtTime(cues, 49)).toBe('open')
     expect(getCoarticulatedVisemeAtTime(cues, 50)).toBe('round')
-    expect(getCoarticulatedVisemeAtTime(cues, 150)).toBe('rest')
+    expect(getCoarticulatedVisemeAtTime(cues, 199)).toBe('round')
+    expect(getCoarticulatedVisemeAtTime(cues, 200)).toBe('rest')
   })
 
   it('should remain at rest before playback starts', () => {
     expect(getCoarticulatedVisemeAtTime(cues, -1)).toBe('rest')
+  })
+
+  it('should shorten the anticipation on both sides of a short cue', () => {
+    const short = [
+      {endMs: 20, startMs: 0, viseme: 'closed'},
+      {endMs: 40, startMs: 20, viseme: 'open'},
+      {endMs: 140, startMs: 40, viseme: 'round'},
+    ] as const
+    expect(getCoarticulatedVisemeAtTime(short, 0)).toBe('closed')
+    expect(getCoarticulatedVisemeAtTime(short, 10)).toBe('open')
+    expect(getCoarticulatedVisemeAtTime(short, 29)).toBe('open')
+    expect(getCoarticulatedVisemeAtTime(short, 30)).toBe('round')
   })
 })

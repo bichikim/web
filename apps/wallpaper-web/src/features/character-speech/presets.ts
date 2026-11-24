@@ -1,6 +1,6 @@
 import manifest from '../../data/speech-presets.json'
 import {prepareSpeechLine} from './configuration'
-import {MOUTH_DURATION_TOLERANCE, parseMouthTrack} from './mouth-track'
+import {MOUTH_DURATION_TOLERANCE, MOUTH_TRACK_REVISION, parseMouthTrack} from './mouth-track'
 import type {PreparedSpeechPlayback} from './types'
 
 export const speechPresets = manifest
@@ -31,7 +31,9 @@ export const loadPresetSpeech = async (
   }
   const [audioResponse, mouthResponse] = await Promise.all([
     options.fetch(`${preset.audio}?v=${preset.cacheKey}`, {signal: options.signal}),
-    options.fetch(`${preset.mouth}?v=${preset.cacheKey}`, {signal: options.signal}),
+    options.fetch(`${preset.mouth}?v=${preset.cacheKey}&mouth=${MOUTH_TRACK_REVISION}`, {
+      signal: options.signal,
+    }),
   ])
   if (!audioResponse.ok || !mouthResponse.ok) {
     throw new Error('Preset speech asset download failed')

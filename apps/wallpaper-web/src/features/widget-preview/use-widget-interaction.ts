@@ -64,9 +64,26 @@ export const useWidgetInteraction = (props: UseWidgetInteractionProps) => {
     setHovered(false)
     setPointer(null)
   }
+  const handleRelease = (event: PointerEvent) => {
+    if (capturedPointer !== event.pointerId) {
+      return
+    }
+    capturedPointer = null
+    props.preview().release()
+    if (event.type === 'pointerup') {
+      handleHover(event)
+    } else {
+      handleLeave()
+    }
+  }
   createEffect(
-    on(props.hitTest, () => {
+    on(props.hitTest, (hitTest) => {
       if (restingPointer === null) {
+        return
+      }
+      if (hitTest === null) {
+        setHovered(false)
+        setPointer(null)
         return
       }
       // 첫 렌더 알림은 픽셀 검사 초기화보다 먼저 도착할 수 있다.
@@ -88,8 +105,7 @@ export const useWidgetInteraction = (props: UseWidgetInteractionProps) => {
     }
     capturedPointer = null
     props.preview().release()
-    restingPointer = null
-    setPointer(null)
+    handleLeave()
   })
   const handleFocus = (event: FocusEvent & {currentTarget: HTMLButtonElement}) => {
     if (event.currentTarget.matches(':focus-visible')) {
@@ -101,8 +117,7 @@ export const useWidgetInteraction = (props: UseWidgetInteractionProps) => {
   const handleKeyDown = (event: KeyboardEvent & {currentTarget: HTMLButtonElement}) => {
     props.preview().keyboard(event)
     if (event.key === 'Escape') {
-      restingPointer = null
-      setPointer(null)
+      handleLeave()
     }
   }
   return {
@@ -112,6 +127,7 @@ export const useWidgetInteraction = (props: UseWidgetInteractionProps) => {
     handleLeave,
     handleMove,
     handlePress,
+    handleRelease,
     hovered,
     tooltip,
   }

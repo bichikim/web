@@ -57,7 +57,6 @@ test('should refresh an opaque pixel under the resting pointer when hit testing 
   expect(hook.result.hovered()).toBe(true)
   expect(hook.result.tooltip()).toEqual({x: 52, y: 70})
   hook.setHitTest(null)
-  hook.renderFrame()
   expect(hook.result.hovered()).toBe(false)
   expect(hook.result.tooltip()).toBeNull()
 })
@@ -137,11 +136,32 @@ test('should avoid GPU pixel readbacks for touch hover and movement', () => {
 
 test('should not revive a pointer after the story locks the widget', () => {
   const hook = setup()
+  hook.setHitTest(() => () => true)
   hook.result.handleHover(hover())
+  expect(hook.result.hovered()).toBe(true)
   hook.setLocked(true)
   hook.setHitTest(() => () => true)
   hook.renderFrame()
   hook.setLocked(false)
+  expect(hook.result.hovered()).toBe(false)
+  expect(hook.result.tooltip()).toBeNull()
+})
+
+test('should recheck the final pointer after releasing a drag outside the character', () => {
+  const hook = setup()
+  const hitTest = vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(true).mockReturnValue(false)
+  hook.setHitTest(() => hitTest)
+  hook.result.handleHover(hover())
+  const event = Object.assign(new MouseEvent('pointerup', {button: 0, clientX: 40, clientY: 50}), {
+    pointerId: 1,
+    pointerType: 'mouse',
+  }) as unknown as PointerEvent & {currentTarget: HTMLButtonElement}
+  Object.defineProperty(event, 'currentTarget', {value: hook.button})
+  hook.result.handlePress(event)
+
+  hook.result.handleRelease(event)
+
+  expect(hook.preview.release).toHaveBeenCalledOnce()
   expect(hook.result.hovered()).toBe(false)
   expect(hook.result.tooltip()).toBeNull()
 })

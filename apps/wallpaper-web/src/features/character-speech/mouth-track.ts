@@ -4,6 +4,7 @@ import type {MouthPose, SpeechAudio, SpeechMouthTrack} from './types'
 
 const CHANNELS = 2
 export const MOUTH_DURATION_TOLERANCE = 0.05
+export const MOUTH_TRACK_REVISION = 2
 
 export const parseMouthTrack = (value: unknown): SpeechMouthTrack | null => {
   if (

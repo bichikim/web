@@ -1,5 +1,5 @@
 import {clientOnly} from '@solidjs/start'
-import {batch, createMemo, createSignal, Show} from 'solid-js'
+import {batch, createEffect, createMemo, createSignal, onCleanup, Show} from 'solid-js'
 import covers from '../../public/music/ash-afternoon/covers.json'
 
 const SDesktopAlbum = clientOnly(() => import('./SDesktopAlbum'), {lazy: true})
@@ -13,11 +13,34 @@ interface SDesktopSlideshowProps {
 export const SDesktopSlideshow = (props: SDesktopSlideshowProps) => {
   const [image, setImage] = createSignal(0)
   const [prepared, setPrepared] = createSignal(false)
+  const [preload, setPreload] = createSignal<HTMLImageElement>()
   const [presented, setPresented] = createSignal(false)
   const cover = createMemo(() => covers.tracks[image()]!)
   const nextCover = createMemo(() => covers.tracks[(image() + 1) % covers.tracks.length]!)
   const effect = createMemo(() => EFFECTS[(image() + EFFECTS.length - 1) % EFFECTS.length]!)
-  const handlePrepared = () => setPrepared(true)
+  const handlePrepared = (event: Event & {currentTarget: HTMLImageElement}) => {
+    if (event.currentTarget === preload()) {
+      setPrepared(true)
+    }
+  }
+  createEffect(() => {
+    const element = preload()
+    if (element === undefined || typeof element.decode !== 'function') {
+      return
+    }
+    let active = true
+    onCleanup(() => {
+      active = false
+    })
+    element.decode().then(
+      () => {
+        if (active) {
+          setPrepared(true)
+        }
+      },
+      () => undefined,
+    )
+  })
   const handlePresented = () => setPresented(true)
   const handleNext = () => {
     if (props.playing !== false && prepared() && presented()) {
@@ -34,6 +57,7 @@ export const SDesktopSlideshow = (props: SDesktopSlideshowProps) => {
         {(current) => (
           <>
             <img
+              ref={setPreload}
               src={nextCover().artwork}
               alt=""
               aria-hidden="true"
