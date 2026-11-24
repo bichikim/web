@@ -193,10 +193,10 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
 
       <div class="flex flex-wrap gap-x-3 gap-y-1 text-sm leading-5 text-muted-foreground">
         <Show when={props.memo.nextExactReminderAt}>
-          {(time) => <span>{m.memory_memo_next_exact({time: formatReminderTime(time())})}</span>}
+          {(time) => <span>{m.memory_memo_exact_time({time: formatReminderTime(time())})}</span>}
         </Show>
         <Show when={props.memo.nextRecallAt}>
-          {(time) => <span>{m.memory_memo_next_recall({time: formatReminderTime(time())})}</span>}
+          {(time) => <span>{m.memory_memo_recall_time({time: formatReminderTime(time())})}</span>}
         </Show>
         <Show when={props.memo.reminderHistory.length > 0}>
           <span>{m.memory_memo_history({count: props.memo.reminderHistory.length})}</span>

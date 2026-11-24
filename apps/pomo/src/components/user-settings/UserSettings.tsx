@@ -72,22 +72,24 @@ export const UserSettings = () => {
             </Match>
           </Switch>
 
-          <PSettingsActionLink
-            class="col-start-2 row-start-1 w-fit max-w-full text-sm"
-            size="medium"
-            href="/account"
-            icon="i-tabler-user-circle"
-          >
-            <Switch>
-              <Match when={settings.authenticatedUser()?.provider === 'toss'}>
-                {m.user_link_web()}
-              </Match>
-              <Match when={settings.state().kind === 'authenticated'}>
-                {m.user_manage_account()}
-              </Match>
-              <Match when>{m.user_sign_in()}</Match>
-            </Switch>
-          </PSettingsActionLink>
+          <Show when={settings.state().kind !== 'loading'}>
+            <PSettingsActionLink
+              class="col-start-2 row-start-1 w-fit max-w-full text-sm"
+              size="medium"
+              href="/account"
+              icon="i-tabler-user-circle"
+            >
+              <Switch>
+                <Match when={settings.authenticatedUser()?.provider === 'toss'}>
+                  {m.user_link_web()}
+                </Match>
+                <Match when={settings.state().kind === 'authenticated'}>
+                  {m.user_manage_account()}
+                </Match>
+                <Match when>{m.user_sign_in()}</Match>
+              </Switch>
+            </PSettingsActionLink>
+          </Show>
         </div>
 
         <section aria-labelledby="pomo-service-information-title" class="grid gap-3">

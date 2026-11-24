@@ -8,7 +8,7 @@ import {
   type DisplayThemePreferenceStorage,
   readDisplayThemePreference,
   writeDisplayThemePreference,
-} from '../index'
+} from '..'
 
 const storageMocks = vi.hoisted(() => ({
   getItem: vi.fn<(key: string) => Promise<string | null>>(),
@@ -202,6 +202,19 @@ describe('display theme preference repository', () => {
       preference: 'dark',
       savedAt: expect.any(Number),
     })
+  })
+
+  it('should preserve a more recent web timestamp before the first native restoration', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    const newer = {preference: 'system', savedAt: 150}
+    webValues.set(STORAGE_KEY, newer)
+    storage.writeWeb.mockImplementationOnce(() => new Error('web mirror unavailable'))
+
+    await expect(repository.write('bright')).resolves.toBeUndefined()
+    expect(tossValues.get(STORAGE_KEY)).toEqual({preference: 'bright', savedAt: 100})
+    expect(webValues.get(STORAGE_KEY)).toEqual(newer)
+    expect(storage.removeWeb).not.toHaveBeenCalled()
+    await expect(repository.read()).resolves.toBe('system')
   })
 
   it('should remove a stale browser copy after native persistence succeeds', async () => {

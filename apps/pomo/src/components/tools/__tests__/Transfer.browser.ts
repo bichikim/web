@@ -5,6 +5,9 @@ import {page} from 'vitest/browser'
 import * as m from '@paraglide/message'
 import {fileTransfer} from 'src/features/file-transfer/session'
 import {Transfer} from '../Transfer'
+import {TransferFileRequest} from '../TransferFileRequest'
+
+const MAXIMUM_FILE_BYTES = 104_857_600
 
 // Only signaling is controlled; the actual session and UI use native WebRTC.
 class Socket extends EventTarget {
@@ -92,4 +95,14 @@ it('should cancel an invited peer from the connecting transfer panel', async () 
   expect(socket.close).toHaveBeenCalledOnce()
   expect(RTCPeerConnection.prototype.close).toHaveBeenCalledOnce()
   await expect.element(page.getByRole('button', {name: m.transfer_create()})).toBeVisible()
+})
+
+it('should show an offered file at the binary transfer limit as 100 MiB', async () => {
+  render(() =>
+    createComponent(TransferFileRequest, {
+      file: {name: 'cover.png', size: MAXIMUM_FILE_BYTES},
+      mode: 'outgoing',
+    }),
+  )
+  await expect.element(page.getByText(/100\s*MiB/u)).toBeVisible()
 })

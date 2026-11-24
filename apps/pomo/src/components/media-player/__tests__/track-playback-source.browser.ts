@@ -50,7 +50,7 @@ afterEach(() => {
   disposals.splice(0).forEach((dispose) => dispose())
   vi.restoreAllMocks()
 })
-const fixture = async (language = 'ko'): Promise<SnapshotTrack> => ({
+const fixture = async (language = 'ko'): Promise<SnapshotTrack & {sourceBlob: Blob}> => ({
   artist: 'Artist',
   durationSeconds: 10,
   id: `custom-track:${language}`,
@@ -97,6 +97,23 @@ it('checks a production lease can be released twice without revoking twice', asy
   lease.release?.()
   expect(revoke).toHaveBeenCalledExactlyOnceWith(lease.source)
   await expect(fetch(lease.source)).rejects.toThrow()
+})
+
+it('should replace the active audio when the blob changes but the track URL is unchanged', async () => {
+  const initial = await fixture()
+  const next = await fixture('en')
+  const view = owner()
+  const firstReady = metadata(view.audio)
+  view.select(initial)
+  await firstReady
+  const firstSource = view.audio.src
+  view.select({...initial, sourceBlob: next.sourceBlob})
+
+  const replacement = view.audio.src
+  expect(replacement).not.toBe(firstSource)
+  const bytes = await (await fetch(replacement)).arrayBuffer()
+  expect(new Uint8Array(bytes)).toEqual(new Uint8Array(await next.sourceBlob.arrayBuffer()))
+  await expect(fetch(firstSource)).rejects.toThrow()
 })
 
 it('checks production metadata and pause/stop retain the selected source and position', async () => {

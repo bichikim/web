@@ -98,7 +98,7 @@ export const FeatureRequestList = (props: FeatureRequestListProps) => {
                   {(request) => (
                     <FeatureRequestCard
                       isAuthenticated={isAuthenticated()}
-                      isVoting={props.model.votingRequestId() === request().id}
+                      isVoting={props.model.isVoting(request().id)}
                       onVote={(requestId) => withPromiseFallback(handleVote(requestId), undefined)}
                       request={request()}
                     />

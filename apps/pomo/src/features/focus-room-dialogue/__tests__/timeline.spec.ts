@@ -9,21 +9,21 @@ import {
 } from '../timeline'
 
 describe('createDialogueTimeline', () => {
-  it('should derive segment offsets from PCM duration and inter-chunk silence', () => {
+  it('should derive segment offsets in chunk index order even when PCM arrives out of order', () => {
     const timeline = createDialogueTimeline({
       audioChunks: [
-        {
-          generationTime: 900,
-          index: 0,
-          sampleRate: 1000,
-          samples: new Float32Array(500),
-          total: 2,
-        },
         {
           generationTime: 200,
           index: 1,
           sampleRate: 1000,
           samples: new Float32Array(750),
+          total: 2,
+        },
+        {
+          generationTime: 900,
+          index: 0,
+          sampleRate: 1000,
+          samples: new Float32Array(500),
           total: 2,
         },
       ],
@@ -51,6 +51,21 @@ describe('createDialogueTimeline', () => {
       ],
     })
   })
+
+  it.each([0, -48_000, Number.NaN, Infinity])(
+    'should reject invalid PCM sample rate %s before building subtitle timings',
+    (sampleRate) => {
+      expect(() =>
+        createDialogueTimeline({
+          audioChunks: [
+            {generationTime: 100, index: 0, sampleRate, samples: Float32Array.of(0), total: 1},
+          ],
+          silenceDuration: 0,
+          textChunks: ['첫 문장'],
+        }),
+      ).toThrow(RangeError)
+    },
+  )
 
   it('should reject audio chunks without matching text', () => {
     expect(() =>

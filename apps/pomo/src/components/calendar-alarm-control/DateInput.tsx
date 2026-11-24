@@ -1,7 +1,14 @@
 import {PInput} from 'src/components/p-input/PInput'
+import {normalizePasteNumericInput} from '@winter-love/supertonic/normalize-paste-numeric-input'
+import {readFormattedPaste} from 'src/utils/formatted-input-paste'
 import {type Accessor} from 'solid-js'
 import * as m from '@paraglide/message'
-import {localDateRuntime, type LocalDateRuntime, useLocalDate} from '../../features/civil-date'
+import {
+  localDateRuntime,
+  type LocalDateRuntime,
+  parseDate,
+  useLocalDate,
+} from '../../features/civil-date'
 import {INPUT_CLASSES} from './input-classes'
 
 interface DateInputProps {
@@ -24,6 +31,15 @@ export const DateInput = (props: DateInputProps) => {
     subscribe: localDateRuntime.subscribe,
   }
   const minimumDate = useLocalDate({runtime, timeZone})
+  const handlePaste = (event: ClipboardEvent) => {
+    const date = readFormattedPaste(event, (text) => {
+      const normalized = normalizePasteNumericInput(text).trim()
+      return parseDate(normalized) === null ? null : normalized
+    })
+    if (date !== null) {
+      props.onInput(date)
+    }
+  }
 
   return (
     <label class="grid gap-1.5 text-sm font-650">
@@ -33,6 +49,7 @@ export const DateInput = (props: DateInputProps) => {
         class={INPUT_CLASSES}
         min={minimumDate()}
         onInput={(event) => props.onInput(event.currentTarget.value)}
+        onPaste={handlePaste}
         type="date"
         value={props.value()}
       />

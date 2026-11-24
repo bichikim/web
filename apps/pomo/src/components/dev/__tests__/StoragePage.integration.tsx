@@ -1,11 +1,11 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, render, screen} from '@solidjs/testing-library'
-import {createSignal, type JSX, Show} from 'solid-js'
+import {type JSX, Show} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
-import {type ModelDownloadState, useModelDownload} from 'src/features/model-download'
+import {PModelDownloadProvider} from 'src/features/model-download'
 import type {ModelStorageManager} from 'src/features/model-storage'
 import {successResult} from 'src/features/result'
 import {StoragePage} from '../StoragePage'
@@ -18,7 +18,6 @@ vi.mock('@solidjs/router', () => ({
   A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
 }))
 vi.mock('src/components/p-modal/PModal', () => ({PModal: vi.fn()}))
-vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 vi.mock('../storage/DeletionModal', async (importOriginal) => {
   const original = await importOriginal<typeof import('../storage/DeletionModal')>()
   return {DeletionModal: vi.fn(original.DeletionModal)}
@@ -38,10 +37,6 @@ const createManager = (): ModelStorageManager => ({
 })
 
 beforeEach(() => {
-  const [downloadState] = createSignal<ModelDownloadState>({status: 'idle'})
-  vi.mocked(useModelDownload).mockReturnValue({state: downloadState} as ReturnType<
-    typeof useModelDownload
-  >)
   vi.mocked(PModal).mockImplementation((props: PModalProps) => (
     <Show when={props.isOpen}>
       <div aria-label={props.title} role="dialog">
@@ -57,7 +52,7 @@ afterEach(() => {
 })
 
 it('should show stored model data and verification destinations', async () => {
-  render(() => <StoragePage manager={createManager()} />)
+  render(() => <StoragePage manager={createManager()} />, {wrapper: PModelDownloadProvider})
 
   expect(await screen.findByText('model.onnx')).toBeDefined()
   expect(screen.getByText('2개 파일이 남아 있어요.')).toBeDefined()

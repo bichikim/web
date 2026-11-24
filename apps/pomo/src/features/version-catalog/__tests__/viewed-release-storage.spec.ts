@@ -58,6 +58,11 @@ it('should read and write the browser storage for web and desktop runtimes', asy
   expect(nativeStorageMocks.setItem).not.toHaveBeenCalled()
 })
 
+it('should restore the same viewed release with a string format version', async () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({...viewedRelease, formatVersion: '1'}))
+  await expect(readViewedRelease()).resolves.toEqual(viewedRelease)
+})
+
 it('should use Apps in Toss storage as the native source of truth', async () => {
   Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
   localStorage.setItem(
@@ -342,3 +347,16 @@ it('should allow a queued native write after persistence fails', async () => {
   await expect(second).resolves.toBeUndefined()
   expect(storage.writeWeb).toHaveBeenCalledOnce()
 })
+
+it.each([false, true])(
+  'should replace an invalid future marker in native storage=%s',
+  async (native) => {
+    const storage = createStorage()
+    const future = {...viewedRelease, releasedAt: '2099-01-01T00:00:00Z'}
+    vi.mocked(storage.usesTossStorage).mockReturnValue(native)
+    vi.mocked(storage.readWeb).mockReturnValue(future)
+    vi.mocked(storage.readToss).mockResolvedValue(future)
+    await createViewedReleaseRepository({storage}).write(viewedRelease)
+    expect(native ? storage.writeToss : storage.writeWeb).toHaveBeenCalledWith(viewedRelease)
+  },
+)

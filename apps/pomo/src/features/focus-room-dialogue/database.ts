@@ -1,10 +1,12 @@
 import Dexie, {type Table} from 'dexie'
 
 const DATABASE_NAME = 'pomo-focus-room'
+const FEED_BACKLOG_VERSION = 3
 
 export interface PDatabase extends Dexie {
   readonly dialogues: Table<unknown, string>
   readonly eventBindings: Table<unknown, string>
+  readonly feedBacklogs: Table<unknown, string>
   readonly feedDialogueJobs: Table<unknown, string>
   readonly feedDialogueMetadata: Table<unknown, string>
   readonly feedItems: Table<unknown, string>
@@ -23,6 +25,7 @@ export const createPDatabase = (): PDatabase => {
       'dialogueId, expiresAt, feedConnectionId, listenedAt, [feedConnectionId+feedItemId]',
     feedItems: 'id, feedConnectionId, status, discoveredAt',
   })
+  database.version(FEED_BACKLOG_VERSION).stores({feedBacklogs: 'connectionId'})
 
   return database
 }

@@ -79,7 +79,7 @@ export const advanceOpacityTwinkle = (
 ) => {
   state.elapsedSeconds += deltaSeconds
 
-  if (state.elapsedSeconds < state.durationSeconds) {
+  if (state.phase !== 'transitioning' && state.elapsedSeconds < state.durationSeconds) {
     return state.currentOpacity
   }
 

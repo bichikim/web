@@ -1,4 +1,5 @@
-import {getTextDirection, type Locale, setLocale} from '@paraglide/runtime'
+import {getTextDirection, type Locale} from '@paraglide/runtime'
+import {setAppLocale} from '../locale'
 
 import {reportClientError} from '../client-error-reporter'
 import {getInitialAppsInTossLocale} from './bootstrap'
@@ -10,7 +11,7 @@ const updateDocumentLocale = (locale: Locale) => {
 }
 
 export const prepareAppsInTossLocale = createAppsInTossLocalePreparation({
-  activateLocale: (locale) => setLocale(locale, {reload: false}),
+  activateLocale: (locale) => setAppLocale(locale, {reload: false}),
   readLocale: getInitialAppsInTossLocale,
   reportError: (error) => {
     reportClientError(error, {feature: 'apps-in-toss-locale', source: 'direct'})

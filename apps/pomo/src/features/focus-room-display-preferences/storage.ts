@@ -22,16 +22,20 @@ export interface CreatePDisplayPreferencesRepositoryOptions {
 }
 
 export const DISPLAY_PREFERENCES_STORAGE_KEY = 'pomo:focus-room-display-preferences:v1'
+const storedVisibility = z.union([
+  z.boolean(),
+  z.enum(['true', 'false']).transform((value) => value === 'true'),
+])
 const displayPreferencesSchema = z.object({
-  dialogueComposerVisible: z
-    .boolean()
-    .default(DEFAULT_P_DISPLAY_PREFERENCES.dialogueComposerVisible),
-  featureRequestVisible: z.boolean().default(true),
-  memoryAssistVisible: z.boolean().default(true),
-  playerVisible: z.boolean().default(true),
-  pomodoroVisible: z.boolean().default(true),
-  toolsButtonVisible: z.boolean().default(true),
-  tourButtonVisible: z.boolean().default(true),
+  dialogueComposerVisible: storedVisibility.default(
+    DEFAULT_P_DISPLAY_PREFERENCES.dialogueComposerVisible,
+  ),
+  featureRequestVisible: storedVisibility.default(true),
+  memoryAssistVisible: storedVisibility.default(true),
+  playerVisible: storedVisibility.default(true),
+  pomodoroVisible: storedVisibility.default(true),
+  toolsButtonVisible: storedVisibility.default(true),
+  tourButtonVisible: storedVisibility.default(true),
 })
 
 export const parsePDisplayPreferences = (value: unknown): PDisplayPreferences | null => {

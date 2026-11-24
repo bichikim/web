@@ -24,6 +24,13 @@ it('should restore each tool selection independently', async () => {
   await expect(lunarDirectionStorage.read()).resolves.toBe('lunar')
   await expect(movingSelectionStorage.read()).resolves.toEqual({month: '5', year: '2027'})
 })
+it.each([
+  {month: 3, year: 2027},
+  {month: '03', year: '2027'},
+])('should restore the stored moving selection %o in its canonical form', async (selection) => {
+  fixture.web.set('pomo:tool-moving:v1', JSON.stringify(selection))
+  await expect(movingSelectionStorage.read()).resolves.toEqual({month: '3', year: '2027'})
+})
 it('should reject mismatched units, unknown directions and unsupported months', async () => {
   fixture.web.set('pomo:tool-units:v1', JSON.stringify({category: 'length', from: 'kg', to: 'm'}))
   fixture.web.set('pomo:tool-lunar-direction:v1', '"unknown"')

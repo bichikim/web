@@ -35,7 +35,9 @@ const getFailureResult = <Value>(
   phase: SpeechRecognitionPhase,
 ): Result<Value, SpeechRecognitionError> =>
   failureResult(
-    mapWorkerRpcFailureToPhaseError(failure, phase, 'Worker 요청을 완료하지 못했습니다.'),
+    failure.code === 'send-error'
+      ? {code: 'request-failed', detail: failure.detail, phase, retryable: true}
+      : mapWorkerRpcFailureToPhaseError(failure, phase, 'Worker 요청을 완료하지 못했습니다.'),
   )
 
 const getUnexpectedResponse = <Value>(

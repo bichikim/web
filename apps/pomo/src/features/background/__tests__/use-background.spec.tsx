@@ -76,7 +76,7 @@ it('should reject empty and unsupported files and continue after one storage fai
   cleanup()
 })
 
-it('should classify empty-MIME PNG and MP4 files by case-insensitive extension', async () => {
+it('should classify empty-MIME PNG, JPEG, and MP4 files by case-insensitive extension', async () => {
   const {result, cleanup} = renderHook(useBackground)
   await waitFor(() => expect(result.ready()).toBe(true))
   const files = [
@@ -84,6 +84,8 @@ it('should classify empty-MIME PNG and MP4 files by case-insensitive extension',
     new File(['png'], 'VACATION.PNG', {type: ''}),
     new File(['mp4'], 'clip.mp4', {type: ''}),
     new File(['mp4'], 'CLIP.MP4', {type: ''}),
+    new File(['jpeg'], 'vacation.jpg', {type: ''}),
+    new File(['jpeg'], 'VACATION.JPEG', {type: ''}),
   ]
 
   await result.add(files)
@@ -92,6 +94,8 @@ it('should classify empty-MIME PNG and MP4 files by case-insensitive extension',
   expect(repository.add).toHaveBeenNthCalledWith(2, files[1], 'photo')
   expect(repository.add).toHaveBeenNthCalledWith(3, files[2], 'video')
   expect(repository.add).toHaveBeenNthCalledWith(4, files[3], 'video')
+  expect(repository.add).toHaveBeenNthCalledWith(5, files[4], 'photo')
+  expect(repository.add).toHaveBeenNthCalledWith(6, files[5], 'photo')
   expect(result.error()).toBeNull()
   cleanup()
 })

@@ -48,3 +48,9 @@ export const WEATHER_CITY_SLUGS: ReadonlyArray<WeatherCitySlug> = WEATHER_CITY_C
 export const WEATHER_CITIES_BY_SLUG: Readonly<
   Record<WeatherCitySlug, (typeof WEATHER_CITY_CATALOG)[number]>
 > = keyBy(WEATHER_CITY_CATALOG, (city) => city.slug)
+
+/** Provider names used for locations that already exist in the curated catalog. */
+export const WEATHER_CITY_ALIASES: Partial<Readonly<Record<WeatherCitySlug, readonly string[]>>> = {
+  jeju: ['Jeju City', '제주시'],
+  miryang: ['Miryang-si'],
+}

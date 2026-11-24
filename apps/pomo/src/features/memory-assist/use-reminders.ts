@@ -179,8 +179,10 @@ const verifyMemoAfterPlayback = (options: VerifyMemoAfterPlaybackOptions) => {
     kind: options.kind,
     memo: getMemoAfterSkippingReminder({
       kind: options.kind,
-      memo: currentMemo,
-      now: new Date(),
+      memo: isVirtualOccurrence
+        ? applyReminderSchedule(currentMemo, invalidatedReminder.memo)
+        : currentMemo,
+      now: options.kind === 'exact' ? new Date(scheduledAt) : new Date(),
       random: options.random,
     }),
     scheduledAt: isVirtualOccurrence ? invalidatedReminder.scheduledAt : scheduledAt,

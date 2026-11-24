@@ -1,4 +1,5 @@
 import {z} from 'zod'
+import {normalizeStoredInteger} from 'src/utils/runtime-storage/normalize-stored-integer'
 
 import {createBestEffortValueStorage, createJsonCodec, type ValueCodec} from '../value-storage'
 import {POMODORO_TIMER_LIMITS} from './limits'
@@ -10,34 +11,47 @@ export const POMODORO_TIMER_CONFIG_STORAGE_KEY = 'pomo:timer-config:v1'
 const SECONDS_PER_MINUTE = 60
 const MAX_DURATION_SECONDS = POMODORO_TIMER_LIMITS.maxDurationMinutes * SECONDS_PER_MINUTE
 const phaseSchema = z.union([z.literal('focus'), z.literal('longBreak'), z.literal('shortBreak')])
+const durationSchema = z.preprocess(
+  normalizeStoredInteger,
+  z.number().int().positive().max(MAX_DURATION_SECONDS),
+)
 const stateBaseSchema = {
-  completedFocusSessions: z.number().int().nonnegative(),
+  completedFocusSessions: z.preprocess(normalizeStoredInteger, z.number().int().nonnegative()),
+  longBreakFocusSessions: z
+    .number()
+    .int()
+    .nonnegative()
+    .max(POMODORO_TIMER_LIMITS.maxFocusSessions)
+    .optional(),
   phase: phaseSchema,
 }
 
 export const pomodoroTimerStateSchema = z.discriminatedUnion('status', [
   z.object({
     ...stateBaseSchema,
-    remainingSeconds: z.number().int().nonnegative(),
+    remainingSeconds: z.preprocess(normalizeStoredInteger, z.number().int().nonnegative()),
     status: z.literal('idle'),
   }),
   z.object({
     ...stateBaseSchema,
-    remainingSeconds: z.number().int().positive(),
+    remainingSeconds: z.preprocess(normalizeStoredInteger, z.number().int().positive()),
     status: z.literal('paused'),
   }),
   z.object({
     ...stateBaseSchema,
-    endsAt: z.number().positive(),
+    endsAt: z.preprocess(normalizeStoredInteger, z.number().positive()),
     status: z.literal('running'),
   }),
 ])
 
 export const pomodoroTimerConfigSchema = z.object({
-  focusSeconds: z.number().int().positive().max(MAX_DURATION_SECONDS),
-  focusSessionsPerCycle: z.number().int().positive().max(POMODORO_TIMER_LIMITS.maxFocusSessions),
-  longBreakSeconds: z.number().int().positive().max(MAX_DURATION_SECONDS),
-  shortBreakSeconds: z.number().int().positive().max(MAX_DURATION_SECONDS),
+  focusSeconds: durationSchema,
+  focusSessionsPerCycle: z.preprocess(
+    normalizeStoredInteger,
+    z.number().int().positive().max(POMODORO_TIMER_LIMITS.maxFocusSessions),
+  ),
+  longBreakSeconds: durationSchema,
+  shortBreakSeconds: durationSchema,
 })
 
 export interface PomodoroTimerStorage {

@@ -32,7 +32,9 @@ export function StoragePage(props: StoragePageProps) {
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [busyAction, setBusyAction] = createSignal<string | null>('inspect')
   const [deletionRequest, setDeletionRequest] = createSignal<DeletionRequest | null>(null)
-  const isModelDownloading = () => modelDownload.state().status === 'loading'
+  const isModelDownloading = () =>
+    modelDownload.state().status === 'loading' ||
+    modelDownload.downloads().some((item) => item.status === 'queued')
   const isBusy = () => busyAction() !== null || isModelDownloading()
   const requestDeletion = (source: HTMLButtonElement, request: DeletionRequest) => {
     deletionTrigger = source

@@ -91,7 +91,11 @@ export const AlbumDraftForm = (props: AdminMusicFormProps) => (
                   src={previewUrl()}
                 />
               </div>
-              <figcaption class="text-xs text-white/45">업로드될 최종 이미지입니다.</figcaption>
+              <figcaption class="text-xs text-white/45">
+                {props.model.coverImageUrl().trim() === ''
+                  ? '업로드될 최종 이미지입니다.'
+                  : '외부 주소로 저장하면 선택한 파일은 해제됩니다.'}
+              </figcaption>
             </figure>
           )}
         </Show>

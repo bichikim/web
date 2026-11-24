@@ -1,4 +1,4 @@
-import type {CreateAuthoritativePreferenceRepositoryOptions} from './index'
+import type {CreateAuthoritativePreferenceRepositoryOptions} from '.'
 /** Preserves browser edits while native writes are pending or fail. */
 export const createSoftNativePreferenceRepository = <Value>(
   options: CreateAuthoritativePreferenceRepositoryOptions<Value>,
@@ -92,7 +92,10 @@ export const createSoftNativePreferenceRepository = <Value>(
       if (writeRevision === currentWriteRevision) {
         setNativeWriteFailure(false)
       }
-    } catch {
+    } catch (error: unknown) {
+      if (webWriteError !== null) {
+        throw new Error(options.writeFailureMessage, {cause: error})
+      }
       if (writeRevision === currentWriteRevision) {
         setNativeWriteFailure(true)
       }

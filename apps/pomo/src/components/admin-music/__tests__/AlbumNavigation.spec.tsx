@@ -27,3 +27,23 @@ it('should mark the selected album and forward album selection', () => {
   fireEvent.click(button)
   expect(onAlbumSelect).toHaveBeenCalledWith(album.id)
 })
+
+it('should show the album type glyph when a navigation cover fails', () => {
+  const album = {
+    ...createAlbum(),
+    coverFallback: 'cd' as const,
+    coverImageUrl: 'https://example.com/broken.webp',
+  }
+  render(() => (
+    <AlbumNavigation
+      albums={[album]}
+      onAlbumSelect={vi.fn()}
+      selectedAlbumId={album.id}
+      trackCount={() => 0}
+    />
+  ))
+  const button = screen.getByRole('button')
+  const cover = button.querySelector('img')!
+  fireEvent.error(cover)
+  expect(button).toHaveTextContent('CD')
+})

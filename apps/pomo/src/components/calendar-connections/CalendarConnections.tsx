@@ -86,6 +86,7 @@ export const CalendarConnections = (props: CalendarConnectionsProps) => {
   const handlePopoverToggle = (event: ToggleEvent) => {
     if (event.newState === 'closed') {
       setConfirmingId(null)
+      setErrorMessage(null)
     }
   }
 

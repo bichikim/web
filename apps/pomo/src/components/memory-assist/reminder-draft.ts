@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import {parseDate} from 'src/features/civil-date'
 import {formatLocalDate} from 'src/utils/format-local-date'
+import {normalizeClockInput} from 'src/utils/formatted-input-paste'
 import {
   MEMORY_REINFORCEMENT_INTERVALS,
   type MemoryMemo,
@@ -33,10 +34,14 @@ export const resolveReminderAt = (
     return null
   }
 
-  const reminder = new Date(`${dateValue}T${time}`)
+  const normalizedTime = normalizeClockInput(time)
+  if (normalizedTime === null) {
+    return null
+  }
+  const reminder = new Date(`${dateValue}T${normalizedTime}`)
   return Number.isNaN(reminder.getTime()) ||
     formatLocalDate(reminder) !== dateValue ||
-    getTimeInputValue(reminder) !== time
+    getTimeInputValue(reminder) !== normalizedTime
     ? null
     : reminder.toISOString()
 }

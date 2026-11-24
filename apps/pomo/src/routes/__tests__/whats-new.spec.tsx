@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {A} from '@solidjs/router'
 import {render, screen, waitFor, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
@@ -18,7 +19,10 @@ vi.mock('src/features/version-catalog', async (importOriginal) => {
   return {...actual, writeViewedRelease: versionCatalogMocks.write}
 })
 
+const resolveLocale = getLocale
+
 beforeEach(() => {
+  overwriteGetLocale(() => 'ko')
   vi.clearAllMocks()
   versionCatalogMocks.write.mockResolvedValue(undefined)
   vi.stubGlobal(
@@ -29,6 +33,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  overwriteGetLocale(resolveLocale)
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
@@ -106,6 +111,7 @@ it('should persist the newest release after loading the public catalog', async (
 })
 
 it('should retain the first newest instant and document order including future releases', async () => {
+  vi.spyOn(Date, 'now').mockReturnValue(new Date('2099-01-02T00:00:00Z').getTime())
   const earlier = {
     ...catalog.releases[0],
     releasedAt: '2099-01-01T08:30:00+09:00',
@@ -155,4 +161,26 @@ it('should report a catalog fetch failure', async () => {
 
   expect(await screen.findByRole('alert')).toHaveTextContent('업데이트 내역을 불러오지 못했습니다.')
   expect(versionCatalogMocks.write).not.toHaveBeenCalled()
+})
+
+it('should mark only a published release viewed when the catalog contains a future entry', async () => {
+  vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-07T00:00:00Z'))
+  const published = catalog.releases[0]
+  const future = {
+    ...published,
+    releasedAt: '2099-01-01T09:00:00+09:00',
+    title: 'Future version',
+    version: '2099. 01. 01 09:00',
+  }
+  vi.mocked(fetch).mockResolvedValueOnce(
+    new Response(JSON.stringify({releases: [future, published]})),
+  )
+  render(() => <WhatsNewPage />)
+
+  expect(await screen.findByRole('heading', {name: 'Future version'})).toBeVisible()
+  expect(versionCatalogMocks.write).toHaveBeenCalledExactlyOnceWith({
+    formatVersion: 1,
+    releasedAt: published.releasedAt,
+    version: published.version,
+  })
 })

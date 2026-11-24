@@ -30,6 +30,13 @@ const createRepository = (storage: ScreenSaverStorage) =>
   createScreenSaverRepository(storage, () => 100)
 
 describe('createScreenSaverRepository', () => {
+  it('should compare a stored decimal timestamp against the native timestamp', async () => {
+    const storage = createStorage()
+    storage.writeWeb(STORAGE_KEY, {delay: '20m', savedAt: '75'})
+    storage.readToss.mockResolvedValue(stored('10m', 4))
+    await expect(createRepository(storage).read()).resolves.toBe('20m')
+    expect(storage.writeToss).toHaveBeenLastCalledWith(STORAGE_KEY, stored('20m', 75))
+  })
   it('should repair native storage before restoring an evicted web preference', async () => {
     const storage = createStorage()
     storage.writeWeb(STORAGE_KEY, stored('off', 10))

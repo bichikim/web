@@ -20,6 +20,12 @@ const truncateLanguageLearningTag = (tag: string): string => {
   return tagGraphemes.join('')
 }
 
+export const hasOverlongLanguageLearningTag = (input: string): boolean =>
+  input.split(LANGUAGE_LEARNING_TAG_DELIMITER_PATTERN).some((item) => {
+    const tag = item.trim()
+    return truncateLanguageLearningTag(tag) !== tag
+  })
+
 export const parseLanguageLearningTags = (input: string): ReadonlyArray<string> =>
   pipe(
     input.split(LANGUAGE_LEARNING_TAG_DELIMITER_PATTERN),

@@ -10,6 +10,7 @@ import {ACCOUNT_CARD_CLASSES, ACCOUNT_PAGE_CLASSES} from '../user-auth/styles'
 import * as m from '@paraglide/message'
 
 export interface AccountPageProps {
+  readonly calendarConnectionFailed?: boolean
   readonly connectedCalendarProvider?: CalendarProviderId
 }
 
@@ -47,6 +48,11 @@ export const AccountPage = (props: AccountPageProps) => {
                 <h1 class="m-0 text-3xl font-800 tracking--0.03em">{m.account_heading()}</h1>
               </header>
 
+              <Show when={props.calendarConnectionFailed}>
+                <p class="mb-4 text-sm leading-6 text-danger" role="alert">
+                  {m.calendar_connection_failed()}
+                </p>
+              </Show>
               {import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true' ? (
                 <TossAccount />
               ) : (

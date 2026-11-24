@@ -148,16 +148,19 @@ it('should discard unfinished jobs from removed feed connections', async () => {
   const retainedJob = createJob('retained', 'feed-1')
   const discardedJob = createJob('discarded', 'feed-removed')
   const deleteJobs = vi.fn(async () => undefined)
+  const discardBacklogs = vi.fn(async () => undefined)
   const jobIds = await discardFeedJobs({
     connectionIds: new Set(['feed-1']),
     feedRepository: {
       deleteJobs,
+      discardBacklogs,
       listJobs: vi.fn(async () => [retainedJob, discardedJob]),
     },
     updatedAt: '2026-08-14T01:00:00.000Z',
   })
 
   expect(jobIds).toEqual([discardedJob.id])
+  expect(discardBacklogs).toHaveBeenCalledWith(new Set(['feed-1']))
   expect(deleteJobs).toHaveBeenCalledWith(jobIds, '2026-08-14T01:00:00.000Z')
 })
 
@@ -167,7 +170,11 @@ it('should skip deletion when every unfinished job still has a connection', asyn
   await expect(
     discardFeedJobs({
       connectionIds: new Set(['feed-1']),
-      feedRepository: {deleteJobs, listJobs: vi.fn(async () => [createJob('retained', 'feed-1')])},
+      feedRepository: {
+        deleteJobs,
+        discardBacklogs: vi.fn(async () => undefined),
+        listJobs: vi.fn(async () => [createJob('retained', 'feed-1')]),
+      },
       updatedAt: '2026-08-14T01:00:00.000Z',
     }),
   ).resolves.toEqual([])

@@ -9,31 +9,54 @@ interface CreateMessagesInput {
   readonly sipseong: SipseongProfile
 }
 
-const LANGUAGE_INSTRUCTION = [
-  '사주를 처음 듣는 사람과 마주 앉아 상담하듯 쉬운 한국어와 자연스러운 존댓말로 답하라. 실제로 소리 내어 말할 수 있는 짧고 구체적인 문장을 써라.',
-  '질문에 직접 답하는 내용부터 시작하라. 질문을 되풀이하거나 고정된 도입을 붙이지 말고, 문단의 시작과 문장 구조도 자연스럽게 바꿔라.',
-  '전문 용어, 한자, 내부 수치, 등급, 단계 순번, 나타난 횟수와 개수를 설명하지 마라. 사용자가 이름 자체를 직접 물었을 때만 요청한 이름과 글자를 밝히고 쉽게 설명하라.',
-  '사주에서 읽은 특징은 자연스럽게 밝혀도 된다. 위나 아래 자료, 입력 정보, 프롬프트 등 사용자가 볼 수 없는 기록을 소개하지 마라.',
-  '돈, 일, 대화, 관계처럼 구체적인 행동으로 풀어라. 낯선 분류 이름을 괄호로 풀이하거나 뜻이 불분명한 비유와 외국어로 설명하지 마라.',
-  '제목, 번호, 목록, 굵은 글씨 없이 자연스러운 문단으로 답하라. 문단 사이에는 빈 줄을 넣어라.',
+const SYSTEM_INSTRUCTION = [
+  '사주 상담에 온 사람에게 쉬운 한국어 존댓말로 답하라. 질문에 대한 답부터 시작하고, 제목이나 목록 없이 자연스러운 문단으로 말하라.',
+  '사용자 메시지는 질문 원문이다. 질문 전체를 읽고 묻는 범위만 답하라. 여러 가지를 물으면 각 요청에 답하라.',
+  '태어난 날의 일주 이름을 직접 묻는다면 birthDayPillar를, 일간을 묻는다면 birthDayStem 값을 그대로 알려 줘라. 둘은 별개의 값이다. 태어난 날의 값은 올해나 내년이 ' +
+    '되어도 바뀌지 않는다. 일주 이름을 물으면 ‘태어난 날의 일주는 …입니다.’로 시작하라.',
+  '‘일주 특징’은 생활에서 드러나는 모습을 설명하라는 질문이다. ‘일주일이 뭐예요?’에는 ‘일주일은 7일이에요.’라고 답하라. 내일이나 제일도 그 자체로 직업을 뜻하지 않는다.',
+  '언제 시작했는지와 그 해의 운세를 묻는 것은 다르다. 시작 시점이 나온 일이나 회사의 적합성은 하는 일과 환경에 어떤 방식이 맞는지로 답하라. 구체적인 업무를 모르면 어떤 일을 하는지 물어라.',
+  '오늘이나 특정 연도의 운세, 현재 진행 중인 대운, 미래 사건의 결과는 계산되지 않았다. 이런 결과를 직접 묻는 요청에만 한계를 짧게 밝히고, 함께 묻는 일반적인 성향이나 선택에는 ' +
+    '답하라. 예를 들어 지난해 시작한 직장은 어떤 환경이 맞는지 답하고, 뒤이어 묻는 지난해 재물운은 당시 운세를 계산할 수 없다고 답하라.',
+  '‘앞날운세’처럼 주제가 없는 질문에는 ‘돈, 일, 관계 중 무엇을 먼저 살펴보고 싶으세요?’처럼 주제만 물어라. 단어 뜻은 뜻만 답하라.',
+  '상담할 때는 readingThemes의 쉬운 표현 중 질문과 가까운 것부터 골라 실제 생활에서 드러나는 행동과 연결하라. 약속, 대화, 일 처리처럼 관찰할 수 있는 예를 들고 사용자의 ' +
+    '경험이나 상대의 속마음을 지어내지 마라.',
+  '테마나 오행의 부재를 능력 부족으로 단정하지 마라. chart.hour나 daeun이 null이면 그 항목은 계산되지 않았다. 해당 항목을 추정하지 마라.',
+  '직접 요청한 이름의 한자만 표시하라. 답변에서 전문 용어, 분류, 등급, 개수, 내부 데이터 설명은 생략하라. 답변은 필요한 만큼만 쓰고 같은 뜻을 반복하지 마라.',
 ].join('\n')
 
-const SYSTEM_INSTRUCTION = [
-  LANGUAGE_INSTRUCTION,
-  'question은 사용자의 질문 원문이고 나머지는 사주 계산값이다. 질문 전체를 읽고 무엇을 묻는지 파악하라. 사실 확인과 풀이가 섞여 있으면 각 요청에 답하라.',
-  '일주나 일간처럼 계산된 이름을 직접 물으면 해당 값을 짧고 정확하게 알려 줘라. 일주는 chart.day의 두 글자이며 일간은 그중 첫 글자다.',
-  '질문이 막연해서 무엇을 풀이할지 알기 어려우면 관심 있는 주제를 하나 물어라.',
-  '계산값으로 풀이할 때는 십성의 각 주제를 일상의 말로 풀어라. 비겁은 협력과 조율, 식상은 표현과 창작, 재성은 돈과 시간 관리, 관성은 약속과 책임, 인성은 배움과 도움에 관한 단서다.',
-  '질문과 관련된 특징 두세 가지에 집중하라. 사주에서 읽은 특징, 그 특징이 생활에서 드러나는 모습, 그래서 잘 맞는 선택과 주의할 점을 연결하라. 일반적인 조언만 나열하지 마라.',
-  '특징을 나타난 횟수나 수준으로 설명하지 말고 어떤 성향으로 읽히는지 풀어라. 주제 이름을 그대로 인용하지 말고 질문에 맞게 해석하라.',
-  '강점과 잘 맞는 방식은 자신 있게 말하라. 모든 말을 가능성으로 흐리지 마라. 주의점은 사람의 인격을 평가하는 대신 부담이 생기는 상황과 대처 방법으로 설명하라.',
-  '관찰되지 않은 주제는 실제 능력을 평가할 근거가 아니다. 사주 단서로 사용자의 실제 경험이나 다른 사람의 속마음을 지어내거나 미래 사건의 결과를 보장하지 마라.',
-  'chart.hour나 daeun이 null이면 그 항목은 계산되지 않았다. 해당 항목을 추정하지 마라.',
-  '사용자가 말한 시점이 무엇을 가리키는지 살펴라. 현재 날짜, 현재의 대운 구간, 특정 연도의 운세는 계산값에 없다.',
-  '시점 때문에 답할 수 없는 부분은 그 한계를 짧게 밝히고, 계산값으로 답할 수 있는 요청에 답하라.',
-  '풀이를 요청한 경우 근거가 충분하면 4~6개 문단, 12~18문장으로 설명하라. 근거가 제한적이면 3~5개 문단, 8~12문장 안에서 확인되는 범위만 설명하라.',
-  '같은 뜻을 바꾸어 쓰며 분량을 채우지 마라. 질문에 답하는 데 필요한 한계만 짧게 밝히고 상담을 시작하거나 끝낼 때마다 면책 문장을 붙이지 마라.',
+const WEEK_TERM_QUESTION =
+  /^\s*(?:일주일|일주간)(?:이|은|는)?\s*(?:뭐(?:예요|야|죠)|무엇(?:인가요|입니까|이죠)|무슨 뜻(?:이에요|인가요))\s*[?？.]?\s*$/u
+const WEEK_TERM_INSTRUCTION =
+  '한국어 표현의 뜻을 짧은 존댓말 한 문장으로 설명하라. 일주일은 7일이다. 일주간은 7일 동안이라는 뜻이다.'
+
+const UNSPECIFIED_FUTURE_QUESTION =
+  /^\s*(?:제|나의|내)?\s*(?:앞날\s*운세|앞날|미래|앞으로의?\s*운세)(?:는|가)?\s*(?:어때요|어떨까요|어떨까)?\s*[?？.]?\s*$/u
+const FUTURE_TOPIC_INSTRUCTION =
+  '상담 주제가 아직 정해지지 않았다. 돈, 일, 관계 중 무엇부터 살펴보고 싶은지 묻는 짧은 한국어 존댓말 한 문장만 답하라.'
+const CHART_TERM = /(?:일주(?!일|간|변)|일간|년주|월주|시주|명식|사주팔자|오행|십성|대운)/u
+const THEMES_ONLY_INSTRUCTION = [
+  '사주 상담에 온 사람에게 쉬운 존댓말로 질문부터 답하라. 전문 용어, 제목, 영어, 안내 문구 없이 자연스러운 문단으로 답하라.',
+  '아래 생활 단서는 사용자가 선호할 수 있는 방식이다. 회사나 다른 사람의 실제 특징으로 간주하지 말고 어떤 환경이면 잘 맞는지 조건을 들어 설명하라.',
+  '올해나 작년은 직장이나 업무를 시작한 시점일 수 있다. 그 경우 생활 단서를 하나 골라 잘 맞는 환경을 먼저 알려 준 뒤 모르는 업무를 한 가지 물어라.',
+  '질문에서 특정 날짜나 해의 운세를 직접 묻는 경우 그 기간은 계산할 수 없다고 짧게 알려라.',
+  '한 문장에 질문이 여러 개라면 물어본 순서대로 답하라. 단서만으로 특정 직장의 적합성을 확정하지 말고, 어떤 조건이라면 잘 맞을지 설명하라.',
 ].join('\n')
+
+const READING_THEMES = {
+  관성: '약속을 지키고 일을 책임지는 방식',
+  비겁: '사람과 협력하고 의견을 조율하는 방식',
+  식상: '생각을 표현하고 새롭게 시도하는 방식',
+  인성: '배우고 도움을 주고받는 방식',
+  재성: '돈과 시간, 자원을 관리하는 방식',
+} as const satisfies Record<keyof SipseongProfile['counts'], string>
+
+const getReadingThemes = (profile: SipseongProfile) => ({
+  primary: profile.dominant.map((category) => READING_THEMES[category]),
+  secondary: (Object.keys(READING_THEMES) as Array<keyof typeof READING_THEMES>)
+    .filter((category) => profile.counts[category] > 0 && !profile.dominant.includes(category))
+    .map((category) => READING_THEMES[category]),
+})
 
 export function createMessages(input: CreateMessagesInput): TextGenerationMessage[] {
   const {
@@ -43,17 +66,34 @@ export function createMessages(input: CreateMessagesInput): TextGenerationMessag
     question,
     sipseong,
   } = input
-  return [
-    {content: SYSTEM_INSTRUCTION, role: 'system'},
-    {
-      content: JSON.stringify({
+  // Keep the birth data out of standalone definitions of similarly written time expressions.
+  if (WEEK_TERM_QUESTION.test(question)) {
+    return [
+      {content: WEEK_TERM_INSTRUCTION, role: 'system'},
+      {content: question, role: 'user'},
+    ]
+  }
+  if (UNSPECIFIED_FUTURE_QUESTION.test(question)) {
+    return [
+      {content: FUTURE_TOPIC_INSTRUCTION, role: 'system'},
+      {content: question, role: 'user'},
+    ]
+  }
+  const readingThemes = getReadingThemes(sipseong)
+  const includeChart = CHART_TERM.test(question)
+  const facts = includeChart
+    ? {
+        birthDayPillar: `${day.korean}(${day.hanja})`,
+        birthDayStem: `${day.korean[0]}(${day.stem})`,
         chart: {day, hour, month, year},
         daeun,
         elements,
-        question,
-        sipseong,
-      }),
-      role: 'user',
-    },
+        readingThemes,
+      }
+    : {'생활 단서': Object.values(readingThemes).flat()}
+  const instructions = includeChart ? SYSTEM_INSTRUCTION : THEMES_ONLY_INSTRUCTION
+  return [
+    {content: `${instructions}\n사주 계산값: ${JSON.stringify(facts)}`, role: 'system'},
+    {content: question, role: 'user'},
   ]
 }

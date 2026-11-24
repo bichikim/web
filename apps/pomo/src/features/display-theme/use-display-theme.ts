@@ -2,6 +2,7 @@ import {createEffect, onMount} from 'solid-js'
 
 import {useMediaQuery} from 'src/hooks/use-media-query'
 import {usePreference} from 'src/hooks/use-preference'
+import {subscribeWebStorageChange} from 'src/utils/subscribe-web-storage-change'
 import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 
 import {
@@ -21,6 +22,7 @@ const displayThemeStorage = createParsedPreferenceStorage({
   invalidMessage: 'Invalid display theme preference.',
   parse: parseDisplayThemePreference,
   read: () => readDisplayThemePreference(),
+  subscribe: (onChange) => subscribeWebStorageChange({key: DISPLAY_THEME_STORAGE_KEY, onChange}),
   write: (value) => writeDisplayThemePreference(value),
 })
 

@@ -349,6 +349,9 @@ export const useChat = (props: UseChatProps): ChatController => {
     setStreamingText('')
     setContextTokens(0)
     setSummaryCount(0)
+    setState((previous) =>
+      previous.status === 'error' ? {status: previous.modelReady ? 'ready' : 'idle'} : previous,
+    )
   }
 
   onCleanup(clientOwner.dispose)

@@ -320,6 +320,9 @@ it('should preserve deletion confirmation and show an error when deletion fails'
   expect(await screen.findByRole('status')).toHaveTextContent('피드 대화를 삭제하지 못했어요.')
   expect(screen.getByRole('button', {name: '새 피드 소식 피드 대화 삭제 확인'})).toBeDefined()
   expect(consoleError).toHaveBeenCalledWith('Failed to delete saved feed dialogue.', deletionError)
+
+  fireEvent.click(screen.getByRole('button', {name: '취소'}))
+  expect(screen.queryByText('피드 대화를 삭제하지 못했어요.')).not.toBeInTheDocument()
 })
 
 it('should show an empty dialogue state, refresh feeds, and list unreadable items', () => {

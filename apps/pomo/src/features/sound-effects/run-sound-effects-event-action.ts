@@ -13,7 +13,7 @@ export const runSoundEffectsEventAction = (
       }
       return true
     case 'sound-effects-stop':
-      controller.stop()
+      controller.stop({temporary: true})
       return true
     case 'music-start':
     case 'music-stop':

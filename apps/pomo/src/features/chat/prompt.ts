@@ -4,6 +4,7 @@ interface CreateChatPromptOptions {
   readonly messages: ReadonlyArray<ChatMessage>
   readonly summary: string
   readonly supplementaryContext?: string
+  readonly taskInstruction?: string
 }
 
 interface CreateSummaryPromptOptions {
@@ -23,12 +24,14 @@ const CHAT_SYSTEM_PROMPT = `당신은 자연스러운 표준 한국어로만 답
 정확히 말하고 모르면 지어내지 마세요.
 이전 대화 요약이 있으면 사실과 사용자 선호만 참고하세요.`
 
-const toTranscript = (messages: ReadonlyArray<ChatMessage>) =>
+export const formatChatTranscript = (messages: ReadonlyArray<ChatMessage>) =>
   messages
     .map((message) => `${message.role === 'user' ? '사용자' : '어시스턴트'}: ${message.content}`)
     .join('\n')
 
-export const createChatMessages = (options: CreateChatPromptOptions): Array<ChatModelMessage> => {
+export const createChatMessages = (
+  options: CreateChatPromptOptions,
+): [ChatModelMessage, ...ChatModelMessage[]] => {
   let systemContent =
     options.summary.length > 0
       ? `${CHAT_SYSTEM_PROMPT}\n\n이전 대화 요약:\n${options.summary}`
@@ -36,6 +39,10 @@ export const createChatMessages = (options: CreateChatPromptOptions): Array<Chat
 
   if (options.supplementaryContext !== undefined && options.supplementaryContext.length > 0) {
     systemContent = `${systemContent}\n\n현재 질문을 위한 외부 정보:\n${options.supplementaryContext}`
+  }
+
+  if (options.taskInstruction !== undefined) {
+    systemContent = `${systemContent}\n\n${options.taskInstruction}`
   }
 
   return [
@@ -57,7 +64,7 @@ export const createSummaryMessages = (
   {
     content: `${
       options.previousSummary.length > 0 ? `기존 메모:\n${options.previousSummary}\n\n` : ''
-    }새로 압축할 대화:\n${toTranscript(options.messages)}`,
+    }새로 압축할 대화:\n${formatChatTranscript(options.messages)}`,
     role: 'user',
   },
 ]

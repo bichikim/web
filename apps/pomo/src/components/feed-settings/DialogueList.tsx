@@ -163,6 +163,10 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
       console.error('Failed to play saved feed dialogue.', error)
     })
   }
+  const cancelDelete = () => {
+    deletion.cancel()
+    setDeleteError(null)
+  }
   const handleDelete = async (dialogueId: string) => {
     setDeleteError(null)
 
@@ -236,7 +240,7 @@ export const PFeedDialogueList = (props: PFeedDialogueListProps) => {
                       </button>
                     }
                   >
-                    <button onClick={() => deletion.cancel()} type="button">
+                    <button onClick={cancelDelete} type="button">
                       {m.settings_feed_cancel()}
                     </button>
                     <button

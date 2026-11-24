@@ -5,8 +5,13 @@ export interface TarotSpreadPosition {
   readonly name: Readonly<Record<TarotLocale, string>>
 }
 
+const presentPosition: TarotSpreadPosition = {
+  meaning: {en: 'The current state of the situation.', ko: '지금 마주한 상황과 마음의 상태.'},
+  name: {en: 'Present', ko: '현재'},
+}
+
 const SPREAD_POSITIONS: Readonly<Record<TarotDrawCount, ReadonlyArray<TarotSpreadPosition>>> = {
-  1: [],
+  1: [presentPosition],
   3: [
     {
       meaning: {
@@ -15,10 +20,7 @@ const SPREAD_POSITIONS: Readonly<Record<TarotDrawCount, ReadonlyArray<TarotSprea
       },
       name: {en: 'Past', ko: '과거'},
     },
-    {
-      meaning: {en: 'The current state of the situation.', ko: '지금 마주한 상황과 마음의 상태.'},
-      name: {en: 'Present', ko: '현재'},
-    },
+    presentPosition,
     {
       meaning: {
         en: 'A possible direction ahead, not a certain prediction.',

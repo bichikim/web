@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {setAppLocale} from 'src/features/locale'
 import {createSignal} from 'solid-js'
 import type {PSceneStyle} from 'src/features/focus-room-animation'
 import {PFeatureRequest} from '../../p-feature-request/PFeatureRequest'
@@ -137,6 +138,22 @@ it('should show recent releases in a gift modal and persist the newest marker on
     releasedAt: '2026-09-03T00:57:00+09:00',
     version: '2026. 09. 03 00:57',
   })
+})
+
+it('should refresh open release content when the language changes without reload', async () => {
+  const english = {releases: [{...catalog.releases[0], title: 'English release'}]}
+  versionMocks.load.mockImplementation(async (locale) => (locale === 'en' ? english : catalog))
+  render(() => <PVersionNotice />)
+  const trigger = await screen.findByRole('button', {name: '새 업데이트 보기'})
+  fireEvent.click(trigger)
+  await screen.findByRole('heading', {name: '업데이트'})
+  try {
+    await setAppLocale('en', {reload: false})
+    await screen.findByRole('heading', {name: 'English release'})
+    expect(screen.queryByRole('heading', {name: '업데이트'})).toBeNull()
+  } finally {
+    await setAppLocale('ko', {reload: false})
+  }
 })
 
 it('should persist the newest marker before closing the desktop dialog', async () => {

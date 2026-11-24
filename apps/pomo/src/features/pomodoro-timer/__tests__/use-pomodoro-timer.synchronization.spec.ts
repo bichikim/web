@@ -225,6 +225,21 @@ it('should stop after the first expired phase when applying configuration change
   view.cleanup()
 })
 
+it('should keep the active session when saving the same routine', async () => {
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  await finishInitialization(view)
+  view.result.onConfigChange(CONFIG)
+  view.result.onStart()
+  const running = view.result.state()
+  expect(running.status).toBe('running')
+  vi.setSystemTime(1_000)
+
+  view.result.onConfigChange({...CONFIG})
+
+  expect(view.result.state()).toEqual(running)
+  view.cleanup()
+})
+
 it('should catch up every expired phase before stopping with auto-start enabled', async () => {
   const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
   await finishInitialization(view)

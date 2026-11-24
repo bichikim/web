@@ -655,3 +655,52 @@ it('should resolve tomorrow morning through DST in the requested zone', () => {
     }),
   ).toEqual({end: '2026-03-08T16:00:00.000Z', start: '2026-03-08T05:00:00.000Z'})
 })
+
+it.each([
+  ['오늘일정 알려줘', '오늘 일정 알려줘'],
+  ['이번주일정 알려줘', '이번 주 일정 알려줘'],
+  ['이번달회의 있어?', '이번 달 회의 있어?'],
+  ['내일오전 일정 알려줘', '내일 오전 일정 알려줘'],
+  ['오늘저녁 뭐 있어?', '오늘 저녁 뭐 있어?'],
+  ['글피뭐 있어?', '글피 뭐 있어?'],
+  ['모레뭐 있어?', '모레 뭐 있어?'],
+])('should resolve compact scheduling phrase %s like %s', (text, spaced) => {
+  const now = new Date('2026-09-04T10:30:00.000Z')
+  const timeZone = 'Asia/Seoul'
+  const expected = createCalendarQuery({now, text: spaced, timeZone})
+  expect(expected).not.toBeNull()
+  expect(createCalendarQuery({now, text, timeZone})).toEqual(expected)
+})
+
+it.each(['평일 일정 알려줘', '주중 일정 알려줘'])(
+  'should end the remaining workweek range on Saturday for %s',
+  (text) => {
+    const now = new Date('2026-09-04T10:30:00.000Z')
+    expect(createCalendarQuery({now, text, timeZone: 'Asia/Seoul'})).toEqual({
+      end: '2026-09-04T15:00:00.000Z',
+      start: now.toISOString(),
+    })
+  },
+)
+
+it.each(['점심', '저녁', '아침'])(
+  'should prefer a named window over the broader afternoon for %s',
+  (daypart) => {
+    const now = new Date('2026-09-04T10:30:00.000Z')
+    const timeZone = 'Asia/Seoul'
+    expect(createCalendarQuery({now, text: `내일 오후 ${daypart} 일정`, timeZone})).toEqual(
+      createCalendarQuery({now, text: `내일 ${daypart} 일정`, timeZone}),
+    )
+  },
+)
+
+it.each([
+  ['지지난 주 평일 일정', '2026-08-16T15:00:00.000Z', '2026-08-21T15:00:00.000Z'],
+  ['지난 주 평일 일정', '2026-08-23T15:00:00.000Z', '2026-08-28T15:00:00.000Z'],
+  ['다음 주 평일 일정', '2026-09-06T15:00:00.000Z', '2026-09-11T15:00:00.000Z'],
+  ['다다음 주 평일 일정', '2026-09-13T15:00:00.000Z', '2026-09-18T15:00:00.000Z'],
+])('should preserve the explicitly requested workweek in %s', (text, start, end) => {
+  expect(
+    createCalendarQuery({now: new Date('2026-09-05T10:00:00Z'), text, timeZone: 'Asia/Seoul'}),
+  ).toEqual({end, start})
+})

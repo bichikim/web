@@ -3,7 +3,7 @@ import {cleanup, render, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {createSoundRuntime} from '../runtime'
-import {type SoundLayer, type SoundPlayback, type SoundVoice, useSoundPlayer} from '../index'
+import {type SoundLayer, type SoundPlayback, type SoundVoice, useSoundPlayer} from '..'
 
 interface TestVoice extends SoundVoice {
   readonly finish: () => void
@@ -140,13 +140,15 @@ it('should invalidate a pending playback when reactive configuration fails', asy
   setLayers([{id: 'rain', source: '/rain.wav', volume: 0.5}])
   finish?.()
   await pending
-  expect(player.status()).toBe('error')
+  expect(player.status()).toBe('idle')
+  expect(player.error()).toBeNull()
   expect(runtime.voices[0].play).not.toHaveBeenCalled()
 })
 it('should report a load failure and allow retry', async () => {
   runtime.load.mockRejectedValueOnce(new Error('Load failed'))
-  const {player} = mount([{id: 'rain', source: '/rain.wav'}])
+  const {player, setLayers} = mount([{id: 'rain', source: '/rain.wav'}])
   await player.play()
+  setLayers([{id: 'rain', source: '/rain.wav', volume: 0.7}])
   expect(player.status()).toBe('error')
   expect(player.error()).toBe('Load failed')
   expect(runtime.voices[0].dispose).toHaveBeenCalledOnce()

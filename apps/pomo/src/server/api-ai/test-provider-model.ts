@@ -15,9 +15,10 @@ const metadataSchema = z.object({metadata: z.object({raw: z.string().optional()}
 export const testProviderModel = async (
   provider: ApiAiProvider,
   model: string,
-  transport?: ApiAiTransport,
+  transport?: Partial<ApiAiTransport> & {readonly signal?: AbortSignal},
 ): Promise<ApiAiModelTestResult> => {
   try {
+    transport?.signal?.throwIfAborted()
     const client = new OpenAI({
       apiKey: provider.apiKey,
       baseURL: provider.baseUrl,
@@ -26,15 +27,18 @@ export const testProviderModel = async (
       timeout: TEST_TIMEOUT_MILLISECONDS,
     })
     const response = normalizeResponse(
-      await client.responses.create({
-        ...(provider.protocol === 'openrouter-responses-queue' ? OPENROUTER_ROUTING : {}),
-        background: false,
-        input: '안녕! 한국어로 짧게 한 문장으로 인사해 줘.',
-        max_output_tokens: MAXIMUM_TEST_TOKENS,
-        model,
-        store: false,
-        stream: false,
-      }),
+      await client.responses.create(
+        {
+          ...(provider.protocol === 'openrouter-responses-queue' ? OPENROUTER_ROUTING : {}),
+          background: false,
+          input: '안녕! 한국어로 짧게 한 문장으로 인사해 줘.',
+          max_output_tokens: MAXIMUM_TEST_TOKENS,
+          model,
+          store: false,
+          stream: false,
+        },
+        {signal: transport?.signal},
+      ),
     )
     return response.status === 'completed'
       ? {

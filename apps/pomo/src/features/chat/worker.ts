@@ -23,6 +23,7 @@ import {
   createKoreanRefinementMessages,
   createKoreanTextSegments,
   type KoreanTextSegment,
+  replaceKoreanSegmentText,
   replaceUnrefinedSentences,
 } from '../korean-text-postprocessor'
 import {createTextGenerationExecutor} from '../text-generation/execution'
@@ -116,7 +117,6 @@ const refineKoreanSegment = async (
 ) => {
   switch (segment.kind) {
     case 'refining': {
-      const leadingWhitespace = segment.text.match(/^\s*/u)?.[0] ?? ''
       const refinedText = await generateText({
         maximumTokens: MAXIMUM_ANSWER_TOKENS,
         messages: createKoreanRefinementMessages(segment.text.trim()),
@@ -125,7 +125,7 @@ const refineKoreanSegment = async (
       })
       return containsForeignCjk(refinedText)
         ? replaceUnrefinedSentences(segment.text)
-        : `${leadingWhitespace}${refinedText}`
+        : replaceKoreanSegmentText(segment.text, refinedText)
     }
     case 'text':
       return segment.text
@@ -230,6 +230,9 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
     outputSchema: options.outputSchema,
   })
   const generatedText = rawGeneratedText
+  if (generatedText.trim().length === 0) {
+    throw new Error(FAILURE_MESSAGE)
+  }
   sendResponse({draft: {content: generatedText, id: options.replyId}, type: 'draft'})
   const refinedText =
     options.refineAnswer && options.outputSchema === undefined

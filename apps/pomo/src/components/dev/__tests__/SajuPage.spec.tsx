@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import {analyzeDaeun, analyzeElements, analyzeSipseong, deriveSaju} from 'k-saju'
+import {analyzeDaeun, deriveSaju} from 'k-saju'
 import {For, type JSX} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
@@ -67,16 +67,12 @@ it('should calculate and display each k-saju result for the entered birth', () =
   const messages = readMessages()
   const birth = {calendar: 'solar', date: '1995-03-17'} as const
   const chart = deriveSaju(birth)
-  const {day, hour, month, year} = chart
 
   expect(readChart()).toEqual(chart)
   expect(messages.map((message) => message.role)).toEqual(['system', 'user'])
-  expect(JSON.parse(messages[1].content)).toEqual({
-    chart: {day, hour, month, year},
-    daeun: analyzeDaeun(birth, chart, 'M'),
-    elements: analyzeElements(chart),
-    question: '재물에 대해 알려줘',
-    sipseong: analyzeSipseong(chart),
+  expect(messages[1].content).toBe('재물에 대해 알려줘')
+  expect(JSON.parse(messages[0].content.split('\n사주 계산값: ')[1]!)).toEqual({
+    '생활 단서': expect.any(Array),
   })
   expect(GenerationWorkspace).toHaveBeenCalledExactlyOnceWith({messages})
 })
@@ -85,7 +81,7 @@ it('should include a chosen birth time and omit it after clearing', () => {
   render(() => <SajuPage />)
 
   const form = screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!
-  fireEvent.input(screen.getByLabelText('질문'), {target: {value: '제 성향은 어떤가요?'}})
+  fireEvent.input(screen.getByLabelText('질문'), {target: {value: '제 성향과 대운은 어떤가요?'}})
   fireEvent.click(screen.getByRole('button', {name: /출생 시각.*선택/u}))
   fireEvent.change(screen.getByRole('combobox', {name: /출생 시각.*시/u}), {
     target: {value: '07'},
@@ -190,11 +186,7 @@ it('should calculate a selectable lunar year-end day and send its calculation to
   expect(getSectionValue('사주팔자 · deriveSaju()')).toEqual(expectedChart)
   expect(getSectionValue('대운 · analyzeDaeun()')).toEqual(expectedDaeun)
   const messages = readMessages()
-  const {day, hour, month, year} = expectedChart
-  expect(JSON.parse(messages[1].content)).toMatchObject({
-    chart: {day, hour, month, year},
-    daeun: expectedDaeun,
-  })
+  expect(JSON.parse(messages[0].content.split('\n사주 계산값: ')[1]!)).toHaveProperty('생활 단서')
 
   fireEvent.submit(screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!)
   expect(readMessages()).toEqual(messages)
@@ -220,10 +212,12 @@ it.each(['나의 미래는 ?', '앞날운세는 어때요?', '제 일주는 무�
     fireEvent.submit(screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!)
 
     const messages = readMessages()
-    expect(JSON.parse(messages[1].content)).toMatchObject({
-      chart: {day: {hanja: '丙午'}},
-      question,
-    })
+    expect(messages[1].content).toBe(question)
+    if (question.includes('일주')) {
+      expect(messages[0].content).toContain('병오(丙午)')
+    } else {
+      expect(messages[0].content).toContain('돈, 일, 관계 중 무엇부터')
+    }
     expect(GenerationWorkspace).toHaveBeenCalledExactlyOnceWith({messages})
   },
 )
@@ -231,12 +225,13 @@ it.each(['나의 미래는 ?', '앞날운세는 어때요?', '제 일주는 무�
 it('should deliver null daeun when its calculation input is unspecified', () => {
   render(() => <SajuPage />)
 
-  fireEvent.input(screen.getByLabelText('질문'), {target: {value: '제 성향은 어떤가요?'}})
+  fireEvent.input(screen.getByLabelText('질문'), {target: {value: '제 성향과 대운은 어떤가요?'}})
   fireEvent.change(screen.getByRole('combobox', {name: '성별'}), {target: {value: 'N'}})
   fireEvent.submit(screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!)
 
   const [system, user] = readMessages()
-  expect(JSON.parse(user.content)).toMatchObject({daeun: null})
+  expect(user.content).toBe('제 성향과 대운은 어떤가요?')
+  expect(JSON.parse(system.content.split('\n사주 계산값: ')[1]!)).toMatchObject({daeun: null})
   expect(system.content).toContain('chart.hour나 daeun이 null이면 그 항목은 계산되지 않았다.')
   expect(
     screen.getByRole('heading', {name: '대운 · analyzeDaeun()'}).nextElementSibling?.textContent,

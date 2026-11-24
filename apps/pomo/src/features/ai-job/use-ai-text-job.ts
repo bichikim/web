@@ -244,8 +244,10 @@ export const useAiTextJob = (props: UseAiTextJobProps): AiTextJobController => {
     }
     return false
   }
+  const canUseServer = () => executionMode() === 'server' && serverAvailable()
   const {submit, retry: retrySubmission} = createAiJobSubmission({
-    canSubmit: () => executionMode() === 'server' && !isBusy() && serverAvailable(),
+    canRetrySubmission: canUseServer,
+    canSubmit: () => canUseServer() && !isBusy(),
     client,
     onAccepted: (nextJob, revision) => {
       autoSpeakJobId = nextJob.id

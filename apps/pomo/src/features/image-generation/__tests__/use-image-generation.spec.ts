@@ -280,7 +280,14 @@ it('should report its model download progress and restore inference status after
   await vi.waitFor(() => expect(result.supported()).toBe(true))
   result.setIdea('산책')
   result.setSeed('123')
+  const textDownload = {
+    label: 'Gemma',
+    percentage: 77,
+    status: 'loading',
+    target: {kind: 'text', modelId: 'gemma-4-e2b'},
+  } satisfies ModelDownloadItem
   setItems([
+    textDownload,
     {label: 'Voice', percentage: 90, status: 'loading', target: {kind: 'voice', modelId: 'full'}},
     {
       label: 'Bonsai',
@@ -297,6 +304,9 @@ it('should report its model download progress and restore inference status after
     percentage: 25,
     type: 'progress',
   })
+  setItems([textDownload])
+  expect(result.status()).toContain('Gemma')
+  expect(result.percentage()).toBe(77)
   setItems([])
   expect(result.status()).toBe('이미지 생성 중')
   expect(result.percentage()).toBe(25)

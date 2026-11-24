@@ -10,7 +10,7 @@ import {
   readLanguageLearningWords,
   setLanguageLearningWordsMemorized,
   writeLanguageLearningWords,
-} from '../index'
+} from '..'
 
 const createStorage = (): LanguageLearningStorage => {
   const values = new Map<string, string>()
@@ -346,4 +346,47 @@ it('should delete only the previously selected canonical spelling', () => {
   deleteLanguageLearningWords('ko', [composedWord.value], options)
 
   expect(readLanguageLearningWords(options)).toEqual([decomposedWord])
+})
+
+it('should compare saved English words independently of the browser default locale', () => {
+  const options = {storage: createStorage()}
+  const lowerCase = String.prototype.toLocaleLowerCase
+  const useTurkishLocale = vi
+    .spyOn(String.prototype, 'toLocaleLowerCase')
+    .mockImplementation(function useTurkishLocale(this: string, locales) {
+      return lowerCase.call(this, locales ?? 'tr-TR')
+    })
+  try {
+    expect(appendLanguageLearningWords('en', ['I'], options)).toEqual({
+      addedCount: 1,
+      skippedCount: 0,
+    })
+    expect(appendLanguageLearningWords('en', ['i'], options)).toEqual({
+      addedCount: 0,
+      skippedCount: 1,
+    })
+    setLanguageLearningWordsMemorized({language: 'en', memorized: true, values: ['i']}, options)
+    expect(readLanguageLearningWords(options)).toMatchObject([{memorized: true, value: 'I'}])
+    deleteLanguageLearningWords('en', ['i'], options)
+    expect(readLanguageLearningWords(options)).toEqual([])
+  } finally {
+    useTurkishLocale.mockRestore()
+  }
+})
+
+it('should display only the first saved copy when legacy storage contains case variants', () => {
+  const storage = createStorage()
+  const key = 'pomo:language-learning:words:v1'
+  const original = {
+    createdAt: '2026-08-29T00:00:00.000Z',
+    language: 'en',
+    memorized: true,
+    value: 'I',
+    version: 1,
+  }
+  const persisted = JSON.stringify([original, {...original, memorized: false, value: 'i'}])
+  storage.setItem(key, persisted)
+
+  expect(readLanguageLearningWords({storage})).toEqual([original])
+  expect(storage.getItem(key)).toBe(persisted)
 })

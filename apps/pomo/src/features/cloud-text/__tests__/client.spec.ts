@@ -101,10 +101,19 @@ it('should not reconnect an invalid notification contract', async () => {
   expect(apiJsonRequest).toHaveBeenCalledTimes(2)
 })
 
-it('should stop reconnecting after five transport failures without posting another generation', async () => {
-  vi.mocked(apiJsonRequest).mockRejectedValue(new TypeError('Failed to fetch'))
+it('should cancel the accepted generation after five transport failures without another POST', async () => {
+  vi.mocked(apiJsonRequest).mockImplementation(async (_url, options) => {
+    if (options.method === 'DELETE') {
+      return new Response(null, {status: 202})
+    }
+    throw new TypeError('Failed to fetch')
+  })
   await expect(requestCloudText(request, new AbortController().signal)).rejects.toThrow()
-  expect(apiJsonRequest).toHaveBeenCalledTimes(6)
+  await vi.waitFor(() => expect(apiJsonRequest).toHaveBeenCalledTimes(7), {interval: 1})
+  expect(apiJsonRequest).toHaveBeenLastCalledWith(
+    expect.stringContaining('requestId='),
+    expect.objectContaining({method: 'DELETE', retry: false}),
+  )
   expect(
     vi.mocked(apiJsonRequest).mock.calls.filter(([, options]) => options.method === 'POST'),
   ).toHaveLength(1)

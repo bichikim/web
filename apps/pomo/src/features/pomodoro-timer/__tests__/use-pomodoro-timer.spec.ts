@@ -198,3 +198,38 @@ it.each([
   expect(onEvents).toHaveBeenCalledTimes(1)
   view.cleanup()
 })
+
+it.each([
+  {focusSeconds: 10, remainingSeconds: 7},
+  {focusSeconds: 20, remainingSeconds: 7},
+  {focusSeconds: 4, remainingSeconds: 4},
+])('should keep paused progress within a new $focusSeconds-second focus', async (scenario) => {
+  localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(CONFIG))
+  localStorage.setItem(
+    STATE_STORAGE_KEY,
+    JSON.stringify({
+      completedFocusSessions: 1,
+      phase: 'focus',
+      remainingSeconds: 7,
+      status: 'paused',
+    }),
+  )
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  try {
+    await finishInitialization(view)
+    view.result.onConfigChange({
+      ...CONFIG,
+      focusSeconds: scenario.focusSeconds,
+      focusSessionsPerCycle: 3,
+    })
+
+    expect(view.result.state()).toEqual({
+      completedFocusSessions: 1,
+      phase: 'focus',
+      remainingSeconds: scenario.remainingSeconds,
+      status: 'idle',
+    })
+  } finally {
+    view.cleanup()
+  }
+})

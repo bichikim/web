@@ -49,3 +49,12 @@ it('should distinguish a rejected consent and an invalid state', async () => {
   expect(cancelled.headers.get('Location')).toContain('calendar=cancelled')
   expect(invalid.headers.get('Location')).toContain('calendar=invalid')
 })
+
+it('should return to account settings after calendar connection fails on the server', async () => {
+  vi.spyOn(console, 'error').mockImplementationOnce(() => undefined)
+  dependencyMocks.completeConnection.mockRejectedValueOnce(new Error('database unavailable'))
+  const response = await GET(createEvent('google', 'code=sample-code&state=sample-state'))
+  expect(response.status).toBe(302)
+  expect(response.headers.get('Location')).toBe('https://www.pomofi.io/account?calendar=failed')
+  expect(response.headers.get('Referrer-Policy')).toBe('no-referrer')
+})

@@ -37,13 +37,13 @@ it('should ignore repeated requestSubmit while pending and accept a later reques
     isLoading: () => false,
     isLoadingMore: () => false,
     isSubmitting,
+    isVoting: () => false,
     loadFailed: () => false,
     loadMore: vi.fn(),
     loadMoreFailed: () => false,
     refresh: vi.fn(),
     requests: () => [],
     voteRequest: vi.fn(),
-    votingRequestId: () => null,
   }
   render(() => createComponent(FeatureRequestForm, {authentication, model}))
   await page.getByRole('button', {name: m.feature_request_new()}).click()

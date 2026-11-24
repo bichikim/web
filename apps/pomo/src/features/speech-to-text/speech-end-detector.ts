@@ -10,8 +10,15 @@ export interface SpeechEndDetector {
 }
 
 /** Observes microphone activity without playing microphone audio. */
-export const createBrowserSpeechEndDetector = (stream: MediaStream): SpeechEndDetector | null => {
-  if (typeof AudioContext === 'undefined' || typeof AudioWorkletNode === 'undefined') {
+export const createBrowserSpeechEndDetector = async (
+  stream: MediaStream,
+  signal?: AbortSignal,
+): Promise<SpeechEndDetector | null> => {
+  if (
+    signal?.aborted ||
+    typeof AudioContext === 'undefined' ||
+    typeof AudioWorkletNode === 'undefined'
+  ) {
     return null
   }
   let context: AudioContext
@@ -29,6 +36,7 @@ export const createBrowserSpeechEndDetector = (stream: MediaStream): SpeechEndDe
       return
     }
     disposed = true
+    signal?.removeEventListener('abort', dispose)
     listeners.clear()
     source?.disconnect()
     if (processor !== undefined) {
@@ -38,10 +46,11 @@ export const createBrowserSpeechEndDetector = (stream: MediaStream): SpeechEndDe
     }
     context.close().catch(() => undefined)
   }
-  const initialize = async () => {
+  signal?.addEventListener('abort', dispose, {once: true})
+  try {
     await context.audioWorklet.addModule(processorUrl)
     if (disposed) {
-      return
+      return null
     }
     processor = new AudioWorkletNode(context, 'speech-end', {numberOfOutputs: 0})
     processor.port.onmessage = (event: MessageEvent<unknown>) => {
@@ -55,8 +64,13 @@ export const createBrowserSpeechEndDetector = (stream: MediaStream): SpeechEndDe
     source = context.createMediaStreamSource(stream)
     source.connect(processor)
     await context.resume()
+    if (disposed) {
+      return null
+    }
+  } catch {
+    dispose()
+    return null
   }
-  initialize().catch(dispose)
   return {
     dispose,
     subscribe: (onSpeechEnd) => {

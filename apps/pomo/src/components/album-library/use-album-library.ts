@@ -13,7 +13,7 @@ import {
   readCustomAlbums,
   type ResolvedCustomAlbum,
 } from '../../features/custom-albums'
-import {getLocale} from '@paraglide/runtime'
+import {getAppLocale} from 'src/features/locale'
 
 export interface AlbumLibraryController {
   readonly albums: Accessor<readonly PResolvedAlbum[]>
@@ -33,11 +33,15 @@ type PublishedCatalogLoadState =
   | {readonly kind: 'pending'}
   | {readonly catalog: PPublishedAlbumCatalog; readonly kind: 'resolved'}
 
+const refreshPublishedCatalog = async () => {
+  await revalidate(publishedAlbumCatalogQuery.keyFor(getAppLocale()))
+}
+
 export const useAlbumLibrary = (): AlbumLibraryController => {
-  const locale = getLocale()
   const [catalogActive, setCatalogActive] = createSignal(false)
-  const [bundledAlbums, {refetch: refetchBundledAlbums}] = createResource(() =>
-    loadBundledPAlbums({locale}),
+  const [bundledAlbums, {refetch: refetchBundledAlbums}] = createResource(
+    getAppLocale,
+    async (locale) => ({albums: await loadBundledPAlbums({locale}), locale}),
   )
   const [publishedCatalogState, setPublishedCatalogState] = createSignal<PublishedCatalogLoadState>(
     {kind: 'pending'},
@@ -46,21 +50,27 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
   const [customAlbumError, setCustomAlbumError] = createSignal<Error | null>(null)
   const [isCustomAlbumsLoading, setIsCustomAlbumsLoading] = createSignal(true)
   let isDisposed = false
+  let latestCustomAlbumLoad = 0
+  let latestPublishedCatalogLoad = 0
   createAsync(async () => {
     if (!catalogActive()) {
       return
     }
 
+    const locale = getAppLocale()
+    const version = (latestPublishedCatalogLoad += 1)
+    const isCurrent = () => !isDisposed && version === latestPublishedCatalogLoad
+    setPublishedCatalogState({kind: 'pending'})
     try {
       const catalog = await publishedAlbumCatalogQuery(locale)
 
-      if (!isDisposed) {
+      if (isCurrent()) {
         setPublishedCatalogState({catalog, kind: 'resolved'})
       }
 
       return catalog
     } catch (error: unknown) {
-      if (!isDisposed) {
+      if (isCurrent()) {
         setPublishedCatalogState({
           error: toError(error, 'Published focus-room albums request failed'),
           kind: 'rejected',
@@ -71,27 +81,27 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
     }
   })
   const [isCatalogRetrying, setIsCatalogRetrying] = createSignal(false)
-  const refreshPublishedCatalog = async () => {
-    await revalidate(publishedAlbumCatalogQuery.keyFor(locale))
-  }
   const reloadCustomAlbums = async () => {
+    latestCustomAlbumLoad += 1
+    const version = latestCustomAlbumLoad
+    const isCurrent = () => !isDisposed && version === latestCustomAlbumLoad
     setIsCustomAlbumsLoading(true)
     setCustomAlbumError(null)
 
     try {
       const albums = await readCustomAlbums()
 
-      if (!isDisposed) {
+      if (isCurrent()) {
         setCustomAlbums(albums)
       }
     } catch (error: unknown) {
-      if (!isDisposed) {
+      if (isCurrent()) {
         setCustomAlbumError(
           error instanceof Error ? error : new Error('Failed to read custom albums.'),
         )
       }
     } finally {
-      if (!isDisposed) {
+      if (isCurrent()) {
         setIsCustomAlbumsLoading(false)
       }
     }
@@ -101,7 +111,7 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
 
     if (!isDisposed) {
       setCustomAlbums((albums) => albums.filter((album) => album.id !== albumId))
-      setCustomAlbumError(null)
+      await reloadCustomAlbums()
     }
   }
   const getPublishedCatalog = (): PPublishedAlbumCatalog | undefined => {
@@ -123,11 +133,11 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
     const bundled = bundledAlbums()
     const published = getPublishedCatalog()
 
-    if (bundled === undefined) {
+    if (bundled === undefined || bundled.locale !== getAppLocale()) {
       return []
     }
 
-    return published?.status === 'ready' ? [...bundled, ...published.albums] : bundled
+    return published?.status === 'ready' ? [...bundled.albums, ...published.albums] : bundled.albums
   }
   const catalogError = () => {
     const state = publishedCatalogState()

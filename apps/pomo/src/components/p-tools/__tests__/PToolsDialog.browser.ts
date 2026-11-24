@@ -55,6 +55,19 @@ const openLink = (value: string) => {
   return history
 }
 
+it('should close the tools dialog when leaving and returning to the home view', async () => {
+  openLink('/')
+  toolsDialog.open()
+  const dialog = page.getByRole('dialog', {name: m.tools_open()})
+  await expect.element(dialog).toBeVisible()
+
+  cleanup()
+  openLink('/')
+
+  await expect.element(dialog).not.toBeInTheDocument()
+  expect(toolsDialog.isOpen()).toBe(false)
+})
+
 it.each(['/?tool=transfer&session#secret', '/?tool=transfer&session=#secret'])(
   'should display invalid-link guidance for %s without opening transport',
   async (link) => {

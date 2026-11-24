@@ -3,6 +3,20 @@ import {describe, expect, it} from 'vitest'
 import {isValidLanguageLearningSentence, normalizeLanguageLearningSentence} from '../sentence'
 
 describe('isValidLanguageLearningSentence', () => {
+  it.each([
+    'So do I. So does she.',
+    'Is it plan B. Yes it is.',
+    'Give me vitamin C. Then rest.',
+    'Choose B. Call home.',
+  ])('should reject a second sentence after a single-letter ending in %s', (sentence) => {
+    expect(isValidLanguageLearningSentence(sentence, 'en')).toBe(false)
+  })
+
+  it.each(['I. Smith waited here.', 'Meet Dr. I. Smith tomorrow.', 'George B. Shaw wrote plays.'])(
+    'should allow names with initials in %s',
+    (sentence) => expect(isValidLanguageLearningSentence(sentence, 'en')).toBe(true),
+  )
+
   it('should accept decimal points in Korean and Japanese sentences', () => {
     expect(isValidLanguageLearningSentence('원주율은 3.14로 계산해요.', 'ko')).toBe(true)
     expect(isValidLanguageLearningSentence('円周率は3.14として計算します。', 'ja')).toBe(true)

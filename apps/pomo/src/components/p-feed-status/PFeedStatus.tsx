@@ -59,6 +59,7 @@ const createFeedStatusActions = (
   const [isRetrying, setIsRetrying] = createSignal(false)
   const [hasRetryError, setHasRetryError] = createSignal(false)
   const isRetryDisabled = () =>
+    feeds.recoveryJobs().length === 0 ||
     isCheckingModel() ||
     isRetrying() ||
     modelDownload.state().status === 'loading' ||
@@ -85,10 +86,11 @@ const createFeedStatusActions = (
 
     setHasRetryError(false)
     setIsCheckingModel(true)
+    const recoveryJobs = feeds.recoveryJobs()
     let missingDownloads: MissingModelDownloads
 
     try {
-      missingDownloads = await getMissingModelDownloads(feeds.recoveryJobs())
+      missingDownloads = await getMissingModelDownloads(recoveryJobs)
     } catch (error: unknown) {
       console.error('Failed to check feed dialogue models.', error)
       setHasRetryError(true)
@@ -97,7 +99,13 @@ const createFeedStatusActions = (
       setIsCheckingModel(false)
     }
 
-    if (isRetryDisabled()) {
+    const currentJobs = feeds.recoveryJobs()
+    const checkedModels = new Map(recoveryJobs.map(({id, modelId}) => [id, modelId]))
+    if (
+      isRetryDisabled() ||
+      currentJobs.length !== checkedModels.size ||
+      currentJobs.some(({id, modelId}) => checkedModels.get(id) !== modelId)
+    ) {
       return
     }
 

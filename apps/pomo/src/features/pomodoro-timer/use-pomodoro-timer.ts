@@ -27,6 +27,7 @@ import {
 import {
   advancePomodoroTimer,
   createPomodoroTimerState,
+  getPomodoroPhaseDuration,
   getPomodoroProgress,
   getPomodoroRemainingSeconds,
   pausePomodoroTimer,
@@ -219,15 +220,6 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
 
   onMount(() => {
     let isDisposed = false
-    const currentTime = Date.now()
-    const storedConfig = readPomodoroTimerConfig(props.storage) ?? POMODORO_TIMER_CONFIG
-    const storedState =
-      readPomodoroTimerState(props.storage) ?? createPomodoroTimerState(storedConfig)
-
-    setConfig(storedConfig)
-    setNow(currentTime)
-    setState(storedState)
-
     syncController = createTimerSyncController((message) => {
       const result = timerSyncMessageSchema.safeParse(message)
 
@@ -259,6 +251,17 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
         })
       })
     })
+
+    const currentTime = Date.now()
+    const storedConfig = readPomodoroTimerConfig(props.storage) ?? POMODORO_TIMER_CONFIG
+    const storedState =
+      readPomodoroTimerState(props.storage) ?? createPomodoroTimerState(storedConfig)
+
+    if (stateToRestore === null) {
+      setConfig(storedConfig)
+      setNow(currentTime)
+      setState(storedState)
+    }
 
     createEffect(() => {
       if (autoStart() === null || isStorageReady()) {
@@ -337,7 +340,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     cancelStateRestore()
     const currentTime = Date.now()
     setNow(currentTime)
-    applyState(startPomodoroTimer(state(), currentTime))
+    applyState(startPomodoroTimer(state(), currentTime, config()))
   }
   const onPause = () => {
     const currentTime = Date.now()
@@ -358,6 +361,15 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     )
   }
   const onConfigChange = (nextConfig: PomodoroTimerConfig) => {
+    const currentConfig = config()
+    if (
+      nextConfig.focusSeconds === currentConfig.focusSeconds &&
+      nextConfig.focusSessionsPerCycle === currentConfig.focusSessionsPerCycle &&
+      nextConfig.longBreakSeconds === currentConfig.longBreakSeconds &&
+      nextConfig.shortBreakSeconds === currentConfig.shortBreakSeconds
+    ) {
+      return
+    }
     cancelStateRestore()
     const currentTime = Date.now()
     setNow(currentTime)
@@ -367,9 +379,33 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
       synchronizedState.status === 'running' && synchronizedState.phase !== 'focus'
         ? advancePomodoroTimer(synchronizedState, nextConfig)
         : synchronizedState
-    applyState(stopPomodoroTimer(stateToStop, nextConfig, {now: currentTime}), {
-      deferEvents: true,
-    })
+    const stoppedState =
+      stateToStop.status === 'paused'
+        ? {
+            ...stateToStop,
+            remainingSeconds: Math.min(
+              stateToStop.remainingSeconds,
+              getPomodoroPhaseDuration(stateToStop.phase, nextConfig),
+            ),
+            status: 'idle' as const,
+          }
+        : stopPomodoroTimer(stateToStop, nextConfig, {now: currentTime})
+    const nextState =
+      stoppedState.phase === 'longBreak' &&
+      currentConfig.focusSessionsPerCycle !== nextConfig.focusSessionsPerCycle
+        ? {
+            ...stoppedState,
+            longBreakFocusSessions:
+              stoppedState.longBreakFocusSessions ??
+              Math.min(
+                stoppedState.completedFocusSessions,
+                state().phase === 'longBreak'
+                  ? currentConfig.focusSessionsPerCycle
+                  : nextConfig.focusSessionsPerCycle,
+              ),
+          }
+        : stoppedState
+    applyState(nextState, {deferEvents: true})
   }
   const onAutoStartChange = (isEnabled: boolean) => {
     setIsAutoStartEnabled(isEnabled)

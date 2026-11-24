@@ -22,6 +22,15 @@ describe('reminder draft dates', () => {
       new Date(2026, 1, 3, 9, 5).toISOString(),
     )
   })
+  it.each(['０９:０５', '09：05', '０９：０５'])(
+    'should resolve a pasted fullwidth reminder time %s',
+    (value) => {
+      const savedAt = new Date(2026, 1, 1, 0, 30)
+      expect(resolveReminderAt('today', '', value, savedAt)).toBe(
+        new Date(2026, 1, 1, 9, 5).toISOString(),
+      )
+    },
+  )
   it('should keep a 00:00 reminder strictly future only until that instant', () => {
     const beforeMidnight = new Date(2026, 0, 31, 23, 59, 59)
     const midnight = new Date(2026, 1, 1, 0, 0)

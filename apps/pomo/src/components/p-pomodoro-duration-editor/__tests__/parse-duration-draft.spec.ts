@@ -34,9 +34,9 @@ describe('parseDurationDraft', () => {
     })
   })
 
-  it('should preserve the existing Number syntax for valid integer values', () => {
+  it('should accept decimal minute and session values with optional positive signs', () => {
     expect(
-      parseDurationDraft({focus: '1e1', longBreak: '0xF', sessions: '0x5', shortBreak: ' ＋５ '}),
+      parseDurationDraft({focus: '10', longBreak: '15', sessions: '05', shortBreak: ' ＋５ '}),
     ).toEqual({
       focusSeconds: 600,
       focusSessionsPerCycle: 5,
@@ -46,6 +46,10 @@ describe('parseDurationDraft', () => {
   })
 
   it.each([
+    {field: 'focus', value: '1e1'},
+    {field: 'longBreak', value: '0xF'},
+    {field: 'shortBreak', value: '0b1'},
+    {field: 'sessions', value: '0x5'},
     {field: 'focus', value: ''},
     {field: 'focus', value: '1.5'},
     {field: 'focus', value: '０'},

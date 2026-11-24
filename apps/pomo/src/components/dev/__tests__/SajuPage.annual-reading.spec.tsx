@@ -52,7 +52,7 @@ it.each([
   '지난 해에 시작한 직장이 나한테 맞을까? 결혼운은?',
   '지난 해에 시작한 직장이 나한테 맞을까? 건강운은?',
   '지난 해에 시작한 직장이 나한테 맞을까? 직장운은?',
-])('should send the original question and chart for a time reference: %s', (question) => {
+])('should send the original question and reading themes for a time reference: %s', (question) => {
   render(() => <SajuPage />)
 
   fireEvent.input(screen.getByRole('textbox', {name: '질문'}), {target: {value: question}})
@@ -64,10 +64,12 @@ it.each([
     role: string
   }>
 
-  expect(system.content).toContain('특정 연도의 운세는 계산값에 없다.')
-  expect(JSON.parse(user.content)).toMatchObject({
-    chart: {day: {hanja: '丙午'}, hour: null},
-    question,
-  })
+  expect(system.role).toBe('system')
+  expect(system.content).toContain(
+    '특정 날짜나 해의 운세를 직접 묻는 경우 그 기간은 계산할 수 없다고',
+  )
+  const facts = JSON.parse(system.content.split('사주 계산값: ').at(-1)!)
+  expect(facts).toEqual({'생활 단서': expect.arrayContaining([expect.any(String)])})
+  expect(user).toEqual({content: question, role: 'user'})
   expect(GenerationWorkspace).toHaveBeenCalledExactlyOnceWith({messages: [system, user]})
 })

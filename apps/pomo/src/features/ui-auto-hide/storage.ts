@@ -1,13 +1,15 @@
 import {z} from 'zod'
 import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
-import type {PreferenceStorage} from 'src/hooks/use-preference/types'
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 import {
+  createTimestampedFieldCodec,
   hasNativeStorageBridge,
   readTossStorageJson,
   readWebStorageJson,
   writeTossStorageJson,
   writeWebStorageJson,
 } from 'src/utils/runtime-storage'
+import {createTimestampedDualRuntimeStorage} from 'src/utils/runtime-storage/create-timestamped-dual-runtime-storage'
 
 const MIN_SECONDS = 5
 const MAX_SECONDS = 3600
@@ -27,74 +29,95 @@ export const parseVisibilityPreferences = (value: unknown): VisibilityPreference
 export const isVisibilitySeconds = (seconds: number) =>
   Number.isInteger(seconds) && seconds >= MIN_SECONDS && seconds <= MAX_SECONDS
 
+const codec = createTimestampedFieldCodec('preferences', preferencesSchema)
+type StoredVisibilityPreferences = ReturnType<typeof codec.toStored>
+
 export interface VisibilityPreferenceStorage {
   readonly usesNative: () => boolean
-  readonly readWeb: () => VisibilityPreferences | null
-  readonly readToss: () => Promise<VisibilityPreferences | null>
-  readonly writeWeb: (value: VisibilityPreferences) => unknown | null
-  readonly writeToss: (value: VisibilityPreferences) => Promise<void>
-}
-export interface VisibilityPreferenceRepository {
-  readonly readWeb: () => VisibilityPreferences | null
-  readonly restoreNative: (
-    stored: VisibilityPreferences | null,
-  ) => Promise<VisibilityPreferences | null>
-  readonly write: (value: VisibilityPreferences) => unknown | null | Promise<unknown | null>
+  readonly readWeb: () => unknown
+  readonly readToss: () => Promise<unknown>
+  readonly writeWeb: (value: StoredVisibilityPreferences) => unknown | null
+  readonly writeToss: (value: StoredVisibilityPreferences) => Promise<void>
 }
 
-/** Owns web-first restoration, native repair, and latest-value persistence for visibility settings. */
+export interface VisibilityPreferenceRepository {
+  readonly read: () => VisibilityPreferences | null | Promise<VisibilityPreferences | null>
+  readonly write: (value: VisibilityPreferences) => Promise<void>
+}
+
+/** Reconciles native and web settings, preserving the legacy web preference when neither has a date. */
 export const createVisibilityPreferenceRepository = (
   storage: VisibilityPreferenceStorage,
 ): VisibilityPreferenceRepository => {
-  const writeLatest = createLatestAsyncTask((value: VisibilityPreferences) =>
-    storage.writeToss(value),
-  )
+  const coordinator = createTimestampedDualRuntimeStorage<StoredVisibilityPreferences>({
+    now: Date.now,
+    timestamp: 'monotonic',
+  })
+  const writeLatest = createLatestAsyncTask(storage.writeToss)
+  const readWeb = () => codec.parseStored(storage.readWeb())
+  const restoreNative = async (): Promise<VisibilityPreferences | null> => {
+    const revision = coordinator.revision()
+    await coordinator.settleWrites()
+    const web = readWeb()
+    const native = await storage.readToss().then(codec.parseStored, () => null)
+    if (coordinator.revision() !== revision) {
+      return restoreNative()
+    }
+
+    const latest = coordinator.selectLatest(web, native)
+    coordinator.observeSavedAt(latest?.savedAt ?? 0)
+    if (latest === null) {
+      return null
+    }
+    if (latest === web) {
+      await writeLatest(latest).catch((error: unknown) => globalThis.reportError(error))
+      if (coordinator.revision() !== revision) {
+        return restoreNative()
+      }
+    } else {
+      storage.writeWeb(latest)
+    }
+    return latest.preferences
+  }
+  const persist = async (value: StoredVisibilityPreferences) => {
+    const webError = storage.writeWeb(value)
+    if (!storage.usesNative()) {
+      if (webError !== null) {
+        throw webError
+      }
+      return
+    }
+    try {
+      await writeLatest(value)
+    } catch (error: unknown) {
+      if (webError !== null) {
+        throw error
+      }
+    }
+  }
   return {
-    readWeb: () => storage.readWeb(),
-    async restoreNative(stored) {
-      if (!storage.usesNative()) {
-        return null
-      }
-      if (stored !== null) {
-        await writeLatest(stored)
-        return null
-      }
-      return storage.readToss()
-    },
-    write(value) {
-      const error = storage.writeWeb(value)
-      if (!storage.usesNative()) {
-        return error
-      }
-      return writeLatest(value).then(
-        () => error,
-        (nativeError: unknown) => nativeError,
-      )
-    },
+    read: () => (storage.usesNative() ? restoreNative() : (readWeb()?.preferences ?? null)),
+    write: (value) => coordinator.writeStored((savedAt) => codec.toStored(value, savedAt), persist),
   }
 }
+
+export const readWebVisibilityPreferences = (): VisibilityPreferences | null =>
+  readWebStorageJson(
+    UI_AUTO_HIDE_STORAGE_KEY,
+    (value) => codec.parseStored(value)?.preferences ?? null,
+  )
+
 export const visibilityPreferenceRepository = createVisibilityPreferenceRepository({
-  readToss: () => readTossStorageJson(UI_AUTO_HIDE_STORAGE_KEY, parseVisibilityPreferences),
-  readWeb: () => readWebStorageJson(UI_AUTO_HIDE_STORAGE_KEY, parseVisibilityPreferences),
+  readToss: () => readTossStorageJson(UI_AUTO_HIDE_STORAGE_KEY, (value) => value),
+  readWeb: () => readWebStorageJson(UI_AUTO_HIDE_STORAGE_KEY, (value) => value),
   usesNative: hasNativeStorageBridge,
   writeToss: (value) => writeTossStorageJson(UI_AUTO_HIDE_STORAGE_KEY, value),
   writeWeb: (value) => writeWebStorageJson(UI_AUTO_HIDE_STORAGE_KEY, value),
 })
 
-/** Adapts web-first visibility restoration and native repair to the preference provider. */
-export const visibilityPreferenceStorage: PreferenceStorage = {
-  read: () => {
-    const stored = visibilityPreferenceRepository.readWeb()
-    if (stored !== null) {
-      if (hasNativeStorageBridge()) {
-        visibilityPreferenceRepository.restoreNative(stored).catch(globalThis.reportError)
-      }
-      return stored
-    }
-    return hasNativeStorageBridge() ? visibilityPreferenceRepository.restoreNative(null) : null
-  },
-  write: (_key, value) => {
-    const preferences = parseVisibilityPreferences(value)
-    return preferences === null ? null : visibilityPreferenceRepository.write(preferences)
-  },
-}
+export const visibilityPreferenceStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid UI auto-hide preferences.',
+  parse: parseVisibilityPreferences,
+  read: () => visibilityPreferenceRepository.read(),
+  write: (value) => visibilityPreferenceRepository.write(value),
+})

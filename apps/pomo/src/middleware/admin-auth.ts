@@ -16,7 +16,8 @@ interface AdminAuthRequest {
 
 export const isProtectedAdminPath = (pathname: string): boolean =>
   (pathname === ADMIN_PATH || pathname.startsWith(`${ADMIN_PATH}/`)) &&
-  pathname !== ADMIN_LOGIN_PATH
+  pathname !== ADMIN_LOGIN_PATH &&
+  pathname !== `${ADMIN_LOGIN_PATH}/`
 
 export const getCleanAuthCallbackUrl = (url: URL): URL | null => {
   if (!url.searchParams.has(SESSION_VERIFIER_PARAM)) {

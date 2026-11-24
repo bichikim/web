@@ -24,10 +24,9 @@ export const selectNoticeReleases = (
   options: SelectNoticeReleasesOptions,
 ): ReadonlyArray<VersionRelease> => {
   const now = options.now.getTime()
-  const viewedAt =
-    options.viewedRelease === null
-      ? Number.NEGATIVE_INFINITY
-      : Date.parse(options.viewedRelease.releasedAt)
+  const viewedTimestamp =
+    options.viewedRelease === null ? Number.NaN : Date.parse(options.viewedRelease.releasedAt)
+  const viewedAt = viewedTimestamp <= now ? viewedTimestamp : Number.NEGATIVE_INFINITY
 
   const releases = options.catalog.releases
     .map((release) => ({release, releasedAt: Date.parse(release.releasedAt)}))

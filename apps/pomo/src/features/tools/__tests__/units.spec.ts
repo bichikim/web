@@ -108,3 +108,14 @@ it.each([
 ] as const)('should reject range input separated by an internal %s', (_label, dash) => {
   expect(convertUnit({from: 'm', to: 'm', value: `5${dash}2`}).kind).toBe('invalid')
 })
+
+it('should convert values grouped with narrow no-break spaces', () => {
+  expect(convertUnit({from: 'm', to: 'm', value: '1\u202f000.5'})).toEqual({
+    kind: 'valid',
+    value: 1000.5,
+  })
+})
+
+it('should reject malformed groups separated by narrow no-break spaces', () => {
+  expect(convertUnit({from: 'm', to: 'm', value: '1\u202f00'})).toEqual({kind: 'invalid'})
+})

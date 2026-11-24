@@ -95,11 +95,15 @@ describe('useTextMood', () => {
 
   it('should prepare the model and expose progress', async () => {
     const runtime = createRuntime()
+    const prepared = createDeferred<Awaited<ReturnType<TextMoodAnalyzer['prepare']>>>()
+    vi.mocked(runtime.analyzer.prepare).mockReturnValueOnce(prepared.promise)
     const root = createTextMoodRoot(runtime)
     const preparation = root.controller.prepare()
 
+    await vi.waitFor(() => expect(runtime.analyzer.prepare).toHaveBeenCalledOnce())
     runtime.reportProgress(48)
     expect(root.controller.state()).toEqual({progress: 48, status: 'loading'})
+    prepared.resolve(successResult({repositoryId: 'Xenova/paraphrase-multilingual-MiniLM-L12-v2'}))
     await preparation
     expect(root.controller.state()).toEqual({status: 'ready'})
     expect(root.controller.statusMessage()).toContain('모델이 준비됐어요')
@@ -228,6 +232,7 @@ describe('useTextMood', () => {
 
     await root.controller.prepare()
     const analysis = root.controller.analyze()
+    await vi.waitFor(() => expect(runtime.analyzer.analyze).toHaveBeenCalledOnce())
     root.controller.setText('입력을 바꿨어요.')
     analysisResult.resolve(
       successResult({analysis: ANALYSIS, elapsedMilliseconds: 18, status: 'complete'}),
@@ -247,6 +252,7 @@ describe('useTextMood', () => {
     const root = createTextMoodRoot(runtime)
     const analysis = root.controller.analyze()
 
+    await vi.waitFor(() => expect(runtime.analyzer.analyze).toHaveBeenCalledOnce())
     root.controller.setText('입력을 바꿨어요.')
     analysisResult.resolve(
       failureResult({
@@ -276,6 +282,7 @@ describe('useTextMood', () => {
     const root = createTextMoodRoot(runtime)
     const analysis = root.controller.analyze()
 
+    await vi.waitFor(() => expect(runtime.analyzer.analyze).toHaveBeenCalledOnce())
     root.controller.setText('입력을 바꿨어요.')
     resolveAnalysis(
       successResult({analysis: ANALYSIS, elapsedMilliseconds: 18, status: 'complete'}),
@@ -288,3 +295,58 @@ describe('useTextMood', () => {
     root.dispose()
   })
 })
+
+it('should allow a new text request immediately and keep the prepared model after a stale failure', async () => {
+  const runtime = createRuntime()
+  const original = createDeferred<Awaited<ReturnType<TextMoodAnalyzer['analyze']>>>()
+  const replacement = createDeferred<Awaited<ReturnType<TextMoodAnalyzer['analyze']>>>()
+  vi.mocked(runtime.analyzer.analyze)
+    .mockReturnValueOnce(original.promise)
+    .mockReturnValueOnce(replacement.promise)
+  const root = createTextMoodRoot(runtime)
+  await root.controller.prepare()
+  const originalRequest = root.controller.analyze()
+  await vi.waitFor(() => expect(runtime.analyzer.analyze).toHaveBeenCalledOnce())
+  root.controller.setText('새 문장을 분석해요.')
+  expect(root.controller.state()).toEqual({status: 'ready'})
+  expect(root.controller.canAnalyze()).toBe(true)
+  const queued = root.controller.analyze()
+  expect(root.controller.state()).toEqual({status: 'analyzing'})
+  expect(runtime.analyzer.analyze).toHaveBeenCalledOnce()
+  original.resolve(
+    failureResult({code: 'model-failed', detail: '오래된 결과', phase: 'analyze', retryable: true}),
+  )
+  await originalRequest
+  expect(root.controller.state()).toEqual({status: 'analyzing'})
+  await vi.waitFor(() =>
+    expect(runtime.analyzer.analyze).toHaveBeenLastCalledWith({text: '새 문장을 분석해요.'}),
+  )
+  replacement.resolve(
+    successResult({analysis: ANALYSIS, elapsedMilliseconds: 20, status: 'complete'}),
+  )
+  await queued
+  expect(root.controller.state()).toEqual({
+    analysis: ANALYSIS,
+    elapsedMilliseconds: 20,
+    status: 'complete',
+  })
+  root.dispose()
+})
+
+it.each(['model-failed', 'worker-failed'] as const)(
+  'should retain model readiness after an obsolete analysis returns %s',
+  async (code) => {
+    const runtime = createRuntime()
+    const lateResult = createDeferred<Awaited<ReturnType<TextMoodAnalyzer['analyze']>>>()
+    vi.mocked(runtime.analyzer.analyze).mockReturnValueOnce(lateResult.promise)
+    const root = createTextMoodRoot(runtime)
+    await root.controller.prepare()
+    const analysis = root.controller.analyze()
+    await vi.waitFor(() => expect(runtime.analyzer.analyze).toHaveBeenCalledOnce())
+    root.controller.setText('변경된 문장')
+    lateResult.resolve(failureResult({code, phase: 'analyze', retryable: true}))
+    await analysis
+    expect(root.controller.state()).toEqual({status: 'ready'})
+    root.dispose()
+  },
+)

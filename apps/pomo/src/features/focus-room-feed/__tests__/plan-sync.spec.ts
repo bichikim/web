@@ -93,19 +93,20 @@ it('should suppress first-sync undated fallback when dated current items exist a
   })
 })
 
-it('should apply stale and historical exclusions to all matching IDs', () => {
+it('should classify the first same-ID item and ignore conflicting later timestamps', () => {
   const stale = item('duplicate', '2026-08-10T00:00:00.000Z')
   const current = item('duplicate', subscriptionCreatedAt)
-  expect(plan([current, stale], ['previous']).ignoredItems).toEqual([
-    {item: stale, reason: 'stale'},
-    {item: current, reason: 'stale'},
-  ])
   const historical = item('duplicate', '2026-08-13T23:00:00.000Z')
-  expect(plan([current, historical], ['previous'])).toEqual({
-    ignoredItems: [
-      {item: historical, reason: 'historical'},
-      {item: current, reason: 'historical'},
-    ],
+  expect(plan([current, stale], ['previous'])).toEqual({
+    ignoredItems: [],
+    itemsToProcess: [current],
+  })
+  expect(plan([stale, current], ['previous'])).toEqual({
+    ignoredItems: [{item: stale, reason: 'stale'}],
+    itemsToProcess: [],
+  })
+  expect(plan([historical, current], ['previous'])).toEqual({
+    ignoredItems: [{item: historical, reason: 'historical'}],
     itemsToProcess: [],
   })
 })
@@ -136,57 +137,16 @@ it('should process identical selected items once, including separately parsed ob
   })
 })
 
-it('should preserve same-ID entries when any parsed field differs', () => {
-  const current = item('duplicate', subscriptionCreatedAt)
-  const alternatives: ReadonlyArray<ParsedFeedItem> = [
-    {...current, id: 'different-id'},
-    {...current, title: 'Different title'},
-    {...current, link: 'https://example.com/other'},
-    {...current, content: 'Different body'},
-    {...current, contentKind: 'summary'},
-    {...current, publishedAt: '2026-08-14T01:00:00.000Z'},
-    {...current, legacyId: 'legacy'},
-  ]
-  for (const alternative of alternatives) {
-    expect(plan([current, alternative], ['previous']).itemsToProcess).toEqual([
-      current,
-      alternative,
-    ])
-  }
-})
-
-it('should deduplicate only after the existing twenty-entry selection', () => {
+it('should deduplicate before selecting the newest twenty items', () => {
   const current = item('duplicate', subscriptionCreatedAt)
   const older = item('older', subscriptionCreatedAt)
   const copies = Array.from({length: 20}, () => ({...current}))
-  expect(plan([older, ...copies], ['previous']).itemsToProcess).toEqual([current])
+  expect(plan([older, ...copies], ['previous']).itemsToProcess).toEqual([older, current])
 })
 
-it('should keep legacy match consumption unchanged for identical feed entries', () => {
+it('should not reprocess an identical entry when its legacy ID is already stored', () => {
   const current = item('duplicate', subscriptionCreatedAt, 'legacy')
-  expect(plan([current, {...current}], ['legacy']).itemsToProcess).toEqual([current])
-})
-
-it('should preserve stale and historical ID exclusions when identical copies are present', () => {
-  const current = item('duplicate', subscriptionCreatedAt)
-  const stale = {...current, publishedAt: '2026-08-10T00:00:00.000Z'}
-  expect(plan([current, {...current}, stale], ['previous'])).toEqual({
-    ignoredItems: [
-      {item: stale, reason: 'stale'},
-      {item: current, reason: 'stale'},
-      {item: current, reason: 'stale'},
-    ],
-    itemsToProcess: [],
-  })
-  const historical = {...current, publishedAt: '2026-08-13T23:00:00.000Z'}
-  expect(plan([current, {...current}, historical], ['previous'])).toEqual({
-    ignoredItems: [
-      {item: historical, reason: 'historical'},
-      {item: current, reason: 'historical'},
-      {item: current, reason: 'historical'},
-    ],
-    itemsToProcess: [],
-  })
+  expect(plan([current, {...current}], ['legacy']).itemsToProcess).toEqual([])
 })
 
 it('should preserve the first undated fallback and deduplicate later undated copies', () => {
@@ -204,11 +164,36 @@ it('should preserve the first undated fallback and deduplicate later undated cop
   })
 })
 
-it('should keep different same-ID payloads while removing their identical repeats', () => {
+it('should process an overflow undated item on the next sync without recording it as ignored', () => {
+  const undated = item('undated', null)
+  const dated = Array.from({length: 20}, (_, index) =>
+    item(`dated-${index}`, subscriptionCreatedAt),
+  )
+  const first = plan([undated, ...dated], ['stored'])
+  expect(first).toEqual({deferredItems: [undated], ignoredItems: [], itemsToProcess: dated})
+  expect(plan([undated, ...dated], ['stored', ...dated.map(({id}) => id)])).toEqual({
+    ignoredItems: [],
+    itemsToProcess: [undated],
+  })
+})
+
+it('should keep the first same-ID item before sorting and count it once toward the cap', () => {
+  const first = item('duplicate', subscriptionCreatedAt)
+  const changed = {...first, content: 'Changed body', publishedAt: '2026-08-14T01:00:00.000Z'}
+  const others = Array.from({length: 19}, (_, index) =>
+    item(`other-${index}`, subscriptionCreatedAt),
+  )
+  expect(plan([first, ...others, changed], ['previous'])).toEqual({
+    ignoredItems: [],
+    itemsToProcess: [first, ...others],
+  })
+})
+
+it('should keep only the first same-ID payload across repeated rows', () => {
   const current = item('duplicate', subscriptionCreatedAt)
   const changed = {...current, content: 'Changed body'}
   expect(plan([current, changed, {...current}, {...changed}], ['previous'])).toEqual({
     ignoredItems: [],
-    itemsToProcess: [current, changed],
+    itemsToProcess: [current],
   })
 })

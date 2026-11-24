@@ -5,7 +5,7 @@ import {expect, it, vi} from 'vitest'
 import type {MemoryMemo} from '../../../features/memory-assist'
 import {MemoryMemoList} from '../Memos'
 
-const {mocks} = setupMemos()
+const {createStoredMemo, mocks} = setupMemos()
 
 it('should save a memo with random recall enabled', async () => {
   render(() => <MemoryMemoList />)
@@ -186,4 +186,13 @@ it('should restore an unsaved memo and its reminder settings after closing and r
   expect(screen.getByLabelText('날짜')).toHaveValue('2026-09-06')
   expect(screen.getByLabelText('시간')).toHaveValue('14:30')
   expect(screen.queryByLabelText('기억 반복')).not.toBeInTheDocument()
+})
+
+it('should label an undelivered elapsed timestamp as its scheduled reminder time', () => {
+  mocks.memos = [{...createStoredMemo(), nextExactReminderAt: '2026-09-04T03:05:00.000Z'}]
+  vi.useFakeTimers({toFake: ['Date']})
+  vi.setSystemTime(new Date('2026-09-04T03:20:00.000Z'))
+  render(() => <MemoryMemoList />)
+  expect(screen.getByText(/^예약 알림 시각 /u)).toBeVisible()
+  expect(screen.getByText(/^반복 알림 시각 /u)).toBeVisible()
 })

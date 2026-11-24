@@ -413,6 +413,7 @@ describe('feed dialogue repository writes', () => {
   it('should save and remove records and close the database', async () => {
     const repository = createFeedDialogueRepository()
     const items = [createItem(), createItem({feedItemId: 'item-2', id: 'feed-1\0item-2'})]
+    feedItems.bulkGet.mockResolvedValueOnce([undefined, undefined])
 
     await repository.saveItems(items)
     await repository.removeItem('feed-1', 'item-2')

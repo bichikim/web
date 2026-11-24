@@ -136,6 +136,18 @@ const eventMatchesInstant = (event: CalendarServiceEvent, instant: Date, timeZon
   return start <= instant.getTime() && instant.getTime() < end
 }
 
+const getEventStartTime = (event: CalendarEvent, displayTimeZone: string): number => {
+  if (event.allDay) {
+    const date = parseAllDayDateKey(event.start)
+    return date === null
+      ? Number.POSITIVE_INFINITY
+      : dayjs.tz(`${date}T00:00:00`, displayTimeZone).valueOf()
+  }
+
+  const timestamp = Date.parse(event.start)
+  return Number.isFinite(timestamp) ? timestamp : Number.POSITIVE_INFINITY
+}
+
 const shouldRefresh = (tokens: CalendarProviderTokens, now: Date) =>
   tokens.expiresAt !== null &&
   new Date(tokens.expiresAt).getTime() <= now.getTime() + TOKEN_REFRESH_LEEWAY_MILLISECONDS
@@ -250,13 +262,19 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
         connections.map((connection) => readConnectionEvents(connection, providerRange)),
       )
       const [fulfilled, rejected] = partition(results, (result) => result.status === 'fulfilled')
-      const matchingEvents = fulfilled
+      const events = fulfilled
         .flatMap(({value}) => value.events)
         .filter((event) => instant === null || eventMatchesInstant(event, instant, displayTimeZone))
-        .sort((left, right) => left.start.localeCompare(right.start))
-      const events = matchingEvents.map(
-        ({exactInstantRange: _exactInstantRange, ...event}) => event,
-      )
+        .map(({exactInstantRange: _exactInstantRange, ...event}) => ({
+          event,
+          startTime: getEventStartTime(event, displayTimeZone),
+        }))
+        .sort((left, right) =>
+          left.startTime === right.startTime
+            ? Number(right.event.allDay) - Number(left.event.allDay)
+            : left.startTime - right.startTime,
+        )
+        .map(({event}) => event)
 
       return {
         connectedConnections: connections.length,

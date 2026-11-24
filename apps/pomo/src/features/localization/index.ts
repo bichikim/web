@@ -9,6 +9,7 @@ import type {PSceneMotionInput, PSceneMotionMode} from '../focus-room-animation'
 import type {SceneTimeMode} from '../focus-room-time'
 import {
   WEATHER_CITIES_BY_SLUG,
+  WEATHER_CITY_ALIASES,
   WEATHER_CITY_SLUGS,
   WEATHER_SCENE_MODES,
   type WeatherCitySlug,
@@ -171,6 +172,7 @@ export const getLocalizedWeatherLocationLabel = (
             city,
             getLocalizedWeatherCityLabel(city, {locale: 'en'}),
             getLocalizedWeatherCityLabel(city, {locale: 'ko'}),
+            ...(WEATHER_CITY_ALIASES[city] ?? []),
           ].some((name) => name.toLowerCase() === location.name.trim().toLowerCase()),
         )
       : undefined)

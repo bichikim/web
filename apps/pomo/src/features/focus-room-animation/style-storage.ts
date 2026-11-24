@@ -1,5 +1,5 @@
-import {withPromiseFallback} from 'src/utils/with-promise-fallback'
 import {
+  createLatestStorageWriter,
   hasNativeStorageBridge,
   readTossStorageJson,
   readWebStorageJson,
@@ -11,6 +11,7 @@ import {getDefaultPSceneStyle, type PSceneStyle} from './scene-style'
 import {parseSceneStyle} from './parse-scene-style'
 
 const SCENE_STYLE_STORAGE_KEY = 'pomo:focus-room-scene-style:v1'
+const NATIVE_WRITE_FAILURE_KEY = 'pomo:focus-room-scene-style:native-write-failure:v1'
 
 export interface PSceneStyleStorage {
   readonly getDefault: () => PSceneStyle
@@ -18,7 +19,7 @@ export interface PSceneStyleStorage {
   readonly readToss: (key: string) => Promise<unknown>
   readonly readWeb: (key: string) => unknown
   readonly writeToss: (key: string, value: unknown) => Promise<void>
-  readonly writeWeb: (key: string, value: unknown) => void
+  readonly writeWeb: (key: string, value: unknown) => unknown
 }
 
 export interface PSceneStyleRepository {
@@ -29,12 +30,14 @@ export interface PSceneStyleRepository {
 /** Reads and writes scene styles using the supplied runtime storage. */
 export const createPSceneStyleRepository = (storage: PSceneStyleStorage): PSceneStyleRepository => {
   let writeRevision = 0
+  let nativeWriteFailed = false
+  const writeNative = createLatestStorageWriter(SCENE_STYLE_STORAGE_KEY, storage.writeToss)
   const readWebPreference = (): PSceneStyle | null => {
     return parseSceneStyle(storage.readWeb(SCENE_STYLE_STORAGE_KEY))
   }
 
   const writeWebPreference = (sceneStyle: PSceneStyle) => {
-    storage.writeWeb(SCENE_STYLE_STORAGE_KEY, sceneStyle)
+    return storage.writeWeb(SCENE_STYLE_STORAGE_KEY, sceneStyle)
   }
 
   /** Reads the scene style from storage whose lifetime matches the current runtime. */
@@ -42,6 +45,13 @@ export const createPSceneStyleRepository = (storage: PSceneStyleStorage): PScene
     const initialWriteRevision = writeRevision
     if (!storage.usesTossStorage()) {
       return readWebPreference() ?? storage.getDefault()
+    }
+
+    if (nativeWriteFailed || storage.readWeb(NATIVE_WRITE_FAILURE_KEY) === true) {
+      const webPreference = readWebPreference()
+      if (webPreference !== null) {
+        return webPreference
+      }
     }
 
     try {
@@ -64,14 +74,28 @@ export const createPSceneStyleRepository = (storage: PSceneStyleStorage): PScene
 
   /** Persists the scene style until the host app or browser data is removed. */
   const write = async (sceneStyle: PSceneStyle): Promise<void> => {
-    writeWebPreference(sceneStyle)
-    writeRevision += 1
+    const webError = writeWebPreference(sceneStyle)
+    const revision = (writeRevision += 1)
 
     if (!storage.usesTossStorage()) {
       return
     }
 
-    await withPromiseFallback(storage.writeToss(SCENE_STYLE_STORAGE_KEY, sceneStyle), null)
+    try {
+      await writeNative(sceneStyle)
+      if (writeRevision === revision) {
+        nativeWriteFailed = false
+        storage.writeWeb(NATIVE_WRITE_FAILURE_KEY, false)
+      }
+    } catch (error: unknown) {
+      if (webError !== null && webError !== undefined) {
+        throw error
+      }
+      if (writeRevision === revision) {
+        nativeWriteFailed = true
+        storage.writeWeb(NATIVE_WRITE_FAILURE_KEY, true)
+      }
+    }
   }
 
   return {read, write}

@@ -205,7 +205,7 @@ describe('createResumableModelFetch recovery', () => {
     )
   })
 
-  it.each(['invalid', 'bytes 3-7/8', 'bytes 4-7/9'])(
+  it.each(['invalid', 'bytes 3-7/8', 'bytes 4-7/9', 'bytes 4-7 /8'])(
     'should discard an invalid partial-content response with range %s',
     async (contentRange) => {
       const url = 'https://models.test/model.onnx'

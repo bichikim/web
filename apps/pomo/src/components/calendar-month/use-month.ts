@@ -1,7 +1,14 @@
 import {dayjs} from 'src/utils/zoned-dayjs'
 import {localDateRuntime, useLocalDate} from 'src/features/civil-date'
 import {formatLocalDate} from 'src/utils/format-local-date'
-import {type Accessor, createEffect, createMemo, createResource, createSignal} from 'solid-js'
+import {
+  type Accessor,
+  createEffect,
+  createMemo,
+  createResource,
+  createSignal,
+  untrack,
+} from 'solid-js'
 import {
   type CalendarEvent,
   type CalendarEvents,
@@ -21,9 +28,16 @@ export interface MonthEnvironment {
   readonly writeCache: (range: CalendarMonthCacheRange, value: CalendarEvents) => unknown | null
 }
 
+export interface CalendarMonthView {
+  readonly month: Date
+  readonly selectedDate: Date
+}
+
 export interface UseMonthProps {
   readonly authentication: AuthController
   readonly environment: MonthEnvironment
+  readonly initialView?: CalendarMonthView
+  readonly onViewChange?: (view: CalendarMonthView) => void
   readonly revision?: number
 }
 
@@ -117,10 +131,18 @@ export const useMonth = (props: UseMonthProps): MonthController => {
     runtime: {...localDateRuntime, now: () => props.environment.now()},
     timeZone,
   })
-  const [month, setMonth] = createSignal(new Date(zonedToday.year(), zonedToday.month(), 1))
-  const [selectedDate, setSelectedDate] = createSignal(
-    new Date(zonedToday.year(), zonedToday.month(), zonedToday.date()),
+  const [view, setView] = createSignal<CalendarMonthView>(
+    untrack(() => props.initialView) ?? {
+      month: new Date(zonedToday.year(), zonedToday.month(), 1),
+      selectedDate: new Date(zonedToday.year(), zonedToday.month(), zonedToday.date()),
+    },
   )
+  const month = createMemo(() => view().month)
+  const selectedDate = createMemo(() => view().selectedDate)
+  const changeView = (next: CalendarMonthView) => {
+    setView(next)
+    props.onViewChange?.(next)
+  }
   const monthRange = createMemo(() => {
     const currentMonth = month()
     const currentTimeZone = timeZone()
@@ -216,8 +238,7 @@ export const useMonth = (props: UseMonthProps): MonthController => {
   const changeMonth = (offset: number) => {
     const currentMonth = month()
     const nextMonth = dayjs(currentMonth).startOf('month').add(offset, 'month').toDate()
-    setMonth(nextMonth)
-    setSelectedDate(nextMonth)
+    changeView({month: nextMonth, selectedDate: nextMonth})
   }
 
   return {
@@ -234,7 +255,7 @@ export const useMonth = (props: UseMonthProps): MonthController => {
     loginRequired: () => props.authentication.state().kind === 'anonymous',
     month,
     refreshFailed,
-    selectDate: setSelectedDate,
+    selectDate: (date) => changeView({month: month(), selectedDate: date}),
     selectedDate,
     selectedEvents,
     selectedKey,

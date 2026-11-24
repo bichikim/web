@@ -276,24 +276,27 @@ it('should return a known provider coordinate as its stable legacy location', as
   expect(mocks.insert).not.toHaveBeenCalled()
 })
 
-it('should return a newly supported Korean city as its stable legacy location', async () => {
-  apiMocks.searchOpenWeatherLocations.mockResolvedValue([
-    {
-      country: 'KR',
-      latitude: 35.5038,
-      longitude: 128.7464,
-      name: 'Miryang',
-      providerLocationId: '35.5038,128.7464',
-      region: 'Gyeongsangnam-do',
-    },
-  ])
-  const mocks = createDatabase()
+it.each(['Miryang', 'Miryang-si'])(
+  'should resolve OpenWeather %s to the stable legacy city',
+  async (name) => {
+    apiMocks.searchOpenWeatherLocations.mockResolvedValue([
+      {
+        country: 'KR',
+        latitude: 35.5038,
+        longitude: 128.7464,
+        name,
+        providerLocationId: '35.5038,128.7464',
+        region: 'Gyeongsangnam-do',
+      },
+    ])
+    const mocks = createDatabase()
 
-  await expect(searchWorldWeatherLocations({query: 'Miryang'}, mocks.database)).resolves.toEqual([
-    LEGACY_WEATHER_LOCATIONS.miryang,
-  ])
-  expect(mocks.insert).not.toHaveBeenCalled()
-})
+    await expect(searchWorldWeatherLocations({query: 'Miryang'}, mocks.database)).resolves.toEqual([
+      LEGACY_WEATHER_LOCATIONS.miryang,
+    ])
+    expect(mocks.insert).not.toHaveBeenCalled()
+  },
+)
 
 it('should register a foreign provider location that shares a legacy city name', async () => {
   const providerLocation = {

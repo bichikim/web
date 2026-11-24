@@ -7,6 +7,7 @@ import {afterEach, expect, it, vi} from 'vitest'
 import type {SoundEffectPlayback} from '../use-sound-effect'
 import {SoundEffectsProvider} from '../SoundEffectsProvider'
 import {useSoundEffects} from '../context'
+import {runSoundEffectsEventAction} from '../run-sound-effects-event-action'
 
 const mocks = vi.hoisted(() => ({
   loadSoundEffects: vi.fn(),
@@ -249,4 +250,35 @@ it('should persist a global stop across provider remounts', async () => {
   document.dispatchEvent(new Event('pointerdown'))
   expect(remountedPlayback.activate).not.toHaveBeenCalled()
   remountedResult.unmount()
+})
+
+it('should resume sound for the next timer event without clearing a manual stop', async () => {
+  const playback = createPlayback()
+  mocks.loadSoundEffects.mockResolvedValue([EFFECT])
+  mocks.useSoundEffectPlayback.mockReturnValue(playback)
+  let controller: ReturnType<typeof useSoundEffects> | undefined
+  const Consumer = () => {
+    controller = useSoundEffects()
+    return null
+  }
+  render(() => (
+    <SoundEffectsProvider>
+      <Consumer />
+    </SoundEffectsProvider>
+  ))
+  await waitFor(() => expect(controller?.getPlayback(EFFECT.id)).toBe(playback), {interval: 1})
+
+  runSoundEffectsEventAction(controller!, 'sound-effects-stop')
+  expect(playback.stop).toHaveBeenCalledOnce()
+  expect(controller?.isStopped()).toBe(false)
+  expect(localStorage.getItem(STOP_STORAGE_KEY)).toBeNull()
+  document.dispatchEvent(new Event('keydown'))
+  expect(playback.activate).not.toHaveBeenCalled()
+  runSoundEffectsEventAction(controller!, 'sound-effects-start')
+  expect(playback.activate).toHaveBeenCalledOnce()
+
+  controller?.stop()
+  runSoundEffectsEventAction(controller!, 'sound-effects-start')
+  expect(playback.activate).toHaveBeenCalledOnce()
+  expect(localStorage.getItem(STOP_STORAGE_KEY)).toBe('true')
 })

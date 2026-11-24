@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
-import {createCrossfadeBuffer, resolveLoopPosition} from '../index'
+import {createCrossfadeBuffer, resolveLoopPosition} from '..'
 import {installAudioBuffer} from './buffer'
 
 beforeEach(installAudioBuffer)
@@ -31,6 +31,16 @@ it('should blend the tail and head independently in each channel without changin
   ])
   expect([...source.getChannelData(0)]).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
 })
+it('should use the first sample at the end of a single-sample crossfade', () => {
+  const source = new AudioBuffer({length: 4, numberOfChannels: 1, sampleRate: 2})
+  source.getChannelData(0).set([1, 2, 3, 4])
+  const result = createCrossfadeBuffer({buffer: source, overlapSeconds: 0.5})
+
+  expect([...result.getChannelData(0)]).toEqual([1, 2, 3, 1])
+  expect(resolveLoopPosition({duration: 2, loopStart: 0.5, position: 2})).toBe(0.5)
+  expect([...source.getChannelData(0)]).toEqual([1, 2, 3, 4])
+})
+
 it('should default to four seconds and preserve the first playback before the blend', () => {
   const source = new AudioBuffer({length: 20, numberOfChannels: 1, sampleRate: 2})
   source.getChannelData(0).set(Array.from({length: 20}, (_, i) => i))

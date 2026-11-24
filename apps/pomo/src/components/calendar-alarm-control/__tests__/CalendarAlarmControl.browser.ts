@@ -51,6 +51,36 @@ beforeEach(async () => {
   document.body.append(outsideButton)
 })
 
+it('should save an alarm pasted with fullwidth date and time characters', async () => {
+  render(() =>
+    createComponent(CalendarAlarmControl, {
+      event,
+      memos: () => [],
+      now: () => new Date('2026-01-31T12:00:00.000Z'),
+      timeZone: 'Asia/Seoul',
+    }),
+  )
+  await page.getByRole('button', {name: '팀 회의 알람 설정'}).click()
+  const date = page.getByLabelText('날짜')
+  const time = page.getByLabelText('시간')
+  const paste = (input: Element, value: string) => {
+    const data = new DataTransfer()
+    data.setData('text/plain', value)
+    const clipboard = new ClipboardEvent('paste', {bubbles: true, cancelable: true})
+    Object.defineProperty(clipboard, 'clipboardData', {value: data})
+    input.dispatchEvent(clipboard)
+  }
+  paste(date.element(), '２０２６-０３-０１')
+  paste(time.element(), '０９：０５')
+  await expect.element(date).toHaveValue('2026-03-01')
+  await expect.element(time).toHaveValue('09:05')
+
+  await page.getByRole('button', {name: '알람 저장'}).click()
+  await expect
+    .poll(() => JSON.parse(localStorage.getItem(MEMORY_MEMOS_STORAGE_KEY) ?? '[]'))
+    .toEqual([expect.objectContaining({exactReminderAt: '2026-03-01T00:05:00.000Z'})])
+})
+
 afterEach(() => {
   cleanup()
   overwriteGetLocale(originalGetLocale)

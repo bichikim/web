@@ -138,6 +138,11 @@ export const useWebAccount = (): WebAccountController => {
       return
     }
 
+    if (result.status === 'sent' && accountCallbackErrorMessage !== null) {
+      const previousCallbackError = accountCallbackErrorMessage
+      accountCallbackErrorMessage = null
+      setLocalErrorMessage((current) => (current === previousCallbackError ? null : current))
+    }
     setMagicLinkStatus(result.status)
     magicLinkSubmission.clear()
   })

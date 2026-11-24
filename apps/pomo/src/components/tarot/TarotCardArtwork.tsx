@@ -56,7 +56,6 @@ export const TarotCardArtwork = (props: TarotCardArtworkProps) => {
             height={1536}
             src={TAROT_CARD_FRAME}
             width={1024}
-            placeholder={<CardPlaceholder />}
             fallback={
               <CardPlaceholder>
                 <h3

@@ -94,7 +94,7 @@ export const generateDialogueAudio = async (
 ): Promise<GenerateDialogueAudioResult> => {
   const model = getSupertonicModel(options.modelId)
   const textChunks = splitSpeechText(options.text, model.speechPolicy)
-  const audioChunks: Array<SupertonicAudioChunk> = []
+  const receivedChunks: Array<SupertonicAudioChunk> = []
   const speed = getSupertonicSpeechSpeed(options.text)
 
   try {
@@ -109,9 +109,10 @@ export const generateDialogueAudio = async (
       }
 
       if (result.value.type === 'chunk') {
-        audioChunks.push(result.value.audio)
-        options.onChunk(result.value.audio.index + 1, result.value.audio.total)
+        receivedChunks.push(result.value.audio)
+        options.onChunk(receivedChunks.length, result.value.audio.total)
       } else {
+        const audioChunks = receivedChunks.toSorted((left, right) => left.index - right.index)
         const timeline = createDialogueTimeline({
           audioChunks,
           silenceDuration: model.speechPolicy.silenceDuration,

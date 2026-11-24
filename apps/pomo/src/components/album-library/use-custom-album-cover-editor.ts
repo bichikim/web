@@ -53,7 +53,10 @@ export const useCustomAlbumCoverEditor = (
     }
 
     props.onErrorMessage(null)
-    if (!selectedFile.type.startsWith('image/') || selectedFile.size <= 0) {
+    const hasJpegExtensionWithoutMime =
+      selectedFile.type === '' && /\.jpe?g$/iu.test(selectedFile.name)
+    const isImageCandidate = selectedFile.type.startsWith('image/') || hasJpegExtensionWithoutMime
+    if (!isImageCandidate || selectedFile.size <= 0) {
       props.onErrorMessage(m.album_custom_error_cover_invalid())
       return
     }

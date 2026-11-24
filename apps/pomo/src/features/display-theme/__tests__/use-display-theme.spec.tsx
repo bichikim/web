@@ -176,3 +176,20 @@ it('should not overwrite a newer session choice with a delayed stored preference
 
   expect(controller?.preference()).toBe('bright')
 })
+
+it('should refresh the document theme only for the corresponding local storage key', async () => {
+  preferenceMocks.read.mockResolvedValue('bright')
+  render(() => (
+    <PreferenceHarness onController={() => undefined} onPreferenceChange={() => undefined} />
+  ))
+  await vi.waitFor(() => expect(document.documentElement).not.toHaveClass('dark'))
+  preferenceMocks.read.mockClear().mockResolvedValue('dark')
+  const key = 'pomo:display-theme:v1'
+  globalThis.dispatchEvent(new StorageEvent('storage', {key, storageArea: sessionStorage}))
+  globalThis.dispatchEvent(
+    new StorageEvent('storage', {key: 'unrelated', storageArea: localStorage}),
+  )
+  expect(preferenceMocks.read).not.toHaveBeenCalled()
+  globalThis.dispatchEvent(new StorageEvent('storage', {key, storageArea: localStorage}))
+  await vi.waitFor(() => expect(document.documentElement).toHaveClass('dark'))
+})

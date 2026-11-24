@@ -143,6 +143,23 @@ it('should retain the draft and report a failure in the original session', async
   expect(sessionStorage.getItem('pomo:memory-memo:draft:v1')).toContain('저장할 메모')
 })
 
+it('should clear the time warning once the reminder is corrected', async () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(2026, 8, 2, 12))
+  const {result: creator} = renderHook(useMemoCreator)
+  creator.changeOpen(true)
+  creator.changeText('알림을 설정할 메모')
+  const reminder = {...creator.reminderDraft(), exactEnabled: true, reminderDay: 'today'} as const
+  creator.changeReminder({...reminder, reminderTime: '09:00'})
+  await creator.save()
+  expect(creator.message()).toBeTruthy()
+  creator.changeReminder({...reminder, reminderTime: '10:00'})
+  expect(creator.message()).toBeTruthy()
+  creator.changeReminder({...reminder, reminderTime: '15:00'})
+  expect(creator.message()).toBeNull()
+  expect(updateMemoryMemos).not.toHaveBeenCalled()
+})
+
 it('should resolve a today reminder from save time after midnight', async () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date(2026, 0, 31, 23))

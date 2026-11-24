@@ -10,6 +10,8 @@ const RANDOM_SAMPLE = 0.5
 const ALPHA_PRECISION = 10
 const LAST_STAR_ALPHA = 0.2459623273767344
 const RESET_OPACITIES = [0, 0, 0, 0, 0, LAST_STAR_ALPHA]
+const STAR_ALPHA_AT_TRANSITION_START = 0.2
+const STAR_ALPHA_AT_TRANSITION_MIDPOINT = 0.325
 
 it('should keep the original night-reading faint stars unchanged at the first zero tick', async () => {
   const definition = getPSceneLayer('night-reading-focused', 'original')
@@ -60,6 +62,48 @@ it('should keep the original night-reading faint stars unchanged at the first ze
       expect(alpha).toBeCloseTo(initial[index], ALPHA_PRECISION)
     }
     expect(pixelsMatch).toBe(true)
+  } finally {
+    scene.destroy()
+    application.destroy(true)
+    add.mockRestore()
+  }
+})
+
+it('should advance a night-reading star between the start and end of its twinkle', async () => {
+  const definition = getPSceneLayer('night-reading-focused', 'original')
+  const layers = definition.layers.filter((layer) => layer.id === 'sky-star-1')
+  expect(layers).toHaveLength(1)
+  const application = new Application()
+  await application.init({autoStart: false, preference: 'webgl', resolution: 1})
+  document.body.append(application.canvas)
+  const add = vi.spyOn(Ticker.prototype, 'add')
+  const scene = new PixiLayerScene(
+    {...definition, layers},
+    {
+      onRender: () => application.render(),
+      random: () => RANDOM_SAMPLE,
+    },
+  )
+  application.stage.addChild(scene.container)
+  try {
+    await scene.initialize(createFocusRoomLayerState('rest', true))
+    const star = scene.container.children[0]?.children.find((view) => view instanceof Sprite)
+    expect(star).toBeInstanceOf(Sprite)
+    scene.setAnimationEnabled(true)
+    const [ticker] = add.mock.contexts
+    if (!(ticker instanceof Ticker)) {
+      throw new Error('Expected the layer scene ticker.')
+    }
+    ticker.stop()
+    const [[advance]] = add.mock.calls
+    ticker.deltaMS = 3750
+    advance(ticker)
+    expect(star?.alpha).toBeCloseTo(STAR_ALPHA_AT_TRANSITION_START)
+
+    ticker.deltaMS = 87.5
+    advance(ticker)
+
+    expect(star?.alpha).toBeCloseTo(STAR_ALPHA_AT_TRANSITION_MIDPOINT)
   } finally {
     scene.destroy()
     application.destroy(true)

@@ -94,6 +94,22 @@ it('should ignore download completion after owner disposal', async () => {
   expect(editor.generate).not.toHaveBeenCalled()
 })
 
+it('should allow a retry after the installed voice model lookup fails', async () => {
+  const {editor, result} = createHarness()
+  vi.mocked(isSupertonicModelDownloaded)
+    .mockRejectedValueOnce(new Error('storage unavailable'))
+    .mockResolvedValueOnce(true)
+
+  await expect(result.generate()).resolves.toBeUndefined()
+  expect(result.busy()).toBe(false)
+  expect(result.message()).toBeTruthy()
+  expect(editor.generate).not.toHaveBeenCalled()
+
+  await result.generate()
+  expect(editor.generate).toHaveBeenCalledOnce()
+  expect(result.message()).toBe('준비됨')
+})
+
 const createQueuedModelHarness = () => {
   const callbacks = new Map<SupertonicModelId, ModelDownloadCallbacks>()
   const downloadError = getSupertonicErrorMessage({

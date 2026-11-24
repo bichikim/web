@@ -17,7 +17,7 @@ interface FeedDialogueIssueRepository extends Pick<FeedDialogueRepository, 'list
 
 interface FeedDialogueJobRepository extends Pick<
   FeedDialogueRepository,
-  'deleteJobs' | 'listJobs'
+  'deleteJobs' | 'discardBacklogs' | 'listJobs'
 > {}
 
 interface FeedDialogueListRepository extends Pick<
@@ -98,9 +98,12 @@ export const loadFeedIssues = async (
     .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
 }
 
-/** Deletes unfinished jobs whose feed connection no longer exists. */
+/** Removes deferred items and unfinished jobs for disconnected feeds. */
 export const discardFeedJobs = async (options: DiscardFeedJobsOptions) => {
-  const jobs = await options.feedRepository.listJobs()
+  const [jobs] = await Promise.all([
+    options.feedRepository.listJobs(),
+    options.feedRepository.discardBacklogs(options.connectionIds),
+  ])
   const jobIds = jobs
     .filter((job) => !options.connectionIds.has(job.feedConnectionId))
     .map((job) => job.id)

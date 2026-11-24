@@ -1,4 +1,5 @@
-import {createMemo, ErrorBoundary, For, Show, Suspense} from 'solid-js'
+import {createMemo, ErrorBoundary, For, Show, Suspense, useContext} from 'solid-js'
+import {MediaPlayerContext} from '../media-player/context'
 import {PButton} from '../p-button/PButton'
 import {reportClientError} from '../../features/client-error-reporter'
 import {type PResolvedAlbum, type PTrack, useTrackPreview} from '../../features/focus-room-audio'
@@ -20,6 +21,13 @@ export interface PAlbumLibraryContentProps {
 
 export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
   const albumLibrary = useAlbumLibrary()
+  const player = useContext(MediaPlayerContext)
+  const handleCustomAlbumSaved = async () => {
+    await albumLibrary.reloadCustomAlbums()
+    if (albumLibrary.customAlbumError() === null) {
+      player?.updateTrackArtists(albumLibrary.customAlbums().flatMap((album) => album.tracks))
+    }
+  }
   const trackIds = createMemo(() => new Set(props.tracks.map((track) => track.id)))
   const isAlbumInPlayer = (album: PResolvedAlbum) =>
     album.tracks.length > 0 && album.tracks.every((track) => trackIds().has(track.id))
@@ -60,7 +68,7 @@ export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
         onAddTrack={handleTrackAdd}
         onDeleteAlbum={albumLibrary.deleteCustomAlbum}
         onRemoveTracks={props.onRemoveTracks}
-        onSaved={albumLibrary.reloadCustomAlbums}
+        onSaved={handleCustomAlbumSaved}
         onPreview={(request) => {
           preview.togglePreview(request).catch((error: unknown) => {
             console.error('Failed to toggle custom album track preview.', error)

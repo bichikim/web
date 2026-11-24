@@ -1,14 +1,19 @@
 import {type JSX, onCleanup, splitProps} from 'solid-js'
 
-import {type AudioPlayerMediaBindings, useAudioPlayer} from './context'
+import {useAudioPlayer} from './context'
 
-type NativeAudioProps = Omit<
-  JSX.AudioHTMLAttributes<HTMLAudioElement>,
-  keyof AudioPlayerMediaBindings
->
+export type AudioPlayerMediaProps = Omit<JSX.AudioHTMLAttributes<HTMLAudioElement>, 'ref'>
 
-export interface AudioPlayerMediaProps
-  extends NativeAudioProps, Partial<Omit<AudioPlayerMediaBindings, 'ref'>> {}
+const callMediaHandler = (
+  handler: JSX.EventHandlerUnion<HTMLAudioElement, Event> | undefined,
+  event: Parameters<JSX.EventHandler<HTMLAudioElement, Event>>[0],
+): void => {
+  if (typeof handler === 'function') {
+    handler(event)
+  } else if (handler !== undefined) {
+    handler[0](handler[1], event)
+  }
+}
 
 export const AudioPlayerMedia = (props: AudioPlayerMediaProps) => {
   const player = useAudioPlayer()
@@ -26,35 +31,35 @@ export const AudioPlayerMedia = (props: AudioPlayerMediaProps) => {
 
   const handleDurationChange: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
     player.onDurationChange(event)
-    localProps.onDurationChange?.(event)
+    callMediaHandler(localProps.onDurationChange, event)
   }
   const handleEmptied: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
     player.onEmptied(event)
-    localProps.onEmptied?.(event)
+    callMediaHandler(localProps.onEmptied, event)
   }
   const handleEnded: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
     player.onEnded(event)
-    localProps.onEnded?.(event)
+    callMediaHandler(localProps.onEnded, event)
   }
   const handleLoadedMetadata: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
     player.onLoadedMetadata(event)
-    localProps.onLoadedMetadata?.(event)
+    callMediaHandler(localProps.onLoadedMetadata, event)
   }
   const handlePause: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
     player.onPause(event)
-    localProps.onPause?.(event)
+    callMediaHandler(localProps.onPause, event)
   }
   const handlePlay: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
     player.onPlay(event)
-    localProps.onPlay?.(event)
+    callMediaHandler(localProps.onPlay, event)
   }
   const handleTimeUpdate: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
     player.onTimeUpdate(event)
-    localProps.onTimeUpdate?.(event)
+    callMediaHandler(localProps.onTimeUpdate, event)
   }
   const handleVolumeChange: JSX.EventHandler<HTMLAudioElement, Event> = (event) => {
     player.onVolumeChange(event)
-    localProps.onVolumeChange?.(event)
+    callMediaHandler(localProps.onVolumeChange, event)
   }
 
   onCleanup(() => player.ref(null))

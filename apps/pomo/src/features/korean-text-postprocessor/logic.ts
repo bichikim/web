@@ -14,6 +14,7 @@ const SENTENCE_CONTENT_PATTERN = [
   String.raw`[^.!?\n。！？]`,
   String.raw`(?<=[\p{Script=Latin}\p{N}])\.(?=[\p{Script=Latin}\p{N}])`,
   String.raw`(?<=\b(?:${SENTENCE_CONTINUATION_ABBREVIATIONS.join('|')}))\.(?=\s+\p{L})`,
+  String.raw`(?<=\b(?:${ENGLISH_TITLE_ABBREVIATIONS.join('|')}))\.(?=\p{Script=Hangul})`,
 ].join('|')
 const SENTENCE_PATTERN_SOURCE = [
   '(?:',
@@ -62,6 +63,13 @@ export const createKoreanRefinementMessages = (text: string): Array<KoreanRefine
 export const createForeignCjkTokenIds = (tokenizer: TextTokenVocabulary): Array<number> =>
   createTokenIdsMatching(tokenizer, containsForeignCjk)
 
+/** Keeps the separators surrounding a sentence when replacing its content. */
+export const replaceKoreanSegmentText = (source: string, replacement: string): string => {
+  const leading = source.match(/^\s*/u)?.[0] ?? ''
+  const trailing = source.match(/\s*$/u)?.[0] ?? ''
+  return `${leading}${replacement}${trailing}`
+}
+
 /** Replaces unresolved foreign-script sentences with a safe Korean fallback. */
 export const replaceUnrefinedSentences = (text: string): string =>
   createKoreanTextSegments(text)
@@ -70,10 +78,6 @@ export const replaceUnrefinedSentences = (text: string): string =>
         return segment.text
       }
 
-      const leadingWhitespace = segment.text.slice(
-        0,
-        segment.text.length - segment.text.trimStart().length,
-      )
-      return `${leadingWhitespace}${REFINEMENT_FALLBACK}`
+      return replaceKoreanSegmentText(segment.text, REFINEMENT_FALLBACK)
     })
     .join('')

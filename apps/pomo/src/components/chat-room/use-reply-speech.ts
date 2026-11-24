@@ -10,6 +10,9 @@ export interface UseReplySpeechProps {
 }
 
 /** Coordinates automatic reply speech and suppresses stopped replies until the next send. */
+const hasSameSpokenText = (message: string, spokenText: string | null) =>
+  message.trim() === spokenText?.trim()
+
 export const useReplySpeech = (props: UseReplySpeechProps) => {
   const speechBuffer = createStreamingSpeechBuffer({locale: 'ko'})
   let handledMessageId: string | null = null
@@ -69,7 +72,7 @@ export const useReplySpeech = (props: UseReplySpeechProps) => {
         handledMessageId = latestMessage.id
         replySpeech = 'completed'
 
-        if (latestMessage.content !== streamedReplyText) {
+        if (!hasSameSpokenText(latestMessage.content, streamedReplyText)) {
           props.voice.arm()
           props.voice.speak(latestMessage.content).catch(console.error)
           props.voice.finish()

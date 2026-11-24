@@ -1,4 +1,4 @@
-import {type Accessor, createMemo, createSignal} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal} from 'solid-js'
 import {getLocale} from '@paraglide/runtime'
 import type {FeedDialogueJob, PFeedController} from 'src/features/focus-room-feed'
 import type {ModelDownloadController} from 'src/features/model-download'
@@ -36,6 +36,7 @@ export const useFeedProgress = (
 ) => {
   const [stopping, setStopping] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
+  let activityVersion = 0
   const activeDownload = createMemo(() => {
     const state = download.state()
     if (state.status !== 'loading' || state.target.kind !== 'voice') {
@@ -71,10 +72,17 @@ export const useFeedProgress = (
     }
     return generation()
   })
+  createEffect(() => {
+    if (progress() === null) {
+      activityVersion += 1
+      setError(null)
+    }
+  })
   const handleStop = async () => {
-    if (stopping()) {
+    if (stopping() || progress() === null) {
       return
     }
+    const version = activityVersion
     setStopping(true)
     setError(null)
     try {
@@ -84,7 +92,9 @@ export const useFeedProgress = (
       await controller().cancelProcessing()
     } catch (failure: unknown) {
       console.error('Failed to cancel feed processing.', failure)
-      setError(m.feed_stop_failed())
+      if (version === activityVersion && progress() !== null) {
+        setError(m.feed_stop_failed())
+      }
     } finally {
       setStopping(false)
     }

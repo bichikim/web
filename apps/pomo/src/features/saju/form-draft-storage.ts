@@ -1,4 +1,5 @@
 import {createDraftStorage, createJsonCodec} from 'src/features/value-storage'
+import {subscribeWebStorageChange} from 'src/utils/subscribe-web-storage-change'
 import {z} from 'zod'
 
 const SAJU_FORM_DRAFT_KEY = 'pomo:saju:form-draft:v1'
@@ -40,6 +41,7 @@ export type SajuFormDraft = z.infer<typeof sajuFormDraftSchema>
 export interface SajuFormDraftPersistence {
   readonly delete: () => void
   readonly read: () => SajuFormDraft | null
+  readonly subscribe?: (onChange: () => void) => () => void
   readonly write: (draft: SajuFormDraft) => void
 }
 
@@ -65,3 +67,10 @@ export const writeSajuFormDraftToLocalStorage = (draft: SajuFormDraft): void =>
   createSajuFormDraftStorage().write(draft)
 
 export const deleteSajuFormDraftFromLocalStorage = (): void => createSajuFormDraftStorage().delete()
+
+export const sajuFormDraftPersistence: SajuFormDraftPersistence = {
+  delete: deleteSajuFormDraftFromLocalStorage,
+  read: readSajuFormDraftFromLocalStorage,
+  subscribe: (onChange) => subscribeWebStorageChange({key: SAJU_FORM_DRAFT_KEY, onChange}),
+  write: writeSajuFormDraftToLocalStorage,
+}

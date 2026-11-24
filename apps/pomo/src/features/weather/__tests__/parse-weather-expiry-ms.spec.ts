@@ -21,3 +21,8 @@ it('should preserve epoch zero and timezone offsets', () => {
   expect(parseWeatherExpiryMs('1970-01-01T00:00:00Z')).toBe(0)
   expect(parseWeatherExpiryMs('1970-01-01T09:00:00+09:00')).toBe(0)
 })
+
+it('should interpret ISO midnight at the end of a day as the next day at midnight', () => {
+  expect(parseWeatherExpiryMs('2024-06-15T24:00:00.000Z')).toBe(Date.UTC(2024, 5, 16))
+  expect(parseWeatherExpiryMs('2024-06-15T24:00:00.001Z')).toBeNull()
+})

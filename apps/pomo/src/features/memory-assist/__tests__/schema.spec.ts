@@ -34,6 +34,29 @@ it('should restore an unconsumed legacy exact reminder with non-repeating defaul
   })
 })
 
+it('should preserve a saved memo with a decimal-string advance time', () => {
+  const result = parseMemoryMemos([
+    {
+      createdAt: '2026-09-04T03:00:00.000Z',
+      dialogueId: null,
+      exactReminderAdvanceMinutes: '15',
+      exactReminderAt: '2026-09-04T04:00:00.000Z',
+      id: 'memo-advance',
+      nextRecallAt: null,
+      recallMode: 'none',
+      reinforcementIndex: 0,
+      reminderHistory: [],
+      text: '여권 챙기기',
+      updatedAt: '2026-09-04T03:00:00.000Z',
+      version: 1,
+    },
+  ])
+  expect(result?.[0]).toMatchObject({
+    exactReminderAdvanceMinutes: 15,
+    nextExactReminderAt: '2026-09-04T03:45:00.000Z',
+  })
+})
+
 it('should disable legacy ongoing recall when an exact reminder is active', () => {
   const result = parseMemoryMemos([
     {

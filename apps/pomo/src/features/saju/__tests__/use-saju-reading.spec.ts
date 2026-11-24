@@ -70,7 +70,7 @@ describe('useSajuReading', () => {
     expect(mocks.downloaded).toHaveBeenCalledExactlyOnceWith('gemma-4-e2b')
     expect(mocks.generate).toHaveBeenCalledOnce()
     const request = mocks.generate.mock.lastCall?.[0]
-    expect(JSON.parse(request.messages[1].content)).toMatchObject({question})
+    expect(request.messages[1]).toEqual({content: question, role: 'user'})
 
     const text = '일, 재물, 관계 중 어떤 부분이 궁금하세요?'
     receive?.({requestId: request.requestId, text, type: 'complete'})

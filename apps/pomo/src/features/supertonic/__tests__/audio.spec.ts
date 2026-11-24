@@ -18,6 +18,20 @@ describe('joinAudioChunks', () => {
     expect(joinAudioChunks({chunks: [], sampleRate: 24_000, silenceDuration: 0.3})).toHaveLength(0)
   })
 
+  it.each([
+    {sampleRate: 10, silenceDuration: -0.2},
+    {sampleRate: -10, silenceDuration: 0.2},
+    {sampleRate: -10, silenceDuration: -0.2},
+    {sampleRate: 10, silenceDuration: Infinity},
+  ])('should retain speech chunks when a gap cannot be represented: %j', (gap) => {
+    expect(
+      joinAudioChunks({
+        ...gap,
+        chunks: [Float32Array.of(0.5), Float32Array.of(-0.5)],
+      }),
+    ).toEqual(Float32Array.of(0.5, -0.5))
+  })
+
   it('should round fractional silence to the nearest sample', () => {
     const samples = joinAudioChunks({
       chunks: [Float32Array.of(0.5), Float32Array.of(-0.5)],

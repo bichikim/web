@@ -6,7 +6,11 @@ import {createSignal, type JSX, Show} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
-import {type ModelDownloadState, useModelDownload} from 'src/features/model-download'
+import {
+  type ModelDownloadItem,
+  type ModelDownloadState,
+  useModelDownload,
+} from 'src/features/model-download'
 import type {ModelStorageManager} from 'src/features/model-storage'
 import {failureResult, successResult} from 'src/features/result'
 import {StoragePage} from '../StoragePage'
@@ -25,6 +29,7 @@ vi.mock('../storage/DeletionModal', async (importOriginal) => {
   return {DeletionModal: vi.fn(original.DeletionModal)}
 })
 
+let setDownloads: (items: readonly ModelDownloadItem[]) => unknown
 let setDownloadState: (value: ModelDownloadState) => ModelDownloadState
 
 const createManager = (): ModelStorageManager => ({
@@ -42,8 +47,10 @@ const createManager = (): ModelStorageManager => ({
 
 beforeEach(() => {
   const [downloadState, updateDownloadState] = createSignal<ModelDownloadState>({status: 'idle'})
+  const [downloads, updateDownloads] = createSignal<readonly ModelDownloadItem[]>([])
+  setDownloads = updateDownloads
   setDownloadState = updateDownloadState
-  vi.mocked(useModelDownload).mockReturnValue({state: downloadState} as ReturnType<
+  vi.mocked(useModelDownload).mockReturnValue({downloads, state: downloadState} as ReturnType<
     typeof useModelDownload
   >)
   vi.mocked(PModal).mockImplementation((props: PModalProps) => (
@@ -151,4 +158,17 @@ it('should block deletion while a model download is active', async () => {
 it('should render its development page content', () => {
   render(() => <StoragePage />)
   expect(screen.getAllByText('모델 저장소 관리', {exact: false}).length).toBeGreaterThan(0)
+})
+
+it('should block cache deletion while a queued download remains between active downloads', async () => {
+  const manager = createManager()
+  render(() => <StoragePage manager={manager} />)
+  fireEvent.click(await screen.findByRole('button', {name: 'model.onnx 삭제'}))
+  setDownloads([{label: 'LFM', status: 'queued', target: {kind: 'text', modelId: 'lfm-2.6b-qad'}}])
+  expect(screen.getByRole('button', {name: '삭제 확정'})).toBeDisabled()
+  vi.mocked(DeletionModal).mock.calls[0]?.[0].onConfirm()
+  expect(manager.deleteCacheEntry).not.toHaveBeenCalled()
+  setDownloads([])
+  fireEvent.click(screen.getByRole('button', {name: 'model.onnx 삭제'}))
+  expect(screen.getByRole('button', {name: '삭제 확정'})).toBeEnabled()
 })

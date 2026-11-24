@@ -13,6 +13,21 @@ import {Spread} from '../Spread'
 
 afterEach(() => vi.unstubAllGlobals())
 
+it.each([
+  {locale: 'ko', position: '현재'},
+  {locale: 'en', position: 'Present'},
+] as const)(
+  'should show the single-card position in $locale before and after drawing',
+  ({locale, position}) => {
+    const [cards, setCards] = createSignal<ReadonlyArray<DrawnTarotCard>>([])
+    const selected = {...TAROT_CARDS[0]!, orientation: 'upright'} as const
+    render(() => <Spread cards={cards()} count={1} locale={locale} />)
+    expect(screen.getByText(position)).toBeVisible()
+    setCards([selected])
+    expect(screen.getByRole('article', {name: position})).toBeVisible()
+  },
+)
+
 it('should keep tarot labels and scrolling after the spread changes', async () => {
   let resize = () => {}
   const disconnect = vi.fn()

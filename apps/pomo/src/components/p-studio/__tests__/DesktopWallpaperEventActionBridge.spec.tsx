@@ -92,11 +92,11 @@ it('should drain pre-mount and loading actions in order once without replaying o
   runner.run(['focus-end', 'focus-start'])
   expect(activate).not.toHaveBeenCalled()
   await ready()
-  expect(activate).toHaveBeenCalledOnce()
+  expect(activate).toHaveBeenCalledTimes(2)
   expect(stop).toHaveBeenCalledOnce()
   expect(activate.mock.invocationCallOrder[0]).toBeLessThan(stop.mock.invocationCallOrder[0]!)
   TestChannel.instances[0]?.dispatch({type: 'player-ready'})
-  expect(activate).toHaveBeenCalledOnce()
+  expect(activate).toHaveBeenCalledTimes(2)
 })
 
 it('should preserve restored all-off state even for a start queued before catalog readiness', async () => {
@@ -169,7 +169,7 @@ it('should not drain a loading queue after the bridge is disposed', async () => 
   unregister()
 })
 
-it('should preserve a queued stop preference when catalog loading fails', async () => {
+it('should keep a queued event stop temporary when catalog loading fails', async () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
   try {
     mountBridge()
@@ -177,7 +177,7 @@ it('should preserve a queued stop preference when catalog loading fails', async 
     catalog.reject(new Error('catalog unavailable'))
     await catalog.promise.catch(() => undefined)
     await Promise.resolve()
-    expect(localStorage.getItem('pomo:sound-effects-stopped:v1')).toBe('true')
+    expect(localStorage.getItem('pomo:sound-effects-stopped:v1')).toBeNull()
     expect(activate).not.toHaveBeenCalled()
   } finally {
     warn.mockRestore()

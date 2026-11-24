@@ -61,12 +61,15 @@ it('should reject unregistered models before invoking a provider', async () => {
   expect(testProviderModel).not.toHaveBeenCalled()
 })
 it('should send one registered model to its provider and return debugging metadata', async () => {
-  const response = await invokeApiRoute(POST, request())
+  const testRequest = request()
+  const response = await invokeApiRoute(POST, testRequest)
   expect(response.headers.get('Cache-Control')).toContain('no-store')
   expect(await response.json()).toMatchObject({
     kind: 'success',
     modelId: 'gemma',
     text: '안녕하세요',
   })
-  expect(testProviderModel).toHaveBeenCalledExactlyOnceWith(provider, 'gemma')
+  expect(testProviderModel).toHaveBeenCalledExactlyOnceWith(provider, 'gemma', {
+    signal: testRequest.signal,
+  })
 })

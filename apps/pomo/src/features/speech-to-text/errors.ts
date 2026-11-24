@@ -27,6 +27,12 @@ export interface SpeechTranscriptionError extends SpeechRecognitionErrorBase {
   readonly phase: 'transcribe'
 }
 
+export interface SpeechRequestError extends SpeechRecognitionErrorBase {
+  readonly code: 'request-failed'
+  readonly detail: string
+  readonly retryable: true
+}
+
 export interface SpeechWorkerError extends SpeechRecognitionErrorBase {
   readonly code: 'worker-failed'
   readonly detail: string
@@ -37,6 +43,7 @@ export type SpeechRecognitionError =
   | SpeechBusyError
   | SpeechCancelledError
   | SpeechModelError
+  | SpeechRequestError
   | SpeechTranscriptionError
   | SpeechWorkerError
 
@@ -73,6 +80,8 @@ export const getSpeechErrorMessage = (error: SpeechCaptureError | SpeechRecognit
       return '음성 인식 모델을 준비하지 못했어요. 네트워크를 확인한 뒤 다시 시도해 주세요.'
     case 'permission-denied':
       return '마이크 권한이 필요해요. 브라우저 주소창에서 권한을 허용해 주세요.'
+    case 'request-failed':
+      return '음성 인식 요청을 완료하지 못했어요. 다시 시도해 주세요.'
     case 'transcription-failed':
       return '음성을 글로 바꾸지 못했어요. 다시 녹음해 주세요.'
     case 'unsupported':

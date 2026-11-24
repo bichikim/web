@@ -28,7 +28,8 @@ const runtimeMocks = vi.hoisted(() => ({
   prepare: vi.fn(),
 }))
 
-vi.mock('../../../korean-text-postprocessor', () => ({
+vi.mock('../../../korean-text-postprocessor', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../korean-text-postprocessor')>()),
   containsForeignCjk: koreanMocks.containsForeignCjk,
   createForeignCjkTokenIds: koreanMocks.createForeignCjkTokenIds,
   createKoreanRefinementMessages: koreanMocks.createKoreanRefinementMessages,

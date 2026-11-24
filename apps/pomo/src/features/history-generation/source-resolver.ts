@@ -12,9 +12,11 @@ export const normalizeHistorySourceUrl = (value: string): string => {
     return !normalizedName?.toLowerCase().startsWith('utm_')
   })
 
-  if (retainedSearchParameters.length !== searchParameters.length) {
+  if (url.search === '' || retainedSearchParameters.length !== searchParameters.length) {
     url.search =
-      retainedSearchParameters.length === 0 ? '' : `?${retainedSearchParameters.join('&')}`
+      url.search === '' || retainedSearchParameters.length === 0
+        ? ''
+        : `?${retainedSearchParameters.join('&')}`
   }
 
   if (url.pathname !== '/') {

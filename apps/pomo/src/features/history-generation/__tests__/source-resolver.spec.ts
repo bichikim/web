@@ -108,3 +108,8 @@ describe('createHistorySourceResolver', () => {
     expect(resolve(generated)).toBe(first)
   })
 })
+
+it('should match citations that append an empty query to a searched URL', () => {
+  const searched = 'https://archive.example/document'
+  expect(createHistorySourceResolver([searched])(`${searched}?`)).toBe(searched)
+})

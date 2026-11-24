@@ -30,7 +30,7 @@ export interface MemoCreator {
 
 export const useMemoCreator = (): MemoCreator => {
   const [isOpen, setIsOpen] = createSignal(false)
-  const [message, setMessage] = createSignal<string | null>(null)
+  const [message, setMessage] = createSignal<'invalid-time' | 'save-failed' | null>(null)
   const [text, setText] = createSignal('')
   const [reminderDraft, setReminderDraft] = createSignal(
     createReminderDraft({exactReminderAt: null, now: new Date(), recallMode: 'none'}),
@@ -51,6 +51,16 @@ export const useMemoCreator = (): MemoCreator => {
     draftRevision += 1
     setReminderDraft(nextReminderDraft)
     persistCreationDraft(text(), nextReminderDraft)
+    if (message() === 'invalid-time') {
+      const now = new Date()
+      const reminder = resolveReminderDraft(nextReminderDraft, now)
+      if (
+        !nextReminderDraft.exactEnabled ||
+        isFirstReminderInFuture(reminder.exactReminderAt, reminder.exactReminderAdvanceMinutes, now)
+      ) {
+        setMessage(null)
+      }
+    }
   }
 
   const changeOpen = (nextOpen: boolean) => {
@@ -92,7 +102,7 @@ export const useMemoCreator = (): MemoCreator => {
       currentDraft.exactEnabled &&
       !isFirstReminderInFuture(reminder.exactReminderAt, reminder.exactReminderAdvanceMinutes, now)
     ) {
-      setMessage(m.memory_memo_invalid_time())
+      setMessage('invalid-time')
       return
     }
 
@@ -120,7 +130,7 @@ export const useMemoCreator = (): MemoCreator => {
       setIsOpen(false)
     } catch (error: unknown) {
       console.error('Failed to save a memory memo.', error)
-      setMessage(m.memory_memo_save_failed())
+      setMessage('save-failed')
     }
   }
 
@@ -130,7 +140,16 @@ export const useMemoCreator = (): MemoCreator => {
     changeReminder,
     changeText,
     isOpen,
-    message,
+    message: () => {
+      switch (message()) {
+        case 'invalid-time':
+          return m.memory_memo_invalid_time()
+        case 'save-failed':
+          return m.memory_memo_save_failed()
+        case null:
+          return null
+      }
+    },
     reminderDraft,
     save,
     text,

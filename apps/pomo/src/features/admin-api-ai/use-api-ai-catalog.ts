@@ -1,4 +1,4 @@
-import {createEffect, createResource, createSignal, onMount} from 'solid-js'
+import {createEffect, createResource, createSignal, onCleanup, onMount} from 'solid-js'
 import {
   readAdminApiAiPage,
   saveAdminApiAiCatalog,
@@ -28,6 +28,8 @@ export const useApiAiCatalog = () => {
   const [label, setLabel] = createSignal('')
   const [saving, setSaving] = createSignal(false)
   const [feedback, setFeedback] = createSignal<SaveApiAiRoutingResult['kind'] | null>(null)
+  const testsLifetime = new AbortController()
+  onCleanup(() => testsLifetime.abort())
   const [tests, setTests] = createSignal<Readonly<Record<string, ApiAiTestState>>>({})
   const [page, {refetch}] = createResource(active, readAdminApiAiPage)
   onMount(() => setActive(true))
@@ -60,6 +62,12 @@ export const useApiAiCatalog = () => {
       setFeedback(result.kind)
       if (result.kind === 'saved') {
         setSaved(result.page)
+        const key = modelKey(entry)
+        setTests((previous) => {
+          const remaining = {...previous}
+          delete remaining[key]
+          return remaining
+        })
         if (operation === 'register') {
           setModelId('')
           setLabel('')
@@ -87,9 +95,16 @@ export const useApiAiCatalog = () => {
     if (tests()[key]?.kind === 'testing' || saving() || page.loading || page.error !== undefined) {
       return
     }
-    setTests((previous) => ({...previous, [key]: {kind: 'testing'}}))
-    const result = await testAdminApiAiModel({model: entry.model, providerId: entry.providerId})
-    setTests((previous) => ({...previous, [key]: result}))
+    const pending: ModelTesting = {kind: 'testing'}
+    setTests((previous) => ({...previous, [key]: pending}))
+    const result = await testAdminApiAiModel(
+      {model: entry.model, providerId: entry.providerId},
+      testsLifetime.signal,
+    )
+    if (testsLifetime.signal.aborted) {
+      return
+    }
+    setTests((previous) => (previous[key] === pending ? {...previous, [key]: result} : previous))
   }
   const refresh = (): void => {
     if (!saving()) {

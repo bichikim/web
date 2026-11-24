@@ -51,6 +51,22 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
+it.each(['{', '{"items":42}'])('should recover from an invalid manifest %s', async (value) => {
+  manifest = value
+  const repository = createNativeRepository()
+
+  await expect(repository.read()).resolves.toEqual({items: [], preferences: DEFAULT_BACKGROUND})
+  expect(Storage.setItem).not.toHaveBeenCalled()
+  await repository.configure({photoSeconds: 30})
+  expect((await repository.read()).preferences.photoSeconds).toBe(30)
+})
+
+it('should expose a native storage read failure', async () => {
+  vi.mocked(Storage.getItem).mockRejectedValueOnce(new Error('storage unavailable'))
+
+  await expect(createNativeRepository().read()).rejects.toThrow('storage unavailable')
+})
+
 it('should serialize manifest changes and restore the list in a new repository', async () => {
   const repository = createNativeRepository()
   const refresh = vi.fn()

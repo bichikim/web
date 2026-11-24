@@ -3,7 +3,10 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const mocks = vi.hoisted(() => ({createRepository: vi.fn()}))
 
-vi.mock('../repository', () => ({createFeedConnectionRepository: mocks.createRepository}))
+vi.mock('../repository', async (original) => ({
+  ...(await original<typeof import('../repository')>()),
+  createFeedConnectionRepository: mocks.createRepository,
+}))
 
 import {
   type FeedConnectionController,
@@ -20,6 +23,15 @@ const STORED_CONNECTION = {
   version: 1,
   voiceId: 'default',
 } as const satisfies FeedConnection
+
+const mockRepository = (initial: readonly FeedConnection[] = []) => {
+  let stored = initial
+  const save = vi.fn((connections: readonly FeedConnection[]) => {
+    stored = connections
+  })
+  mocks.createRepository.mockReturnValue({list: () => stored, save})
+  return save
+}
 
 const mountController = (beforeMount?: (controller: FeedConnectionController) => void) => {
   let controller!: FeedConnectionController
@@ -43,10 +55,9 @@ afterEach(() => {
 })
 
 it('should add, deduplicate, update, and delete persistent feed connections', async () => {
-  const save = vi.fn()
+  const save = mockRepository()
   const persist = vi.fn(async () => true)
   Object.defineProperty(navigator, 'storage', {configurable: true, value: {persist}})
-  mocks.createRepository.mockReturnValue({list: () => [], save})
   const changed = vi.fn()
   globalThis.addEventListener(FEED_CONNECTIONS_CHANGED_EVENT, changed)
   const {controller, unmount} = mountController()
@@ -77,8 +88,7 @@ it('should add, deduplicate, update, and delete persistent feed connections', as
 })
 
 it('should reject a trailing-slash variant of an existing feed', () => {
-  const save = vi.fn()
-  mocks.createRepository.mockReturnValue({list: () => [], save})
+  const save = mockRepository()
   const {controller, unmount} = mountController()
 
   expect(controller.onAddRecommendation('https://example.test/feed.xml')).toBe(true)
@@ -86,6 +96,24 @@ it('should reject a trailing-slash variant of an existing feed', () => {
   expect(controller.connections()).toHaveLength(1)
   expect(save).toHaveBeenCalledOnce()
 
+  unmount()
+})
+
+it('should preserve a feed saved in another tab before a stale tab writes', () => {
+  let saved: readonly FeedConnection[] = []
+  const save = vi.fn((connections: readonly FeedConnection[]) => {
+    saved = connections
+  })
+  mocks.createRepository.mockReturnValue({list: () => saved, save})
+  const {controller, unmount} = mountController()
+  saved = [STORED_CONNECTION]
+
+  expect(controller.onAddRecommendation('https://another.example.test/feed')).toBe(true)
+
+  expect(saved.map((connection) => connection.url)).toEqual([
+    STORED_CONNECTION.url,
+    'https://another.example.test/feed',
+  ])
   unmount()
 })
 
@@ -107,7 +135,7 @@ it('should deduplicate previously saved URLs with a trailing slash', () => {
 
 it('should deduplicate owned today-in-history URLs after applying the viewer time zone', () => {
   vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
-  mocks.createRepository.mockReturnValue({list: () => [], save: vi.fn()})
+  mockRepository()
   const {controller, unmount} = mountController()
 
   expect(
@@ -142,7 +170,7 @@ it('should deduplicate owned today-in-history URLs across local and public origi
 })
 
 it('should preserve time zone variants for external feed URLs', () => {
-  mocks.createRepository.mockReturnValue({list: () => [], save: vi.fn()})
+  mockRepository()
   const {controller, unmount} = mountController()
 
   expect(
