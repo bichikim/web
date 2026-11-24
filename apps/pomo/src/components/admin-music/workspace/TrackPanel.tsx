@@ -31,15 +31,18 @@ export const TrackPanel = (props: TrackPanelProps) => {
   const [isFormOpen, setIsFormOpen] = createSignal(false)
   const [playingTrackId, setPlayingTrackId] = createSignal<string | null>(null)
   const [requestedTrackId, setRequestedTrackId] = createSignal<string | null>(null)
-  const activeAssetsByTrack = createMemo(() =>
-    Map.groupBy(
-      props.assets.filter((asset) => asset.status === 'active'),
-      (asset) => asset.trackId,
-    ),
-  )
-  const trackArtwork = (trackId: string) => activeAssetsByTrack().get(trackId)?.[0]?.artworkUrl
+  const firstByTrack = createMemo(() => {
+    const assetsByTrack = new Map<string, AdminAsset>()
+    for (const asset of props.assets) {
+      if (asset.status === 'active' && !assetsByTrack.has(asset.trackId)) {
+        assetsByTrack.set(asset.trackId, asset)
+      }
+    }
+    return assetsByTrack
+  })
+  const trackArtwork = (trackId: string) => firstByTrack().get(trackId)?.artworkUrl
   const playableTracks = createMemo(() => {
-    const assetsByTrack = activeAssetsByTrack()
+    const assetsByTrack = firstByTrack()
     return props.tracks
       .filter((track) => assetsByTrack.has(track.id))
       .toSorted((leftTrack, rightTrack) => leftTrack.position - rightTrack.position)
