@@ -72,7 +72,7 @@ export const DialogueConnectionMenu = (props: DialogueConnectionMenuProps) => {
       }}
       options={options()}
       placeholder={
-        options().length === 0
+        props.dialogues.length === 0 && (props.actions?.length ?? 0) === 0
           ? m.settings_event_binding_empty()
           : m.settings_event_binding_select()
       }
