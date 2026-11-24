@@ -90,3 +90,9 @@ it('should omit temperature when the feed has no measured temperature', () => {
   expect(screen.getByRole('status').textContent).toContain('서울 · 맑음')
   expect(screen.getByRole('status').textContent).not.toContain('°')
 })
+
+it('should show the refresh status while retaining the observed weather', () => {
+  render(() => <PWeatherStatus state={{feed: createFeed(), refreshing: true, status: 'ready'}} />)
+
+  expect(screen.getByRole('status')).toHaveTextContent('서울 · 맑음 · 0° · 업데이트 중')
+})

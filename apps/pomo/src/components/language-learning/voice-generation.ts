@@ -13,6 +13,7 @@ interface VoiceGenerationOptions {
   readonly language: LanguageLearningLanguage
   readonly modelId: SupertonicModelId
   readonly onStatus: (message: string) => void
+  readonly signal?: AbortSignal
   readonly voiceId: SupertonicVoiceId
 }
 
@@ -75,6 +76,7 @@ export const generateVoiceCandidates = async (
             language: options.language,
             modelId: options.modelId,
             onChunk: () => undefined,
+            signal: options.signal,
             text: sentence,
             voiceId: options.voiceId,
           })
@@ -103,6 +105,7 @@ export const generateVoiceCandidates = async (
 
         return {candidates, status: 'complete'}
       },
+      signal: options.signal,
     })
 
     switch (result.status) {
@@ -115,6 +118,9 @@ export const generateVoiceCandidates = async (
         return result.value
     }
   } catch (error: unknown) {
+    if (options.signal?.aborted) {
+      return {status: 'cancelled'}
+    }
     console.error('Failed to generate language learning audio.', error)
     return {message: m.learning_editor_voice_failed(), status: 'error'}
   } finally {
@@ -139,6 +145,7 @@ export const regenerateCandidateVoice = async (
           language: options.language,
           modelId: options.modelId,
           onChunk: () => undefined,
+          signal: options.signal,
           text: options.candidate.text,
           voiceId: options.voiceId,
         })
@@ -168,6 +175,7 @@ export const regenerateCandidateVoice = async (
           status: 'complete',
         }
       },
+      signal: options.signal,
     })
 
     switch (result.status) {
@@ -179,6 +187,9 @@ export const regenerateCandidateVoice = async (
         return result.value
     }
   } catch (error: unknown) {
+    if (options.signal?.aborted) {
+      return {status: 'cancelled'}
+    }
     console.error('Failed to regenerate language learning audio.', error)
     return {message: m.learning_editor_voice_failed(), status: 'error'}
   }

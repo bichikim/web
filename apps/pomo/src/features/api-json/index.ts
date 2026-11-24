@@ -1,9 +1,9 @@
 import type {z} from 'zod'
 import {isCancellationReason} from 'src/utils/is-cancellation-reason'
 
-import {apiFetch, type HttpRequestInit} from '../http-client'
+import {apiFetch, type ApiRequestInit} from '../http-client'
 
-export interface ApiJsonRequestOptions extends Omit<HttpRequestInit, 'body'> {
+export interface ApiJsonRequestOptions extends Omit<ApiRequestInit, 'body'> {
   readonly body?: object
 }
 
@@ -49,7 +49,7 @@ export class ApiJsonError extends Error {
   }
 }
 
-const createJsonRequestInit = (options: ApiJsonRequestOptions): HttpRequestInit => {
+const createJsonRequestInit = (options: ApiJsonRequestOptions): ApiRequestInit => {
   const {body, ...init} = options
 
   if (body === undefined) {

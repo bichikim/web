@@ -18,6 +18,7 @@ export type QueryRevalidationSchedule = QueryRevalidationAfterDelay | QueryReval
 
 export interface CreateQueryRevalidationSchedulerProps {
   readonly key: Accessor<string>
+  readonly onRevalidate?: () => void
   readonly schedule: Accessor<QueryRevalidationSchedule>
 }
 
@@ -48,6 +49,7 @@ export const createQueryRevalidationScheduler = (
 
     const delay = getScheduleDelay(schedule)
     const revalidateQuery = (): void => {
+      props.onRevalidate?.()
       revalidate(key).catch(() => undefined)
     }
 

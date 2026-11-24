@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import {useTooltipTrigger} from '../tooltip'
 import {cx} from 'class-variance-authority'
 import {type JSX, Show} from 'solid-js'
@@ -27,6 +28,10 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
   const tooltip = useTooltipTrigger()
 
   const removable = () => props.onRemove !== undefined
+  const accessibleName = () => {
+    const trackLabel = `${props.track.title} · ${props.track.artist}`
+    return removable() ? `${trackLabel} · ${m.playlist_swipe_delete_hint()}` : trackLabel
+  }
   const gesture = useSwipeTrackGesture({enabled: removable, onRemove: () => props.onRemove?.()})
   const handleClick: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
     gesture.handleClick(event)
@@ -78,7 +83,7 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
       <button
         aria-current={props.current ? 'true' : undefined}
         aria-keyshortcuts={removable() ? 'Delete' : undefined}
-        aria-label={`${props.track.title} · ${props.track.artist}${removable() ? ' · 밀어서 삭제' : ''}`}
+        aria-label={accessibleName()}
         class={cx(
           TRACK_CLASSES,
           'group box-border flex min-w-0 w-full touch-pan-y select-none items-center',
@@ -127,7 +132,7 @@ export const PSwipeTrackItem = (props: PSwipeTrackItemProps) => {
       <PTooltip target={tooltip.target()} show={tooltip.show()} text={props.track.title} />
 
       <span aria-live="polite" class="sr-only">
-        {gesture.deleteReady() ? `${props.track.title}, 놓으면 삭제` : ''}
+        {gesture.deleteReady() ? m.playlist_swipe_delete_ready({title: props.track.title}) : ''}
       </span>
     </li>
   )

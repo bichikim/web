@@ -1,4 +1,6 @@
-import {createContext, type JSX, useContext} from 'solid-js'
+import {revalidate} from '@solidjs/router'
+import {createContext, type JSX, onCleanup, onMount, useContext} from 'solid-js'
+import {subscribeWebSessionUnauthorized} from '../http-client'
 
 import {accountSessionQuery, tossSessionQuery} from '../user-auth/session-query'
 import {type AuthController, createAuthenticationController} from './controller'
@@ -23,6 +25,25 @@ export const AuthProvider = (props: AuthProviderProps) => {
       : {email: accountSession.email, kind: 'authenticated', provider: 'email'}
   }
   const controller = createAuthenticationController({loadSession})
+  onMount(() => {
+    if (isAppsInToss) {
+      return
+    }
+
+    let checkingSession = false
+    const finishCheck = () => {
+      checkingSession = false
+    }
+    const unsubscribe = subscribeWebSessionUnauthorized(() => {
+      if (checkingSession || controller.session() === null) {
+        return
+      }
+
+      checkingSession = true
+      revalidate(accountSessionQuery.key).then(finishCheck, finishCheck)
+    })
+    onCleanup(unsubscribe)
+  })
 
   return <AuthContext.Provider value={controller}>{props.children}</AuthContext.Provider>
 }

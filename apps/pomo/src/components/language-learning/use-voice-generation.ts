@@ -23,6 +23,7 @@ export const useVoiceGeneration = (props: UseVoiceGenerationProps) => {
       },
       onStatus: props.state.setMessage,
       sentences: generatedSentences,
+      signal: props.state.voiceSignal,
       voiceId: selectedVoiceId,
     })
 

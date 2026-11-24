@@ -368,6 +368,12 @@ describe('dialogue writer worker', () => {
       output: '  첫 문장입니다.\n행복은 가까이에 있습니다.  ',
     },
     {
+      expected: '한번 생각해 보세요',
+      language: 'ko',
+      name: 'imperative at the end of a sentence',
+      output: '한번 생각해보라',
+    },
+    {
       expected: 'same phrase here; same phrase here; same phrase here.',
       language: 'en',
       name: 'non-Korean repetition trimming',

@@ -12,6 +12,7 @@ const MAXIMUM_TIMEOUT_DELAY_MILLISECONDS = 2_147_483_647
 
 interface SchedulerRoot {
   readonly dispose: () => void
+  readonly onRevalidate: () => void
   readonly setKey: (key: string) => void
   readonly setSchedule: (schedule: QueryRevalidationSchedule) => void
 }
@@ -19,6 +20,7 @@ interface SchedulerRoot {
 const createSchedulerRoot = (
   initialSchedule: QueryRevalidationSchedule,
   initialKey = 'weather-feed["seoul"]',
+  onRevalidate = vi.fn(),
 ): SchedulerRoot => {
   let disposeRoot: () => void = () => undefined
   let setKey: SchedulerRoot['setKey'] = () => undefined
@@ -30,10 +32,10 @@ const createSchedulerRoot = (
     const [schedule, updateSchedule] = createSignal<QueryRevalidationSchedule>(initialSchedule)
     setKey = updateKey
     setSchedule = updateSchedule
-    createQueryRevalidationScheduler({key, schedule})
+    createQueryRevalidationScheduler({key, onRevalidate, schedule})
   })
 
-  return {dispose: disposeRoot, setKey, setSchedule}
+  return {dispose: disposeRoot, onRevalidate, setKey, setSchedule}
 }
 
 beforeEach(() => {
@@ -52,9 +54,11 @@ it('should revalidate the selected query after the requested delay', async () =>
 
   await vi.advanceTimersByTimeAsync(1_999)
   expect(revalidate).not.toHaveBeenCalled()
+  expect(root.onRevalidate).not.toHaveBeenCalled()
 
   await vi.advanceTimersByTimeAsync(1)
   expect(revalidate).toHaveBeenCalledOnce()
+  expect(root.onRevalidate).toHaveBeenCalledOnce()
   expect(revalidate).toHaveBeenCalledWith('weather-feed["seoul"]')
   root.dispose()
 })

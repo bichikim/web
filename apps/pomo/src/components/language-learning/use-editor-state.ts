@@ -28,6 +28,7 @@ import type {LanguageLearningCount} from './Settings'
 
 export const useLanguageLearningEditorState = () => {
   const modelDownload = useModelDownload()
+  const voiceLifetime = new AbortController()
   const [language, setLanguage] = createSignal<LanguageLearningLanguage>('en')
   const [voiceId, setVoiceId] = createSignal<SupertonicVoiceId>('Yuna')
   const [modelId, setModelId] = createSignal<SupertonicModelId>('full')
@@ -125,6 +126,7 @@ export const useLanguageLearningEditorState = () => {
 
   onCleanup(() => {
     workflow.isDisposed = true
+    voiceLifetime.abort()
     writer.release()
     revokeLanguageLearningAudioUrls(candidates())
   })
@@ -166,6 +168,7 @@ export const useLanguageLearningEditorState = () => {
     textModelCheckActive,
     textModelId: writer.modelId,
     voiceId,
+    voiceSignal: voiceLifetime.signal,
     wordSource,
     workflow,
     writer,

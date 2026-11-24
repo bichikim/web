@@ -32,6 +32,7 @@ export const useCandidateReview = (props: UseCandidateReviewProps) => {
       language: props.state.language(),
       modelId: selectedModelId,
       onStatus: props.state.setMessage,
+      signal: props.state.voiceSignal,
       voiceId: selectedVoiceId,
     })
 
