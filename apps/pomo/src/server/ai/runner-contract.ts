@@ -1,6 +1,6 @@
 import {z} from 'zod'
 
-import {createAiArtifactIntermediateObjectKeyPrefix} from './artifacts.ts'
+import {createAiArtifactIntermediateObjectKeyPrefix} from './artifact-keys.ts'
 import {runnerCapabilityFor} from './contracts.ts'
 
 export const AI_RUNNER_PROTOCOL_VERSION = 1
