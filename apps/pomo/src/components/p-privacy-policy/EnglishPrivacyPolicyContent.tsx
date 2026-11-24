@@ -1,5 +1,6 @@
 import {Show} from 'solid-js'
 
+import {SERVICE_OPERATOR} from 'src/features/service-operator'
 import {
   PServicePolicyDocument,
   type ServicePolicyContentsItem,
@@ -17,8 +18,6 @@ import {
 
 const BUSINESS_NAME = 'Kuwoong'
 const REPRESENTATIVE = 'Bichi Kim'
-const SUPPORT_EMAIL = 'info@pomofi.io'
-const SUPPORT_PHONE = '070-5236-4741'
 
 const CONTENT_ITEMS = [
   {id: 'controller', label: '1. Data controller'},
@@ -58,8 +57,8 @@ export const EnglishPrivacyPolicyContent = (props: PPrivacyPolicyProps) => {
         <>
           <span>
             Privacy inquiries:{' '}
-            <a class={CONTENT_LINK_CLASSES} href={`mailto:${SUPPORT_EMAIL}`}>
-              {SUPPORT_EMAIL}
+            <a class={CONTENT_LINK_CLASSES} href={`mailto:${SERVICE_OPERATOR.supportEmail}`}>
+              {SERVICE_OPERATOR.supportEmail}
             </a>
           </span>
           <span>© Pomofi</span>
@@ -98,11 +97,11 @@ export const EnglishPrivacyPolicyContent = (props: PPrivacyPolicyProps) => {
             <li>Representative: {REPRESENTATIVE}</li>
             <li>
               Privacy inquiries:{' '}
-              <a class={CONTENT_LINK_CLASSES} href={`mailto:${SUPPORT_EMAIL}`}>
-                {SUPPORT_EMAIL}
+              <a class={CONTENT_LINK_CLASSES} href={`mailto:${SERVICE_OPERATOR.supportEmail}`}>
+                {SERVICE_OPERATOR.supportEmail}
               </a>
             </li>
-            <li>Phone: {SUPPORT_PHONE}</li>
+            <li>Phone: {SERVICE_OPERATOR.supportPhone}</li>
           </ul>
         </section>
 
@@ -420,8 +419,8 @@ export const EnglishPrivacyPolicyContent = (props: PPrivacyPolicyProps) => {
           <p class={PARAGRAPH_CLASSES}>
             Web and Apps in Toss accounts are managed separately and may be deleted separately.
             Requests can be sent to{' '}
-            <a class={CONTENT_LINK_CLASSES} href={`mailto:${SUPPORT_EMAIL}`}>
-              {SUPPORT_EMAIL}
+            <a class={CONTENT_LINK_CLASSES} href={`mailto:${SERVICE_OPERATOR.supportEmail}`}>
+              {SERVICE_OPERATOR.supportEmail}
             </a>
             . Kuwoong handles them within the period and by the method required by applicable law.
           </p>
@@ -470,11 +469,11 @@ export const EnglishPrivacyPolicyContent = (props: PPrivacyPolicyProps) => {
             <li>Privacy officer: {REPRESENTATIVE}</li>
             <li>
               Email:{' '}
-              <a class={CONTENT_LINK_CLASSES} href={`mailto:${SUPPORT_EMAIL}`}>
-                {SUPPORT_EMAIL}
+              <a class={CONTENT_LINK_CLASSES} href={`mailto:${SERVICE_OPERATOR.supportEmail}`}>
+                {SERVICE_OPERATOR.supportEmail}
               </a>
             </li>
-            <li>Phone: {SUPPORT_PHONE}</li>
+            <li>Phone: {SERVICE_OPERATOR.supportPhone}</li>
           </ul>
           <p class={PARAGRAPH_CLASSES}>
             This policy may be revised when processing practices or applicable law changes.
