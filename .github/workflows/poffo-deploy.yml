@@ -1,4 +1,8 @@
-name: Deploy Poffo Dev
+name: Deploy Poffo
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch' &&
+      format('Deploy Poffo ({0}) from {1} at {2}', inputs.environment, github.ref_name, github.sha) ||
+      github.event.pull_request.title }}
 
 on:
   pull_request:
@@ -14,6 +18,15 @@ on:
       - .github/workflows/poffo-*.yml
       - .github/actions/poffo/**
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment environment
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - production
 
 permissions:
   contents: read
@@ -25,7 +38,7 @@ env:
 
 jobs:
   verify-and-deploy-dev:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/dev'
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'dev' && github.ref == 'refs/heads/dev')
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     concurrency:
@@ -87,5 +100,69 @@ jobs:
         if: failure()
         with:
           name: poffo-dev-browser-diagnostics
+          path: apps/poffo/test-results
+          if-no-files-found: ignore
+  deploy-production:
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'production' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: poffo-production
+      cancel-in-progress: false
+    environment:
+      name: Production – poffo
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Validate release source
+        run: |
+          test "${GITHUB_REF}" = "refs/heads/main" || {
+            echo "::error::Select the main branch for production deployment."
+            exit 1
+          }
+      - uses: actions/checkout@v5
+      - name: Verify source and document contracts
+        uses: ./.github/actions/poffo/verify
+      - name: Pull production settings
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} pull --yes --environment=production
+          --local-config=apps/poffo/vercel.json --token="$VERCEL_TOKEN"
+      - name: Build production deployment artifact
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} build --prod
+          --local-config=apps/poffo/vercel.json --token="$VERCEL_TOKEN"
+      - name: Verify build UI and assets
+        uses: ./.github/actions/poffo/browser
+        with:
+          vercel-output: 'true'
+      - name: Deploy verified artifact without assigning production domains
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          deployment_url="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
+            --prebuilt --prod --skip-domain --yes --local-config=apps/poffo/vercel.json \
+            --token="$VERCEL_TOKEN" --meta githubCommitSha="$GITHUB_SHA" \
+            --meta githubCommitRef="$GITHUB_REF_NAME")"
+          echo "url=${deployment_url}" >> "$GITHUB_OUTPUT"
+          echo "Source commit: ${GITHUB_SHA}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deployment: ${deployment_url}" >> "$GITHUB_STEP_SUMMARY"
+      - name: Check deployment routes and promote
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          for path in /editor /studio /viewer /converter /tracking/worker.js /tracking/vendor/vision_wasm_internal.wasm; do
+            pnpm dlx vercel@${VERCEL_CLI_VERSION} curl "$path" --deployment="$DEPLOYMENT_URL" \
+              --token="$VERCEL_TOKEN" -- --fail --silent --show-error --max-time 30 --output /dev/null
+          done
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} promote "$DEPLOYMENT_URL" --yes --token="$VERCEL_TOKEN"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: poffo-production-browser-diagnostics
           path: apps/poffo/test-results
           if-no-files-found: ignore

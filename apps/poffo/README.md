@@ -29,12 +29,14 @@ macOS 데스크톱 앱은 `pnpm --filter @winter-love/poffo dev:desktop`으로 �
 
 GitHub Actions만 배포 경로로 사용한다. PR 검증은 자동 실행하지만 배포는 자동 실행하지 않는다. Pomo와 같은 브랜치·환경 분리를 따른다.
 
-| 배포      | 수동 실행 워크플로                                                              | 소스 브랜치 | Vercel 환경 |
-| --------- | ------------------------------------------------------------------------------- | ----------- | ----------- |
-| 개발 확인 | [Verify and deploy Poffo Dev](../../.github/workflows/poffo-deploy.yml)         | `dev`       | Preview     |
-| 운영 공개 | [Release Poffo Production](../../.github/workflows/poffo-production-deploy.yml) | `main`      | Production  |
+[Deploy Poffo](../../.github/workflows/poffo-deploy.yml)의 수동 실행에서 브랜치와 `environment`를 고른다.
 
-개발 검증은 `dev`에서 실행한다. 운영에 공개할 변경은 `main`에 반영한 뒤 운영 워크플로에서 `main`을 선택한다. 각 워크플로는 지정한 브랜치에서만 배포한다. `dev` 액션에는 운영 배포·운영 승격 명령이 없다. 개발 배포는 Vercel이 반환하는 Preview URL을 사용하며, 개발 전용 커스텀 도메인은 이번 변경에서 추가하지 않는다.
+| 배포      | 소스 브랜치 | `environment` | Vercel 환경 |
+| --------- | ----------- | ------------- | ----------- |
+| 개발 확인 | `dev`       | `dev`         | Preview     |
+| 운영 공개 | `main`      | `production`  | Production  |
+
+운영에 공개할 변경은 먼저 `main`에 반영한다. 각 배포는 표에 적힌 브랜치와 환경을 함께 선택해야 시작한다. 개발 배포는 Vercel이 반환하는 Preview URL을 사용하며, 개발 전용 커스텀 도메인은 이번 변경에서 추가하지 않는다.
 
 두 배포 모두 코드·타입·단위·통합 테스트와 빌드를 검사하고, 해당 Vercel 환경의 설정으로 만든 산출물에 브라우저 검사를 수행한다. 운영 배포만 `--prod --skip-domain`으로 배포한 뒤 원격 경로·자산 응답을 확인하고 승격한다. 실패하면 승격하지 않는다. 개발 배포는 `--target=preview`를 사용하며 운영 도메인을 승격하지 않는다. 배포 URL과 커밋 SHA는 Actions 요약에 기록한다.
 

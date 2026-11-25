@@ -31,11 +31,11 @@ PNG 텍스처는 무손실 WebP로 저장하고, 아틀라스 재배치 시 해�
 
 ## GitHub Actions 배포
 
-| 흐름    | 실행 방법                                                                                                      |
-| ------- | -------------------------------------------------------------------------------------------------------------- |
-| PR 검증 | 관련 파일을 바꾸면 타입·린트·단위 테스트·정적 빌드·Chromium 검사를 실행한다. 배포 자격 증명은 사용하지 않는다. |
-| Preview | `dev` 반영 후 **Verify and deploy Wallpaper Dev**를 `dev` 브랜치로 수동 실행한다.                              |
-| 운영    | `main`에 코드와 워크플로를 반영한 후 **Release Wallpaper Production**을 `main` 브랜치로 수동 실행한다.         |
+| 흐름    | 실행 방법                                                                                                         |
+| ------- | ----------------------------------------------------------------------------------------------------------------- |
+| PR 검증 | 관련 파일을 바꾸면 타입·린트·단위 테스트·정적 빌드·Chromium 검사를 실행한다. 배포 자격 증명은 사용하지 않는다.    |
+| Preview | **Deploy Poffo Wallpaper**에서 `dev` 브랜치와 `environment=dev`를 선택한다.                                       |
+| 운영    | `main`에 코드와 워크플로를 반영한 뒤 **Deploy Poffo Wallpaper**에서 `main`과 `environment=production`을 선택한다. |
 
 검증한 `.output/public`을 Vercel Build Output API v3의 정적 에셋으로 포장해 배포한다.
 운영 배포는 도메인을 연결하지 않은 후보를 먼저 생성하며, 페이지와 모델 경로 확인이
@@ -47,7 +47,7 @@ PNG 텍스처는 무손실 WebP로 저장하고, 아틀라스 재배치 시 해�
 - 저장소 Actions 변수 `WALLPAPER_VERCEL_PROJECT_ID`에 해당 프로젝트 ID를 설정한다.
 - Actions secret `VERCEL_TOKEN`에 해당 팀의 배포 토큰을 설정한다. 기존 토큰이 그 팀에
   접근할 수 있으면 재사용한다.
-- 팀은 워크플로의 `VERCEL_ORG_ID`를 사용한다. 다른 팀을 선택하면 두 워크플로도 함께 수정한다.
+- 팀은 워크플로의 `VERCEL_ORG_ID`를 사용한다. 다른 팀을 선택하면 [배포 워크플로](../../.github/workflows/wallpaper-web-deploy.yml)를 수정한다.
 
 로컬에서는 빌드 후 다음 명령으로 브라우저 검사를 실행할 수 있다.
 

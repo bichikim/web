@@ -1,4 +1,8 @@
-name: Deploy Poffo Themes Dev
+name: Deploy Poffo Themes
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch' &&
+      format('Deploy Poffo Themes ({0}) from {1} at {2}', inputs.environment, github.ref_name, github.sha) ||
+      github.event.pull_request.title }}
 
 on:
   pull_request:
@@ -13,12 +17,21 @@ on:
       - .github/actions/poffo-themes/**
       - .github/workflows/poffo-themes-*.yml
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment environment
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - production
 
 permissions:
   contents: read
 
 concurrency:
-  group: poffo-themes-${{ github.event_name == 'workflow_dispatch' && 'dev' || github.ref }}
+  group: poffo-themes-${{ github.event_name == 'workflow_dispatch' && inputs.environment || github.ref }}
   cancel-in-progress: false
 
 env:
@@ -28,7 +41,10 @@ env:
 
 jobs:
   verify:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/dev'
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_dispatch' && ((inputs.environment == 'dev' && github.ref == 'refs/heads/dev') ||
+        (inputs.environment == 'production' && github.ref == 'refs/heads/main')))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -38,7 +54,7 @@ jobs:
       - uses: ./.github/actions/poffo-themes/verify
   deploy-preview:
     needs: verify
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev'
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'dev' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -48,4 +64,21 @@ jobs:
       - uses: ./.github/actions/poffo-themes/deploy
         with:
           target: preview
+          token: ${{ secrets.VERCEL_TOKEN }}
+  deploy-production:
+    needs: verify
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'production' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: Production – poffo-themes
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/poffo-themes/deploy
+        id: deploy
+        with:
+          target: production
           token: ${{ secrets.VERCEL_TOKEN }}

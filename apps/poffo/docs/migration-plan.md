@@ -411,12 +411,12 @@ Poffo는 SolidJS·Vite 기반 앱으로 구성하고, `@winter-love/puppet`을 w
 
 워크플로를 구현했다. 실제 원격 실행·배포·도메인 연결은 별도 검증 항목이다.
 
-- 개발용 [poffo-deploy.yml](../../../.github/workflows/poffo-deploy.yml#L1)과 운영용 [poffo-production-deploy.yml](../../../.github/workflows/poffo-production-deploy.yml#L1)을 분리한다.
+- [Deploy Poffo](../../../.github/workflows/poffo-deploy.yml#L1)에서 개발 배포와 운영 배포를 선택한다.
 - PR에서는 앱·패키지의 lint, 포맷, 타입, 관련 테스트·서비스 빌드·브라우저 동작을 검증한다.
-- 자동 배포는 실행하지 않는다. 개발 배포는 `dev`의 수동 실행만 허용하고 Vercel Preview 설정·산출물·배포를 사용한다. 운영 배포는 `main`의 수동 실행만 허용한다. 개발 액션에는 `--prod`·운영 승격 경로가 없다.
+- 자동 배포는 실행하지 않는다. 개발 배포는 `dev`의 수동 실행만 허용하고 Vercel Preview 설정·산출물·배포를 사용한다. 운영 배포는 `main`에서 `production`을 고를 때 실행한다.
 - 변경 감지에 앱, Puppet, 실제 공용 의존 패키지, 잠금 파일과 빌드·워크플로 설정을 포함한다.
 - 프로덕션 배포를 직렬화하고 Vercel Git 자동 배포와 중복 실행되지 않도록 구성한다.
-- [Pomo 운영 워크플로](../../../.github/workflows/pomo-production-deploy.yml#L1)의 `main` 제한과 [Pomo 개발 워크플로](../../../.github/workflows/pomo-audio-gateway-deploy.yml#L1)의 `dev`·Preview 분리를 따른다. Node·pnpm·Vercel CLI 구성과 인증 방식도 기존 구성을 참고한다. 토큰의 실제 사용 가능 여부는 구현할 때 확인한다.
+- [Deploy Pomo](../../../.github/workflows/pomo-audio-gateway-deploy.yml#L1)의 운영 `main` 제한과 개발 `dev`·Preview 분리를 따른다. Node·pnpm·Vercel CLI 구성과 인증 방식도 기존 구성을 참고한다. 토큰의 실제 사용 가능 여부는 구현할 때 확인한다.
 - Vercel 프로젝트의 Root Directory는 `apps/poffo`로 맞춘다. 앞서 생성한 `poffo` 프로젝트의 설정을 다시 확인하며, 기존 로그인 보호 설정을 임의로 변경하지 않는다.
 
 운영 배포 순서는 다음과 같다. 개발 배포는 Preview 설정을 가져와 `build --target=preview`·`deploy --prebuilt --target=preview`를 사용하고, 응답 검사 후 운영 승격 없이 끝낸다. CLI 옵션과 프로젝트 설정은 구현 시 공식 문서로 재확인한다.
@@ -432,7 +432,7 @@ Poffo는 SolidJS·Vite 기반 앱으로 구성하고, `@winter-love/puppet`을 w
   → promote로 프로덕션 도메인 반영
 ```
 
-기존 [Pomo의 배포 후 검증·승격 흐름](../../../.github/workflows/pomo-production-deploy.yml#L1)을 참고한다. 실패한 배포는 승격하지 않는다. 배포 URL과 커밋 SHA를 Actions 요약에 남기고, 이전 정상 배포가 있는 경우 되돌릴 수 있도록 기록한다.
+기존 [Pomo의 배포 후 검증·승격 흐름](../../../.github/workflows/pomo-audio-gateway-deploy.yml#L1)을 참고한다. 실패한 배포는 승격하지 않는다. 배포 URL과 커밋 SHA를 Actions 요약에 남기고, 이전 정상 배포가 있는 경우 되돌릴 수 있도록 기록한다.
 
 첫 Actions 배포를 확인한 뒤 `poffo.io`의 DNS·HTTPS 연결을 진행한다. DNS는 당시 Vercel이 반환하는 값을 사용하고, 기존 메일 등 관련 없는 레코드는 보존한다.
 

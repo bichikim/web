@@ -1,4 +1,4 @@
-name: Release Slowcove Production
+name: Deploy Slowcove
 
 on:
   push:
@@ -13,11 +13,20 @@ on:
       - .github/workflows/slowcove-deploy.yml
       - .github/workflows/config/slowcove-vercel.json
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment environment
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - production
 
-run-name: Release Slowcove from ${{ github.ref_name }} at ${{ github.sha }}
+run-name: Deploy Slowcove (${{ github.event_name == 'push' && 'production' || inputs.environment }}) from ${{ github.ref_name }} at ${{ github.sha }}
 
 concurrency:
-  group: slowcove-production
+  group: slowcove-${{ github.event_name == 'workflow_dispatch' && inputs.environment == 'dev' && 'dev' || 'production' }}
   cancel-in-progress: false
 
 permissions:
@@ -27,6 +36,8 @@ env:
   NODE_VERSION: '24.x'
   PNPM_VERSION: 11.8.0
   VERCEL_CLI_VERSION: 59.5.0
+  VERCEL_DEPLOY_ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && inputs.environment == 'dev' && 'preview' || 'production' }}
+  VERCEL_DEPLOY_TARGET_ARG: ${{ github.event_name == 'workflow_dispatch' && inputs.environment == 'dev' && '--target=preview' || '--prod' }}
   VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV
   VERCEL_PROJECT_ID: prj_pr4m1w0MSBhDDrSY3qgLrZuOZZGa
   VERCEL_CONFIG: .github/workflows/config/slowcove-vercel.json
@@ -34,7 +45,10 @@ env:
 jobs:
   deploy:
     name: Verify and deploy Slowcove
-    if: github.ref == 'refs/heads/dev'
+    if: >-
+      github.ref == 'refs/heads/dev' &&
+      (github.event_name == 'push' ||
+        (github.event_name == 'workflow_dispatch' && (inputs.environment == 'dev' || inputs.environment == 'production')))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -69,19 +83,22 @@ jobs:
             apps/pomo/scripts/vite/__tests__/create-nitro-config.spec.ts \
             --project=unit --reporter=dot
 
-      - name: Pull Slowcove production settings
+      - name: Pull Slowcove deployment settings
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: >-
-          pnpm dlx vercel@${VERCEL_CLI_VERSION} pull
-          --yes --environment=production --local-config="${VERCEL_CONFIG}"
+        run: |
+          pull_args=("--environment=${VERCEL_DEPLOY_ENVIRONMENT}")
+          if [[ "$VERCEL_DEPLOY_ENVIRONMENT" == preview ]]; then
+            pull_args+=("--git-branch=${GITHUB_REF_NAME}")
+          fi
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} pull --yes "${pull_args[@]}" --local-config="${VERCEL_CONFIG}"
 
       - name: Build Slowcove output
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           pnpm dlx vercel@${VERCEL_CLI_VERSION} build \
-            --prod --local-config="${VERCEL_CONFIG}"
+            "$VERCEL_DEPLOY_TARGET_ARG" --local-config="${VERCEL_CONFIG}"
           test -f .vercel/output/functions/__server.func/.vc-config.json
           test -f .vercel/output/static/slowcove/city-sunny-riverside.webp
           node --input-type=module <<'NODE'
@@ -112,7 +129,7 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           deployment_url="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
-            --prebuilt --prod --yes --local-config="${VERCEL_CONFIG}" \
+            --prebuilt "$VERCEL_DEPLOY_TARGET_ARG" --yes --local-config="${VERCEL_CONFIG}" \
             --meta githubCommitSha="${GITHUB_SHA}" \
             --meta githubCommitRef="${GITHUB_REF_NAME}")"
           echo "url=${deployment_url}" >> "${GITHUB_OUTPUT}"

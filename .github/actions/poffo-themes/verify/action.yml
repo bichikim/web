@@ -19,7 +19,7 @@ runs:
         pnpm --filter @apps/poffo-themes exec tsc --noEmit
         pnpm exec oxlint apps/poffo-themes/src apps/poffo-themes/scripts apps/poffo-themes/vite.config.ts
         pnpm exec oxfmt --check apps/poffo-themes .github/actions/poffo-themes \
-          .github/workflows/poffo-themes-deploy.yml .github/workflows/poffo-themes-production-deploy.yml
+          .github/workflows/poffo-themes-deploy.yml
     - name: Test deployment packaging
       shell: bash
       env:
