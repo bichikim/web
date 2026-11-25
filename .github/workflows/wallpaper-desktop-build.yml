@@ -2,6 +2,9 @@ name: Build Poffo Wallpaper Desktop
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - codex/verify-poffo-wallpaper-desktop-windows
 
 run-name: Build Poffo Wallpaper Desktop from ${{ github.ref_name }}
 
@@ -25,14 +28,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-latest
-            target: aarch64-apple-darwin
-            bundles: dmg
-            extension: dmg
-          - runner: macos-15-intel
-            target: x86_64-apple-darwin
-            bundles: dmg
-            extension: dmg
           - runner: windows-latest
             target: x86_64-pc-windows-msvc
             bundles: nsis
