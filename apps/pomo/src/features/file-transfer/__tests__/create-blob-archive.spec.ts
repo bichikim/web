@@ -9,6 +9,39 @@ const readArchive = async (archive: Blob) => {
 }
 
 describe('createBlobArchive', () => {
+  it('should retain the first free prefix across later numbered names and normalization collisions', async () => {
+    const names = ['a?.txt', 'a*.txt', '3-a_.txt', 'a_.txt', 'a?.txt', '1-a_.txt', 'a*.txt']
+    const archive = await createBlobArchive(
+      names.map((name, index) => ({blob: new Blob([String(index)]), name})),
+    )
+
+    expect(await readArchive(archive)).toEqual([
+      ['a_.txt', '0'],
+      ['1-a_.txt', '1'],
+      ['3-a_.txt', '2'],
+      ['2-a_.txt', '3'],
+      ['4-a_.txt', '4'],
+      ['1-1-a_.txt', '5'],
+      ['5-a_.txt', '6'],
+    ])
+  })
+
+  it('should allocate duplicate names independently for separate archives', async () => {
+    const files = ['한글.txt', '한글.txt', '1-한글.txt', '../한글.txt', 'folder\\한글.txt'].map(
+      (name, index) => Object.freeze({blob: new Blob([String(index)]), name}),
+    )
+    const expected = [
+      ['한글.txt', '0'],
+      ['1-한글.txt', '1'],
+      ['1-1-한글.txt', '2'],
+      ['../한글.txt', '3'],
+      ['folder\\한글.txt', '4'],
+    ]
+
+    expect(await readArchive(await createBlobArchive(Object.freeze(files)))).toEqual(expected)
+    expect(await readArchive(await createBlobArchive(files))).toEqual(expected)
+  })
+
   it('should preserve ordered contents, verbatim names and collision chains', async () => {
     const names = ['same.txt', '1-same.txt', 'same.txt', 'same.txt', '../그림.txt', 'empty.txt']
     const archive = await createBlobArchive(
