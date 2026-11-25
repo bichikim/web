@@ -2,6 +2,9 @@ name: Build Poffo Wallpaper Desktop
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - codex/verify-poffo-wallpaper-desktop
 
 run-name: Build Poffo Wallpaper Desktop from ${{ github.ref_name }}
 
