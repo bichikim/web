@@ -80,6 +80,10 @@ jobs:
           BUILD_BUNDLES: ${{ matrix.bundles }}
           BUNDLE_CONFIG: '{"bundle":{"active":true,"macOS":{"signingIdentity":"-"}}}'
         run: |
+          if [[ "$RUNNER_OS" == Windows ]]; then
+            # Vite's static copy needs the model cache on the workspace drive.
+            export LOCALAPPDATA="$GITHUB_WORKSPACE/.cache/desktop-build"
+          fi
           pnpm --filter @apps/wallpaper exec tauri build --ci \
             --target "$BUILD_TARGET" --bundles "$BUILD_BUNDLES" \
             --config "$BUNDLE_CONFIG" -- --locked
