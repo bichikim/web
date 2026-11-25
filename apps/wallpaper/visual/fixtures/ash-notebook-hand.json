@@ -1,0 +1,16 @@
+{
+  "crop": {
+    "x": 2480,
+    "y": 1280,
+    "width": 224,
+    "height": 224
+  },
+  "hand": "ArtMesh125",
+  "arm": "coat-free:notes-right:ArtMesh994",
+  "armTextureSha256": "5f30ce6e767b5bea60c786164df2d9b599799ed42d1c74954a0dc451d0fced31",
+  "atlasCleanup": {
+    "record": "../../asset-library/characters/ash/texture-atlas/cleanup.json",
+    "previousTextureSha256": "465e1e615221ee3f16d99a8c5dccc66137f8f1deb4763d840a1b66b84b09c1eb",
+    "scope": "Only unused notice pixels; original forearm UV pixels unchanged"
+  }
+}

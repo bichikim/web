@@ -1,4 +1,5 @@
-import {parseStudioFile, type StudioFile} from './parse-studio-file'
+import type {StudioFile} from './parse-studio-file'
+import {useStudioImport} from './use-studio-import'
 import {
   type Accessor,
   batch,
@@ -39,13 +40,12 @@ interface UseWorkspaceLayoutProps {
 const storageKey = (signature: string) => `puppet:studio-layout:v1:${signature}`
 export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
   const [restoring, setRestoring] = createSignal(false)
+  const [restoredSignature, setRestoredSignature] = createSignal<string>()
   const [error, setError] = createSignal<string | null>(null)
   let disposed = false
-  let importVersion = 0
   let restoreVersion = 0
   onCleanup(() => {
     disposed = true
-    importVersion += 1
   })
   const snapshot = (): WorkspaceLayout | undefined => {
     const profile = props.controls.profile()
@@ -96,8 +96,9 @@ export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
   createEffect(
     on(signature, (signature) => {
       if (signature === undefined) {
-        return
+        return setRestoredSignature(undefined)
       }
+      props.restoreHiddenIds([])
       try {
         const storage = props.sessionStorage ?? globalThis.sessionStorage
         const stored = storage.getItem(storageKey(signature))
@@ -109,10 +110,11 @@ export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
       } catch {
         setError('스튜디오 배치를 복원하지 못했습니다.')
       }
+      setRestoredSignature(signature)
     }),
   )
   createEffect(() => {
-    if (restoring()) {
+    if (restoring() || signature() !== restoredSignature()) {
       return
     }
     const layout = snapshot()
@@ -141,47 +143,6 @@ export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
     anchor.click()
     URL.revokeObjectURL(url)
   }
-  const importStudio = async (file: File) => {
-    if (disposed) {
-      return
-    }
-    importVersion += 1
-    const version = importVersion
-    const signature = props.controls.profile()?.signature
-    const current = () =>
-      !disposed &&
-      version === importVersion &&
-      signature !== undefined &&
-      signature === props.controls.profile()?.signature
-    setError(null)
-    try {
-      const text = await file.text()
-      if (!current()) {
-        return
-      }
-      const value: unknown = JSON.parse(text)
-      const currentProfile = props.controls.profile()
-      if (currentProfile === undefined) {
-        return
-      }
-      const result = parseStudioFile({
-        currentProfile,
-        parseProfile: props.controls.parseProfile,
-        value,
-      })
-      if (result === undefined) {
-        throw new Error('현재 모델과 스튜디오 파일이 맞지 않습니다.')
-      }
-      if (result.layout === undefined) {
-        props.controls.updateProfile(result.profile)
-      } else {
-        restore(result.layout, result.profile)
-      }
-    } catch (cause) {
-      if (current()) {
-        setError(cause instanceof Error ? cause.message : '스튜디오를 불러오지 못했습니다.')
-      }
-    }
-  }
+  const importStudio = useStudioImport({controls: props.controls, reportError: setError, restore})
   return {dismissError: () => setError(null), error, exportStudio, importStudio}
 }

@@ -2,7 +2,8 @@ import {PSelect, type PSelectOption} from '../../p-select/PSelect'
 import {type DisplayThemePreference, useDisplayTheme} from '../../../features/display-theme'
 import {type ScreenWakeLockController} from '../../../features/screen-wake-lock'
 import * as m from '@paraglide/message'
-import {getLocale, type Locale, setLocale} from '@paraglide/runtime'
+import type {Locale} from '@paraglide/runtime'
+import {getAppLocale, setAppLocale} from 'src/features/locale'
 import {PHealthCheck} from '../../p-health-check/PHealthCheck'
 import {CLASSES} from '../classes'
 import type {PSettingsProps} from '../types'
@@ -33,9 +34,9 @@ export const PGeneralSettings = (props: PGeneralSettingsProps) => {
       <div class={CLASSES.settingsGrid}>
         <PSelect
           label={m.settings_language()}
-          onChange={setLocale}
+          onChange={setAppLocale}
           options={LANGUAGE_OPTIONS}
-          value={getLocale()}
+          value={getAppLocale()}
         />
         <PSelect
           label={m.settings_theme()}

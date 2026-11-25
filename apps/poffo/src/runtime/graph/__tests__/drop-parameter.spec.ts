@@ -17,6 +17,15 @@ test('should include a dropped parameter below the group header', () => {
   expect(result.groups[0].parameterIds).toEqual(['mouth'])
   expect(result.node).toMatchObject({parentId: 'parameter:group:one', position: {x: 0, y: 40}})
 })
+test('should recognize the lower part of an unmeasured broadcast header', () => {
+  const node = {data: {}, id: 'parameter:mouth', position: {x: 430, y: 32}, type: 'parameters'}
+  const nodes = [...containers.map(({measured, ...container}) => container), node]
+
+  const result = dropParameter({groups, node, nodes})
+
+  expect(result?.node).toMatchObject({parentId: 'parameter:group:two', position: {x: 0, y: 64}})
+  expect(result?.groups[1].parameterIds).toEqual(['mouth'])
+})
 test('should move between groups without duplicate membership', () => {
   const node = {
     data: {},

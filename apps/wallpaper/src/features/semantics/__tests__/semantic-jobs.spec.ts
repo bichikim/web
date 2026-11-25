@@ -48,3 +48,12 @@ test('should leave pending text analysis unchanged when only menu state or label
     )[0]!.signature,
   ).not.toBe(before)
 })
+
+test('should invalidate pending matching when the widget character changes', () => {
+  const widget: PoffoWidget = {assetId: 'builtin:ash', id: 'widget', x: null, y: null}
+  const inputs = new Map([['widget', {text: 'Hello', widgetId: 'widget'}]])
+  const original = semanticJobs([widget], inputs)[0]!.signature
+  expect(semanticJobs([{...widget, assetId: 'custom-character'}], inputs)[0]!.signature).not.toBe(
+    original,
+  )
+})

@@ -8,7 +8,7 @@ type Vector = readonly [number, number]
  * document's.
  */
 export interface PuppetPhysicsOptions {
-  /** Direction `[x, y]` with `y` down; its length is ignored and must not be zero. */
+  /** Direction `[x, y]` with `y` down; `[0, 0]` disables gravity. */
   readonly gravity?: Vector
   /** Added to every chain pendulum's pull, `[x, y]` with `y` down. */
   readonly wind?: Vector
@@ -17,11 +17,9 @@ export interface PuppetPhysicsOptions {
 const isFiniteVector = (vector: Vector | undefined) =>
   vector === undefined || (Number.isFinite(vector[0]) && Number.isFinite(vector[1]))
 
-/** Whether the vectors are finite and gravity has a direction. */
+/** Whether the supplied vectors are finite. */
 export const isValidPhysicsOptions = (options: PuppetPhysicsOptions) =>
-  isFiniteVector(options.gravity) &&
-  isFiniteVector(options.wind) &&
-  (options.gravity === undefined || options.gravity[0] !== 0 || options.gravity[1] !== 0)
+  isFiniteVector(options.gravity) && isFiniteVector(options.wind)
 
 /** The document's physics with the app's gravity and wind in place of its own. */
 export const applyPhysicsOptions = (

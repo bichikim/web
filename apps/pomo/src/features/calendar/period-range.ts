@@ -1,4 +1,4 @@
-import type {CalendarEventRange} from './types'
+import type {CalendarEventQuery, CalendarEventRange} from './types'
 
 export const DAY_AFTER_TOMORROW_START_DAYS = 2
 export const DAYS_PER_WEEK = 7
@@ -265,4 +265,95 @@ export const createCalendarPeriodRange = ({
       ? requestedDateEnd
       : weekEnd
   return toRange(start, end)
+}
+
+interface CalendarWorkweekOptions {
+  readonly boundary: (days: number) => Date
+  readonly daysUntilNextMonday: number
+  readonly weekOffset: number | null
+  readonly includesThisWeek: boolean
+  readonly now: Date
+  readonly weekday: number
+}
+
+export const createCalendarWorkweekRange = (
+  options: CalendarWorkweekOptions,
+): CalendarEventQuery => {
+  const {boundary, daysUntilNextMonday, includesThisWeek, now, weekday, weekOffset} = options
+  const weekend = weekday === 0 || weekday === DAYS_PER_WEEK - 1
+  if (weekOffset !== null || (weekend && !includesThisWeek)) {
+    const monday = daysUntilNextMonday + (weekOffset ?? 0) * DAYS_PER_WEEK
+    return toRange(boundary(monday), boundary(monday + DAYS_FROM_NEXT_MONDAY_TO_SATURDAY))
+  }
+  if (weekend) {
+    return {empty: true}
+  }
+  return toRange(
+    now,
+    boundary(daysUntilNextMonday - DAYS_PER_WEEK + DAYS_FROM_NEXT_MONDAY_TO_SATURDAY),
+  )
+}
+
+interface WorkweekIntent extends Omit<CalendarWorkweekOptions, 'weekOffset'> {
+  readonly includesNextWeek: boolean
+  readonly includesPreviousWeek: boolean
+  readonly includesTwoWeeksAgo: boolean
+  readonly includesWeekAfterNext: boolean
+  readonly hasWorkweek: boolean
+  readonly hasRequestedDay: boolean
+}
+
+const PREVIOUS_WEEK_FROM_NEXT_MONDAY = -2
+const TWO_WEEKS_AGO_FROM_NEXT_MONDAY = -3
+
+const getWorkweekOffset = (intent: WorkweekIntent) => {
+  if (intent.includesWeekAfterNext) {
+    return 1
+  }
+  if (intent.includesNextWeek) {
+    return 0
+  }
+  if (intent.includesTwoWeeksAgo) {
+    return TWO_WEEKS_AGO_FROM_NEXT_MONDAY
+  }
+  return intent.includesPreviousWeek ? PREVIOUS_WEEK_FROM_NEXT_MONDAY : null
+}
+
+export const selectCalendarWorkweekRange = (intent: WorkweekIntent): CalendarEventQuery | null =>
+  intent.hasWorkweek && !intent.hasRequestedDay
+    ? createCalendarWorkweekRange({...intent, weekOffset: getWorkweekOffset(intent)})
+    : null
+
+interface QualifiedWeekdayRangeOptions {
+  readonly boundary: (days: number) => Date
+  readonly competingPeriods: ReadonlyArray<RegExp>
+  readonly daysUntilNextMonday: number
+  readonly includesPreviousWeek: boolean
+  readonly includesWeekAfterNext: boolean
+  readonly findDay: (pattern: RegExp) => number | null
+  readonly previousWeekPattern: RegExp
+  readonly weekAfterNextPattern: RegExp
+  readonly text: string
+}
+
+export const selectQualifiedWeekdayRange = (
+  options: QualifiedWeekdayRangeOptions,
+): CalendarEventQuery | null => {
+  if (!options.includesPreviousWeek && !options.includesWeekAfterNext) {
+    return null
+  }
+  const pattern = options.includesPreviousWeek
+    ? options.previousWeekPattern
+    : options.weekAfterNextPattern
+  const otherText = options.text.replace(pattern, '')
+  if (options.competingPeriods.some((candidate) => candidate.test(otherText))) {
+    return null
+  }
+  const day = options.findDay(pattern)
+  if (day === null) {
+    return null
+  }
+  const offset = options.includesPreviousWeek ? PREVIOUS_WEEK_FROM_NEXT_MONDAY : 1
+  const start = options.daysUntilNextMonday + offset * DAYS_PER_WEEK + day
+  return toRange(options.boundary(start), options.boundary(start + 1))
 }

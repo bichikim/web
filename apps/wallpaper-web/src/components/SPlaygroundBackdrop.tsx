@@ -11,6 +11,7 @@ interface SPlaygroundBackdropProps {
   readonly previousBackground?: WidgetBackground
   /** Warm the second animated scene after scrolling starts, preserving the first canvas. */
   readonly prepareStreet?: boolean
+  readonly playing?: boolean
   /** Reveal the incoming background while retaining the outgoing one. */
   readonly transition?: StoryTransition | null
 }
@@ -41,7 +42,10 @@ export const SPlaygroundBackdrop = (props: SPlaygroundBackdropProps) => {
         transition={mask()}
         outgoing={Boolean(mask() && props.previousBackground === 'profile')}
       >
-        <SDesktopBackdrop background="profile" playing={profileVisible()} />
+        <SDesktopBackdrop
+          background="profile"
+          playing={profileVisible() && props.playing !== false}
+        />
       </SStoryMask>
       <Show when={streetMounted()}>
         <SStoryMask
@@ -49,7 +53,10 @@ export const SPlaygroundBackdrop = (props: SPlaygroundBackdropProps) => {
           transition={mask()}
           outgoing={Boolean(mask() && props.previousBackground === 'street-front')}
         >
-          <SDesktopBackdrop background="street-front" playing={streetVisible()} />
+          <SDesktopBackdrop
+            background="street-front"
+            playing={streetVisible() && props.playing !== false}
+          />
         </SStoryMask>
       </Show>
     </>

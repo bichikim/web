@@ -15,6 +15,9 @@ export const boundParameterValue = (parameter: PuppetParameter, value: number) =
     return clamp(value, parameter.minimum, parameter.maximum)
   }
   const span = parameter.maximum - parameter.minimum
+  if (span === 0) {
+    return parameter.minimum
+  }
   const offset = (value - parameter.minimum) % span
   return parameter.minimum + (offset < 0 ? offset + span : offset)
 }

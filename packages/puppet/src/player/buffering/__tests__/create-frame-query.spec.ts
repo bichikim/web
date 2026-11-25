@@ -1,20 +1,21 @@
-import {expect, test} from 'vitest'
+import {expect, test, vi} from 'vitest'
 import {createEmptyDocument} from '../../create-empty-document'
 import {createFrameQuery} from '../create-frame-query'
 import {createState} from './fixtures/runtime-state'
+const createDocument = (vertices: Float32Array) => ({
+  ...createEmptyDocument(),
+  hitAreas: [{id: 'face', name: 'Face', partIds: ['part']}],
+  parts: [
+    {
+      id: 'part',
+      mesh: {indices: [0, 1, 2], uvs: [0, 0, 1, 0, 0, 1], vertices: [...vertices]},
+      texture: {height: 1, src: '', width: 1},
+    },
+  ],
+})
 test('should retain displayed geometry and query values while input or renderer buffers change', () => {
   const vertices = new Float32Array([0, 0, 1, 0, 0, 1])
-  const document = {
-    ...createEmptyDocument(),
-    hitAreas: [{id: 'face', name: 'Face', partIds: ['part']}],
-    parts: [
-      {
-        id: 'part',
-        mesh: {indices: [0, 1, 2], uvs: [0, 0, 1, 0, 0, 1], vertices: [...vertices]},
-        texture: {height: 1, src: '', width: 1},
-      },
-    ],
-  }
+  const document = createDocument(vertices)
   const query = createFrameQuery({
     getPaintOrder: () => ['part'],
     getPartVertices: () => vertices,
@@ -31,4 +32,28 @@ test('should retain displayed geometry and query values while input or renderer 
   query.update(document, {...state, frameValues: {p: 0.5}}, undefined)
   expect(query.hitTest({x: 0.2, y: 0.2})).toBeUndefined()
   expect(query.getParameterValue('p')).toBe(0.5)
+})
+
+test('should read renderer-owned hit areas on demand instead of copying the displayed vertices', () => {
+  const getPartVertices = vi.fn()
+  const getPaintOrder = vi.fn()
+  const hitTestDisplayed = vi.fn().mockReturnValue('face')
+  const toDocumentPoint = vi.fn()
+  const query = createFrameQuery({
+    getPaintOrder,
+    getPartVertices,
+    hitTestDisplayed,
+    toDocumentPoint,
+  })
+  const vertices = new Float32Array([0, 0, 1, 0, 0, 1])
+  query.update(createDocument(vertices), createState(), undefined)
+
+  expect(hitTestDisplayed).not.toHaveBeenCalled()
+  expect(getPartVertices).not.toHaveBeenCalled()
+  expect(getPaintOrder).not.toHaveBeenCalled()
+  const point = {x: 1, y: 2}
+  expect(query.hitTest(point)).toBe('face')
+  expect(hitTestDisplayed).toHaveBeenCalledWith(point)
+  query.clearGeometry()
+  expect(query.hitTest(point)).toBeUndefined()
 })

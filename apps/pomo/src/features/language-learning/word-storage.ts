@@ -10,11 +10,10 @@ import {
   normalizeLanguageLearningWordUnicodeValue,
 } from './word-schema'
 
-const STORAGE_KEY = 'pomo:language-learning:words:v1'
+export const LANGUAGE_LEARNING_WORDS_STORAGE_KEY = 'pomo:language-learning:words:v1'
 export const LANGUAGE_LEARNING_WORDS_CHANGED_EVENT = 'pomo:language-learning:words-changed'
 const storedWordsSchema = z.array(languageLearningWordSchema).readonly()
-const normalizeLanguageLearningWordValue = (value: string): string =>
-  value.trim().toLocaleLowerCase()
+const normalizeLanguageLearningWordValue = (value: string): string => value.trim().toLowerCase()
 const normalizeAppendedLanguageLearningWordValue = (value: string): string =>
   normalizeLanguageLearningWordUnicodeValue(normalizeLanguageLearningWordValue(value))
 
@@ -25,7 +24,7 @@ export interface AppendLanguageLearningWordsResult {
 
 const getCollectionStorage = (options?: LanguageLearningStorageOptions) =>
   createCollectionStorage({
-    key: STORAGE_KEY,
+    key: LANGUAGE_LEARNING_WORDS_STORAGE_KEY,
     onChange: () => {
       const events = options?.events ?? globalThis
       events.dispatchEvent(new CustomEvent(LANGUAGE_LEARNING_WORDS_CHANGED_EVENT))
@@ -42,7 +41,8 @@ const deduplicateLanguageLearningWords = (
 
 export const readLanguageLearningWords = (
   options?: LanguageLearningStorageOptions,
-): ReadonlyArray<LanguageLearningWord> => getCollectionStorage(options).read()
+): ReadonlyArray<LanguageLearningWord> =>
+  deduplicateLanguageLearningWords(getCollectionStorage(options).read())
 
 export const writeLanguageLearningWords = (
   values: ReadonlyArray<LanguageLearningWord>,

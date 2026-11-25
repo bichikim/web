@@ -7,6 +7,7 @@ import {
   DEFAULT_BACKGROUND,
 } from '@winter-love/wallpaper/model'
 import {createSerialTaskQueue, type SerialTaskQueue} from 'src/utils/create-serial-task-queue'
+import {parseStorageJson} from 'src/utils/runtime-storage/parse-storage-json'
 
 const STORAGE_KEY = 'pomo:background:v1'
 const CACHE_NAME = 'pomo-background-v1'
@@ -68,28 +69,19 @@ export const createNativeRepository = (
       : getInjectedNativeStorageCoordinator(options.storage))
   const getMediaUrl = options.mediaUrl ?? getDefaultMediaUrl
   const read = async (): Promise<BackgroundSnapshot> => {
-    const {storage} = options
-    if (storage !== undefined) {
-      const value = await storage.getItem(STORAGE_KEY)
-      return value === null
-        ? {items: [], preferences: DEFAULT_BACKGROUND}
-        : backgroundSnapshotSchema.parse(JSON.parse(value))
-    }
-    const defaultStorage = await getDefaultStorage()
-    const value = await defaultStorage.getItem(STORAGE_KEY)
-    return value === null
-      ? {items: [], preferences: DEFAULT_BACKGROUND}
-      : backgroundSnapshotSchema.parse(JSON.parse(value))
+    const storage = options.storage ?? (await getDefaultStorage())
+    const value = await storage.getItem(STORAGE_KEY)
+    return (
+      parseStorageJson(value, (json) => backgroundSnapshotSchema.parse(json)) ?? {
+        items: [],
+        preferences: DEFAULT_BACKGROUND,
+      }
+    )
   }
   const write = async (snapshot: BackgroundSnapshot) => {
     const value = JSON.stringify(backgroundSnapshotSchema.parse(snapshot))
-    const {storage} = options
-    if (storage === undefined) {
-      const defaultStorage = await getDefaultStorage()
-      await defaultStorage.setItem(STORAGE_KEY, value)
-    } else {
-      await storage.setItem(STORAGE_KEY, value)
-    }
+    const storage = options.storage ?? (await getDefaultStorage())
+    await storage.setItem(STORAGE_KEY, value)
     listeners.forEach((refresh) => refresh())
   }
   const mutate = (operation: () => Promise<void>) => coordinator.run(operation)

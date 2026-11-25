@@ -1,6 +1,7 @@
-import type {LipSyncWeights} from './types'
+import type {LipSyncMotion, LipSyncPose, LipSyncWeights} from './types'
 import {isTauri} from '@tauri-apps/api/core'
 import {emitTo, listen} from '@tauri-apps/api/event'
+import {getCurrentWindow} from '@tauri-apps/api/window'
 import {
   LIP_SYNC_SHAPES,
   type LipSyncShape,
@@ -12,10 +13,21 @@ export interface LipSyncFrame {
   readonly source: Exclude<LipSyncSource, 'off'>
   readonly level: number
   readonly weights?: LipSyncWeights
+  readonly openingWeights?: LipSyncWeights
   readonly shape?: LipSyncShape | null
+  readonly motion?: LipSyncMotion
 }
 const EVENT = 'poffo-lipsync'
 const WEIGHT_TOLERANCE = 0.000001
+const isLevel = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
+const isMotion = (value: unknown): value is LipSyncMotion =>
+  value !== null &&
+  typeof value === 'object' &&
+  'phase' in value &&
+  (value.phase === 'prepare' || value.phase === 'hold' || value.phase === 'release') &&
+  'weight' in value &&
+  isLevel(value.weight)
 const isWeights = (value: unknown): value is LipSyncWeights =>
   value !== null &&
   typeof value === 'object' &&
@@ -36,37 +48,21 @@ const isFrame = (value: unknown): value is LipSyncFrame =>
   'widgetId' in value &&
   typeof value.widgetId === 'string' &&
   'source' in value &&
-  (value.source === 'voice' || value.source === 'speech') &&
+  (value.source === 'voice' || value.source === 'speech' || value.source === 'microphone') &&
   'level' in value &&
-  typeof value.level === 'number' &&
-  Number.isFinite(value.level) &&
-  value.level >= 0 &&
-  value.level <= 1 &&
+  isLevel(value.level) &&
   (!('weights' in value) || isWeights(value.weights)) &&
+  (!('openingWeights' in value) || isWeights(value.openingWeights)) &&
+  (!('motion' in value) || isMotion(value.motion)) &&
   (!('shape' in value) ||
     value.shape === null ||
     LIP_SYNC_SHAPES.some((shape) => shape === value.shape))
 
-const send = async (frame: LipSyncFrame) => {
-  if (!isTauri()) {
-    globalThis.dispatchEvent(new CustomEvent(EVENT, {detail: frame}))
-    return
-  }
-  const deliveries = await Promise.allSettled([
-    emitTo(`poffo-widget-${frame.widgetId}`, EVENT, frame),
-    emitTo('manager', EVENT, frame),
-  ])
-  const failures = deliveries.filter((delivery) => delivery.status === 'rejected')
-  if (failures.length > 0) {
-    throw new AggregateError(
-      failures.map((delivery) => delivery.reason),
-      'Poffo lip sync delivery failed',
-    )
-  }
-}
+const sendLocal = (frame: LipSyncFrame) =>
+  globalThis.dispatchEvent(new CustomEvent(EVENT, {detail: frame}))
 
-/** Coalesces pending levels while preserving delivery order to the character and its preview. */
-export const createLipSyncPublisher = (widgetId: string) => {
+/** Keeps one destination ordered without delaying other destinations. */
+const createNativeDelivery = (label: string) => {
   let pending: LipSyncFrame | null = null
   let sending = false
   const drain = async () => {
@@ -75,9 +71,8 @@ export const createLipSyncPublisher = (widgetId: string) => {
       while (pending !== null) {
         const frame = pending
         pending = null
-        // Each native delivery must finish before its replacement, including the closing zero.
-        // oxlint-disable-next-line no-await-in-loop
-        await send(frame).catch((cause: unknown) =>
+        // oxlint-disable-next-line no-await-in-loop -- Each destination preserves its own closing pose.
+        await emitTo(label, EVENT, frame).catch((cause: unknown) =>
           console.error('Poffo lip sync delivery failed', cause),
         )
       }
@@ -85,22 +80,39 @@ export const createLipSyncPublisher = (widgetId: string) => {
       sending = false
     }
   }
+  return (frame: LipSyncFrame) => {
+    pending = frame
+    if (!sending) {
+      drain().catch((cause: unknown) => console.error('Poffo lip sync delivery failed', cause))
+    }
+  }
+}
+
+/** Delivers local poses immediately; remote destinations independently coalesce pending frames. */
+export const createLipSyncPublisher = (widgetId: string) => {
+  const targets = [`poffo-widget-${widgetId}`, 'manager']
+  const native = isTauri()
+  const local = native ? getCurrentWindow().label : undefined
+  const deliver = native ? targets.filter((label) => label !== local).map(createNativeDelivery) : []
   return (
     source: LipSyncFrame['source'],
     level: number,
     shape?: LipSyncShape | null,
-    weights?: LipSyncWeights,
+    pose?: LipSyncPose,
   ) => {
-    pending = {
-      ...(weights === undefined ? {} : {weights}),
+    const frame: LipSyncFrame = {
+      ...(pose?.weights === undefined ? {} : {weights: pose.weights}),
+      ...(pose?.openingWeights === undefined ? {} : {openingWeights: pose.openingWeights}),
+      ...(pose?.motion === undefined ? {} : {motion: pose.motion}),
       level: Number.isFinite(level) ? Math.max(0, Math.min(1, level)) : 0,
       shape: shape ?? null,
       source,
       widgetId,
     }
-    if (!sending) {
-      drain().catch((cause: unknown) => console.error('Poffo lip sync delivery failed', cause))
+    if (!native || (local !== undefined && targets.includes(local))) {
+      sendLocal(frame)
     }
+    deliver.forEach((send) => send(frame))
   }
 }
 
@@ -114,14 +126,23 @@ export const subscribeLipSync = async (
       receive(value)
     }
   }
-  if (isTauri()) {
-    return listen<unknown>(EVENT, ({payload}) => accept(payload))
-  }
   const handle = (event: Event) => {
     if (event instanceof CustomEvent) {
       accept(event.detail)
     }
   }
+  const stopLocal = () => globalThis.removeEventListener(EVENT, handle)
   globalThis.addEventListener(EVENT, handle)
-  return () => globalThis.removeEventListener(EVENT, handle)
+  try {
+    const stopNative = isTauri()
+      ? await listen<unknown>(EVENT, ({payload}) => accept(payload))
+      : undefined
+    return () => {
+      stopLocal()
+      stopNative?.()
+    }
+  } catch (cause) {
+    stopLocal()
+    throw cause
+  }
 }

@@ -1,0 +1,53 @@
+{
+  "beforeModelSha256": "e1f7c393db0b249454ac9d2b1179f739319cecc28c64d5dc2c35324c539d900f",
+  "modelSha256": "af776c169d48771e5c0799433b39c187ecd0ac27655fbd35e3a4cf1261f9f9ca",
+  "modelBytes": 18188649,
+  "changedBindings": [
+    "coat-free:notes-left:elbow-center:activation",
+    "coat-free:notes-right:elbow-center:activation",
+    "coat-free:notes-right:wrist:activation"
+  ],
+  "scope": "Keep contact active independently of notebook action opacity; retain the coat parameter.",
+  "allOtherBindingsMeshesTexturesUvsGluePhysicsExpressionsMotionsUnchanged": true,
+  "cause": "Notebook opacity Param89 also scaled contact strength. The hand and elbow became visible before the contacts reached full strength.",
+  "mechanism": "Remove only Param89 from the three contact activation grids. Retain Param49 and the original coat-on and coat-off endpoint keyforms.",
+  "review": {
+    "before": "notebook-transition-before.png",
+    "after": "notebook-transition-after.png",
+    "scope": "Real expression fade-in frames captured from the player, with authored physics enabled."
+  },
+  "checks": {
+    "browserRegression": {
+      "files": 10,
+      "passed": 18,
+      "failed": 0,
+      "engines": ["Chromium", "WebKit"],
+      "buffering": [false, true],
+      "transitions": [
+        "enter notes",
+        "cross-fade to coffee",
+        "interrupted entry",
+        "reverse before entry completes",
+        "re-enter while writing"
+      ],
+      "scope": "Intermediate displayed-frame contacts, original arm shape, painted wrist coverage, live head physics, and coat visibility"
+    },
+    "maximumContactGap": 0.01,
+    "contactGapUnit": "document coordinates",
+    "oxlint": "passed",
+    "oxfmt": "passed",
+    "wallpaperTypecheck": "passed",
+    "wallpaperBuild": "passed",
+    "finalTransitionRerun": {
+      "passed": 4,
+      "failed": 0,
+      "engines": ["Chromium", "WebKit"]
+    },
+    "nativeApp": {
+      "restarted": true,
+      "servedModelSha256": "af776c169d48771e5c0799433b39c187ecd0ac27655fbd35e3a4cf1261f9f9ca",
+      "settledNotebookScreenshot": "notebook-transition-native.png",
+      "transitionVerification": "Intermediate displayed-frame contacts were measured in the real player in Chromium and WebKit. The native widget was reloaded and its settled notebook pose was captured."
+    }
+  }
+}

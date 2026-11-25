@@ -4,9 +4,12 @@ import {TEXT_MESSAGE_ROLES} from '../ai-job/text-message-roles'
 
 export const CLOUD_TEXT_DAILY_LIMIT = 3
 export const CLOUD_TEXT_MODEL = 'gpt-6-luna'
-const MAXIMUM_MESSAGES = 64
-const MAXIMUM_MESSAGE_LENGTH = 12_000
-const MAXIMUM_INPUT_LENGTH = 48_000
+export const CLOUD_TEXT_LIMITS = {
+  bodyBytes: 200_000,
+  inputCharacters: 48_000,
+  messageCharacters: 12_000,
+  messages: 64,
+} as const
 const MAXIMUM_OUTPUT_TOKENS = 4096
 
 const cloudTextUsageBase = z.object({
@@ -28,16 +31,18 @@ export const cloudTextRequestSchema = z.object({
   messages: z
     .array(
       z.object({
-        content: z.string().min(1).max(MAXIMUM_MESSAGE_LENGTH),
+        content: z.string().min(1).max(CLOUD_TEXT_LIMITS.messageCharacters),
         role: z.enum(TEXT_MESSAGE_ROLES),
       }),
     )
     .min(1)
-    .max(MAXIMUM_MESSAGES)
+    .max(CLOUD_TEXT_LIMITS.messages)
     .refine(
-      (messages) => sumBy(messages, (message) => message.content.length) <= MAXIMUM_INPUT_LENGTH,
+      (messages) =>
+        sumBy(messages, (message) => message.content.length) <= CLOUD_TEXT_LIMITS.inputCharacters,
     ),
   requestId: z.uuid(),
+  temperature: z.number().min(0).max(2).optional(),
 })
 export type CloudTextRequest = z.infer<typeof cloudTextRequestSchema>
 

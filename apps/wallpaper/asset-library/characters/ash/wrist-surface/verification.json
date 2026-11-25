@@ -1,0 +1,31 @@
+{
+  "sourceSha256": "7a4a64a0cf53eec42e8023cd94433d94f9c2d5db6b09a847b150af65a32b6be8",
+  "sha256": "9a9cd65b002c81d34b7ffdbdd3396f286623945c9c3af131fc4970e585cf78bf",
+  "bytes": 20570575,
+  "records": [
+    {
+      "partId": "coat-free:noodles-left:hand",
+      "dimensions": [232, 604],
+      "changedPixels": 9305,
+      "maximumChannelDifference": 19,
+      "alphaChanged": 0,
+      "protectedLinePixelsChanged": 0,
+      "outsideMaskChanged": 0
+    },
+    {
+      "partId": "coat-free:noodles-left:ArtMesh900",
+      "dimensions": [265, 355],
+      "changedPixels": 91,
+      "maximumChannelDifference": 26,
+      "alphaChanged": 0,
+      "protectedLinePixelsChanged": 0,
+      "outsideMaskChanged": 0,
+      "bodyRowsUnchangedFrom": 80
+    }
+  ],
+  "verifiedSerializedModel": true,
+  "meshAndRigChanged": false,
+  "twoPartStructurePreserved": true,
+  "handComfyPromptId": "3e579e22-953d-4d97-9f29-30ea8ba0449b",
+  "armComfyPromptId": "48ac5638-df34-40c1-b470-da9d33b4398b"
+}

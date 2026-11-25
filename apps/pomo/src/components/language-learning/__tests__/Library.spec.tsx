@@ -274,3 +274,13 @@ it('should filter an edited learning dialogue by its current language', () => {
 
   result.unmount()
 })
+
+it('should distinguish an empty language filter from an empty sentence library', () => {
+  const {view} = renderLearningLibrary()
+  fireEvent.change(screen.getByRole('combobox', {name: '학습 언어'}), {target: {value: 'ko'}})
+  expect(screen.getByText('선택한 언어로 저장한 문장이 없어요.')).toBeVisible()
+  expect(screen.queryByText('저장된 학습 문장이 없어요.')).toBeNull()
+  fireEvent.change(screen.getByRole('combobox', {name: '학습 언어'}), {target: {value: 'ja'}})
+  expect(screen.getByText('家に帰ります。')).toBeVisible()
+  view.unmount()
+})

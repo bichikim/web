@@ -1,0 +1,12 @@
+diff --git a/src/Track.ts b/src/Track.ts
+index 8bdb59aa2886729d2186b615788982338a8277bd..85851fa6e889b320abd67625d334ed64ba53e73f 100644
+--- a/src/Track.ts
++++ b/src/Track.ts
+@@ -96,6 +96,7 @@ export class Track {
+ 				// Find the corresponding note off.
+ 				const offIndex = noteOffs.findIndex(
+ 					(note) =>
++						note.channel === currentNote.channel &&
+ 						note.noteNumber === currentNote.noteNumber &&
+ 						note.absoluteTime >= currentNote.absoluteTime
+ 				);

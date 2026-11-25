@@ -1,11 +1,115 @@
 /** @vitest-environment jsdom */
 import 'fake-indexeddb/auto'
 import Dexie from 'dexie'
-import {afterEach, expect, it} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
 import {createLibraryRepository} from '../library-repository'
 import {DEFAULT_POFFO_VOICE} from '../voice'
+import {DEFAULT_POFFO_SPEECH} from '../library-model'
+import {trackingProfile} from '../tracking-profile'
 
 const repositories: ReturnType<typeof createLibraryRepository>[] = []
+
+it('should persist separate calibration and bindings for each input mode across reopen', async () => {
+  const repository = open()
+  const widget = await repository.addWidget('character')
+  await Promise.all(
+    (
+      [
+        ['cursor', 1],
+        ['camera', 0.4],
+        ['camera-pose', 2],
+      ] as const
+    ).map(async ([mode, speed]) => {
+      await repository.configureTracking(
+        widget.id,
+        {bodyFollowSpeed: speed, eyeCenterX: speed, headFollowSpeed: speed},
+        mode,
+      )
+      await repository.bindWidget(widget.id, {headX: {parameterId: mode}}, mode)
+    }),
+  )
+  repository.close()
+  const saved = (await open().read()).widgets[0]!
+  expect(saved.trackingProfiles).toEqual({
+    camera: {
+      bindings: {headX: {parameterId: 'camera'}},
+      options: {bodyFollowSpeed: 0.4, eyeCenterX: 0.4, headFollowSpeed: 0.4},
+    },
+    'camera-pose': {
+      bindings: {headX: {parameterId: 'camera-pose'}},
+      options: {bodyFollowSpeed: 2, eyeCenterX: 2, headFollowSpeed: 2},
+    },
+    cursor: {
+      bindings: {headX: {parameterId: 'cursor'}},
+      options: {bodyFollowSpeed: 1, eyeCenterX: 1, headFollowSpeed: 1},
+    },
+  })
+})
+
+it('should persist each bubble type across reopen without changing another widget', async () => {
+  const repository = open()
+  const first = await repository.addWidget('character')
+  const second = await repository.addWidget('character')
+  await repository.configureSpeech(first.id, {
+    ...DEFAULT_POFFO_SPEECH,
+    showCharacter: false,
+    showCodex: true,
+  })
+  await repository.configureSpeech(second.id, {
+    ...DEFAULT_POFFO_SPEECH,
+    showCharacter: true,
+    showCodex: false,
+  })
+  repository.close()
+  const saved = (await open().read()).widgets
+  expect(saved.find((widget) => widget.id === first.id)?.speech).toMatchObject({
+    enabled: true,
+    showCharacter: false,
+    showCodex: true,
+  })
+  expect(saved.find((widget) => widget.id === second.id)?.speech).toMatchObject({
+    enabled: true,
+    showCharacter: true,
+    showCodex: false,
+  })
+})
+
+it('should enable local narration and voice lip sync by default across reopen', async () => {
+  const repository = open()
+  const widget = await repository.addWidget('character')
+  repository.close()
+  const saved = (await open().read()).widgets.find((item) => item.id === widget.id)!
+  expect(saved.speech?.voice).toMatchObject({enabled: true, language: 'ko', provider: 'local'})
+  expect(saved.speech?.lipsync).toMatchObject({gain: 1.5, source: 'voice'})
+})
+
+it('should fill missing narration preferences without re-enabling explicitly disabled inputs', async () => {
+  const repository = open()
+  const missing = await repository.addWidget('missing')
+  const disabled = await repository.addWidget('disabled')
+  await repository.configureSpeech(missing.id, {enabled: true, x: 0.2, y: 0.3})
+  await repository.configureSpeech(disabled.id, {
+    enabled: true,
+    lipsync: {source: 'off'},
+    voice: {...DEFAULT_POFFO_VOICE, enabled: false, voice: 'Hana'},
+    x: 0.4,
+    y: 0.5,
+  })
+  repository.close()
+  const widgets = (await open().read()).widgets
+  expect(widgets.find((item) => item.id === missing.id)?.speech).toMatchObject({
+    lipsync: {source: 'voice'},
+    voice: {enabled: true},
+    x: 0.2,
+    y: 0.3,
+  })
+  expect(widgets.find((item) => item.id === disabled.id)?.speech).toMatchObject({
+    lipsync: {source: 'off'},
+    voice: {enabled: false, voice: 'Hana'},
+    x: 0.4,
+    y: 0.5,
+  })
+})
 
 it('should persist independent state connections alongside existing lip-sync and voice preferences', async () => {
   const repository = open()
@@ -85,6 +189,7 @@ it('should persist independent speech visibility and position without changing t
     tracking: 'cursor',
   })
   expect(widgets.find((widget) => widget.id === second.id)?.speech).toEqual({
+    ...DEFAULT_POFFO_SPEECH,
     enabled: true,
     x: 1.2,
     y: 0.1,
@@ -122,7 +227,13 @@ it('should persist per-widget tracking choices across reopen without reviving re
   })
   repository.close()
   const reopened = open()
-  expect((await reopened.read()).widgets).toEqual(
+  expect(
+    (await reopened.read()).widgets.map((widget) => ({
+      ...widget,
+      trackingBindings: trackingProfile(widget).bindings,
+      trackingOptions: trackingProfile(widget).options,
+    })),
+  ).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
         id: first.id,
@@ -179,6 +290,7 @@ it('should remember each monitor website and deduplicate visits across reopen', 
   expect(snapshot.history).toEqual([
     {url: 'https://example.com/', visitedAt: 3},
     {url: 'https://example.org/', visitedAt: 2},
+    {url: 'https://bruno-simon.com/', visitedAt: 0},
   ])
   expect(snapshot.websites).toEqual([
     {monitorId: 'first', url: 'https://example.com/'},
@@ -192,16 +304,61 @@ it('should delete one history entry without clearing the remembered address or o
   await repository.visit({monitorId: 'first', url: 'https://example.org', visitedAt: 2})
   await repository.removeVisit('https://example.org/')
   const snapshot = await repository.read()
-  expect(snapshot.history).toEqual([{url: 'https://example.com/', visitedAt: 1}])
+  expect(snapshot.history).toEqual([
+    {url: 'https://example.com/', visitedAt: 1},
+    {url: 'https://bruno-simon.com/', visitedAt: 0},
+  ])
   expect(snapshot.websites).toEqual([{monitorId: 'first', url: 'https://example.org/'}])
 })
 
 it('should reject a non-web URL without changing history', async () => {
   const repository = open()
+  const original = (await repository.read()).history
   await expect(
     repository.visit({monitorId: 'first', url: 'file:///tmp/site.html', visitedAt: 1}),
   ).rejects.toThrow()
-  expect((await repository.read()).history).toEqual([])
+  expect((await repository.read()).history).toEqual(original)
+})
+
+it('should offer one example without selecting it and keep its deletion across reopen', async () => {
+  const repository = open()
+  expect((await repository.read()).history).toEqual([
+    {url: 'https://bruno-simon.com/', visitedAt: 0},
+  ])
+  expect((await repository.read()).websites).toEqual([])
+  await repository.removeVisit('https://bruno-simon.com/')
+  repository.close()
+  expect((await open().read()).history).toEqual([])
+})
+
+it('should add the example to a version-one library without replacing existing data', async () => {
+  const legacy = new Dexie('wallpaper-test-library')
+  legacy.version(1).stores({history: '&url,visitedAt', websites: '&monitorId', widgets: '&id'})
+  try {
+    await legacy.table('history').put({url: 'https://example.org/', visitedAt: 12})
+    await legacy.table('websites').put({monitorId: 'monitor', url: 'https://example.org/'})
+    await legacy.table('widgets').put({assetId: 'custom', id: 'existing', x: 3, y: 4})
+  } finally {
+    legacy.close()
+  }
+  const snapshot = await open().read()
+  expect(snapshot.history).toEqual([
+    {url: 'https://example.org/', visitedAt: 12},
+    {url: 'https://bruno-simon.com/', visitedAt: 0},
+  ])
+  expect(snapshot.websites).toEqual([{monitorId: 'monitor', url: 'https://example.org/'}])
+  expect(snapshot.widgets).toMatchObject([{assetId: 'custom', id: 'existing', x: 3, y: 4}])
+})
+
+it('should retain the real visit when the example already exists before upgrading', async () => {
+  const legacy = new Dexie('wallpaper-test-library')
+  legacy.version(1).stores({history: '&url,visitedAt', websites: '&monitorId', widgets: '&id'})
+  try {
+    await legacy.table('history').put({url: 'https://bruno-simon.com/', visitedAt: 42})
+  } finally {
+    legacy.close()
+  }
+  expect((await open().read()).history).toEqual([{url: 'https://bruno-simon.com/', visitedAt: 42}])
 })
 
 it('should persist independent widgets and their positions without reviving a removed widget', async () => {
@@ -276,7 +433,9 @@ it('should load legacy local voices and persist independent ChatGPT selection ac
     provider: 'chatgpt',
     voice: 'Hana',
   })
-  expect(widgets.find((widget) => widget.id === second.id)?.speech?.voice).toBeUndefined()
+  expect(widgets.find((widget) => widget.id === second.id)?.speech?.voice).toEqual(
+    DEFAULT_POFFO_VOICE,
+  )
 })
 
 it('should preserve an explicit per-widget CPU preference across reopening the library', async () => {
@@ -296,7 +455,11 @@ it('should move a bubble without replacing its latest voice and lip sync prefere
   const repository = open()
   const widget = await repository.addWidget('character')
   await repository.moveSpeech(widget.id, {x: -0.25, y: 1.2})
-  expect((await repository.read()).widgets[0].speech).toEqual({enabled: true, x: -0.25, y: 1.2})
+  expect((await repository.read()).widgets[0].speech).toEqual({
+    ...DEFAULT_POFFO_SPEECH,
+    x: -0.25,
+    y: 1.2,
+  })
   await repository.configureSpeech(widget.id, {
     enabled: true,
     lipsync: {source: 'voice'},
@@ -372,7 +535,14 @@ it('should persist a complete connection profile atomically without changing spe
     ],
     tracking: 'cursor',
     trackingBindings: {headX: {inverted: true, parameterId: 'ParamAngleX'}},
-    trackingOptions: {headMaximumX: 18, headMinimumX: -12},
+    trackingOptions: {
+      bodyFollowSpeed: 2.5,
+      bodyScale: 0.6,
+      eyeFollowSpeed: 2,
+      headFollowSpeed: 0.5,
+      headMaximumX: 18,
+      headMinimumX: -12,
+    },
   })
   repository.close()
   const reopened = open()
@@ -386,11 +556,23 @@ it('should persist a complete connection profile atomically without changing spe
     x: 0.3,
     y: 0.4,
   })
-  expect(stored.trackingOptions).toEqual({headMaximumX: 18, headMinimumX: -12})
+  expect(stored.trackingOptions).toEqual({
+    bodyFollowSpeed: 2.5,
+    bodyScale: 0.6,
+    eyeFollowSpeed: 2,
+    headFollowSpeed: 0.5,
+    headMaximumX: 18,
+    headMinimumX: -12,
+  })
   expect(stored.tracking).toBe('cursor')
   expect(stored.trackingBindings?.headX).toEqual({inverted: true, parameterId: 'ParamAngleX'})
   await reopened.configureConnections(widget.id, {trackingOptions: {eyeCenterX: 0.2}})
-  expect((await reopened.read()).widgets[0]?.tracking).toBe('cursor')
+  expect((await reopened.read()).widgets[0]).toMatchObject({
+    tracking: 'cursor',
+    trackingOptions: {eyeCenterX: 0.2, headMaximumX: 18, headMinimumX: -12},
+  })
+  await reopened.configureConnections(widget.id, {trackingOptions: {eyeCenterX: 0.3}}, 'replace')
+  expect((await reopened.read()).widgets[0]?.trackingOptions).toEqual({eyeCenterX: 0.3})
 })
 
 it('should retain explicit empty bindings when initializing defaults', async () => {
@@ -414,6 +596,78 @@ it('should retain explicit empty bindings when initializing defaults', async () 
     'missing',
   )
   expect((await reopened.read()).widgets[0]?.speech?.semanticBindings).toEqual([])
+})
+
+it('should serialize conditional migrations against the latest stored widget', async () => {
+  const repository = open()
+  const other = open()
+  const widget = await repository.addWidget('character')
+  await repository.configureConnections(widget.id, {
+    trackingBindings: {headX: {inverted: true, parameterId: 'custom-head'}},
+  })
+  const migrate = vi.fn((current: typeof widget) =>
+    current.trackingBindingsVersion === 1
+      ? undefined
+      : {
+          trackingBindings: {
+            ...current.trackingBindings,
+            headX: {...current.trackingBindings?.headX, blend: 'add' as const},
+          },
+          trackingBindingsVersion: 1,
+        },
+  )
+  await Promise.all([
+    repository.migrateConnections(widget.id, migrate),
+    other.migrateConnections(widget.id, migrate),
+  ])
+  expect(migrate.mock.calls.map(([current]) => current.trackingBindingsVersion)).toEqual([
+    undefined,
+    1,
+  ])
+  expect((await repository.read()).widgets[0]).toMatchObject({
+    trackingBindings: {headX: {blend: 'add', inverted: true, parameterId: 'custom-head'}},
+    trackingBindingsVersion: 1,
+  })
+})
+
+it('should skip a removed widget during migration while explicit configuration still rejects it', async () => {
+  const repository = open()
+  const widget = await repository.addWidget('character')
+  await repository.removeWidget(widget.id)
+  const migrate = vi.fn(() => ({trackingBindingsVersion: 1}))
+  await repository.migrateConnections(widget.id, migrate)
+  expect(migrate).not.toHaveBeenCalled()
+  expect((await repository.read()).widgets).toEqual([])
+  await expect(repository.configureConnections(widget.id, {})).rejects.toThrow(
+    'Poffo widget is unavailable',
+  )
+})
+
+it('should leave stored settings unchanged when a migration returns no patch', async () => {
+  const repository = open()
+  const widget = await repository.addWidget('character')
+  await repository.configureConnections(widget.id, {trackingBindingsVersion: 1})
+  const before = await repository.read()
+  await repository.migrateConnections(widget.id, () => undefined)
+  expect(await repository.read()).toEqual(before)
+})
+
+it('should reject an invalid migration without changing its revision or bindings', async () => {
+  const repository = open()
+  const widget = await repository.addWidget('character')
+  await repository.configureConnections(widget.id, {
+    trackingBindings: {headX: {parameterId: 'original'}},
+  })
+  const before = await repository.read()
+  await expect(
+    repository.migrateConnections(widget.id, () => ({
+      trackingBindings: {headX: {parameterId: 'changed'}},
+      trackingBindingsVersion: -1,
+    })),
+  ).rejects.toThrow()
+  expect(await repository.read()).toEqual(before)
+  await repository.migrateConnections(widget.id, () => ({trackingBindingsVersion: 1}))
+  expect((await repository.read()).widgets[0]?.trackingBindingsVersion).toBe(1)
 })
 
 it('should reject invalid connections before replacing stored values', async () => {

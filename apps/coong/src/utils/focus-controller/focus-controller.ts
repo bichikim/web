@@ -201,7 +201,9 @@ export const createFocusController = (
   //
   return {
     active,
-    deepPosition: _deepPosition,
+    get deepPosition() {
+      return _deepPosition
+    },
     moveFocus,
     positionMap: _positionMap,
     registerFocus,

@@ -13,6 +13,8 @@ import {
   type PoffoTrackingBindings,
   type PoffoTrackingOptions,
   poffoTrackingOptionsSchema,
+  type PoffoTrackingProfiles,
+  poffoTrackingProfilesSchema,
   poffoTrackingSchema,
 } from './tracking'
 
@@ -27,6 +29,8 @@ export interface PuppetWallpaper {
   readonly tracking?: PoffoTracking
   readonly trackingBindings?: PoffoTrackingBindings
   readonly trackingOptions?: PoffoTrackingOptions
+  /** Separate calibration and rig connections for each tracking input. */
+  readonly trackingProfiles?: PoffoTrackingProfiles
 }
 
 export interface PoffoPlacement {
@@ -89,6 +93,7 @@ export const wallpaperContentSchema: z.ZodType<WallpaperContent> = z.discriminat
     tracking: poffoTrackingSchema.optional(),
     trackingBindings: poffoBindingsSchema.optional(),
     trackingOptions: poffoTrackingOptionsSchema.optional(),
+    trackingProfiles: poffoTrackingProfilesSchema.optional(),
   }),
   z.object({
     css: z.string().optional(),

@@ -1,5 +1,6 @@
 import {type Accessor, createSignal, onCleanup} from 'solid-js'
 import {createLibraryRepository} from '@winter-love/wallpaper/settings/library-repository'
+import {DEFAULT_POFFO_LIPSYNC} from '@winter-love/wallpaper/settings/lipsync'
 import {
   type ConnectionProfile,
   MAX_CONNECTION_BYTES,
@@ -9,6 +10,8 @@ import type {PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
 import type {TrackingParameter} from '../tracking/types'
 import {builtinConnectionProfile} from './builtin-profile'
 import type {CharacterAction} from '../semantics/types'
+import {poffoTrackingSchema} from '@winter-love/wallpaper/settings/tracking'
+import {trackingProfile} from '@winter-love/wallpaper/settings/tracking-profile'
 
 interface UseConnectionProfilesOptions {
   readonly widget: Accessor<PoffoWidget | undefined>
@@ -83,7 +86,7 @@ export const useConnectionProfiles = (options: UseConnectionProfilesOptions) => 
         setError(IMPORT_ERRORS[parsed.reason])
         return
       }
-      await repository.configureConnections(widget.id, parsed.profile.connections)
+      await repository.configureConnections(widget.id, parsed.profile.connections, 'replace')
     })
   }
   const exportFile = () => {
@@ -96,12 +99,22 @@ export const useConnectionProfiles = (options: UseConnectionProfilesOptions) => 
       assetId: widget.assetId,
       connections: {
         agentBindings: widget.speech?.agentBindings ?? {},
-        lipsync: widget.speech?.lipsync ?? {source: 'off'},
+        lipsync: widget.speech?.lipsync ?? DEFAULT_POFFO_LIPSYNC,
         randomActions: widget.speech?.randomActions,
         semanticBindings: widget.speech?.semanticBindings ?? [],
+        semanticBindingsVersion: widget.speech?.semanticBindingsVersion,
+        touch: widget.speech?.touch,
+        touchBindingsVersion: widget.speech?.touchBindingsVersion,
         tracking: widget.tracking ?? 'off',
-        trackingBindings: widget.trackingBindings ?? {},
-        trackingOptions: widget.trackingOptions ?? {},
+        trackingBindings: trackingProfile(widget).bindings ?? {},
+        trackingBindingsVersion: widget.trackingBindingsVersion,
+        trackingOptions: trackingProfile(widget).options ?? {},
+        trackingProfiles: Object.fromEntries(
+          poffoTrackingSchema.options.map((mode) => {
+            const profile = trackingProfile(widget, mode)
+            return [mode, {bindings: profile.bindings ?? {}, options: profile.options ?? {}}]
+          }),
+        ),
       },
       format: 'poffo-connections',
       version: 1,
@@ -127,7 +140,7 @@ export const useConnectionProfiles = (options: UseConnectionProfilesOptions) => 
     const widget = options.widget()
     return profile === undefined || widget === undefined
       ? pending
-      : run(() => repository.configureConnections(widget.id, profile.connections))
+      : run(() => repository.configureConnections(widget.id, profile.connections, 'replace'))
   }
   return {busy, error, exportFile, hasBuiltin: () => builtin() !== undefined, importFile, restore}
 }

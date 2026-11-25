@@ -1,5 +1,5 @@
 import * as m from '@paraglide/message'
-import {getLocale} from '@paraglide/runtime'
+import {getAppLocale} from 'src/features/locale'
 import {createMemo, createSignal, onCleanup} from 'solid-js'
 
 import {createFocusRoomTourAudioPlayer} from '../../features/focus-room-tour-audio'
@@ -166,109 +166,107 @@ const createSettingsTourSteps = (
   ] satisfies ReadonlyArray<PTourStep>
 
 export const useStudioTour = () => {
-  const locale = getLocale()
-  const videoDirectory = locale === 'en' ? '/tour/en' : '/tour'
-  const audioDirectory = `/tour/audio/${locale}`
   const [isOpen, setIsOpen] = createSignal(false)
   const [studioElement, setStudioElement] = createSignal<HTMLElement | null>(null)
   const audioPlayer = createFocusRoomTourAudioPlayer()
-  const getAudio = (stepId: string) => ({source: `${audioDirectory}/${stepId}.mp3`})
-  const steps = createMemo(
-    () =>
-      [
-        {
-          audio: getAudio('pomodoro'),
-          description: m.tour_pomodoro_description(),
-          id: 'pomodoro',
-          scrollIntoView: true,
-          title: m.tour_pomodoro_title(),
+  const steps = createMemo(() => {
+    const locale = getAppLocale()
+    const videoDirectory = locale === 'en' ? '/tour/en' : '/tour'
+    const getAudio = (stepId: string) => ({source: `/tour/audio/${locale}/${stepId}.mp3`})
+    return [
+      {
+        audio: getAudio('pomodoro'),
+        description: m.tour_pomodoro_description(),
+        id: 'pomodoro',
+        scrollIntoView: true,
+        title: m.tour_pomodoro_title(),
+      },
+      {
+        audio: getAudio('pomodoro-control'),
+        description: m.tour_pomodoro_control_description(),
+        id: 'pomodoro-control',
+        scrollIntoView: true,
+        title: m.tour_pomodoro_title(),
+        video: {
+          label: m.tour_pomodoro_control_video_label(),
+          source: `${videoDirectory}/pomodoro-control.webm`,
         },
-        {
-          audio: getAudio('pomodoro-control'),
-          description: m.tour_pomodoro_control_description(),
-          id: 'pomodoro-control',
-          scrollIntoView: true,
-          title: m.tour_pomodoro_title(),
-          video: {
-            label: m.tour_pomodoro_control_video_label(),
-            source: `${videoDirectory}/pomodoro-control.webm`,
-          },
+      },
+      {
+        audio: getAudio('pomodoro-detail'),
+        description: m.tour_pomodoro_detail_description(),
+        id: 'pomodoro-detail',
+        scrollIntoView: true,
+        title: m.tour_pomodoro_title(),
+        video: {
+          label: m.tour_pomodoro_detail_video_label(),
+          source: `${videoDirectory}/pomodoro-detail.webm`,
         },
-        {
-          audio: getAudio('pomodoro-detail'),
-          description: m.tour_pomodoro_detail_description(),
-          id: 'pomodoro-detail',
-          scrollIntoView: true,
-          title: m.tour_pomodoro_title(),
-          video: {
-            label: m.tour_pomodoro_detail_video_label(),
-            source: `${videoDirectory}/pomodoro-detail.webm`,
-          },
+      },
+      {
+        audio: getAudio('pomodoro-duration'),
+        description: m.tour_pomodoro_duration_description(),
+        id: 'pomodoro-duration',
+        scrollIntoView: true,
+        title: m.tour_pomodoro_title(),
+        video: {
+          label: m.tour_pomodoro_duration_video_label(),
+          source: `${videoDirectory}/pomodoro-duration.webm`,
         },
-        {
-          audio: getAudio('pomodoro-duration'),
-          description: m.tour_pomodoro_duration_description(),
-          id: 'pomodoro-duration',
-          scrollIntoView: true,
-          title: m.tour_pomodoro_title(),
-          video: {
-            label: m.tour_pomodoro_duration_video_label(),
-            source: `${videoDirectory}/pomodoro-duration.webm`,
-          },
+      },
+      {
+        audio: getAudio('music'),
+        description: m.tour_music_description(),
+        id: 'music',
+        scrollIntoView: true,
+        title: m.tour_music_title(),
+      },
+      {
+        audio: getAudio('music-album'),
+        description: m.tour_music_album_description(),
+        id: 'music-album',
+        scrollIntoView: true,
+        title: m.tour_music_title(),
+        video: {
+          label: m.tour_music_album_video_label(),
+          source: `${videoDirectory}/add-album.webm`,
         },
-        {
-          audio: getAudio('music'),
-          description: m.tour_music_description(),
-          id: 'music',
-          scrollIntoView: true,
-          title: m.tour_music_title(),
+      },
+      {
+        audio: getAudio('music-expand'),
+        description: m.tour_music_expand_description(),
+        id: 'music-expand',
+        scrollIntoView: true,
+        title: m.tour_music_title(),
+        video: {
+          label: m.tour_music_expand_video_label(),
+          source: `${videoDirectory}/expand-player.webm`,
         },
-        {
-          audio: getAudio('music-album'),
-          description: m.tour_music_album_description(),
-          id: 'music-album',
-          scrollIntoView: true,
-          title: m.tour_music_title(),
-          video: {
-            label: m.tour_music_album_video_label(),
-            source: `${videoDirectory}/add-album.webm`,
-          },
-        },
-        {
-          audio: getAudio('music-expand'),
-          description: m.tour_music_expand_description(),
-          id: 'music-expand',
-          scrollIntoView: true,
-          title: m.tour_music_title(),
-          video: {
-            label: m.tour_music_expand_video_label(),
-            source: `${videoDirectory}/expand-player.webm`,
-          },
-        },
-        {
-          audio: getAudio('memory-assist'),
-          description: m.tour_memory_assist_description(),
-          id: 'memory-assist',
-          scrollIntoView: true,
-          title: m.memory_assist_feedback(),
-        },
-        ...createMemoryAssistTourSteps(getAudio, videoDirectory),
-        {
-          audio: getAudio('settings'),
-          description: m.tour_settings_description(),
-          id: 'settings',
-          scrollIntoView: true,
-          title: m.tour_settings_title(),
-        },
-        ...createSettingsTourSteps(getAudio, videoDirectory),
-        {
-          audio: getAudio('completion'),
-          description: m.tour_completion_description(),
-          id: 'completion',
-          title: m.tour_completion_title(),
-        },
-      ] satisfies ReadonlyArray<PTourStep>,
-  )
+      },
+      {
+        audio: getAudio('memory-assist'),
+        description: m.tour_memory_assist_description(),
+        id: 'memory-assist',
+        scrollIntoView: true,
+        title: m.memory_assist_feedback(),
+      },
+      ...createMemoryAssistTourSteps(getAudio, videoDirectory),
+      {
+        audio: getAudio('settings'),
+        description: m.tour_settings_description(),
+        id: 'settings',
+        scrollIntoView: true,
+        title: m.tour_settings_title(),
+      },
+      ...createSettingsTourSteps(getAudio, videoDirectory),
+      {
+        audio: getAudio('completion'),
+        description: m.tour_completion_description(),
+        id: 'completion',
+        title: m.tour_completion_title(),
+      },
+    ] satisfies ReadonlyArray<PTourStep>
+  })
   const getStepElement = (stepId: string) => {
     const selector = STEP_SELECTORS[stepId]
     return selector === undefined ? null : (studioElement()?.querySelector(selector) ?? null)
@@ -284,7 +282,7 @@ export const useStudioTour = () => {
         audioPlayer.play(
           resolveAudioSource({
             documentLocale: document.documentElement.lang,
-            runtimeLocale: getLocale(),
+            runtimeLocale: getAppLocale(),
             source,
           }),
         )

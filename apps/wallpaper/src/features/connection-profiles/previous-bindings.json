@@ -73,5 +73,35 @@
     "excludeText": "제 답변의 오류가 아니라 사용자 입력의 오타예요.\n제가 앞서 설명한 내용은 맞아서 고칠 필요가 없어요.",
     "category": "behavior",
     "exclusiveGroup": "몸동작"
+  },
+  {
+    "id": "ash:walking",
+    "text": "다음 단계로 넘어가 볼게요.\n이어서 진행할게요.\n출발해 볼까요?\n그럼 다음 단계로 이동해서 이어 가겠습니다.\n여기까지 마무리하고 다음 작업을 시작할게요.\n이제 준비가 됐으니 본격적으로 출발해 보죠.",
+    "threshold": 0.845,
+    "enabled": true,
+    "action": {
+      "kind": "motion",
+      "id": "Walk:0"
+    },
+    "parameterId": null,
+    "mode": "toggle",
+    "excludeText": "여기서 그만두고 다음 단계로 이동하지 않겠습니다.\n진행을 멈추고 잠시 쉬는 중이에요.",
+    "category": "behavior",
+    "exclusiveGroup": "몸동작"
+  },
+  {
+    "id": "ash:glasses",
+    "text": "원인을 자세히 분석해 볼게요.\n근거를 비교해서 꼼꼼히 검토할게요.\n자료를 조사해서 확인해 볼게요.\n로그와 설정을 대조해서 원인을 자세히 살펴보겠습니다.\n공식 자료를 확인하고 근거를 비교해 보겠습니다.\n추측하지 않고 실제 수치를 조사해서 판단할게요.",
+    "threshold": 0.819,
+    "enabled": true,
+    "action": {
+      "kind": "expression",
+      "id": "안경"
+    },
+    "parameterId": null,
+    "mode": "toggle",
+    "excludeText": "원인을 분석하거나 조사하지는 않았어요.\n자료를 대조하지 않고 바로 실행했어요.",
+    "category": "behavior",
+    "exclusiveGroup": "장식"
   }
 ]

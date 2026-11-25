@@ -13,6 +13,7 @@ const pointer = (type: string, x: number, y: number) => {
 const prepare = (handle: HTMLButtonElement) => {
   const area = screen.getByRole('group', {name: '움직임 범위'})
   vi.spyOn(area, 'getBoundingClientRect').mockReturnValue({height: 200, width: 200} as DOMRect)
+  Object.defineProperty(handle, 'hasPointerCapture', {value: vi.fn(() => true)})
   Object.defineProperty(handle, 'setPointerCapture', {value: vi.fn()})
   Object.defineProperty(handle, 'releasePointerCapture', {value: vi.fn()})
 }

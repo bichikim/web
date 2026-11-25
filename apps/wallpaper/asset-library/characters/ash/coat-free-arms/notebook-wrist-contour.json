@@ -1,0 +1,72 @@
+{
+  "beforeModelSha256": "4ceb427b193e75e4c21c5f7e16646a7135abce35a8014ed7da92f06baaf9b869",
+  "modelSha256": "e1f7c393db0b249454ac9d2b1179f739319cecc28c64d5dc2c35324c539d900f",
+  "modelBytes": 18188559,
+  "textureSha256": "5d5f0c495cc31a00bf2d975fb13062b8eafdd4331dbe9b06ba07d6ca092d6dc8",
+  "changedPart": "ArtMesh125",
+  "geometryBindingsSceneGluePhysicsUnchanged": true,
+  "tool": "Local ComfyUI core image crop/compositing nodes; no generation",
+  "promptId": "04ff2e87-bf81-4658-8b22-ca574da29f6d",
+  "source": "hand-options/2026-11-07-contour/source.png",
+  "workflow": "hand-options/2026-11-07-contour/workflow.json",
+  "mask": "hand-options/2026-11-07-contour/edit-mask.png",
+  "texture": "notebook-wrist-contour-atlas.png",
+  "hand": "notebook-wrist-contour.png",
+  "scope": "Only move the existing outer wrist contour inward by up to 3 native atlas pixels. Preserve original colours and line width, fingers, arm, geometry, pose and physics.",
+  "imageVerification": {
+    "outsideRgbaMaxDelta": 0,
+    "changedPixels": 154,
+    "maximumAlphaIncrease": 0,
+    "newPaintedPixels": 0,
+    "maximumEdgeShiftNativePixels": 3,
+    "handCrop": {
+      "x": 2480,
+      "y": 1280,
+      "width": 224,
+      "height": 224
+    },
+    "editRows": [127, 141],
+    "editMask": "edit-mask.png"
+  },
+  "structureVerification": {
+    "changedTextures": ["ArtMesh125"],
+    "originalFingersOutsideEditUnchanged": true,
+    "allMeshesUvsIndicesUnchanged": true,
+    "allSceneBindingsGluePhysicsMotionsExpressionsUnchanged": true,
+    "originalForearmTextureUnchanged": true
+  },
+  "review": {
+    "detail": "notebook-wrist-contour-detail.png",
+    "joint": "notebook-wrist-contour-joint.png",
+    "context": "notebook-wrist-contour-both-hands.png",
+    "turn": "notebook-wrist-contour-turn-right.png",
+    "physics": "notebook-wrist-contour-physics-2.png",
+    "coat": "notebook-wrist-contour-coat.png"
+  },
+  "checks": {
+    "browserPreview": {
+      "files": 2,
+      "passed": 2,
+      "failed": 0,
+      "engines": ["Chromium", "WebKit"]
+    },
+    "browserRegression": {
+      "files": 6,
+      "passed": 10,
+      "failed": 0,
+      "engines": ["Chromium", "WebKit"],
+      "scope": "Hand pixel preservation, wrist length, arm contact, live physics and coat visibility"
+    },
+    "oxlint": "passed for the related regression test",
+    "format": "pnpm format completed",
+    "typecheck": "Wallpaper passed",
+    "build": "Wallpaper passed",
+    "desktop": {
+      "restarted": true,
+      "pid": 99019,
+      "servedModelSha256": "e1f7c393db0b249454ac9d2b1179f739319cecc28c64d5dc2c35324c539d900f",
+      "visualEvidence": "Actual browser player before/after static poses and recorded physics states",
+      "nativeUiVisuallyInspected": false
+    }
+  }
+}

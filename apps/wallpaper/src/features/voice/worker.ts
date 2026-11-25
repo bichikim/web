@@ -16,12 +16,11 @@ import {
 import type {SupertonicBackend, SupertonicRuntime} from '@winter-love/supertonic/runtime'
 import {failureResult, successResult} from '@winter-love/supertonic/result'
 import type {SynthesisCommand, SynthesisReply, SynthesisRequest} from './protocol'
-import {createModelCache} from './model-cache'
+import {loadModelAsset} from './load-model-asset'
 import {createModelSessions} from './create-model-sessions'
 
 const scope = globalThis.self as DedicatedWorkerGlobalScope
-const cache = createModelCache()
-const modelSessions = createModelSessions()
+const modelSessions = createModelSessions(new URL('/voice-runtime/', globalThis.location.href).href)
 let loaded: {
   backend: SupertonicBackend
   gpu: boolean
@@ -33,7 +32,7 @@ const voices = new Map<SupertonicVoiceId, SupertonicVoice>()
 const post = (message: SynthesisReply, transfer: Transferable[] = []) =>
   scope.postMessage(message, transfer)
 const json = async (url: string): Promise<unknown> =>
-  JSON.parse(new TextDecoder().decode(await cache.load(url)))
+  JSON.parse(new TextDecoder().decode(await loadModelAsset(url)))
 
 const initialize = async (id: SupertonicModelId, gpu: boolean) => {
   if (loaded?.model === id && loaded.gpu === gpu) {
@@ -53,7 +52,7 @@ const initialize = async (id: SupertonicModelId, gpu: boolean) => {
     gpu,
     loadBuffer: async (options) => {
       try {
-        return successResult(await cache.load(options.url))
+        return successResult(await loadModelAsset(options.url))
       } catch (cause) {
         console.error('Poffo voice model download failed', cause)
         return failureResult({

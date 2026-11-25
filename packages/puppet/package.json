@@ -4,7 +4,8 @@
   "private": true,
   "files": [
     "dist",
-    "examples"
+    "examples",
+    "vite"
   ],
   "type": "module",
   "sideEffects": [
@@ -21,6 +22,11 @@
       "development": "./src/player/index.ts",
       "import": "./dist/player.js"
     },
+    "./native": {
+      "types": "./dist/types/native/index.d.ts",
+      "development": "./src/native/index.ts",
+      "import": "./dist/native.js"
+    },
     "./editor": {
       "types": "./dist/types/editor/index.d.ts",
       "development": "./src/editor/index.ts",
@@ -32,7 +38,8 @@
       "import": "./dist/editor-element.js"
     },
     "./uno": "./uno.config.ts",
-    "./examples/*": "./examples/*"
+    "./examples/*": "./examples/*",
+    "./vite/*": "./vite/*.ts"
   },
   "scripts": {
     "build": "vite build --mode player && vite build --mode editor && vite build --mode editor-element && vite build --mode converter && tsc -p tsconfig.build.json",

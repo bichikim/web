@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createSignal} from 'solid-js'
 import {usePointDrag} from '../features/tracking/use-point-drag'
 
@@ -50,6 +51,7 @@ export const SSlider = (props: SSliderProps) => {
       case 'Home':
       case 'End':
         event.preventDefault()
+        movement.cancel()
         return props.onChange?.(event.key === 'Home' ? min() : max())
       case 'ArrowUp':
         return movement.keyboard({key: 'ArrowRight', preventDefault: () => event.preventDefault()})
@@ -67,7 +69,7 @@ export const SSlider = (props: SSliderProps) => {
       aria-valuemin={min()}
       aria-valuemax={max()}
       aria-valuenow={value()}
-      aria-valuetext={`${value()}배`}
+      aria-valuetext={uiText('{value0}배', {value0: String(value())})}
       aria-disabled={disabled()}
       tabindex={disabled() ? -1 : 0}
       ref={setArea}

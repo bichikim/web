@@ -1,0 +1,704 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-11-05T13:21:40.945550+09:00",
+  "scope": "Retest the previous presentation, cadence and decoded-property improvements using the same local model and exact before/after artifacts after the user reported that their competing GPU job had finished. No production changes in this retest.",
+  "outcome": {
+    "comparisonCompleted": true,
+    "sameModelAndArtifactsVerified": true,
+    "consistentActualFPSUpliftVerified": false,
+    "summary": "Normal single-player playback improved by 5.62% in the median and 1.31% in the mean, but adjacent comparisons split 2 wins / 2 losses. The small, mixed result does not establish a repeatable actual-FPS gain. The resident-build control has a positive aggregate difference but a different, lower rAF range and must be reported separately.",
+    "singlePlayer": {
+      "before": {
+        "sampleCount": 4,
+        "observedModelFPS": {
+          "median": 80.30176845300898,
+          "mean": 80.43042061372961,
+          "min": 73.83560205759876,
+          "max": 87.28254349130175
+        },
+        "rafFPS": {
+          "median": 120.01549626545957,
+          "mean": 120.00839797351733,
+          "min": 119.97660456211038,
+          "max": 120.02599480103981
+        },
+        "perRunModelFPS": [
+          87.28254349130175, 73.83560205759876, 78.43352895891864, 82.1700079470993
+        ]
+      },
+      "candidate": {
+        "sampleCount": 4,
+        "observedModelFPS": {
+          "median": 84.81564966188694,
+          "mean": 81.48748157290022,
+          "min": 69.07168061094951,
+          "max": 87.2469463568775
+        },
+        "rafFPS": {
+          "median": 119.97360991101323,
+          "mean": 119.94987010054643,
+          "min": 119.85086114692976,
+          "max": 120.00139943322955
+        },
+        "perRunModelFPS": [86.9647792643979, 82.66652005937596, 69.07168061094951, 87.2469463568775]
+      },
+      "deltaPercent": {
+        "median": 5.621147947095828,
+        "mean": 1.3142551675157765
+      },
+      "adjacentPairs": [
+        {
+          "runNumbers": [1, 2],
+          "beforeFPS": 87.28254349130175,
+          "candidateFPS": 86.9647792643979,
+          "deltaPercent": -0.3640638943290142
+        },
+        {
+          "runNumbers": [3, 4],
+          "beforeFPS": 73.83560205759876,
+          "candidateFPS": 82.66652005937596,
+          "deltaPercent": 11.960243778994627
+        },
+        {
+          "runNumbers": [5, 6],
+          "beforeFPS": 78.43352895891864,
+          "candidateFPS": 69.07168061094951,
+          "deltaPercent": -11.936028471793758
+        },
+        {
+          "runNumbers": [7, 8],
+          "beforeFPS": 82.1700079470993,
+          "candidateFPS": 87.2469463568775,
+          "deltaPercent": 6.178578457783179
+        }
+      ],
+      "adjacentPairWins": 2,
+      "adjacentPairLosses": 2
+    },
+    "residentControl": {
+      "before": {
+        "sampleCount": 6,
+        "observedModelFPS": {
+          "median": 66.53674530187925,
+          "mean": 65.9294313205981,
+          "min": 61.19816405507842,
+          "max": 67.88730707026338
+        },
+        "rafFPS": {
+          "median": 81.96457154548607,
+          "mean": 78.45562596766138,
+          "min": 65.9980200593983,
+          "max": 84.4
+        },
+        "perRunModelFPS": [
+          66.8, 67.88730707026338, 65.84600627485464, 61.19816405507842, 66.2734906037585,
+          67.57161991963368
+        ]
+      },
+      "candidate": {
+        "sampleCount": 6,
+        "observedModelFPS": {
+          "median": 71.91077359508444,
+          "mean": 69.83040036019996,
+          "min": 62.79575903999366,
+          "max": 75.1308795907764
+        },
+        "rafFPS": {
+          "median": 78.00308018335255,
+          "mean": 74.97416659599548,
+          "min": 63.993770341233514,
+          "max": 82.53149885594966
+        },
+        "perRunModelFPS": [
+          73.83945164964729, 71.18183814867321, 62.79575903999366, 63.39476469061354,
+          75.1308795907764, 72.63970904149565
+        ]
+      },
+      "deltaPercent": {
+        "median": 8.07678263916134,
+        "mean": 5.916885617642342
+      },
+      "adjacentPairs": [
+        {
+          "runNumbers": [1, 2],
+          "beforeFPS": 66.8,
+          "candidateFPS": 73.83945164964729,
+          "deltaPercent": 10.538101271927092
+        },
+        {
+          "runNumbers": [3, 4],
+          "beforeFPS": 67.88730707026338,
+          "candidateFPS": 71.18183814867321,
+          "deltaPercent": 4.852941176470571
+        },
+        {
+          "runNumbers": [5, 6],
+          "beforeFPS": 65.84600627485464,
+          "candidateFPS": 62.79575903999366,
+          "deltaPercent": -4.632395201204198
+        },
+        {
+          "runNumbers": [7, 8],
+          "beforeFPS": 61.19816405507842,
+          "candidateFPS": 63.39476469061354,
+          "deltaPercent": 3.589324401232319
+        },
+        {
+          "runNumbers": [9, 10],
+          "beforeFPS": 66.2734906037585,
+          "candidateFPS": 75.1308795907764,
+          "deltaPercent": 13.364904890818563
+        },
+        {
+          "runNumbers": [11, 12],
+          "beforeFPS": 67.57161991963368,
+          "candidateFPS": 72.63970904149565,
+          "deltaPercent": 7.500322069960297
+        }
+      ],
+      "adjacentPairWins": 5,
+      "adjacentPairLosses": 1
+    }
+  },
+  "environment": {
+    "cpu": "Apple M5 Pro",
+    "chrome": "156.0.8078.80",
+    "renderer": "webgl (requested by the benchmark); the ANGLE backend was not re-queried in this follow-up.",
+    "viewport": {
+      "width": 900,
+      "height": 700
+    },
+    "resolution": 1,
+    "antialiasing": "ssaa",
+    "model": "white-cat-idle-english.poffo",
+    "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+    "parts": 852,
+    "vertices": 34452,
+    "parameters": 265,
+    "physicsChains": 25,
+    "motion": "Idle:0",
+    "seed": 42,
+    "modelPath": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+    "gpuAvailability": "The user reported that the competing GPU job had finished. GPU utilization, thermal state and all other system activity were not independently certified idle. No other task was stopped or reconfigured.",
+    "monitorNominalHzFromUserContext": 120,
+    "cpuThrottle": 1,
+    "browserHeadless": false,
+    "singlePlayerMeasuredRafHzRange": [119.85086114692976, 120.02599480103981],
+    "residentMeasuredRafHzRange": [63.993770341233514, 84.4]
+  },
+  "measurementDefinitions": {
+    "observedModelFPS": "Number of browser rAF intervals in which the player onFrame publish counter changed, divided by elapsed rAF time. Primary visible model-update metric, rather than browser callbacks or Worker request count. This does not measure physical panel scanout.",
+    "updatedFPS": "Player onFrame publish count divided by elapsed rAF time. A boundary callback may differ from the observed interval count by one.",
+    "rafFPS": "Browser requestAnimationFrame callback interval count divided by elapsed rAF time. This is not model-update FPS.",
+    "frameP95": "95th percentile of browser rAF intervals in milliseconds. This is not the model-update interval percentile.",
+    "summary": "Arithmetic mean and median of all runs, with no discarded samples or outlier exclusions. Adjacent pairs are predetermined successive pairs in the run order, with candidate/before percentage change."
+  },
+  "artifacts": {
+    "before": {
+      "playerSHA256": "db011758da4be2e1f46d3a683649998c89bdb8316883f1855317719458314fbf",
+      "workerSHA256": "6e7df97f92a59733afefa2b2a8c17f3ff885ac6f2615a5b42f382c71461ee1c1"
+    },
+    "candidate": {
+      "playerSHA256": "1d43bf34af9697e37f6110d5384402044435c9b057b1a92c3e6587f210de257f",
+      "workerSHA256": "6e7df97f92a59733afefa2b2a8c17f3ff885ac6f2615a5b42f382c71461ee1c1"
+    },
+    "beforeMeaning": "Before the previous task removed stale response-time cadence floors, moved prediction refill before synchronous presentation and reused unchanged exact decoded part properties.",
+    "candidateMeaning": "The exact previous-task candidate including those changes; it matches the current workspace player artifact.",
+    "sourceSHA256": {
+      "src/player/buffering/create-buffer-clock.ts": "9c8d8f6179e1a245f9a85f45c809a8192b4778968b1b49db198b2a7904ede39d",
+      "src/player/buffering/create-buffer-session.ts": "aab04fd274084cd6939959ef0648bb36d7e01257b3e7e1c4839b45ef9361b56a",
+      "src/player/buffering/types.ts": "a63432bf8a006033e1e7aac82548a4f5fac6a80a03b7a73d246492e6d9716ea0",
+      "src/player/buffering/render-frame/create-decoder.ts": "bc113af012135e4e3a520063dd4e669afad313ca2ece7b03b287507f38517490",
+      "src/player/buffering/__tests__/create-buffer-clock.spec.ts": "253723aff2906240c2b473a1b2a1528de9442a368f7f15826ca554a0b8ca9f47",
+      "src/player/buffering/__tests__/create-buffer-session.spec.ts": "b9274982ec0533ac248dbb5d70bc67616ee25618f3198eab242d8328e7aad076",
+      "src/player/buffering/render-frame/__tests__/create-decoder.spec.ts": "27cc968de733244d71f99c2c614fad225f8d3572dc10fc90a800c306d13ab747",
+      "src/player/buffering/README.md": "20fe2357dbabf48c36217f66a75f7e47df37ed60b64ad073bab58472e33a6cca",
+      "visual/__tests__/create-buffer-session.integration.tsx": "c22ca99de1c7c934a649702a32ff08f6365f792900445df6e8854aa67096f6d4"
+    }
+  },
+  "methods": {
+    "singlePlayer": {
+      "role": "Primary comparison for ordinary playback with a single player and canvas.",
+      "procedure": "Run the two artifact orders serially in separate Chrome launches. Create a fresh page/player for each run and destroy it before the next. Warm up for 10 seconds, then measure for 20 seconds. Run one player at a time. Both artifact orders use identical settings and local model bytes.",
+      "orders": [
+        ["before", "candidate", "candidate", "before"],
+        ["candidate", "before", "before", "candidate"]
+      ],
+      "runsPerArtifact": 4,
+      "warmupMillis": 10000,
+      "measureMillis": 20000,
+      "configuration": {
+        "antialiasing": "ssaa",
+        "cpuRates": [1],
+        "measureMillis": 20000,
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modes": ["worker"],
+        "randomSeed": 42,
+        "resolution": 1,
+        "runs": 1,
+        "viewport": {
+          "height": 700,
+          "width": 900
+        },
+        "warmupMillis": 10000
+      },
+      "runSets": [
+        {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 20000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 10000
+          },
+          "results": [
+            {
+              "artifact": "before",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20003.999999999996,
+              "errors": [],
+              "frameP95": 9,
+              "observedModelFPS": 87.28254349130175,
+              "rafFPS": 120.02599480103981,
+              "updatedFPS": 87.28254349130175,
+              "heapBytes": 252658880,
+              "scriptSeconds": 6.937707,
+              "taskSeconds": 7.628298
+            },
+            {
+              "artifact": "candidate",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20008.100000000002,
+              "errors": [],
+              "frameP95": 8.799999999999272,
+              "observedModelFPS": 86.9647792643979,
+              "rafFPS": 119.9514196750316,
+              "updatedFPS": 86.9647792643979,
+              "heapBytes": 168287344,
+              "scriptSeconds": 6.694176000000001,
+              "taskSeconds": 7.394213999999999
+            },
+            {
+              "artifact": "candidate",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20008.1,
+              "errors": [],
+              "frameP95": 9,
+              "observedModelFPS": 82.66652005937596,
+              "rafFPS": 120.00139943322955,
+              "updatedFPS": 82.66652005937596,
+              "heapBytes": 182869780,
+              "scriptSeconds": 6.7395499999999995,
+              "taskSeconds": 7.413122
+            },
+            {
+              "artifact": "before",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20003.9,
+              "errors": [],
+              "frameP95": 8.799999999999272,
+              "observedModelFPS": 73.83560205759876,
+              "rafFPS": 119.97660456211038,
+              "updatedFPS": 73.88559230949964,
+              "heapBytes": 212516260,
+              "scriptSeconds": 6.82696,
+              "taskSeconds": 7.523061
+            }
+          ]
+        },
+        {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 20000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 10000
+          },
+          "results": [
+            {
+              "artifact": "candidate",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20008.2,
+              "errors": [],
+              "frameP95": 9.099999999998545,
+              "observedModelFPS": 69.07168061094951,
+              "rafFPS": 119.85086114692976,
+              "updatedFPS": 69.07168061094951,
+              "heapBytes": 182525360,
+              "scriptSeconds": 6.5515360000000005,
+              "taskSeconds": 7.296269999999999
+            },
+            {
+              "artifact": "before",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20004.199999999997,
+              "errors": [],
+              "frameP95": 9.19999999999709,
+              "observedModelFPS": 78.43352895891864,
+              "rafFPS": 120.02479479309346,
+              "updatedFPS": 78.43352895891864,
+              "heapBytes": 188112292,
+              "scriptSeconds": 6.823735,
+              "taskSeconds": 7.489692000000001
+            },
+            {
+              "artifact": "before",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20007.300000000003,
+              "errors": [],
+              "frameP95": 9,
+              "observedModelFPS": 82.1700079470993,
+              "rafFPS": 120.00619773782567,
+              "updatedFPS": 82.21998970375812,
+              "heapBytes": 203130524,
+              "scriptSeconds": 6.743899999999999,
+              "taskSeconds": 7.3940339999999996
+            },
+            {
+              "artifact": "candidate",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20000.7,
+              "errors": [],
+              "frameP95": 8.900000000001455,
+              "observedModelFPS": 87.2469463568775,
+              "rafFPS": 119.99580014699485,
+              "updatedFPS": 87.2469463568775,
+              "heapBytes": 175294700,
+              "scriptSeconds": 6.726338,
+              "taskSeconds": 7.380440000000001
+            }
+          ]
+        }
+      ]
+    },
+    "residentControl": {
+      "role": "Separate control that reuses the two initialized builds within one page; it is not the ordinary one-player resource footprint.",
+      "procedure": "Initialize both builds once. Pause both and await flush before switching. Hide the inactive canvas; only the selected player runs. Both builds and GPU resources remain resident. Use ABBA three times, each with 5 seconds of warmup and 10 seconds of measurement. Animation resumes rather than resetting between resident windows.",
+      "runsPerArtifact": 6,
+      "raw": {
+        "metadata": {
+          "parts": 852,
+          "vertices": 34452,
+          "viewport": {
+            "width": 900,
+            "height": 700
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        },
+        "warmupMillis": 5000,
+        "measureMillis": 10000,
+        "order": [
+          "before",
+          "candidate",
+          "candidate",
+          "before",
+          "before",
+          "candidate",
+          "candidate",
+          "before",
+          "before",
+          "candidate",
+          "candidate",
+          "before"
+        ],
+        "results": [
+          {
+            "artifact": "before",
+            "elapsed": 10000,
+            "observedModelFPS": 66.8,
+            "updatedFPS": 66.9,
+            "rafFPS": 84.4,
+            "frameP95": 17.5,
+            "errors": []
+          },
+          {
+            "artifact": "candidate",
+            "elapsed": 10008.2,
+            "observedModelFPS": 73.83945164964729,
+            "updatedFPS": 73.83945164964729,
+            "rafFPS": 77.5364201354889,
+            "frameP95": 17.5,
+            "errors": []
+          },
+          {
+            "artifact": "candidate",
+            "elapsed": 10016.599999999999,
+            "observedModelFPS": 71.18183814867321,
+            "updatedFPS": 71.28167242377654,
+            "rafFPS": 78.46974023121619,
+            "frameP95": 17.400000000001455,
+            "errors": []
+          },
+          {
+            "artifact": "before",
+            "elapsed": 10016.599999999999,
+            "observedModelFPS": 67.88730707026338,
+            "updatedFPS": 67.9871413453667,
+            "rafFPS": 82.26344268514268,
+            "frameP95": 17.5,
+            "errors": []
+          },
+          {
+            "artifact": "before",
+            "elapsed": 10008.199999999997,
+            "observedModelFPS": 65.84600627485464,
+            "updatedFPS": 65.94592434203955,
+            "rafFPS": 73.43977938090768,
+            "frameP95": 17.60000000000582,
+            "errors": []
+          },
+          {
+            "artifact": "candidate",
+            "elapsed": 10016.599999999991,
+            "observedModelFPS": 62.79575903999366,
+            "updatedFPS": 62.895593315096995,
+            "rafFPS": 68.78581554619338,
+            "frameP95": 17.40000000000873,
+            "errors": []
+          },
+          {
+            "artifact": "candidate",
+            "elapsed": 10016.600000000006,
+            "observedModelFPS": 63.39476469061354,
+            "updatedFPS": 63.494598965716875,
+            "rafFPS": 63.993770341233514,
+            "frameP95": 17.60000000000582,
+            "errors": []
+          },
+          {
+            "artifact": "before",
+            "elapsed": 10000.299999999988,
+            "observedModelFPS": 61.19816405507842,
+            "updatedFPS": 61.298161055168414,
+            "rafFPS": 65.9980200593983,
+            "frameP95": 24.89999999999418,
+            "errors": []
+          },
+          {
+            "artifact": "before",
+            "elapsed": 10004,
+            "observedModelFPS": 66.2734906037585,
+            "updatedFPS": 66.3734506197521,
+            "rafFPS": 82.96681327469013,
+            "frameP95": 17.400000000023283,
+            "errors": []
+          },
+          {
+            "artifact": "candidate",
+            "elapsed": 10009.200000000012,
+            "observedModelFPS": 75.1308795907764,
+            "updatedFPS": 75.2307876753386,
+            "rafFPS": 78.52775446589129,
+            "frameP95": 16.800000000017462,
+            "errors": []
+          },
+          {
+            "artifact": "candidate",
+            "elapsed": 10008.299999999988,
+            "observedModelFPS": 72.63970904149565,
+            "updatedFPS": 72.73962611032852,
+            "rafFPS": 82.53149885594966,
+            "frameP95": 17.10000000000582,
+            "errors": []
+          },
+          {
+            "artifact": "before",
+            "elapsed": 10004.200000000012,
+            "observedModelFPS": 67.57161991963368,
+            "updatedFPS": 67.67157793726626,
+            "rafFPS": 81.66570040582945,
+            "frameP95": 17.10000000000582,
+            "errors": []
+          }
+        ],
+        "errors": []
+      }
+    }
+  },
+  "validation": {
+    "completedRuns": 20,
+    "modelHashMatchesPreviousMeasurement": true,
+    "beforeAndCandidateHashesMatchPreviousMeasurement": true,
+    "currentWorkspacePlayerMatchesCandidate": true,
+    "previouslyRecordedSourceHashesStillMatch": true,
+    "noProductionCodeEdited": true,
+    "renderingAndMemoryTests": "Not rerun for this measurement-only follow-up. The source and artifacts match the previous report, whose independent rendering and memory results remain separate evidence.",
+    "capturedBufferingErrors": 0,
+    "singlePlayerBufferingActiveAfterWarmupInEveryRun": true
+  },
+  "provenance": {
+    "previousReport": "packages/puppet/visual/worker-presentation-performance.json",
+    "previousGpuBusyResults": "Historical results are retained in the previous report and are not pooled with this retest.",
+    "evidenceDirectory": "/private/tmp/puppet-fps-idle-z9elln5y",
+    "temporaryBenchmarkScripts": [
+      "/private/tmp/puppet-fps-idle-z9elln5y/fps-resident.mjs",
+      "/private/tmp/puppet-fps-idle-z9elln5y/fps-paired.mjs",
+      "/private/tmp/puppet-fps-idle-z9elln5y/fps-reverse.mjs"
+    ],
+    "temporaryRawResults": [
+      "/private/tmp/puppet-fps-idle-z9elln5y/fps-resident.json",
+      "/private/tmp/puppet-fps-idle-z9elln5y/fps-paired.json",
+      "/private/tmp/puppet-fps-idle-z9elln5y/fps-reverse.json"
+    ]
+  }
+}

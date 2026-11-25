@@ -2,7 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>CFBundleURLName</key>
+      <string>io.winterlove.wallpaper.themes</string>
+      <key>CFBundleURLSchemes</key>
+      <array><string>poffo-wallpaper</string></array>
+    </dict>
+  </array>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>음성 입력과 캐릭터 마이크 립싱크에 사용합니다. 소리는 기기에서 처리합니다.</string>
   <key>NSCameraUsageDescription</key>
-  <string>Poffo 캐릭터가 얼굴 위치를 따라가도록 카메라를 사용합니다. 영상은 저장하거나 전송하지 않습니다.</string>
+  <string>Poffo 캐릭터가 얼굴 위치와 머리·눈·몸 움직임을 따라가도록 카메라를 사용합니다. 영상은 저장하거나 전송하지 않습니다.</string>
 </dict>
 </plist>

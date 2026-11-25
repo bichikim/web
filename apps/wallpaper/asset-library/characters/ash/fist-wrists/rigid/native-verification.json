@@ -1,0 +1,2192 @@
+{
+  "sha256": "364da2c71673f01304aa07f639fef8be8795d37e5ae7908e275c77140aa6ca00",
+  "pointerInputUsed": false,
+  "source": "Actual Wallpaper app canvas with original live physics",
+  "duration": 6385,
+  "frames": 99,
+  "physicsRange": [14.157353690883383, 9.435820457362093],
+  "maxContactError": 0.0006610836562368019,
+  "maxHandLengthError": 0.0005109980035435946,
+  "maxArmLengthError": 0.0006391533099829871,
+  "maxWorkerError": 0.001337531414719706,
+  "motion": [
+    {
+      "elapsed": 26,
+      "name": "neutral",
+      "head": [0, 0],
+      "physics": [-0.031207183298663312, -0.012425028608114546],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00037118317025734335,
+          "handLengthError": 0.0004476470666638921,
+          "armLengthError": 0.0003739773652071676,
+          "renderedError": 0.00043386577226556255
+        },
+        {
+          "side": "right",
+          "contactError": 0.0002652756409427979,
+          "handLengthError": 0.00043870799394962745,
+          "armLengthError": 0.00031735790911824324,
+          "renderedError": 0.0004774525532411644
+        }
+      ]
+    },
+    {
+      "elapsed": 87,
+      "name": "neutral",
+      "head": [0, 0],
+      "physics": [-0.038243697829773896, 0.16961653173064473],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00028430697269385587,
+          "handLengthError": 0.00041140739846579066,
+          "armLengthError": 0.00024304239899208824,
+          "renderedError": 0.00037801311918883584
+        },
+        {
+          "side": "right",
+          "contactError": 0.0005768692462918283,
+          "handLengthError": 0.0004329617831942967,
+          "armLengthError": 0.0003008015921110996,
+          "renderedError": 0.0004077368867001496
+        }
+      ]
+    },
+    {
+      "elapsed": 159,
+      "name": "neutral",
+      "head": [0, 0],
+      "physics": [-0.03528476201109905, 0.24359831316775823],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003975118857854254,
+          "handLengthError": 0.0004098061493101879,
+          "armLengthError": 0.0004467315389149462,
+          "renderedError": 0.0005938742051512236
+        },
+        {
+          "side": "right",
+          "contactError": 0.0004276267679227161,
+          "handLengthError": 0.00045952507392321706,
+          "armLengthError": 0.00033111439985589186,
+          "renderedError": 0.0004979377085874148
+        }
+      ]
+    },
+    {
+      "elapsed": 219,
+      "name": "neutral",
+      "head": [0, 0],
+      "physics": [-0.022779859836287317, 0.18575290676985853],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003493856627942473,
+          "handLengthError": 0.00046836564518715207,
+          "armLengthError": 0.00027757277993245566,
+          "renderedError": 0.0003143663875562197
+        },
+        {
+          "side": "right",
+          "contactError": 0.00025848142724387566,
+          "handLengthError": 0.00041395625544726755,
+          "armLengthError": 0.0003244537142350623,
+          "renderedError": 0.0003882881651406933
+        }
+      ]
+    },
+    {
+      "elapsed": 272,
+      "name": "neutral",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 364,
+      "name": "neutral",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 449,
+      "name": "neutral",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 536,
+      "name": "neutral",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 619,
+      "name": "neutral",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 702,
+      "name": "neutral",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 786,
+      "name": "neutral",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 868,
+      "name": "up",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 953,
+      "name": "up",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 1037,
+      "name": "up",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 1119,
+      "name": "up",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 1202,
+      "name": "up",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 1286,
+      "name": "up",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 1368,
+      "name": "up",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 1451,
+      "name": "up",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 1534,
+      "name": "up",
+      "head": [0, 0],
+      "physics": [-0.01780251093514816, 0.1433592882863186],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004065013773717543,
+          "handLengthError": 0.0004190902913314698,
+          "armLengthError": 0.00032435699391442085,
+          "renderedError": 0.0004513076337389066
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042459072501214973,
+          "handLengthError": 0.00047524841090318404,
+          "armLengthError": 0.00034193425717177206,
+          "renderedError": 0.0008585894538555294
+        }
+      ]
+    },
+    {
+      "elapsed": 1593,
+      "name": "up",
+      "head": [0, 30],
+      "physics": [0.7402298274369039, -0.4903422691900584],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00036710026111087156,
+          "handLengthError": 0.000431689319978279,
+          "armLengthError": 0.0004938939713454715,
+          "renderedError": 0.0005861066174475127
+        },
+        {
+          "side": "right",
+          "contactError": 0.00043088093062202174,
+          "handLengthError": 0.0003985723130206509,
+          "armLengthError": 0.0002965729212576207,
+          "renderedError": 0.0006305180213530548
+        }
+      ]
+    },
+    {
+      "elapsed": 1653,
+      "name": "down",
+      "head": [0, 30],
+      "physics": [-0.18004181945955355, 0.1196831904019613],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00030344588546102796,
+          "handLengthError": 0.0004326580655886758,
+          "armLengthError": 0.00034698985835746043,
+          "renderedError": 0.0005427711262200319
+        },
+        {
+          "side": "right",
+          "contactError": 0.00036109790036951,
+          "handLengthError": 0.00041732628779023173,
+          "armLengthError": 0.00032240209836942313,
+          "renderedError": 0.00044804796107200673
+        }
+      ]
+    },
+    {
+      "elapsed": 1706,
+      "name": "down",
+      "head": [0, 30],
+      "physics": [-0.42916378926395543, 0.2847201132961417],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003762199462653715,
+          "handLengthError": 0.00043243882525967337,
+          "armLengthError": 0.0003253375290981353,
+          "renderedError": 0.000376769030253854
+        },
+        {
+          "side": "right",
+          "contactError": 0.000510137402447335,
+          "handLengthError": 0.00042305184113633487,
+          "armLengthError": 0.00031865687394372344,
+          "renderedError": 0.0008458675442852837
+        }
+      ]
+    },
+    {
+      "elapsed": 1810,
+      "name": "down",
+      "head": [0, -30],
+      "physics": [-6.781057032898953, 4.5167507922603995],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0006009901396569151,
+          "handLengthError": 0.0004325222912100468,
+          "armLengthError": 0.0003362773309945055,
+          "renderedError": 0.0011675258438117453
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003971457802229298,
+          "handLengthError": 0.0004269258395832587,
+          "armLengthError": 0.00039187800413031937,
+          "renderedError": 0.0009402192308698432
+        }
+      ]
+    },
+    {
+      "elapsed": 1869,
+      "name": "down",
+      "head": [0, -30],
+      "physics": [-1.100472339243366, 0.7298241795613486],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004701301668272478,
+          "handLengthError": 0.0004105399378251384,
+          "armLengthError": 0.0004138929356116705,
+          "renderedError": 0.00040246836624646676
+        },
+        {
+          "side": "right",
+          "contactError": 0.00029587677390435416,
+          "handLengthError": 0.000418504284269261,
+          "armLengthError": 0.00035068929865644805,
+          "renderedError": 0.0006328649187707924
+        }
+      ]
+    },
+    {
+      "elapsed": 1929,
+      "name": "down",
+      "head": [0, -30],
+      "physics": [3.8595049821816145, -2.5761436760518466],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00038555619816363216,
+          "handLengthError": 0.00040785579882296474,
+          "armLengthError": 0.00034849365407296773,
+          "renderedError": 0.0006687782592962321
+        },
+        {
+          "side": "right",
+          "contactError": 0.0004190114680229957,
+          "handLengthError": 0.0004717821729860461,
+          "armLengthError": 0.0003457840264218248,
+          "renderedError": 0.0011459939810265496
+        }
+      ]
+    },
+    {
+      "elapsed": 1988,
+      "name": "down",
+      "head": [0, -30],
+      "physics": [6.167930821441407, -4.1139447578173955],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0005922433021164801,
+          "handLengthError": 0.0004299846598856405,
+          "armLengthError": 0.0004014550787303506,
+          "renderedError": 0.001337531414719706
+        },
+        {
+          "side": "right",
+          "contactError": 0.0005061005392203295,
+          "handLengthError": 0.0004218780019700219,
+          "armLengthError": 0.0004033394925855305,
+          "renderedError": 0.0010298759020770376
+        }
+      ]
+    },
+    {
+      "elapsed": 2047,
+      "name": "down",
+      "head": [0, -30],
+      "physics": [5.50170479789989, -3.668728729530381],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00039076702263264736,
+          "handLengthError": 0.00040712383971786004,
+          "armLengthError": 0.0003371671089169581,
+          "renderedError": 0.0009314262417774444
+        },
+        {
+          "side": "right",
+          "contactError": 0.00037144417743808535,
+          "handLengthError": 0.0004651342243722212,
+          "armLengthError": 0.0004539694520806492,
+          "renderedError": 0.0007552042420684302
+        }
+      ]
+    },
+    {
+      "elapsed": 2105,
+      "name": "down",
+      "head": [0, -30],
+      "physics": [2.9280694732205226, -1.952376855887189],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00036920129340286775,
+          "handLengthError": 0.0004032804537092982,
+          "armLengthError": 0.00035939126494000107,
+          "renderedError": 0.0007169053099005396
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003802052903528377,
+          "handLengthError": 0.00042744673452244086,
+          "armLengthError": 0.0004123536374578407,
+          "renderedError": 0.0005725684918616025
+        }
+      ]
+    },
+    {
+      "elapsed": 2161,
+      "name": "down",
+      "head": [0, -30],
+      "physics": [-0.007412522267921237, 0.00461786697960976],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004153155230303403,
+          "handLengthError": 0.00040679854423419926,
+          "armLengthError": 0.0004284212555631939,
+          "renderedError": 0.0009109784600696003
+        },
+        {
+          "side": "right",
+          "contactError": 0.00041770370506444363,
+          "handLengthError": 0.00042943463422950856,
+          "armLengthError": 0.0003683111508117065,
+          "renderedError": 0.0008807220960989071
+        }
+      ]
+    },
+    {
+      "elapsed": 2217,
+      "name": "down",
+      "head": [0, -30],
+      "physics": [-2.309157472733772, 1.5387642851894938],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00034069150028308537,
+          "handLengthError": 0.00041402416270397424,
+          "armLengthError": 0.00046608421314431325,
+          "renderedError": 0.0010337702274227922
+        },
+        {
+          "side": "right",
+          "contactError": 0.0004000241192785309,
+          "handLengthError": 0.0004285101482333076,
+          "armLengthError": 0.00039052169726971897,
+          "renderedError": 0.0005481125831465761
+        }
+      ]
+    },
+    {
+      "elapsed": 2272,
+      "name": "down",
+      "head": [0, -30],
+      "physics": [-3.4628174458164347, 2.307381436968364],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003585455619293495,
+          "handLengthError": 0.00041988728045661006,
+          "armLengthError": 0.00036368212274595635,
+          "renderedError": 0.0006005591330904281
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003491763128826495,
+          "handLengthError": 0.0004790534684415704,
+          "armLengthError": 0.0004604289041623133,
+          "renderedError": 0.0005469281227306055
+        }
+      ]
+    },
+    {
+      "elapsed": 2326,
+      "name": "down",
+      "head": [0, -30],
+      "physics": [-3.4027288814466394, 2.266879164954274],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004883656051057685,
+          "handLengthError": 0.00042685034671041677,
+          "armLengthError": 0.0003491895377862875,
+          "renderedError": 0.0005119751931488281
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003507904931038529,
+          "handLengthError": 0.00042150491605319473,
+          "armLengthError": 0.00035806100000712604,
+          "renderedError": 0.00046278301897473284
+        }
+      ]
+    },
+    {
+      "elapsed": 2381,
+      "name": "down",
+      "head": [0, -30],
+      "physics": [-2.470876617382474, 1.6453188788094768],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004966813967821572,
+          "handLengthError": 0.00040783969548252585,
+          "armLengthError": 0.0005040972534686716,
+          "renderedError": 0.0008559619691368425
+        },
+        {
+          "side": "right",
+          "contactError": 0.0004011993246814389,
+          "handLengthError": 0.000414191558337329,
+          "armLengthError": 0.00041519285932167804,
+          "renderedError": 0.0009293011144109187
+        }
+      ]
+    },
+    {
+      "elapsed": 2438,
+      "name": "up-reversal",
+      "head": [0, -30],
+      "physics": [-1.0964595215900472, 0.7288944359765127],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00055935214947864,
+          "handLengthError": 0.0004140915866401862,
+          "armLengthError": 0.0004117492493023178,
+          "renderedError": 0.001074918872291164
+        },
+        {
+          "side": "right",
+          "contactError": 0.00043954437297688683,
+          "handLengthError": 0.00043610743228494897,
+          "armLengthError": 0.0003417202505531236,
+          "renderedError": 0.0007269403486134252
+        }
+      ]
+    },
+    {
+      "elapsed": 2489,
+      "name": "up-reversal",
+      "head": [0, -30],
+      "physics": [-0.5014050360907221, 0.3321963023031244],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0006610836562368019,
+          "handLengthError": 0.000442322627677072,
+          "armLengthError": 0.0006030636744327467,
+          "renderedError": 0.0008415394986514002
+        },
+        {
+          "side": "right",
+          "contactError": 0.00039526096806495023,
+          "handLengthError": 0.00042569894035793254,
+          "armLengthError": 0.000395760074141549,
+          "renderedError": 0.0004414503719090135
+        }
+      ]
+    },
+    {
+      "elapsed": 2575,
+      "name": "up-reversal",
+      "head": [0, 30],
+      "physics": [7.376296657984431, -4.919069665101693],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003486082632471392,
+          "handLengthError": 0.00046218665133812564,
+          "armLengthError": 0.00034520362971335317,
+          "renderedError": 0.0005325496792920603
+        },
+        {
+          "side": "right",
+          "contactError": 0.00027296210123892747,
+          "handLengthError": 0.00040833548966889843,
+          "armLengthError": 0.0003103384818956556,
+          "renderedError": 0.0003070804409617267
+        }
+      ]
+    },
+    {
+      "elapsed": 2628,
+      "name": "up-reversal",
+      "head": [0, 30],
+      "physics": [3.7959152827282345, -2.532783779663153],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00035159045440814435,
+          "handLengthError": 0.00041997638669455384,
+          "armLengthError": 0.0004394281708641756,
+          "renderedError": 0.0006265757720029796
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003889719081804992,
+          "handLengthError": 0.0004351292315014632,
+          "armLengthError": 0.0003468413031617601,
+          "renderedError": 0.0004587117900882731
+        }
+      ]
+    },
+    {
+      "elapsed": 2685,
+      "name": "up-reversal",
+      "head": [0, 30],
+      "physics": [-1.2268420968567035, 0.8156225894035639],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00035538485713743155,
+          "handLengthError": 0.0004055794123023482,
+          "armLengthError": 0.0004498702582012015,
+          "renderedError": 0.00033726307628967334
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003441644171483823,
+          "handLengthError": 0.000382169304039337,
+          "armLengthError": 0.00042369634898875574,
+          "renderedError": 0.0004437097727532091
+        }
+      ]
+    },
+    {
+      "elapsed": 2739,
+      "name": "up-reversal",
+      "head": [0, 30],
+      "physics": [-4.82934523622562, 3.2181268321558454],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0005393218283710495,
+          "handLengthError": 0.0004567345061929906,
+          "armLengthError": 0.00030237121116982735,
+          "renderedError": 0.0008574419480282813
+        },
+        {
+          "side": "right",
+          "contactError": 0.0004338783916599133,
+          "handLengthError": 0.00042773827079400917,
+          "armLengthError": 0.0004425060439601225,
+          "renderedError": 0.0007708548619120847
+        }
+      ]
+    },
+    {
+      "elapsed": 2793,
+      "name": "up-reversal",
+      "head": [0, 30],
+      "physics": [-5.7780620741677575, 3.851814587688799],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00044063924412511356,
+          "handLengthError": 0.00040520637689134276,
+          "armLengthError": 0.0002451933448419652,
+          "renderedError": 0.0006255146095099917
+        },
+        {
+          "side": "right",
+          "contactError": 0.0002840578851959565,
+          "handLengthError": 0.0004241045255950482,
+          "armLengthError": 0.0003591112676275543,
+          "renderedError": 0.0005571474880525784
+        }
+      ]
+    },
+    {
+      "elapsed": 2849,
+      "name": "up-reversal",
+      "head": [0, 30],
+      "physics": [-4.587940568442914, 3.059438710300749],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003922396743527731,
+          "handLengthError": 0.0004259723944426419,
+          "armLengthError": 0.0002318760141797327,
+          "renderedError": 0.0005387343858274107
+        },
+        {
+          "side": "right",
+          "contactError": 0.00043187354677868916,
+          "handLengthError": 0.0004218571746070765,
+          "armLengthError": 0.00034736997523054924,
+          "renderedError": 0.0005994854259370186
+        }
+      ]
+    },
+    {
+      "elapsed": 2903,
+      "name": "up-reversal",
+      "head": [0, 30],
+      "physics": [-2.1406661713443307, 1.4285839504058622],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004728685999876526,
+          "handLengthError": 0.00044145198947909137,
+          "armLengthError": 0.0006391533099829871,
+          "renderedError": 0.00045366367339738645
+        },
+        {
+          "side": "right",
+          "contactError": 0.00029114451655588115,
+          "handLengthError": 0.00039292116423084167,
+          "armLengthError": 0.0003657845678475269,
+          "renderedError": 0.0002986424628943496
+        }
+      ]
+    },
+    {
+      "elapsed": 2959,
+      "name": "up-reversal",
+      "head": [0, 30],
+      "physics": [0.4939460753793879, -0.32756386367955853],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00030635521542922526,
+          "handLengthError": 0.0004166928833342354,
+          "armLengthError": 0.0003382708887968988,
+          "renderedError": 0.0004222473273784999
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003246755825948732,
+          "handLengthError": 0.0004151271028982606,
+          "armLengthError": 0.0003952098047363961,
+          "renderedError": 0.0004057230337366491
+        }
+      ]
+    },
+    {
+      "elapsed": 3013,
+      "name": "up-reversal",
+      "head": [0, 30],
+      "physics": [2.4820123776213725, -1.652887154542031],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00038196878995506604,
+          "handLengthError": 0.0003931162149719558,
+          "armLengthError": 0.00037705020450573556,
+          "renderedError": 0.00042335841590102063
+        },
+        {
+          "side": "right",
+          "contactError": 0.00033536807420997015,
+          "handLengthError": 0.000457520723367022,
+          "armLengthError": 0.00032574561561204973,
+          "renderedError": 0.0005058789365648408
+        }
+      ]
+    },
+    {
+      "elapsed": 3069,
+      "name": "up-reversal",
+      "head": [0, 30],
+      "physics": [3.327539696605197, -2.216515096630867],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004349057648501651,
+          "handLengthError": 0.0005109980035435946,
+          "armLengthError": 0.00034451127360313194,
+          "renderedError": 0.0005140330558788264
+        },
+        {
+          "side": "right",
+          "contactError": 0.00028665689848022375,
+          "handLengthError": 0.00040689352750167274,
+          "armLengthError": 0.0003130078556949911,
+          "renderedError": 0.0005765824384980078
+        }
+      ]
+    },
+    {
+      "elapsed": 3124,
+      "name": "up-reversal",
+      "head": [0, 30],
+      "physics": [3.0673643530043186, -2.0428661223976636],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003949538238200178,
+          "handLengthError": 0.00041647414703316343,
+          "armLengthError": 0.0003709959021946929,
+          "renderedError": 0.0005797974436063669
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003649978638560893,
+          "handLengthError": 0.00045117189237586786,
+          "armLengthError": 0.0003128767321740611,
+          "renderedError": 0.00036539722759698634
+        }
+      ]
+    },
+    {
+      "elapsed": 3178,
+      "name": "up-reversal",
+      "head": [0, 30],
+      "physics": [2.052255712796244, -1.3657808948156605],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00024913492218149775,
+          "handLengthError": 0.00042004718739585556,
+          "armLengthError": 0.0003196027322331929,
+          "renderedError": 0.00039886352942630765
+        },
+        {
+          "side": "right",
+          "contactError": 0.0004236510479515965,
+          "handLengthError": 0.000427677461765974,
+          "armLengthError": 0.00034201090555541214,
+          "renderedError": 0.0005250590661489696
+        }
+      ]
+    },
+    {
+      "elapsed": 3234,
+      "name": "left",
+      "head": [0, 30],
+      "physics": [0.7684783896526947, -0.5095118937101413],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003238374000349486,
+          "handLengthError": 0.00045065253666143334,
+          "armLengthError": 0.0003891191549598716,
+          "renderedError": 0.00027537689629753004
+        },
+        {
+          "side": "right",
+          "contactError": 0.0002835773130194456,
+          "handLengthError": 0.00042771633235094697,
+          "armLengthError": 0.00036406717813974865,
+          "renderedError": 0.0004182283009868115
+        }
+      ]
+    },
+    {
+      "elapsed": 3323,
+      "name": "left",
+      "head": [0, 30],
+      "physics": [0.23783316240381625, -0.1555779682506212],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0005209986651629779,
+          "handLengthError": 0.00041310535886252,
+          "armLengthError": 0.0005388739815401777,
+          "renderedError": 0.00048210173372353893
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003893278557720509,
+          "handLengthError": 0.00042272599747938955,
+          "armLengthError": 0.00037300115359073516,
+          "renderedError": 0.0005426155435088731
+        }
+      ]
+    },
+    {
+      "elapsed": 3374,
+      "name": "left",
+      "head": [-30, 0],
+      "physics": [-3.296150100620094, 4.395377110884747],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0005064293475750169,
+          "handLengthError": 0.00041580200895641184,
+          "armLengthError": 0.00040577754754522743,
+          "renderedError": 0.0006585779742636078
+        },
+        {
+          "side": "right",
+          "contactError": 0.0004732180665742327,
+          "handLengthError": 0.000422983503921337,
+          "armLengthError": 0.00038131369892369094,
+          "renderedError": 0.000477512215184106
+        }
+      ]
+    },
+    {
+      "elapsed": 3429,
+      "name": "left",
+      "head": [-30, 0],
+      "physics": [-1.8804717982588213, 1.8984696643845032],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003131023568960086,
+          "handLengthError": 0.0003874053325176874,
+          "armLengthError": 0.00043860330469414066,
+          "renderedError": 0.0003914587114195456
+        },
+        {
+          "side": "right",
+          "contactError": 0.0002530143545052849,
+          "handLengthError": 0.00040715606028474127,
+          "armLengthError": 0.00034670100210831833,
+          "renderedError": 0.00043846124663105
+        }
+      ]
+    },
+    {
+      "elapsed": 3484,
+      "name": "left",
+      "head": [-30, 0],
+      "physics": [-0.1339689282946368, -0.8918009114051744],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004810096165712252,
+          "handLengthError": 0.0004379657976478768,
+          "armLengthError": 0.0002904752390406884,
+          "renderedError": 0.0006156342119538749
+        },
+        {
+          "side": "right",
+          "contactError": 0.00031106772317244147,
+          "handLengthError": 0.0004403179002498425,
+          "armLengthError": 0.00038540476704440607,
+          "renderedError": 0.0005037739879298897
+        }
+      ]
+    },
+    {
+      "elapsed": 3542,
+      "name": "left",
+      "head": [-30, 0],
+      "physics": [1.1505231135914749, -2.694744417498442],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00030373698392318786,
+          "handLengthError": 0.00042027504346897615,
+          "armLengthError": 0.0002758550823998007,
+          "renderedError": 0.0007644613087904872
+        },
+        {
+          "side": "right",
+          "contactError": 0.00043558243557721536,
+          "handLengthError": 0.00039827199445019446,
+          "armLengthError": 0.0003206864461571257,
+          "renderedError": 0.0005825091211590916
+        }
+      ]
+    },
+    {
+      "elapsed": 3596,
+      "name": "left",
+      "head": [-30, 0],
+      "physics": [1.6652677931940674, -3.084337939257029],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004950672803404707,
+          "handLengthError": 0.00041700643012454464,
+          "armLengthError": 0.0003866030392529751,
+          "renderedError": 0.00044383771637512837
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003897769626611019,
+          "handLengthError": 0.00039579512478216117,
+          "armLengthError": 0.0003520836737536115,
+          "renderedError": 0.0004633027606359974
+        }
+      ]
+    },
+    {
+      "elapsed": 3651,
+      "name": "left",
+      "head": [-30, 0],
+      "physics": [1.444761436334527, -2.3172688824234884],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00034180806420546785,
+          "handLengthError": 0.0003727976690506285,
+          "armLengthError": 0.0004430854706427567,
+          "renderedError": 0.0004925381331304379
+        },
+        {
+          "side": "right",
+          "contactError": 0.00035036498485933594,
+          "handLengthError": 0.000410135570581005,
+          "armLengthError": 0.00041223687451719115,
+          "renderedError": 0.0004291490181458357
+        }
+      ]
+    },
+    {
+      "elapsed": 3707,
+      "name": "left",
+      "head": [-30, 0],
+      "physics": [0.7921900493488719, -0.9436527066903794],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004135764501711473,
+          "handLengthError": 0.0004427270181088794,
+          "armLengthError": 0.00029029023367854734,
+          "renderedError": 0.0004632603540812852
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003787907523850729,
+          "handLengthError": 0.0004502592432871211,
+          "armLengthError": 0.00034364845410550515,
+          "renderedError": 0.0006451266576732451
+        }
+      ]
+    },
+    {
+      "elapsed": 3762,
+      "name": "left",
+      "head": [-30, 0],
+      "physics": [0.026847496086258124, 0.46671874235510163],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0002848509924020154,
+          "handLengthError": 0.0004087752169517067,
+          "armLengthError": 0.00025010816794690527,
+          "renderedError": 0.0003752422715024295
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003001909184411017,
+          "handLengthError": 0.000401358944372987,
+          "armLengthError": 0.00033938191948124086,
+          "renderedError": 0.0006983818757362314
+        }
+      ]
+    },
+    {
+      "elapsed": 3816,
+      "name": "left",
+      "head": [-30, 0],
+      "physics": [-0.5500037721403396, 1.4180412649747058],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00034244296556208443,
+          "handLengthError": 0.0004553964820672718,
+          "armLengthError": 0.00027277800509750705,
+          "renderedError": 0.00028963201202714117
+        },
+        {
+          "side": "right",
+          "contactError": 0.000251252202744404,
+          "handLengthError": 0.00042354884065431975,
+          "armLengthError": 0.0003636292021838017,
+          "renderedError": 0.0005817038118038909
+        }
+      ]
+    },
+    {
+      "elapsed": 3873,
+      "name": "left",
+      "head": [-30, 0],
+      "physics": [-0.8424225143172414, 1.785287956808492],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.000309749108505485,
+          "handLengthError": 0.00045956410111003265,
+          "armLengthError": 0.00036070787489705936,
+          "renderedError": 0.0004871673068009841
+        },
+        {
+          "side": "right",
+          "contactError": 0.00028965069670002565,
+          "handLengthError": 0.0004346375507200406,
+          "armLengthError": 0.00032018595374694314,
+          "renderedError": 0.0003560899881449586
+        }
+      ]
+    },
+    {
+      "elapsed": 3927,
+      "name": "left",
+      "head": [-30, 0],
+      "physics": [-0.8137299004569063, 1.5606640356214407],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003213526722805612,
+          "handLengthError": 0.000415995016600057,
+          "armLengthError": 0.0002808359849666431,
+          "renderedError": 0.0004940965791320195
+        },
+        {
+          "side": "right",
+          "contactError": 0.00039711431976808604,
+          "handLengthError": 0.00045383960774980636,
+          "armLengthError": 0.0004196451413136515,
+          "renderedError": 0.0006183662635521614
+        }
+      ]
+    },
+    {
+      "elapsed": 3982,
+      "name": "left",
+      "head": [-30, 0],
+      "physics": [-0.5680745549327527, 0.9775308770653457],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003601800448028251,
+          "handLengthError": 0.0004165995716585158,
+          "armLengthError": 0.00037947610091038086,
+          "renderedError": 0.00041653216612758115
+        },
+        {
+          "side": "right",
+          "contactError": 0.00034423283911661504,
+          "handLengthError": 0.00040779832534898475,
+          "armLengthError": 0.000425948950883992,
+          "renderedError": 0.000464611255665659
+        }
+      ]
+    },
+    {
+      "elapsed": 4038,
+      "name": "right",
+      "head": [-30, 0],
+      "physics": [-0.23092438575152646, 0.2812783088063058],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00031370978915351317,
+          "handLengthError": 0.00040063157198810817,
+          "armLengthError": 0.00026319684028663914,
+          "renderedError": 0.0002850327036867384
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003362173969106924,
+          "handLengthError": 0.0004180369896790159,
+          "armLengthError": 0.00029410352584591237,
+          "renderedError": 0.0004496972096603713
+        }
+      ]
+    },
+    {
+      "elapsed": 4088,
+      "name": "right",
+      "head": [-30, 0],
+      "physics": [-0.09254191342088183, 0.012481502581273753],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004396080801113939,
+          "handLengthError": 0.0004041871626889737,
+          "armLengthError": 0.0003581203201363792,
+          "renderedError": 0.0004656028547742608
+        },
+        {
+          "side": "right",
+          "contactError": 0.000280391953211381,
+          "handLengthError": 0.00042291733621568905,
+          "armLengthError": 0.0004382112292091733,
+          "renderedError": 0.0005217770603849203
+        }
+      ]
+    },
+    {
+      "elapsed": 4174,
+      "name": "right",
+      "head": [30, 0],
+      "physics": [-3.1649933595558917, -3.0590232817578427],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00030506416923293357,
+          "handLengthError": 0.0004023978437706077,
+          "armLengthError": 0.00032161164578781154,
+          "renderedError": 0.0006155464948278677
+        },
+        {
+          "side": "right",
+          "contactError": 0.0002946662666706653,
+          "handLengthError": 0.0004083279011410923,
+          "armLengthError": 0.0004132153774705216,
+          "renderedError": 0.0004892909778391186
+        }
+      ]
+    },
+    {
+      "elapsed": 4230,
+      "name": "right",
+      "head": [30, 0],
+      "physics": [-0.7990958139012664, -1.4826265237456893],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00040935281316575775,
+          "handLengthError": 0.0004566642973529156,
+          "armLengthError": 0.00034587300066846183,
+          "renderedError": 0.00044646778178503155
+        },
+        {
+          "side": "right",
+          "contactError": 0.00031724367317978057,
+          "handLengthError": 0.00045063913675846834,
+          "armLengthError": 0.00035538294039838547,
+          "renderedError": 0.0008439890943918726
+        }
+      ]
+    },
+    {
+      "elapsed": 4285,
+      "name": "right",
+      "head": [30, 0],
+      "physics": [1.8981355040383145, 0.5464889763889339],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0002846812252789023,
+          "handLengthError": 0.0004652305241248378,
+          "armLengthError": 0.00034298124323584034,
+          "renderedError": 0.0005232526746112853
+        },
+        {
+          "side": "right",
+          "contactError": 0.00042380986398406656,
+          "handLengthError": 0.0004070247289069684,
+          "armLengthError": 0.00033919275535509996,
+          "renderedError": 0.0002982173818963929
+        }
+      ]
+    },
+    {
+      "elapsed": 4340,
+      "name": "right",
+      "head": [30, 0],
+      "physics": [3.387035940384591, 1.8923302265214892],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00033300257660960896,
+          "handLengthError": 0.00046629181143265086,
+          "armLengthError": 0.0003036572926617964,
+          "renderedError": 0.00048015140691859415
+        },
+        {
+          "side": "right",
+          "contactError": 0.0004192456122152064,
+          "handLengthError": 0.000416496385618359,
+          "armLengthError": 0.00039805188340835684,
+          "renderedError": 0.00044275499931245577
+        }
+      ]
+    },
+    {
+      "elapsed": 4397,
+      "name": "right",
+      "head": [30, 0],
+      "physics": [3.3651042848443664, 2.2357653499315906],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003364433014325221,
+          "handLengthError": 0.0003851226749720382,
+          "armLengthError": 0.0003258238482359843,
+          "renderedError": 0.00037861176383557904
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003259487449998436,
+          "handLengthError": 0.0003909979665232266,
+          "armLengthError": 0.00038430270304701253,
+          "renderedError": 0.0005226943417255825
+        }
+      ]
+    },
+    {
+      "elapsed": 4453,
+      "name": "right",
+      "head": [30, 0],
+      "physics": [2.193633542418023, 1.7100182156615271],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00033058846327241895,
+          "handLengthError": 0.00038383860122293,
+          "armLengthError": 0.00032546144203848826,
+          "renderedError": 0.0004463498330551374
+        },
+        {
+          "side": "right",
+          "contactError": 0.00041708202819783663,
+          "handLengthError": 0.0004172174165546494,
+          "armLengthError": 0.00032088924326956203,
+          "renderedError": 0.0004811525432160124
+        }
+      ]
+    },
+    {
+      "elapsed": 4510,
+      "name": "right",
+      "head": [30, 0],
+      "physics": [0.5279299834509317, 0.7208481827180359],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.000327819408962868,
+          "handLengthError": 0.0004405140450671752,
+          "armLengthError": 0.00031754752976809186,
+          "renderedError": 0.00045861858393436705
+        },
+        {
+          "side": "right",
+          "contactError": 0.0004097491885982603,
+          "handLengthError": 0.00042323372087249567,
+          "armLengthError": 0.0003930660910498318,
+          "renderedError": 0.0003829841625702102
+        }
+      ]
+    },
+    {
+      "elapsed": 4568,
+      "name": "right",
+      "head": [30, 0],
+      "physics": [-0.9974134574988238, -0.29868130546579974],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0005045070690869567,
+          "handLengthError": 0.0004197918496759989,
+          "armLengthError": 0.0003964289666953391,
+          "renderedError": 0.0007742826237517875
+        },
+        {
+          "side": "right",
+          "contactError": 0.00031444366753904295,
+          "handLengthError": 0.0004131880926676601,
+          "armLengthError": 0.0003595263956626127,
+          "renderedError": 0.0003933633588530938
+        }
+      ]
+    },
+    {
+      "elapsed": 4627,
+      "name": "right",
+      "head": [30, 0],
+      "physics": [-1.9251572386498141, -1.0120122533042757],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00038233900625333795,
+          "handLengthError": 0.0004437872525051567,
+          "armLengthError": 0.0004007663799825423,
+          "renderedError": 0.0005273446877254173
+        },
+        {
+          "side": "right",
+          "contactError": 0.0002466935454620904,
+          "handLengthError": 0.00042079010149276286,
+          "armLengthError": 0.0003135944301746463,
+          "renderedError": 0.0004745068945339881
+        }
+      ]
+    },
+    {
+      "elapsed": 4684,
+      "name": "right",
+      "head": [30, 0],
+      "physics": [-2.0508009719383042, -1.2269657584894464],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003382282151421529,
+          "handLengthError": 0.0004326326265204905,
+          "armLengthError": 0.000577161727413511,
+          "renderedError": 0.0004629401064448757
+        },
+        {
+          "side": "right",
+          "contactError": 0.0004593209050465469,
+          "handLengthError": 0.00043899768277810836,
+          "armLengthError": 0.000366064212876438,
+          "renderedError": 0.0006952843891667726
+        }
+      ]
+    },
+    {
+      "elapsed": 4739,
+      "name": "right",
+      "head": [30, 0],
+      "physics": [-1.5681944386975004, -1.024867889335088],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00036671607742563367,
+          "handLengthError": 0.00043369872610465876,
+          "armLengthError": 0.00034318967946234125,
+          "renderedError": 0.0003782522035180591
+        },
+        {
+          "side": "right",
+          "contactError": 0.00039728956077824724,
+          "handLengthError": 0.0004764758469901764,
+          "armLengthError": 0.0004338574200772882,
+          "renderedError": 0.0004390414351291838
+        }
+      ]
+    },
+    {
+      "elapsed": 4804,
+      "name": "return",
+      "head": [30, 0],
+      "physics": [-0.8027215491149075, -0.5941318304406937],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003842611206453061,
+          "handLengthError": 0.0004074273132124162,
+          "armLengthError": 0.0005197050275995707,
+          "renderedError": 0.000305097378713981
+        },
+        {
+          "side": "right",
+          "contactError": 0.0002729801366509598,
+          "handLengthError": 0.0004091766751601611,
+          "armLengthError": 0.00037659111637111664,
+          "renderedError": 0.00037668741242669057
+        }
+      ]
+    },
+    {
+      "elapsed": 4856,
+      "name": "return",
+      "head": [30, 0],
+      "physics": [-0.3237268945269221, -0.3016813556803433],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00027638454255586305,
+          "handLengthError": 0.000437088837481614,
+          "armLengthError": 0.00031622559075827894,
+          "renderedError": 0.00036477721005212516
+        },
+        {
+          "side": "right",
+          "contactError": 0.0005025276978507135,
+          "handLengthError": 0.00044705567139935454,
+          "armLengthError": 0.00035829441818435726,
+          "renderedError": 0.0004878079698755755
+        }
+      ]
+    },
+    {
+      "elapsed": 4947,
+      "name": "return",
+      "head": [30, 0],
+      "physics": [-0.3237268945269221, -0.3016813556803433],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00027638454255586305,
+          "handLengthError": 0.000437088837481614,
+          "armLengthError": 0.00031622559075827894,
+          "renderedError": 0.00036477721005212516
+        },
+        {
+          "side": "right",
+          "contactError": 0.0005025276978507135,
+          "handLengthError": 0.00044705567139935454,
+          "armLengthError": 0.00035829441818435726,
+          "renderedError": 0.0004878079698755755
+        }
+      ]
+    },
+    {
+      "elapsed": 5036,
+      "name": "return",
+      "head": [30, 0],
+      "physics": [-0.3237268945269221, -0.3016813556803433],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00027638454255586305,
+          "handLengthError": 0.000437088837481614,
+          "armLengthError": 0.00031622559075827894,
+          "renderedError": 0.00036477721005212516
+        },
+        {
+          "side": "right",
+          "contactError": 0.0005025276978507135,
+          "handLengthError": 0.00044705567139935454,
+          "armLengthError": 0.00035829441818435726,
+          "renderedError": 0.0004878079698755755
+        }
+      ]
+    },
+    {
+      "elapsed": 5123,
+      "name": "return",
+      "head": [30, 0],
+      "physics": [-0.3237268945269221, -0.3016813556803433],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00027638454255586305,
+          "handLengthError": 0.000437088837481614,
+          "armLengthError": 0.00031622559075827894,
+          "renderedError": 0.00036477721005212516
+        },
+        {
+          "side": "right",
+          "contactError": 0.0005025276978507135,
+          "handLengthError": 0.00044705567139935454,
+          "armLengthError": 0.00035829441818435726,
+          "renderedError": 0.0004878079698755755
+        }
+      ]
+    },
+    {
+      "elapsed": 5209,
+      "name": "return",
+      "head": [30, 0],
+      "physics": [-0.3237268945269221, -0.3016813556803433],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00027638454255586305,
+          "handLengthError": 0.000437088837481614,
+          "armLengthError": 0.00031622559075827894,
+          "renderedError": 0.00036477721005212516
+        },
+        {
+          "side": "right",
+          "contactError": 0.0005025276978507135,
+          "handLengthError": 0.00044705567139935454,
+          "armLengthError": 0.00035829441818435726,
+          "renderedError": 0.0004878079698755755
+        }
+      ]
+    },
+    {
+      "elapsed": 5291,
+      "name": "return",
+      "head": [30, 0],
+      "physics": [-0.3237268945269221, -0.3016813556803433],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00027638454255586305,
+          "handLengthError": 0.000437088837481614,
+          "armLengthError": 0.00031622559075827894,
+          "renderedError": 0.00036477721005212516
+        },
+        {
+          "side": "right",
+          "contactError": 0.0005025276978507135,
+          "handLengthError": 0.00044705567139935454,
+          "armLengthError": 0.00035829441818435726,
+          "renderedError": 0.0004878079698755755
+        }
+      ]
+    },
+    {
+      "elapsed": 5372,
+      "name": "return",
+      "head": [30, 0],
+      "physics": [-0.3237268945269221, -0.3016813556803433],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00027638454255586305,
+          "handLengthError": 0.000437088837481614,
+          "armLengthError": 0.00031622559075827894,
+          "renderedError": 0.00036477721005212516
+        },
+        {
+          "side": "right",
+          "contactError": 0.0005025276978507135,
+          "handLengthError": 0.00044705567139935454,
+          "armLengthError": 0.00035829441818435726,
+          "renderedError": 0.0004878079698755755
+        }
+      ]
+    },
+    {
+      "elapsed": 5453,
+      "name": "return",
+      "head": [30, 0],
+      "physics": [-0.3237268945269221, -0.3016813556803433],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00027638454255586305,
+          "handLengthError": 0.000437088837481614,
+          "armLengthError": 0.00031622559075827894,
+          "renderedError": 0.00036477721005212516
+        },
+        {
+          "side": "right",
+          "contactError": 0.0005025276978507135,
+          "handLengthError": 0.00044705567139935454,
+          "armLengthError": 0.00035829441818435726,
+          "renderedError": 0.0004878079698755755
+        }
+      ]
+    },
+    {
+      "elapsed": 5536,
+      "name": "return",
+      "head": [30, 0],
+      "physics": [-0.3237268945269221, -0.3016813556803433],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00027638454255586305,
+          "handLengthError": 0.000437088837481614,
+          "armLengthError": 0.00031622559075827894,
+          "renderedError": 0.00036477721005212516
+        },
+        {
+          "side": "right",
+          "contactError": 0.0005025276978507135,
+          "handLengthError": 0.00044705567139935454,
+          "armLengthError": 0.00035829441818435726,
+          "renderedError": 0.0004878079698755755
+        }
+      ]
+    },
+    {
+      "elapsed": 5617,
+      "name": "return",
+      "head": [30, 0],
+      "physics": [-0.3237268945269221, -0.3016813556803433],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00027638454255586305,
+          "handLengthError": 0.000437088837481614,
+          "armLengthError": 0.00031622559075827894,
+          "renderedError": 0.00036477721005212516
+        },
+        {
+          "side": "right",
+          "contactError": 0.0005025276978507135,
+          "handLengthError": 0.00044705567139935454,
+          "armLengthError": 0.00035829441818435726,
+          "renderedError": 0.0004878079698755755
+        }
+      ]
+    },
+    {
+      "elapsed": 5708,
+      "name": "return",
+      "head": [0, 0],
+      "physics": [-0.2574394032643876, -0.18657119274523362],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003996759273690185,
+          "handLengthError": 0.0004066010852041835,
+          "armLengthError": 0.000315184354349185,
+          "renderedError": 0.0007364941066043684
+        },
+        {
+          "side": "right",
+          "contactError": 0.00027296174097620537,
+          "handLengthError": 0.0004500516548664457,
+          "armLengthError": 0.0003589494937088489,
+          "renderedError": 0.00032752201877883635
+        }
+      ]
+    },
+    {
+      "elapsed": 5763,
+      "name": "return",
+      "head": [0, 0],
+      "physics": [-0.344775471018622, -0.2545028505919456],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004095200675249084,
+          "handLengthError": 0.0004521242515478363,
+          "armLengthError": 0.00030210890449211547,
+          "renderedError": 0.0004345293855294585
+        },
+        {
+          "side": "right",
+          "contactError": 0.00036225446150659927,
+          "handLengthError": 0.00040409878627656326,
+          "armLengthError": 0.00030853518865825436,
+          "renderedError": 0.0004423209202286671
+        }
+      ]
+    },
+    {
+      "elapsed": 5819,
+      "name": "return",
+      "head": [0, 0],
+      "physics": [-0.30583523307402766, -0.2382250157348681],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00033834741724135634,
+          "handLengthError": 0.00045363376417384416,
+          "armLengthError": 0.0003757615717745466,
+          "renderedError": 0.0004170588808847242
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003438481853030186,
+          "handLengthError": 0.0003898857722042237,
+          "armLengthError": 0.0003790958666343158,
+          "renderedError": 0.0005071584478173463
+        }
+      ]
+    },
+    {
+      "elapsed": 5876,
+      "name": "return",
+      "head": [0, 0],
+      "physics": [-0.19421187467978945, -0.17004251380335111],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0004883007272873783,
+          "handLengthError": 0.0004133282764353652,
+          "armLengthError": 0.00047615035935422156,
+          "renderedError": 0.0005279113474898622
+        },
+        {
+          "side": "right",
+          "contactError": 0.000296896016665183,
+          "handLengthError": 0.00044945557999431784,
+          "armLengthError": 0.00030817404805816295,
+          "renderedError": 0.0007142795079744246
+        }
+      ]
+    },
+    {
+      "elapsed": 5932,
+      "name": "return",
+      "head": [0, 0],
+      "physics": [-0.05012450904103045, -0.07618403255460786],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0002729896389620483,
+          "handLengthError": 0.0004247293952830411,
+          "armLengthError": 0.00025565426192741825,
+          "renderedError": 0.000493166644446319
+        },
+        {
+          "side": "right",
+          "contactError": 0.00025849678280758767,
+          "handLengthError": 0.0003970124505983108,
+          "armLengthError": 0.0003599974801957728,
+          "renderedError": 0.0004300490663808887
+        }
+      ]
+    },
+    {
+      "elapsed": 5987,
+      "name": "return",
+      "head": [0, 0],
+      "physics": [0.06733097059560916, 0.0040022828345011195],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003050248656355487,
+          "handLengthError": 0.0004118555271213076,
+          "armLengthError": 0.00043156121746790177,
+          "renderedError": 0.000480614981825056
+        },
+        {
+          "side": "right",
+          "contactError": 0.00047564719132064807,
+          "handLengthError": 0.0004129175497936677,
+          "armLengthError": 0.00036645078850483515,
+          "renderedError": 0.0007825348088772444
+        }
+      ]
+    },
+    {
+      "elapsed": 6041,
+      "name": "return",
+      "head": [0, 0],
+      "physics": [0.13985671394020252, 0.05689784535746759],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003135437252635711,
+          "handLengthError": 0.00042738127043495666,
+          "armLengthError": 0.00027164372140475734,
+          "renderedError": 0.000622119273430144
+        },
+        {
+          "side": "right",
+          "contactError": 0.00037432343301710023,
+          "handLengthError": 0.00038668590887858123,
+          "armLengthError": 0.0003818041521199689,
+          "renderedError": 0.00030253352224463015
+        }
+      ]
+    },
+    {
+      "elapsed": 6096,
+      "name": "return",
+      "head": [0, 0],
+      "physics": [0.1627180795128216, 0.0776650752130276],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003372651415850625,
+          "handLengthError": 0.000406295752832464,
+          "armLengthError": 0.000381424661114238,
+          "renderedError": 0.0004896933032796369
+        },
+        {
+          "side": "right",
+          "contactError": 0.0004005682958613674,
+          "handLengthError": 0.000430698541755703,
+          "armLengthError": 0.000322596782766027,
+          "renderedError": 0.0003716666924447054
+        }
+      ]
+    },
+    {
+      "elapsed": 6161,
+      "name": "return",
+      "head": [0, 0],
+      "physics": [0.14427518189938524, 0.07057962579258216],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0003086466260425401,
+          "handLengthError": 0.000411141397668624,
+          "armLengthError": 0.0003977173601796835,
+          "renderedError": 0.0007543424171672086
+        },
+        {
+          "side": "right",
+          "contactError": 0.0002726076859856031,
+          "handLengthError": 0.00038315968952762347,
+          "armLengthError": 0.00038206917421490516,
+          "renderedError": 0.0003422525246605801
+        }
+      ]
+    },
+    {
+      "elapsed": 6217,
+      "name": "return",
+      "head": [0, 0],
+      "physics": [0.09214428335739816, 0.04046526155236942],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.000312723580061372,
+          "handLengthError": 0.0003901219246795762,
+          "armLengthError": 0.0002727971797042983,
+          "renderedError": 0.0006917645637258829
+        },
+        {
+          "side": "right",
+          "contactError": 0.00039465867702846496,
+          "handLengthError": 0.00042875790105512124,
+          "armLengthError": 0.00034200392163086235,
+          "renderedError": 0.0006002160839670978
+        }
+      ]
+    },
+    {
+      "elapsed": 6272,
+      "name": "return",
+      "head": [0, 0],
+      "physics": [0.04066866640456851, 0.008780170795517583],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00029893742541510423,
+          "handLengthError": 0.0004040859989133949,
+          "armLengthError": 0.000317367518320566,
+          "renderedError": 0.0005979161082905193
+        },
+        {
+          "side": "right",
+          "contactError": 0.0003061124793048436,
+          "handLengthError": 0.00043404608659081134,
+          "armLengthError": 0.0003520284586500111,
+          "renderedError": 0.0007631848761775473
+        }
+      ]
+    },
+    {
+      "elapsed": 6327,
+      "name": "return",
+      "head": [0, 0],
+      "physics": [-0.00015069702189835114, -0.016733103989167167],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0005057148136869044,
+          "handLengthError": 0.0004089948814751665,
+          "armLengthError": 0.0005287485302076789,
+          "renderedError": 0.0008232038303503941
+        },
+        {
+          "side": "right",
+          "contactError": 0.0004191197128559062,
+          "handLengthError": 0.00045514458328721474,
+          "armLengthError": 0.00034058853081120333,
+          "renderedError": 0.0004812268921341456
+        }
+      ]
+    },
+    {
+      "elapsed": 6385,
+      "name": "return",
+      "head": [0, 0],
+      "physics": [-0.026462642207793423, -0.032645549369921714],
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00043289549938130745,
+          "handLengthError": 0.00040500025509437876,
+          "armLengthError": 0.0004688137525832303,
+          "renderedError": 0.0006338635148495086
+        },
+        {
+          "side": "right",
+          "contactError": 0.0002993432492924889,
+          "handLengthError": 0.0004100588851621012,
+          "armLengthError": 0.00039377049780853213,
+          "renderedError": 0.0005060098619651399
+        }
+      ]
+    }
+  ]
+}

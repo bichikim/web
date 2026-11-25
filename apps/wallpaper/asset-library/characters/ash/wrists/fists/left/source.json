@@ -1,0 +1,66 @@
+{
+  "group": "fists-left",
+  "sourceModelSha256": "404a5a884fa552f548f09973ca7e37d008f81388e27fdb9c438f946880efa927",
+  "wristSha256": "05171b11942458d560112945a5f6305e009fa75f55f1223a9a7b93d0723ef62c",
+  "placement": {
+    "action": "fists",
+    "expression": "주먹 쥐기",
+    "group": "fists-left",
+    "wrist": [2087.5367880643153, 1584.025444066479],
+    "elbow": [1890.606211231115, 2140.6666974533173],
+    "axis": [0.33352628556960207, -0.9427408004505502],
+    "normal": [0.9427408004505502, 0.33352628556960207],
+    "box": {
+      "x": 1921,
+      "y": 1252,
+      "width": 336,
+      "height": 496,
+      "scale": 2
+    },
+    "referenceSize": [672, 992],
+    "arm": "coat-free:fists-left:ArtMesh900",
+    "armIds": ["coat-free:fists-left:ArtMesh900", "coat-free:fists-left:ArtMesh901"],
+    "followers": [
+      "ArtMesh1039",
+      "ArtMesh1040",
+      "ArtMesh1041",
+      "ArtMesh1042",
+      "ArtMesh1043",
+      "ArtMesh1044",
+      "ArtMesh1046",
+      "ArtMesh1047",
+      "ArtMesh1048",
+      "ArtMesh1029",
+      "ArtMesh1030",
+      "ArtMesh1031",
+      "ArtMesh1032",
+      "ArtMesh1033",
+      "ArtMesh1034",
+      "ArtMesh1036",
+      "ArtMesh1037",
+      "ArtMesh1038"
+    ],
+    "hand": {
+      "partId": "ArtMesh849",
+      "triangle": [50, 56, 57],
+      "weights": [0.49828037289216004, 0.3146959053867452, 0.18702372172109472]
+    },
+    "actualHand": "ArtMesh1044",
+    "selected": ["ArtMesh1043", "ArtMesh1044"],
+    "generationOffset": {
+      "x": 13,
+      "y": 184
+    },
+    "wristGeneration": {
+      "x": 1927.5367880643153,
+      "y": 1344.025444066479,
+      "width": 320,
+      "height": 384,
+      "scale": 2
+    }
+  },
+  "generatedPixelsUsed": "Short wrist only. Original fingers and nails remain on the original parts. Forearm geometry and physics are unchanged.",
+  "method": "Local Qwen Image 2.1 Turbo 8-step wrist repair; original skin and ink palette; forearm outline registered in the new wrist mesh; barycentric surface contacts at both ends; original cuff drawing with coat on.",
+  "referenceModelSha256": "7c81a99a94605bd34078b0cccdeef99af18446ea0e769953a5ecd3ed0ac39813",
+  "execution": "Local ComfyUI; no hosted model"
+}

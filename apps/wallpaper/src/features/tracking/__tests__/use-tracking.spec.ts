@@ -52,8 +52,8 @@ test('should add native cursor or camera input and release it on disable', async
   vi.stubGlobal('cancelAnimationFrame', () => {
     scheduled = null
   })
-  const flush = () => {
-    for (let index = 1; index < 100; index += 1) {
+  const flush = (frames = 100) => {
+    for (let index = 1; index < frames; index += 1) {
       const callback = scheduled
       scheduled = null
       callback?.(index * 16)
@@ -68,13 +68,25 @@ test('should add native cursor or camera input and release it on disable', async
   } as DOMRect)
   const player = {patchParameterBlends: vi.fn()}
   const [mode, setMode] = createSignal<PoffoTracking>('cursor')
+  const [options, setOptions] = createSignal<PoffoTrackingOptions>({
+    bodyFollowSpeed: 1,
+    bodyScale: 0.3,
+  })
   renderHook(() =>
     useTracking({
-      bindings: () => ({headX: {blend: 'add'}}),
+      bindings: () => ({
+        bodyX: {blend: 'add', parameterId: 'ParamBodyAngleX'},
+        headX: {blend: 'add'},
+      }),
       canvas: () => canvas,
       mode,
       onError: vi.fn(),
-      parameters: () => [{defaultValue: 0, id: 'face-x', maximum: 30, minimum: -30}],
+      options,
+      parameters: () => [
+        {defaultValue: 0, id: 'face-x', maximum: 30, minimum: -30},
+        {defaultValue: 0, id: 'gaze-x', maximum: 1, minimum: -1},
+        {defaultValue: 0, id: 'ParamBodyAngleX', maximum: 10, minimum: -10},
+      ],
       player: () => player as unknown as Player,
     }),
   )
@@ -84,12 +96,36 @@ test('should add native cursor or camera input and release it on disable', async
   flush()
   expect(player.patchParameterBlends.mock.lastCall?.[0]['face-x'].value).toBe(0)
   handlers.get('poffo-cursor')?.({payload: {height: 100, width: 100, x: 80, y: 30}})
+  flush(2)
+  const initial = player.patchParameterBlends.mock.lastCall?.[0]
+  expect(initial.ParamBodyAngleX.value).toBeGreaterThan(0)
+  expect(initial.ParamBodyAngleX.value / 3).toBeLessThan(initial['face-x'].value / 30)
   flush()
   expect(player.patchParameterBlends.mock.lastCall?.[0]['face-x'].value).toBeCloseTo(15.56525664, 6)
   expect(player.patchParameterBlends.mock.lastCall?.[0]['face-x'].mode).toBe('add')
+  expect(player.patchParameterBlends.mock.lastCall?.[0]['gaze-x'].value).toBeGreaterThan(
+    player.patchParameterBlends.mock.lastCall?.[0]['face-x'].value / 30,
+  )
+  expect(player.patchParameterBlends.mock.lastCall?.[0].ParamBodyAngleX).toEqual({
+    mode: 'add',
+    value: expect.closeTo(1.556525664, 4),
+  })
   expect(invoke).toHaveBeenCalledWith(
     'subscribe_poffo_cursor',
     expect.objectContaining({enabled: true}),
+  )
+  setOptions({bodyFollowSpeed: 4, bodyScale: 0.6})
+  await Promise.resolve()
+  await Promise.resolve()
+  handlers.get('poffo-cursor')?.({payload: {height: 100, width: 100, x: 80, y: 30}})
+  flush(2)
+  const faster = player.patchParameterBlends.mock.lastCall?.[0]
+  expect(faster['face-x'].value).toBeCloseTo(initial['face-x'].value, 6)
+  expect(faster.ParamBodyAngleX.value / 6).toBeGreaterThan(initial.ParamBodyAngleX.value / 3)
+  flush()
+  expect(player.patchParameterBlends.mock.lastCall?.[0].ParamBodyAngleX.value).toBeCloseTo(
+    3.113051328,
+    4,
   )
   setMode('camera')
   await Promise.resolve()
@@ -101,7 +137,11 @@ test('should add native cursor or camera input and release it on disable', async
   expect(player.patchParameterBlends.mock.lastCall?.[0]['face-x'].mode).toBe('add')
   setMode('off')
   expect(handlers.size).toBe(0)
-  expect(player.patchParameterBlends).toHaveBeenCalledWith({'face-x': undefined})
+  expect(player.patchParameterBlends).toHaveBeenCalledWith({
+    'face-x': undefined,
+    'gaze-x': undefined,
+    ParamBodyAngleX: undefined,
+  })
   expect(scheduled).toBeNull()
 })
 
@@ -259,4 +299,101 @@ test('should add center displacements and release them when switching to overwri
   setBindings({headX: {parameterId: null}})
   expect(player.patchParameterBlends).toHaveBeenLastCalledWith({'face-x': undefined})
   view.cleanup()
+})
+
+test('should follow head, eyes and body independently in pose mode and neutralize only missing inputs', async () => {
+  vi.mocked(useViewport).mockReturnValue(() => null)
+  const handlers = new Map<string, TrackingListener>()
+  const unlisten = vi.fn()
+  const listen = vi.fn(async (_name: string, handler: TrackingListener) => {
+    handlers.set(_name, handler)
+    return unlisten
+  })
+  vi.mocked(isTauri).mockReturnValue(true)
+  vi.mocked(getCurrentWebview).mockReturnValue({listen} as unknown as ReturnType<
+    typeof getCurrentWebview
+  >)
+  let pending: FrameRequestCallback | null = null
+  let timestamp = 0
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    pending = callback
+    return 1
+  })
+  vi.stubGlobal('cancelAnimationFrame', () => {
+    pending = null
+  })
+  const settle = () => {
+    for (let index = 0; index < 180 && pending !== null; index += 1) {
+      timestamp += 16
+      const callback = pending
+      pending = null
+      callback(timestamp)
+    }
+    expect(pending).toBeNull()
+  }
+  const patch = vi.fn()
+  const [mode, setMode] = createSignal<PoffoTracking>('camera-pose')
+  renderHook(() =>
+    useTracking({
+      bindings: () => ({bodyX: {parameterId: 'BodyX'}}),
+      canvas: () => document.createElement('canvas'),
+      mode,
+      onError: vi.fn(),
+      options: () => ({bodyFollowSpeed: 1, cameraX: 4, cameraY: 4}),
+      parameters: () => [
+        {defaultValue: 0, id: 'FaceX', maximum: 30, minimum: -30},
+        {defaultValue: 0, id: 'FaceZ', maximum: 30, minimum: -30},
+        {defaultValue: 0, id: 'GazeX', maximum: 1, minimum: -1},
+        {defaultValue: 0, id: 'BodyX', maximum: 30, minimum: -30},
+      ],
+      player: () => ({patchParameterBlends: patch}) as unknown as Player,
+    }),
+  )
+  await Promise.resolve()
+  handlers.get('poffo-face')?.({
+    payload: {
+      body: {x: -0.5, y: 0},
+      detected: true,
+      pose: {eyes: {x: -0.5, y: 0}, head: {x: 0.5, y: 0, z: -0.5}},
+      x: 1,
+      y: 1,
+    },
+  })
+  settle()
+  expect(patch.mock.lastCall?.[0]).toEqual({
+    BodyX: {mode: 'overwrite', value: -15},
+    FaceX: {mode: 'overwrite', value: 15},
+    FaceZ: {mode: 'overwrite', value: -15},
+    GazeX: {mode: 'overwrite', value: -0.5},
+  })
+  handlers.get('poffo-face')?.({
+    payload: {
+      body: null,
+      detected: true,
+      pose: {eyes: {x: 0, y: 0}, head: {x: 0.5, y: 0, z: 0}},
+      x: 0,
+      y: 0,
+    },
+  })
+  settle()
+  expect(patch.mock.lastCall?.[0].BodyX.value).toBe(0)
+  expect(patch.mock.lastCall?.[0].FaceX.value).toBe(15)
+  handlers.get('poffo-face')?.({payload: {body: {x: 0.5, y: 0}, detected: false, x: 0, y: 0}})
+  settle()
+  expect(patch.mock.lastCall?.[0].BodyX.value).toBe(15)
+  expect(patch.mock.lastCall?.[0].FaceX.value).toBe(0)
+  handlers.get('poffo-face')?.({payload: {detected: false, x: 0, y: 0}})
+  settle()
+  expect(patch.mock.lastCall?.[0].FaceX.value).toBe(0)
+  expect(patch.mock.lastCall?.[0].FaceZ.value).toBe(0)
+  expect(patch.mock.lastCall?.[0].GazeX.value).toBe(0)
+  expect(patch.mock.lastCall?.[0].BodyX.value).toBe(0)
+  setMode('off')
+  expect(unlisten).toHaveBeenCalledOnce()
+  expect(patch).toHaveBeenLastCalledWith({
+    BodyX: undefined,
+    FaceX: undefined,
+    FaceZ: undefined,
+    GazeX: undefined,
+  })
 })

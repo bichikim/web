@@ -134,21 +134,32 @@ it('should reject an Atom updated date with an impossible calendar day', () => {
   expect(feed.items[0]?.publishedAt).toBeNull()
 })
 
-it.each(['Wed, 30 Feb 2026 00:00:00 GMT', 'Sat, 29 Feb 2025 00:00:00 GMT'])(
-  'should reject an RSS pubDate with an impossible calendar day: %s',
-  (pubDate) => {
-    const feed = parseFeedXml(
-      `<rss version="2.0"><channel><title>테스트 RSS</title><item>
+it.each([
+  'Wed, 30 Feb 2026 00:00:00 GMT',
+  'Sat, 29 Feb 2025 00:00:00 GMT',
+  'Mon, 30 February 2026 09:00:00 GMT',
+  'Feb 30, 2026 09:00:00 GMT',
+  'February 31, 2026 09:00:00 GMT',
+])('should reject an RSS pubDate with an impossible calendar day: %s', (pubDate) => {
+  const feed = parseFeedXml(
+    `<rss version="2.0"><channel><title>테스트 RSS</title><item>
       <pubDate>${pubDate}</pubDate>
     </item></channel></rss>`,
-      'https://example.com/rss.xml',
-    )
+    'https://example.com/rss.xml',
+  )
 
-    expect(feed.items[0]?.publishedAt).toBeNull()
-  },
-)
+  expect(feed.items[0]?.publishedAt).toBeNull()
+})
 
 it.each([
+  {
+    pubDate: 'Feb 14, 2026 09:00:00 GMT',
+    publishedAt: '2026-02-14T09:00:00.000Z',
+  },
+  {
+    pubDate: 'Sat, 14 February 2026 09:00:00 GMT',
+    publishedAt: '2026-02-14T09:00:00.000Z',
+  },
   {
     pubDate: 'Thu, 29 Feb 2024 00:00:00 +0530',
     publishedAt: '2024-02-28T18:30:00.000Z',

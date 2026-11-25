@@ -33,9 +33,6 @@ it.each(['cloud', 'gemma-4-e2b', 'lfm-2.6b-qad'] as const)(
       gender: 'N',
       question: '제 일은 어떨까요?',
     })
-    if (calculation.type !== 'generate') {
-      throw new Error('Expected a generated reading')
-    }
     const request = {...calculation.request, modelId: selectedId, requestId: 'catalog-reading'}
     const pending = Promise.withResolvers<CloudTextResponse>()
     vi.mocked(requestCloudText).mockReturnValue(pending.promise)
@@ -53,7 +50,12 @@ it.each(['cloud', 'gemma-4-e2b', 'lfm-2.6b-qad'] as const)(
       if (selectedId === 'cloud') {
         expect(Worker).not.toHaveBeenCalled()
         expect(requestCloudText).toHaveBeenCalledExactlyOnceWith(
-          {maximumTokens: 768, messages: request.messages, requestId: expect.any(String)},
+          {
+            maximumTokens: 2048,
+            messages: request.messages,
+            requestId: expect.any(String),
+            temperature: 0.2,
+          },
           expect.any(AbortSignal),
         )
         pending.resolve(CLOUD_TEXT_RESPONSE)

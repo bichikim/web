@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {For} from 'solid-js'
 import {type PoffoTrackingOptions, TRACKING_LIMITS} from '@winter-love/wallpaper/settings/tracking'
 import {
@@ -15,15 +16,43 @@ interface SPoffoMotionRangeProps {
   readonly onChange?: (options: PoffoTrackingOptions) => void | Promise<void>
 }
 const EDGES = [
-  {key: 'minX', label: '좌우 최소', minimum: true, opposite: 'maxX'},
-  {key: 'maxX', label: '좌우 최대', minimum: false, opposite: 'minX'},
-  {key: 'minY', label: '상하 최소', minimum: true, opposite: 'maxY'},
-  {key: 'maxY', label: '상하 최대', minimum: false, opposite: 'minY'},
+  {
+    key: 'minX',
+    get label() {
+      return uiText('좌우 최소')
+    },
+    minimum: true,
+    opposite: 'maxX',
+  },
+  {
+    key: 'maxX',
+    get label() {
+      return uiText('좌우 최대')
+    },
+    minimum: false,
+    opposite: 'minX',
+  },
+  {
+    key: 'minY',
+    get label() {
+      return uiText('상하 최소')
+    },
+    minimum: true,
+    opposite: 'maxY',
+  },
+  {
+    key: 'maxY',
+    get label() {
+      return uiText('상하 최대')
+    },
+    minimum: false,
+    opposite: 'minY',
+  },
 ] as const
 const EYE_STEP = 0.05
 export const SPoffoMotionRange = (props: SPoffoMotionRangeProps) => {
   const target = () => props.target ?? 'head'
-  const label = () => (target() === 'head' ? '얼굴' : '눈동자')
+  const label = () => (target() === 'head' ? uiText('머리') : uiText('눈동자'))
   const step = () => (target() === 'head' ? 1 : EYE_STEP)
   const fields = () => TRACKING_RANGE_FIELDS[target()]
   const limit = () => TRACKING_LIMITS[fields().maxX].max
@@ -37,9 +66,11 @@ export const SPoffoMotionRange = (props: SPoffoMotionRangeProps) => {
   const handleChange = (value: TrackingRange) => props.onChange?.(values(value))
   return (
     <div class="grid min-w-0 gap-2">
-      <span class="text-[13px] font-medium text-stone-700">{label()} 움직임 범위</span>
+      <span class="text-[13px] font-medium text-stone-700">
+        {uiText('{value0} 움직임 범위', {value0: label()})}
+      </span>
       <SRangePad
-        label={`${label()} 움직임 범위`}
+        label={uiText('{value0} 움직임 범위', {value0: String(label())})}
         value={range()}
         limit={limit()}
         step={step()}

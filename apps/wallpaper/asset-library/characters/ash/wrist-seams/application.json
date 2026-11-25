@@ -1,0 +1,428 @@
+{
+  "sourceSha256": "797259b9b1322bcea9eb58d17321d3b21efc4d8d936e9fb33a7e20a69135b299",
+  "sha256": "d51d8a19a8b6027547eb7f7bb11deb0a436b500a42ba49df15e4a7bedee559ea",
+  "bytes": 20577617,
+  "removed": [
+    "coat-free:coffee-left:wrist-arm",
+    "coat-free:coffee-left:arm-replaced",
+    "coat-free:noodles-left:wrist-contour:arm-overlap"
+  ],
+  "pixelRecords": [
+    {
+      "name": "coffee",
+      "id": "coat-free:coffee:hand",
+      "rgbChanged": 8043,
+      "alphaChanged": 0,
+      "outsideColorMaskPreserved": true,
+      "dimensions": [1024, 1536]
+    },
+    {
+      "name": "noodles",
+      "id": "coat-free:noodles-left:wrist-contour:skin",
+      "rgbChanged": 44596,
+      "alphaChanged": 105566,
+      "outsideColorMaskPreserved": true,
+      "dimensions": [640, 768]
+    }
+  ],
+  "rigRecords": [
+    {
+      "action": "coffee",
+      "guideId": "coat-free:coffee:arm-end-guide",
+      "handEdge": [
+        [2163.048234755074, 1697.9146275431708],
+        [2265.049730132876, 1703.449961974925]
+      ],
+      "refs": [
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 0,
+          "pixel": [208.78564453125, -23.0714111328125],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 1,
+          "pixel": [238.642822265625, -8.9285888671875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 2,
+          "pixel": [262.21435546875, 16.21429443359375],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 3,
+          "pixel": [252.78564453125, 39.78570556640625],
+          "weight": 0.4522060199579254
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 31,
+          "pixel": [155.357177734375, 57.07141113281251],
+          "weight": 0.009862461857809922
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 32,
+          "pixel": [163.21435546875, 33.5],
+          "weight": 0.5438161620963111
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 33,
+          "pixel": [174.21435546875, 9.9285888671875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 34,
+          "pixel": [180.5, -13.64288330078125],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 35,
+          "pixel": [214.269287109375, 2.87347412109375],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 36,
+          "pixel": [232.840576171875, 18.0880126953125],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 37,
+          "pixel": [222.7216796875, 38.00726318359375],
+          "weight": 0.4076033169247264
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 38,
+          "pixel": [211.39599609375, 59.68182373046876],
+          "weight": 9.422874663306725e-5
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 64,
+          "pixel": [182.22265625, 52.50830078125],
+          "weight": 0.05719636756707043
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 65,
+          "pixel": [191.381591796875, 33.38153076171875],
+          "weight": 0.4995660605443833
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 66,
+          "pixel": [198.72265625, 5.36541748046875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 72,
+          "pixel": [256.69998757101354, 30],
+          "weight": 0.772184846475292
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 73,
+          "pixel": [243.79037634185147, 30],
+          "weight": 0.789086242891411
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 74,
+          "pixel": [226.78933611491428, 30],
+          "weight": 0.7046164019789435
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 77,
+          "pixel": [220.79531382403727, 30],
+          "weight": 0.6180600273846125
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 78,
+          "pixel": [229.07126196536362, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 79,
+          "pixel": [217.18665412478495, 15],
+          "weight": 0.9163336596618535
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 87,
+          "pixel": [164.84769001045703, 30],
+          "weight": 0.6467673374238531
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 88,
+          "pixel": [188.90635700550808, 30],
+          "weight": 0.6015295525968405
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 89,
+          "pixel": [171.84769518920137, 15],
+          "weight": 0.9713029238499393
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 90,
+          "pixel": [177.92655984061932, 15],
+          "weight": 0.9642652822942115
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 91,
+          "pixel": [192.2676545787747, 30],
+          "weight": 0.5917162204121814
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 92,
+          "pixel": [196.19810580487578, 15],
+          "weight": 0.9238035783574559
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 93,
+          "pixel": [216.83455864167934, 30],
+          "weight": 0.5676264069515511
+        },
+        {
+          "partId": "coat-free:coffee-left:ArtMesh900",
+          "vertexIndex": 94,
+          "pixel": [205.80621928744864, 15],
+          "weight": 0.9025240846047122
+        }
+      ],
+      "maximumReferenceError": 5.084229945850415e-13,
+      "bodyCorePreserved": true,
+      "method": "Original forearm texture and body retained; only its wrist end is fitted to the hand-side fold"
+    },
+    {
+      "action": "noodles",
+      "guideId": "coat-free:noodles:arm-end-guide",
+      "handEdge": [
+        [2157.103415744419, 1711.5045534187004],
+        [2228.0409957384218, 1794.9499976541879]
+      ],
+      "refs": [
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 0,
+          "pixel": [208.78564453125, -23.0714111328125],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 1,
+          "pixel": [238.642822265625, -8.9285888671875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 2,
+          "pixel": [262.21435546875, 16.21429443359375],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 3,
+          "pixel": [252.78564453125, 39.78570556640625],
+          "weight": 0.4522060199579254
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 31,
+          "pixel": [155.357177734375, 57.07141113281251],
+          "weight": 0.009862461857809922
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 32,
+          "pixel": [163.21435546875, 33.5],
+          "weight": 0.5438161620963111
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 33,
+          "pixel": [174.21435546875, 9.9285888671875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 34,
+          "pixel": [180.5, -13.64288330078125],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 35,
+          "pixel": [214.269287109375, 2.87347412109375],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 36,
+          "pixel": [232.840576171875, 18.0880126953125],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 37,
+          "pixel": [222.7216796875, 38.00726318359375],
+          "weight": 0.4076033169247264
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 38,
+          "pixel": [211.39599609375, 59.68182373046876],
+          "weight": 9.422874663306725e-5
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 64,
+          "pixel": [182.22265625, 52.50830078125],
+          "weight": 0.05719636756707043
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 65,
+          "pixel": [191.381591796875, 33.38153076171875],
+          "weight": 0.4995660605443833
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 66,
+          "pixel": [198.72265625, 5.36541748046875],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 72,
+          "pixel": [256.69998757101354, 30],
+          "weight": 0.772184846475292
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 73,
+          "pixel": [243.79037634185147, 30],
+          "weight": 0.789086242891411
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 74,
+          "pixel": [226.78933611491428, 30],
+          "weight": 0.7046164019789435
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 77,
+          "pixel": [220.79531382403727, 30],
+          "weight": 0.6180600273846125
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 78,
+          "pixel": [229.07126196536362, 15],
+          "weight": 1
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 79,
+          "pixel": [217.18665412478495, 15],
+          "weight": 0.9163336596618535
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 87,
+          "pixel": [164.84769001045703, 30],
+          "weight": 0.6467673374238531
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 88,
+          "pixel": [188.90635700550808, 30],
+          "weight": 0.6015295525968405
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 89,
+          "pixel": [171.84769518920137, 15],
+          "weight": 0.9713029238499393
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 90,
+          "pixel": [177.92655984061932, 15],
+          "weight": 0.9642652822942115
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 91,
+          "pixel": [192.2676545787747, 30],
+          "weight": 0.5917162204121814
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 92,
+          "pixel": [196.19810580487578, 15],
+          "weight": 0.9238035783574559
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 93,
+          "pixel": [216.83455864167934, 30],
+          "weight": 0.5676264069515511
+        },
+        {
+          "partId": "coat-free:noodles-left:ArtMesh900",
+          "vertexIndex": 94,
+          "pixel": [205.80621928744864, 15],
+          "weight": 0.9025240846047122
+        }
+      ],
+      "maximumReferenceError": 6.431098710768743e-13,
+      "bodyCorePreserved": true,
+      "method": "Original forearm texture and body retained; only its wrist end is fitted to the hand-side fold"
+    }
+  ],
+  "originalArmTexturesPreserved": true,
+  "wristEndUvUsesCleanOriginalArmProfile": 70,
+  "originalFingerAndCupPixelsPreserved": true,
+  "otherActionsPreserved": true,
+  "colorPromptId": "40811aaa-c88c-4076-a4dd-6d8d53d646f7",
+  "cupProtectionPromptId": "b1f986a8-f9fd-47a6-9e76-a1ab13fe863c",
+  "source": "Local ComfyUI core ColorTransfer and masked compositing; no generation",
+  "cupAndUpperHandChangedPixels": 0,
+  "validation": {
+    "otherArmConnections": 13,
+    "regularRenderer": "passed",
+    "workerRenderer": "passed",
+    "visualPoses": ["rest", "wrist-left", "wrist-right", "turn-left", "turn-right", "coat"],
+    "numericPoses": 14,
+    "nativeApp": {
+      "modelSha256": "d51d8a19a8b6027547eb7f7bb11deb0a436b500a42ba49df15e4a7bedee559ea",
+      "poses": ["coffee-left", "coffee-right", "noodles-left", "noodles-right"],
+      "externalCoat": "off",
+      "headInput": "temporary head parameter preview before real physics",
+      "pointerInputUsed": false,
+      "canvasCaptures": "app-review.png",
+      "maximumVertexError": 0.0005446978007057623
+    }
+  }
+}

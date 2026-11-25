@@ -1,0 +1,13 @@
+{
+  "sourceSha256": "143beffc3c329396f312fdb8b45cf00e1b31fd3cb01d547dbbbe20255e85b42c",
+  "sha256": "7a4a64a0cf53eec42e8023cd94433d94f9c2d5db6b09a847b150af65a32b6be8",
+  "separateWristPartRemoved": true,
+  "visibleConnectionParts": {
+    "coffee": ["coat-free:coffee:hand", "coat-free:coffee-left:ArtMesh900"],
+    "noodles": ["coat-free:noodles-left:hand", "coat-free:noodles-left:ArtMesh900"]
+  },
+  "partCountChanged": 0,
+  "handAtlasSourceRgbPixelsChecked": 95768,
+  "originalFingerMeshAndCupAssetsPreserved": true,
+  "originalPhysicsAndMouthRigPreserved": true
+}

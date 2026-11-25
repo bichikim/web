@@ -48,6 +48,8 @@ export interface CreatePlayerRuntimeOptions extends Pick<
 }
 
 export interface PlayerRuntimeState {
+  /** Displayed touch values awaiting one transfer into authored physics. Omitted, no release. */
+  readonly physicsRelease?: PuppetParameterValueMap
   readonly additional: ReadonlyArray<AdditionalPlaybackState>
   readonly notices: RuntimeNoticesState
   readonly randomState: number

@@ -1,6 +1,6 @@
 ---
 name: refine-korean-dev-writing
-description: Write or refine Korean engineering prose so it is natural and grammatical rather than literal or awkward; use for comments, commits, PRs, reviews, docs, and notes.
+description: Write or edit Korean engineering prose in docs, comments, PRs, and review reports while preserving technical meaning.
 ---
 
 # 한국어 개발 문장 다듬기
@@ -12,7 +12,7 @@ description: Write or refine Korean engineering prose so it is natural and gramm
 - 통용되는 개발 외래어와 영문 식별자·코드는 유지한다.
 - 한 문서의 어투와 동등한 목록 항목의 종결을 통일한다.
 - 주석은 비직관적인 이유를 간결하게 설명하되 프로젝트의 주석 규칙을 따른다.
-- 커밋 제목·타입은 git 스킬을 따르고 한국어 본문을 다듬는다.
+- 커밋 메시지 전체는 [git 스킬](../git/SKILL.md)의 언어와 형식을 따른다.
 - PR·리뷰는 설명체를 통일하고, 주장과 근거를 구분한다.
 
 출력 전에 문장의 자연스러움, 서술어 완결성, 번역투, 문체 일관성을 점검한다.

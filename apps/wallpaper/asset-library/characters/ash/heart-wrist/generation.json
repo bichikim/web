@@ -1,0 +1,147 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "original-hand-arm.png"
+    }
+  },
+  "2": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "10": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+      "unet_name": "Qwen-Image-2.1-Turbo-Q4_K_S.gguf"
+    }
+  },
+  "11": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "12": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+  },
+  "13": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": ["11", 0],
+      "vae": ["12", 0],
+      "resolution": 0,
+      "prompt": "Edit image 1 only. Image 2 is an anatomical guide showing how this same original finger-heart hand should connect to its original forearm. Keep the original image 1 fingers, nails, finger heart pose, arm shaft, elbow, scale and placement exactly unchanged. Repair only the tiny wrist/palm-base junction in the lower central part of image 1. Remove the overlapping diagonal cut edge and bulbous palm stump. Short natural wrist: palm base narrows into forearm with continuous smooth outer contours and continuous original pale ivory skin with soft pink shading. Match the forearm original soft thin reddish brown outline width and original color palette exactly. No seam line across skin. Do not lengthen the wrist, forearm, hand, or add a new segment. No skin tube, cuff, patch, bracelet, ring, collar, diagonal skin-color boundary, grain or checkerboard. This is only a short wrist repair. The upper hand and all fingers remain image 1, not redrawn in the different style of image 2. Transparent RGBA background. Same image 1 canvas 640x768.",
+      "negative_prompt": "",
+      "images.image_1": ["4", 0],
+      "images.image_2": ["7", 0]
+    }
+  },
+  "16": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": ["10", 0],
+      "device": "auto",
+      "dtype": "default"
+    }
+  },
+  "18": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["24", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["18", 0],
+      "filename_prefix": "Wallpaper/heart-wrist/anatomy-guided"
+    }
+  },
+  "20": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": ["16", 0],
+      "conditioning": ["13", 0]
+    }
+  },
+  "21": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 1111251
+    }
+  },
+  "22": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "23": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0.0"
+    }
+  },
+  "24": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["21", 0],
+      "guider": ["20", 0],
+      "sampler": ["22", 0],
+      "sigmas": ["23", 0],
+      "latent_image": ["13", 2]
+    }
+  },
+  "3": {
+    "class_type": "ImageCrop",
+    "inputs": {
+      "image": ["2", 0],
+      "width": 750,
+      "height": 900,
+      "x": 75,
+      "y": 225
+    }
+  },
+  "4": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": ["3", 0],
+      "width": 640,
+      "height": 768,
+      "upscale_method": "lanczos",
+      "crop": "disabled"
+    }
+  },
+  "5": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "wrist-reference.png"
+    }
+  },
+  "6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["5", 0],
+      "alpha": ["5", 1]
+    }
+  },
+  "7": {
+    "class_type": "ImageCrop",
+    "inputs": {
+      "image": ["6", 0],
+      "width": 640,
+      "height": 768,
+      "x": 64,
+      "y": 192
+    }
+  }
+}

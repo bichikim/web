@@ -82,7 +82,7 @@ test('should toggle a widget pose and retain it through speech and remount', asy
   try {
     const player = await ready.promise
     const menu = openMenu()
-    const toggle = screen.getByRole('menuitemcheckbox', {name: '귀엽게 작아지기'})
+    const toggle = screen.getByRole('menuitemcheckbox', {name: 'Shrink'})
     expect(toggle).toHaveAttribute('aria-checked', 'false')
     const bounds = menu.getBoundingClientRect()
     expect(bounds.right).toBeLessThanOrEqual(innerWidth)
@@ -108,7 +108,7 @@ test('should toggle a widget pose and retain it through speech and remount', asy
     const reopened = await ready.promise
     await expect.poll(() => reopened.getParameterValue('Param95'), {timeout: 3000}).toBeCloseTo(1)
     openMenu()
-    const checked = screen.getByRole('menuitemcheckbox', {name: '귀엽게 작아지기'})
+    const checked = screen.getByRole('menuitemcheckbox', {name: 'Shrink'})
     expect(checked).toHaveAttribute('aria-checked', 'true')
     await userEvent.click(checked)
     await expect.poll(() => reopened.getParameterValue('Param95'), {timeout: 3000}).toBeCloseTo(0)
@@ -125,3 +125,126 @@ test('should toggle a widget pose and retain it through speech and remount', asy
     assets.close()
   }
 }, 20_000)
+
+test.each(['motion', 'expression'] as const)(
+  'should retry a checked menu %s on the next frame after its first start is rejected',
+  async (kind) => {
+    const actual = await vi.importActual<typeof playerModule>('@winter-love/puppet/player')
+    const ready = Promise.withResolvers<playerModule.Player>()
+    const startMotion = vi.fn<playerModule.Player['startMotion']>()
+    const setExpressionLayer = vi.fn<playerModule.Player['setExpressionLayer']>()
+    const starts = () =>
+      kind === 'motion'
+        ? startMotion.mock.calls
+        : setExpressionLayer.mock.calls.filter(([, id]) => id !== undefined)
+    vi.mocked(playerModule.createPlayer).mockImplementation(async (options) => {
+      try {
+        const player = await actual.createPlayer(options)
+        if (kind === 'motion') {
+          startMotion.mockImplementation(player.startMotion).mockReturnValueOnce(undefined)
+          player.startMotion = startMotion
+        } else {
+          setExpressionLayer
+            .mockImplementation(player.setExpressionLayer)
+            .mockReturnValueOnce(false)
+          player.setExpressionLayer = setExpressionLayer
+        }
+        ready.resolve(player)
+        return player
+      } catch (cause) {
+        ready.reject(cause)
+        throw cause
+      }
+    })
+    const repository = createLibraryRepository('wallpaper-library')
+    const assets = createSettingsRepository('wallpaper-settings')
+    const model = playerModule.createDemoDocument()
+    const asset = await assets.addPuppet(
+      'Retry character',
+      JSON.stringify({
+        ...model,
+        expressions: [
+          {
+            composition: 'cubism',
+            fadeInTime: 0,
+            fadeOutTime: 0,
+            id: 'semantic-walk',
+            parameters: [{blend: 'add', parameterId: 'walking', value: 1}],
+          },
+        ],
+        motions: [
+          ...model.motions,
+          {
+            duration: 1,
+            id: 'semantic-walk',
+            tracks: [
+              {
+                keyframes: [{time: 0, value: 1}],
+                kind: 'parameter',
+                parameterId: 'walking',
+              },
+            ],
+          },
+        ],
+        parameters: [
+          ...model.parameters!,
+          {defaultValue: 0, id: 'walking', maximum: 1, minimum: 0, name: 'Walking'},
+        ],
+      }),
+    )
+    const widget = await repository.addWidget(asset.id)
+    await repository.configureSpeech(widget.id, {
+      enabled: true,
+      semanticBindings: [
+        {
+          action: {id: 'semantic-walk', kind},
+          category: 'menu',
+          enabled: true,
+          id: 'walk',
+          menuLabel: '걷기',
+          mode: 'toggle',
+          parameterId: null,
+          text: '걷기',
+          threshold: 0.8,
+        },
+      ],
+      x: 0.9,
+      y: 0.05,
+    })
+    const view = render(() => <SPoffoWidget id={widget.id} />)
+    const openMenu = async () => {
+      const root = screen.getByRole('main', {name: 'Poffo 위젯'})
+      root.focus()
+      await userEvent.keyboard('{Shift>}{F10}{/Shift}')
+      return screen.getByRole('menuitemcheckbox', {name: '걷기'})
+    }
+    try {
+      const player = await ready.promise
+      await userEvent.click(await openMenu())
+      await expect.poll(() => starts().length).toBe(1)
+      if (kind === 'motion') {
+        expect(startMotion.mock.results[0]!.value).toBeUndefined()
+      } else {
+        expect(setExpressionLayer.mock.results[0]!.value).toBe(false)
+      }
+      expect(player.getParameterValue('walking')).toBe(0)
+      expect(await openMenu()).toHaveAttribute('aria-checked', 'true')
+      await userEvent.keyboard('{Escape}')
+      await sendSemanticFrame({scores: {}, widgetId: widget.id})
+      await expect.poll(() => player.getParameterValue('walking')).toBe(1)
+      expect(starts()).toHaveLength(2)
+      await sendSemanticFrame({scores: {}, widgetId: widget.id})
+      expect(starts()).toHaveLength(2)
+      await userEvent.click(await openMenu())
+      await expect.poll(() => player.getParameterValue('walking')).toBe(0)
+      expect(screen.queryByRole('alert')).toBeNull()
+    } finally {
+      view.unmount()
+      await repository.removeWidget(widget.id)
+      repository.close()
+      await assets.removePuppet(asset.id)
+      assets.close()
+    }
+  },
+  20_000,
+)

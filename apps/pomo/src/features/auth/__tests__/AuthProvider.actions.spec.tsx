@@ -30,6 +30,7 @@ vi.mock('../../user-auth/web-session', () => ({
   signOutWebSession: sessionMocks.signOutWebSession,
 }))
 
+import {apiFetch} from '../../http-client'
 import {createTossLoginSessionAction, revokeTossLoginSessionAction} from '../../user-auth/actions'
 import {signOutAccountSessionAction} from '../actions'
 import {AuthProvider, useAuth} from '../AuthProvider'
@@ -62,6 +63,7 @@ beforeEach(() => {
 afterEach(() => {
   query.clear()
   vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
 })
 
 it('should synchronize every consumer after a web sign-out action', async () => {
@@ -80,6 +82,40 @@ it('should synchronize every consumer after a web sign-out action', async () => 
     expect(screen.getByTestId('second-authentication')).toHaveTextContent('anonymous')
   })
 })
+
+it.each([null, {email: 'user@example.com'}])(
+  'should coalesce unauthorized replies and publish the authoritative session %j',
+  async (checkedSession) => {
+    webSession = {email: 'user@example.com'}
+    const recheck = Promise.withResolvers<typeof checkedSession>()
+    sessionMocks.readAccountSession
+      .mockResolvedValueOnce(webSession)
+      .mockReturnValueOnce(recheck.promise)
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 401})))
+    render(() => <MemoryRouter root={WebAuthenticationRoot} />)
+    const first = screen.getByTestId('first-authentication')
+    const second = screen.getByTestId('second-authentication')
+    await waitFor(() => expect(first).toHaveTextContent('user@example.com'), {interval: 1})
+
+    await Promise.all([
+      apiFetch('cloud-text', {recheckWebSessionOnUnauthorized: true}),
+      apiFetch('calendar/events', {recheckWebSessionOnUnauthorized: true}),
+    ])
+    expect(first).toHaveTextContent('user@example.com')
+    expect(sessionMocks.readAccountSession).toHaveBeenCalledTimes(2)
+
+    recheck.resolve(checkedSession)
+    await waitFor(
+      () => {
+        const expected = checkedSession?.email ?? 'anonymous'
+        expect(first).toHaveTextContent(expected)
+        expect(second).toHaveTextContent(expected)
+      },
+      {interval: 1},
+    )
+    expect(sessionMocks.readAccountSession).toHaveBeenCalledTimes(2)
+  },
+)
 
 it('should synchronize Toss login and logout actions through the shared session query', async () => {
   vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')

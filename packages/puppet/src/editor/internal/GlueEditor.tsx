@@ -1,4 +1,4 @@
-import {EditorButton, EditorNumberField} from '../../design-system'
+import {EditorButton, EditorNumberField, EditorSegmentedField} from '../../design-system'
 import {For, Show} from 'solid-js'
 import {getSceneNode, isSceneNodeLocked} from './scene-graph'
 import {BoundaryGlueEditor} from './BoundaryGlueEditor'
@@ -17,6 +17,8 @@ export const GlueEditor = (props: GlueEditorProps) => {
     canEdit,
     sampled,
     change,
+    changeMode,
+    canEditMode,
     connections,
   } = useGlueEditor(props)
   const canBatchAttach = () =>
@@ -75,6 +77,20 @@ export const GlueEditor = (props: GlueEditorProps) => {
                 <legend title={`${label(glue().first)} ↔ ${label(glue().second)}`}>
                   붙임 조절
                 </legend>
+                <span>붙임 방식</span>
+                <EditorSegmentedField
+                  label={`${id} 붙임 방식`}
+                  value={glue().mode ?? 'vertex'}
+                  disabled={!canEditMode(glue())}
+                  options={[
+                    {label: '정점 붙임', value: 'vertex'},
+                    {label: '전체 이동', value: 'translate'},
+                    ...(glue().rotation === undefined
+                      ? []
+                      : [{label: '전체 이동·회전', value: 'rigid' as const}]),
+                  ]}
+                  onChange={(mode) => changeMode(glue(), mode)}
+                />
                 <Show
                   when={
                     props.editMode === 'parameter' &&

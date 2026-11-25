@@ -334,3 +334,22 @@ it('should remove focus without discarding a draft when the scene is pressed', a
   expect(input).not.toHaveFocus()
   expect(input).toHaveValue('남겨 둘 대화')
 })
+
+it('should prevent implicit submission when Enter is used during IME composition', () => {
+  const onSubmit = vi.fn()
+  render(() => <PDialogueComposer autoExpand onSubmit={onSubmit} />)
+  const input = screen.getByRole('textbox', {name: '대화 입력'})
+  fireEvent.input(input, {target: {value: '한글'}})
+  const composingEnter = new KeyboardEvent('keydown', {
+    bubbles: true,
+    cancelable: true,
+    isComposing: true,
+    key: 'Enter',
+  })
+
+  input.dispatchEvent(composingEnter)
+
+  expect(composingEnter.defaultPrevented).toBe(true)
+  expect(input).toHaveValue('한글')
+  expect(onSubmit).not.toHaveBeenCalled()
+})

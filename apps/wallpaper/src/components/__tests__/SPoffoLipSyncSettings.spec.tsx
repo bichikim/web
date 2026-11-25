@@ -36,8 +36,9 @@ it('should expose lip-sync input and a independent vowel connections with per-sh
     <SPoffoLipSyncSettings assetId="asset" load={vi.fn()} value={value()} onChange={setValue} />
   ))
   fireEvent.click(screen.getByRole('combobox', {name: '립싱크 입력'}))
-  fireEvent.click(screen.getByRole('option', {name: '음성'}))
+  fireEvent.click(screen.getByRole('option', {name: '읽어주는 음성'}))
   expect(value().source).toBe('voice')
+  expect(screen.getByRole('spinbutton', {name: '립싱크 움직임 배율'})).toHaveValue('1.5')
   expect(screen.getByRole('combobox', {name: '아 입모양 파라미터'})).toHaveTextContent('자동 · 아')
   expect(screen.getByRole('combobox', {name: '에 입모양 파라미터'})).toHaveTextContent('연결 없음')
   fireEvent.click(screen.getByRole('combobox', {name: '아 입모양 파라미터'}))
@@ -48,7 +49,7 @@ it('should expose lip-sync input and a independent vowel connections with per-sh
     source: 'voice',
   })
   fireEvent.click(screen.getByRole('combobox', {name: '립싱크 입력'}))
-  fireEvent.click(screen.getByRole('option', {name: '말풍선'}))
+  fireEvent.click(screen.getByRole('option', {name: '말풍선 글'}))
   expect(value()).toMatchObject({
     shapes: {a: {inverted: true, parameterId: 'custom'}},
     source: 'speech',
@@ -77,4 +78,5 @@ it('should show automatic open-and-form connections for every Ash mouth pose', (
       '자동 · 벌림 + 형태',
     )
   }
+  expect(screen.getByRole('spinbutton', {name: '립싱크 움직임 배율'})).toHaveValue('1.5')
 })

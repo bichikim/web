@@ -446,3 +446,17 @@ describe('normalizeAliasTree', () => {
     })
   })
 })
+
+it.each(['', ' \t '])(
+  'should reject a blank workspace path %j at plugin setup',
+  (workspacePath) => {
+    expect(() => createAlias({workspacePaths: ['packages/', workspacePath]})).toThrow(
+      'workspacePaths[1] must not be blank',
+    )
+  },
+)
+
+it('should allow configuring no workspace paths', () => {
+  expect(getWorkspaceRegexList([])).toEqual([])
+  expect(() => createAlias({workspacePaths: []})).not.toThrow()
+})

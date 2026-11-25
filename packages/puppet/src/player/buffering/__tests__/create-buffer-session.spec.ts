@@ -2,16 +2,16 @@ import {expect, test, vi} from 'vitest'
 import {createEmptyDocument} from '../../create-empty-document'
 import {createBufferEngine} from '../create-buffer-engine'
 import {createBufferSession} from '../create-buffer-session'
-import type {BufferFrame, BufferScheduler, BufferWorker} from '../types'
+import type {BufferFrame, BufferRefreshCallback, BufferScheduler, BufferWorker} from '../types'
 
 const createScheduler = () => {
   let now = 0
   let sequence = 0
-  const frames = new Map<number, VoidFunction>()
+  const frames = new Map<number, BufferRefreshCallback>()
   const cancelFrame = vi.fn((handle: number) => {
     frames.delete(handle)
   })
-  const requestFrame = vi.fn((callback: () => void) => {
+  const requestFrame = vi.fn((callback: BufferRefreshCallback) => {
     sequence += 1
     frames.set(sequence, callback)
     return sequence
@@ -23,17 +23,237 @@ const createScheduler = () => {
     requestFrame,
   }
   return {
-    advance(milliseconds: number) {
+    advance(milliseconds: number, timestamp?: number) {
       now += milliseconds
       const ready = [...frames.values()]
       frames.clear()
-      ready.forEach((callback) => callback())
+      ready.forEach((callback) => callback(timestamp))
     },
     cancelFrame,
     requestFrame,
     scheduler,
   }
 }
+
+test('should refill a full prediction queue before presenting its next frame', async () => {
+  const document = createEmptyDocument()
+  const engine = createBufferEngine(document)
+  const state = engine.step(0, new ArrayBuffer(0)).state
+  const requests: Array<{
+    request: import('../types').ProduceBufferFrame
+    resolve: (frame: BufferFrame) => void
+  }> = []
+  const worker: BufferWorker = {
+    destroy: vi.fn(),
+    initialize: vi.fn().mockResolvedValue(0),
+    produce: (request) =>
+      new Promise((resolve) => {
+        requests.push({request, resolve})
+      }),
+    reset: vi.fn().mockResolvedValue(undefined),
+    updateAudio: vi.fn().mockResolvedValue(undefined),
+  }
+  const {advance, scheduler} = createScheduler()
+  const seen: number[] = []
+  const session = createBufferSession({
+    createWorker: () => worker,
+    document,
+    onError: vi.fn(),
+    onFrame: () => {
+      seen.push(requests.length)
+    },
+    scheduler,
+  })
+  await session.ready
+  await session.start(state)
+  for (const index of [0, 1, 2]) {
+    const {request, resolve} = requests[index]!
+    resolve({
+      ...engine.step(request.deltaTime, request.buffer),
+      deltaTime: request.deltaTime,
+      generation: request.generation,
+      kind: 'frame',
+      time: request.time,
+    })
+    // eslint-disable-next-line no-await-in-loop -- Each completion fills the next ordered queue slot.
+    await Promise.resolve()
+  }
+  expect(requests).toHaveLength(3)
+  advance(100, 0)
+  advance(25, 1000 / 120)
+  expect(seen).toEqual([4])
+  expect(requests[3]!.request.deltaTime).toBeCloseTo(1 / 120, 10)
+  session.destroy()
+})
+
+test('should recover display cadence after a delayed Worker response without stretching future frames', async () => {
+  const document = createEmptyDocument()
+  const engine = createBufferEngine(document)
+  const state = engine.step(0, new ArrayBuffer(0)).state
+  const requests: Array<{
+    request: import('../types').ProduceBufferFrame
+    resolve: (frame: BufferFrame) => void
+  }> = []
+  const worker: BufferWorker = {
+    destroy: vi.fn(),
+    initialize: vi.fn().mockResolvedValue(0),
+    produce: (request) =>
+      new Promise((resolve) => {
+        requests.push({request, resolve})
+      }),
+    reset: vi.fn().mockResolvedValue(undefined),
+    updateAudio: vi.fn().mockResolvedValue(undefined),
+  }
+  const {advance, scheduler} = createScheduler()
+  const session = createBufferSession({
+    createWorker: () => worker,
+    document,
+    onError: vi.fn(),
+    onFrame: vi.fn(),
+    scheduler,
+  })
+  const finish = async (index: number) => {
+    const {request, resolve} = requests[index]!
+    resolve({
+      ...engine.step(request.deltaTime, request.buffer),
+      deltaTime: request.deltaTime,
+      generation: request.generation,
+      kind: 'frame',
+      time: request.time,
+    })
+    await Promise.resolve()
+  }
+  await session.ready
+  await session.start(state)
+  expect(requests[0]!.request.deltaTime).toBe(0)
+  advance(100)
+  await finish(0)
+  expect(requests[1]!.request.time).toBeCloseTo(100 + 1000 / 60, 8)
+  advance(5)
+  await finish(1)
+  expect(requests[2]!.request.deltaTime).toBeCloseTo(1 / 60, 10)
+  expect(requests[2]!.request.time).toBeGreaterThan(requests[1]!.request.time)
+  session.destroy()
+})
+
+test('should base overlapping input on the submitted checkpoint', async () => {
+  const document = createEmptyDocument()
+  const engine = createBufferEngine(document)
+  let checkpoint = engine.step(0, new ArrayBuffer(0)).state
+  let pending = false
+  const requests: Array<{
+    request: import('../types').ProduceBufferFrame
+    resolve: (frame: BufferFrame) => void
+  }> = []
+  const worker: BufferWorker = {
+    destroy: vi.fn(),
+    initialize: vi.fn().mockResolvedValue(0),
+    produce: (request) =>
+      new Promise((resolve) => {
+        requests.push({request, resolve})
+      }),
+    reset: vi.fn().mockResolvedValue(undefined),
+    updateAudio: vi.fn().mockResolvedValue(undefined),
+  }
+  const {advance, scheduler} = createScheduler()
+  const seen: number[] = []
+  const session = createBufferSession({
+    createWorker: () => worker,
+    document,
+    input: (base) =>
+      pending ? {revision: 1, settle: false, state: base?.state ?? checkpoint} : undefined,
+    onError: vi.fn(),
+    onFrame: (frame) => {
+      seen.push(requests.length)
+      checkpoint = frame.state
+    },
+    scheduler,
+  })
+  await session.ready
+  await session.start(checkpoint)
+  for (const index of [0, 1, 2]) {
+    const {request, resolve} = requests[index]!
+    resolve({
+      ...engine.step(request.deltaTime, request.buffer),
+      deltaTime: request.deltaTime,
+      generation: request.generation,
+      kind: 'frame',
+      time: request.time,
+    })
+    // eslint-disable-next-line no-await-in-loop -- Predictions must fill before pending input arrives.
+    await Promise.resolve()
+  }
+  advance(100)
+  pending = true
+  advance(25)
+  expect(seen).toEqual([4])
+  expect(requests[3]!.request.input?.state).toBe(checkpoint)
+  expect(requests[3]!.request.input?.revision).toBe(1)
+  session.destroy()
+})
+
+test('should start the next prediction before preparing queued display objects', async () => {
+  const document = createEmptyDocument()
+  const engine = createBufferEngine(document)
+  const state = engine.step(0, new ArrayBuffer(0)).state
+  const events: string[] = []
+  const worker: BufferWorker = {
+    destroy: vi.fn(),
+    initialize: vi.fn().mockResolvedValue(0),
+    produce: vi.fn(async (request) => {
+      events.push('produce')
+      const result = engine.step(request.deltaTime, request.buffer)
+      return {
+        ...result,
+        computed: {
+          ...result.computed,
+          frame: {
+            get layers() {
+              events.push('layers')
+              return new Map()
+            },
+            get plans() {
+              events.push('plans')
+              return []
+            },
+            spatialPoses: new Map(),
+          },
+        },
+        deltaTime: request.deltaTime,
+        generation: request.generation,
+        kind: 'frame' as const,
+        time: request.time,
+      }
+    }),
+    reset: vi.fn().mockResolvedValue(undefined),
+    updateAudio: vi.fn().mockResolvedValue(undefined),
+  }
+  const base = createScheduler()
+  let scheduled = () => {}
+  const ready = new Promise<void>((resolve) => {
+    scheduled = resolve
+  })
+  const session = createBufferSession({
+    createWorker: () => worker,
+    document,
+    onError: vi.fn(),
+    onFrame: vi.fn(),
+    scheduler: {
+      ...base.scheduler,
+      requestFrame(callback) {
+        const handle = base.scheduler.requestFrame(callback)
+        scheduled()
+        return handle
+      },
+    },
+  })
+  await session.ready
+  await session.start(state)
+  await ready
+  expect(events.slice(0, 2)).toEqual(['produce', 'produce'])
+  expect(events.slice(2, 4)).toEqual(expect.arrayContaining(['plans', 'layers']))
+  session.destroy()
+})
 
 test('should present the pending initial frame when playback stops before its response', async () => {
   const document = createEmptyDocument()
@@ -206,12 +426,12 @@ test('should display an in-flight input result even when newer inputs keep arriv
   input = {revision: 1, settle: false, state}
   session.refresh()
   await finish(0)
-  expect(onFrame.mock.calls[0]![0].inputRevision).toBe(0)
+  expect(onFrame).not.toHaveBeenCalled()
   expect(requests[1]!.request.input?.revision).toBe(1)
   input = {revision: 2, settle: false, state}
   session.refresh()
   await finish(1)
-  expect(onFrame.mock.calls[1]![0].inputRevision).toBe(1)
+  expect(onFrame.mock.calls[0]![0].inputRevision).toBe(1)
   expect(requests[2]!.request.input?.revision).toBe(2)
   session.destroy()
 })
@@ -282,12 +502,13 @@ test('should report host callback exceptions outside the Worker failure path and
     reset: vi.fn().mockResolvedValue(undefined),
     updateAudio: vi.fn().mockResolvedValue(undefined),
   }
+  let revision = 1
   const failure = new Error('Consumer callback failed')
   const onError = vi.fn()
   const session = createBufferSession({
     createWorker: () => worker,
     document,
-    input: () => ({revision: 1, settle: false, state}),
+    input: () => ({revision, settle: false, state}),
     onError,
     onFrame: () => {
       throw failure
@@ -307,6 +528,8 @@ test('should report host callback exceptions outside the Worker failure path and
   expect(callbacks).toHaveLength(1)
   expect(() => callbacks.shift()!()).toThrow(failure)
   expect(onError).not.toHaveBeenCalled()
+  revision = 2
+  session.refresh()
   expect(produce).toHaveBeenCalledTimes(2)
   session.destroy()
 })
@@ -358,4 +581,414 @@ test('should cancel only its own frames when sessions share a scheduler', async 
   advance(100)
   expect(second.onFrame).toHaveBeenCalledOnce()
   expect(second.worker.destroy).toHaveBeenCalledOnce()
+})
+
+test('should retain a frame until asynchronous GPU presentation finishes', async () => {
+  const document = createEmptyDocument()
+  const engine = createBufferEngine(document)
+  const state = engine.step(0, new ArrayBuffer(0)).state
+  let input: import('../types').BufferedInput | undefined
+  const requests: Array<{
+    request: import('../types').ProduceBufferFrame
+    resolve: (frame: BufferFrame) => void
+  }> = []
+  const worker: BufferWorker = {
+    destroy: vi.fn(),
+    initialize: vi.fn().mockResolvedValue(0),
+    produce: (request) =>
+      new Promise((resolve) => {
+        requests.push({request, resolve})
+      }),
+    reset: vi.fn().mockResolvedValue(undefined),
+    updateAudio: vi.fn().mockResolvedValue(undefined),
+  }
+  let finish = () => {}
+  const presented = new Promise<void>((resolve) => {
+    finish = resolve
+  })
+  const onFrame = vi.fn().mockReturnValueOnce(presented)
+  const prepareFrame = vi.fn()
+  const {advance, scheduler} = createScheduler()
+  const session = createBufferSession({
+    createWorker: () => worker,
+    document,
+    input: () => input,
+    onError: vi.fn(),
+    onFrame,
+    prepareFrame,
+    scheduler,
+  })
+  await session.ready
+  await session.start(state)
+  for (const index of [0, 1, 2]) {
+    const {request, resolve} = requests[index]!
+    resolve({
+      ...engine.step(request.deltaTime, request.buffer),
+      deltaTime: request.deltaTime,
+      generation: request.generation,
+      kind: 'frame',
+      time: request.time,
+    })
+    // eslint-disable-next-line no-await-in-loop -- Each completion opens the next ordered prediction slot.
+    await Promise.resolve()
+  }
+  advance(100)
+  advance(17)
+  expect(onFrame).toHaveBeenCalledOnce()
+  input = {revision: 1, settle: false, state}
+  const {request, resolve} = requests[3]!
+  resolve({
+    ...engine.step(request.deltaTime, request.buffer),
+    deltaTime: request.deltaTime,
+    generation: request.generation,
+    kind: 'frame',
+    time: request.time,
+  })
+  await Promise.resolve()
+  await Promise.resolve()
+  const next = requests[4]!
+  expect(next.request.input?.revision).toBe(1)
+  next.resolve({
+    ...engine.step(next.request.deltaTime, next.request.buffer, next.request.input),
+    deltaTime: next.request.deltaTime,
+    generation: next.request.generation,
+    kind: 'frame',
+    time: next.request.time,
+  })
+  await Promise.resolve()
+  await Promise.resolve()
+  advance(17)
+  expect(onFrame).toHaveBeenCalledOnce()
+  expect(prepareFrame).toHaveBeenCalledOnce()
+  input = undefined
+  finish()
+  await presented
+  await Promise.resolve()
+  advance(17)
+  expect(onFrame).toHaveBeenCalledTimes(2)
+  expect(onFrame.mock.calls[1]?.[0]).toBe(prepareFrame.mock.calls[0]?.[0])
+  session.destroy()
+})
+
+test('should predict during immediate GPU display and defer newer controls', async () => {
+  const document = createEmptyDocument()
+  const engine = createBufferEngine(document)
+  const state = engine.step(0, new ArrayBuffer(0)).state
+  let input = {revision: 1, settle: false, state}
+  const requests: Array<{
+    request: import('../types').ProduceBufferFrame
+    resolve: (frame: BufferFrame) => void
+  }> = []
+  const worker: BufferWorker = {
+    destroy: vi.fn(),
+    initialize: vi.fn().mockResolvedValue(0),
+    produce: (request) =>
+      new Promise((resolve) => {
+        requests.push({request, resolve})
+      }),
+    reset: vi.fn().mockResolvedValue(undefined),
+    updateAudio: vi.fn().mockResolvedValue(undefined),
+  }
+  let finish = () => {}
+  const displayed = new Promise<void>((resolve) => {
+    finish = resolve
+  })
+  const onFrame = vi.fn().mockReturnValueOnce(displayed)
+  const {scheduler} = createScheduler()
+  const session = createBufferSession({
+    createWorker: () => worker,
+    document,
+    input: () => input,
+    onError: vi.fn(),
+    onFrame,
+    scheduler,
+  })
+  const complete = async (index: number) => {
+    const {request, resolve} = requests[index]!
+    resolve({
+      ...engine.step(request.deltaTime, request.buffer),
+      deltaTime: request.deltaTime,
+      generation: request.generation,
+      inputRevision: 1,
+      kind: 'frame',
+      time: request.time,
+    })
+    await Promise.resolve()
+    await Promise.resolve()
+  }
+  await session.ready
+  await session.start(state)
+  await complete(0)
+  expect(onFrame).toHaveBeenCalledOnce()
+  expect(requests).toHaveLength(2)
+  expect(requests[1]!.request.input).toBeUndefined()
+  expect(requests[1]!.request.buffer).not.toBe(requests[0]!.request.buffer)
+  await complete(1)
+  expect(requests).toHaveLength(3)
+  expect(requests[2]!.request.input).toBeUndefined()
+  input = {revision: 2, settle: false, state}
+  session.refresh()
+  await complete(2)
+  expect(requests[3]!.request.input?.revision).toBe(2)
+  expect(onFrame).toHaveBeenCalledOnce()
+  finish()
+  await displayed
+  await Promise.resolve()
+  session.destroy()
+})
+
+test('should prioritize a continuing input stream and refill predictions after it stops', async () => {
+  const document = createEmptyDocument()
+  const engine = createBufferEngine(document)
+  const state = engine.step(0, new ArrayBuffer(0)).state
+  let input: import('../types').BufferedInput | undefined = {revision: 1, settle: false, state}
+  const requests: Array<{
+    request: import('../types').ProduceBufferFrame
+    resolve: (frame: BufferFrame) => void
+  }> = []
+  const worker: BufferWorker = {
+    destroy: vi.fn(),
+    initialize: vi.fn().mockResolvedValue(0),
+    produce: (request) =>
+      new Promise((resolve) => {
+        requests.push({request, resolve})
+      }),
+    reset: vi.fn().mockResolvedValue(undefined),
+    updateAudio: vi.fn().mockResolvedValue(undefined),
+  }
+  const {advance, scheduler} = createScheduler()
+  const presented: number[] = []
+  const displayed: Map<number, () => void> = new Map()
+  const session = createBufferSession({
+    createWorker: () => worker,
+    document,
+    input: () => input,
+    onError: vi.fn(),
+    onFrame: (frame) => {
+      presented.push(frame.inputRevision)
+      displayed.get(frame.inputRevision)?.()
+    },
+    scheduler,
+  })
+  const finish = async (index: number) => {
+    const {request, resolve} = requests[index]!
+    const shown = new Promise<void>((complete) => {
+      displayed.set(request.input!.revision, complete)
+    })
+    resolve({
+      ...engine.step(request.deltaTime, request.buffer, request.input),
+      deltaTime: request.deltaTime,
+      generation: request.generation,
+      kind: 'frame',
+      time: request.time,
+    })
+    await shown
+  }
+  await session.ready
+  await session.start(state)
+  input = {revision: 2, settle: false, state}
+  session.refresh()
+  await finish(0)
+  await finish(1)
+  expect(requests).toHaveLength(2)
+  advance(1000 / 60)
+  input = {revision: 3, settle: false, state}
+  session.refresh()
+  expect(requests[2]!.request.input?.revision).toBe(3)
+  await finish(2)
+  input = undefined
+  advance(1000 / 60)
+  expect(requests).toHaveLength(3)
+  advance(1000 / 60)
+  expect(requests).toHaveLength(4)
+  expect(requests[3]!.request.input).toBeUndefined()
+  expect(presented).toEqual([1, 2, 3])
+  for (const index of [3, 4, 5]) {
+    const {request, resolve} = requests[index]!
+    resolve({
+      ...engine.step(request.deltaTime, request.buffer, request.input),
+      deltaTime: request.deltaTime,
+      generation: request.generation,
+      kind: 'frame',
+      time: request.time,
+    })
+    // eslint-disable-next-line no-await-in-loop -- Each response opens the next ordered prediction slot.
+    await Promise.resolve()
+  }
+  expect(requests).toHaveLength(6)
+  session.destroy()
+})
+
+test('should display a due frame when the previous presentation completes', async () => {
+  const document = createEmptyDocument()
+  const engine = createBufferEngine(document)
+  const state = engine.step(0, new ArrayBuffer(0)).state
+  const requests: Array<{
+    request: import('../types').ProduceBufferFrame
+    resolve: (frame: BufferFrame) => void
+  }> = []
+  const completions: Array<() => void> = []
+  const worker: BufferWorker = {
+    destroy: vi.fn(),
+    initialize: vi.fn().mockResolvedValue(0),
+    produce: (request) =>
+      new Promise((resolve) => {
+        requests.push({request, resolve})
+      }),
+    reset: vi.fn().mockResolvedValue(undefined),
+    updateAudio: vi.fn().mockResolvedValue(undefined),
+  }
+  const {advance, scheduler} = createScheduler()
+  const onFrame = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        completions.push(resolve)
+      }),
+  )
+  const session = createBufferSession({
+    createWorker: () => worker,
+    document,
+    onError: vi.fn(),
+    onFrame,
+    scheduler,
+  })
+  try {
+    await session.ready
+    await session.start(state)
+    for (const index of [0, 1, 2]) {
+      const {request, resolve} = requests[index]!
+      resolve({
+        ...engine.step(request.deltaTime, request.buffer),
+        deltaTime: request.deltaTime,
+        generation: request.generation,
+        kind: 'frame',
+        time: request.time,
+      })
+      // eslint-disable-next-line no-await-in-loop -- Each reply fills the next prediction slot.
+      await Promise.resolve()
+    }
+    advance(100)
+    advance(17)
+    expect(onFrame).toHaveBeenCalledOnce()
+    advance(17)
+    expect(onFrame).toHaveBeenCalledOnce()
+    completions[0]!()
+    await Promise.resolve()
+    expect(onFrame).toHaveBeenCalledTimes(2)
+  } finally {
+    session.destroy()
+    completions.forEach((resolve) => resolve())
+  }
+})
+
+test('should submit the newest completed input while a newer input is still computing', async () => {
+  const document = createEmptyDocument()
+  const engine = createBufferEngine(document)
+  const state = engine.step(0, new ArrayBuffer(0)).state
+  type Input = import('../types').BufferedInput
+  type Request = import('../types').ProduceBufferFrame
+  let input: Input = {revision: 1, settle: false, state}
+  const requests: Array<{request: Request; resolve: (frame: BufferFrame) => void}> = []
+  let finishPresentation = () => {}
+  const busy = new Promise<void>((resolve) => {
+    finishPresentation = resolve
+  })
+  const onFrame = vi.fn<(frame: BufferFrame) => void | Promise<void>>().mockReturnValueOnce(busy)
+  const releaseFrame = vi.fn()
+  const {scheduler} = createScheduler()
+  const session = createBufferSession({
+    createWorker: () => ({
+      destroy: vi.fn(),
+      initialize: vi.fn().mockResolvedValue(0),
+      produce: (request) =>
+        new Promise((resolve) => {
+          requests.push({request, resolve})
+        }),
+      reset: vi.fn().mockResolvedValue(undefined),
+      updateAudio: vi.fn().mockResolvedValue(undefined),
+    }),
+    document,
+    input: () => input,
+    onError: vi.fn(),
+    onFrame,
+    releaseFrame,
+    running: () => false,
+    scheduler,
+  })
+  const complete = async (index: number) => {
+    const {request, resolve} = requests[index]!
+    resolve({
+      ...engine.step(request.deltaTime, request.buffer, request.input),
+      deltaTime: request.deltaTime,
+      generation: request.generation,
+      kind: 'frame',
+      time: request.time,
+    })
+    await Promise.resolve()
+    await Promise.resolve()
+  }
+  try {
+    await session.ready
+    await session.start(state)
+    await complete(0)
+    input = {...input, revision: 2}
+    session.refresh()
+    await complete(1)
+    input = {...input, revision: 3}
+    session.refresh()
+    expect(requests[2]?.request.input?.revision).toBe(3)
+    expect(onFrame.mock.calls.map(([frame]) => frame.inputRevision)).toEqual([1])
+    expect(releaseFrame).not.toHaveBeenCalled()
+    finishPresentation()
+    await busy
+    expect(onFrame.mock.calls.map(([frame]) => frame.inputRevision)).toEqual([1, 2])
+  } finally {
+    session.destroy()
+    finishPresentation()
+  }
+})
+
+test('should bound concurrent GPU predictions and avoid replaying queued controls', async () => {
+  const document = createEmptyDocument()
+  const engine = createBufferEngine(document)
+  const state = engine.step(0, new ArrayBuffer(engine.bytes)).state
+  const requests: Array<{
+    request: import('../types').ProduceBufferFrame
+    resolve: (frame: BufferFrame) => void
+  }> = []
+  const worker: BufferWorker = {
+    concurrency: () => 3,
+    destroy: vi.fn(),
+    initialize: vi.fn().mockResolvedValue(engine.bytes),
+    produce: (request) =>
+      new Promise((resolve) => {
+        requests.push({request, resolve})
+      }),
+    reset: vi.fn().mockResolvedValue(undefined),
+    updateAudio: vi.fn().mockResolvedValue(undefined),
+  }
+  const {scheduler} = createScheduler()
+  const input = {revision: 1, settle: false, state}
+  const session = createBufferSession({
+    createWorker: () => worker,
+    document,
+    input: () => input,
+    onError: vi.fn(),
+    onFrame: vi.fn(),
+    scheduler,
+  })
+  try {
+    await session.ready
+    await session.start(state)
+    await Promise.resolve()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(requests).toHaveLength(3)
+    expect(requests.filter(({request}) => request.input !== undefined)).toHaveLength(1)
+    expect(requests.map(({request}) => request.time)).toEqual(
+      requests.map(({request}) => request.time).sort((a, b) => a - b),
+    )
+  } finally {
+    session.destroy()
+  }
 })

@@ -90,6 +90,7 @@ test.each([
           to: 1,
         },
       ],
+      showCharacter: false,
       voice: {...DEFAULT_POFFO_VOICE, enabled: true},
       x: 0.9,
       y: 0.05,

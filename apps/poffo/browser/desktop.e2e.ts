@@ -24,6 +24,49 @@ const openDocument = async (page: Page, action = 'document-open') => {
   await activateMenu(page, action)
 }
 
+test('should download only the current JSON export after a superseded atlas finishes', async ({
+  page,
+}) => {
+  await installDesktop(page, {platform: 'MacIntel'})
+  await page.goto('/editor')
+  await openDocument(page)
+  await expect(page.getByRole('button', {name: 'mesh-preview 레이어 선택'})).toBeVisible()
+  await page.evaluate(() => {
+    const root = document.documentElement
+    const release = Promise.withResolvers<void>()
+    globalThis.addEventListener('release-test-atlas', () => release.resolve(), {once: true})
+    const decode = HTMLImageElement.prototype.decode
+    HTMLImageElement.prototype.decode = async function decodeAfterRelease(this: HTMLImageElement) {
+      await decode.call(this)
+      root.dataset.atlasDecoding = 'true'
+      await release.promise
+    }
+    const encode = HTMLCanvasElement.prototype.toDataURL
+    HTMLCanvasElement.prototype.toDataURL = function markEncoded(this: HTMLCanvasElement, ...args) {
+      const encoded = encode.apply(this, args)
+      root.dataset.atlasEncoded = 'true'
+      return encoded
+    }
+    document.addEventListener('click', ({target}) => {
+      if (target instanceof HTMLAnchorElement && target.download === 'puppet-model.json') {
+        root.dataset.jsonDownloads = String(Number(root.dataset.jsonDownloads ?? 0) + 1)
+      }
+    })
+  })
+
+  await activateMenu(page, 'atlas-export')
+  const root = page.locator('html')
+  await expect(root).toHaveAttribute('data-atlas-decoding', 'true')
+  const downloaded = page.waitForEvent('download')
+  await activateMenu(page, 'json-export')
+  expect((await downloaded).suggestedFilename()).toBe('puppet-model.json')
+
+  await page.evaluate(() => globalThis.dispatchEvent(new Event('release-test-atlas')))
+  await expect(root).toHaveAttribute('data-atlas-encoded', 'true')
+  await page.evaluate(() => new Promise(requestAnimationFrame))
+  await expect(root).toHaveAttribute('data-json-downloads', '1')
+})
+
 test('should report native read failures without replacing the current model', async ({page}) => {
   await installDesktop(page, {
     automaticAction: 'document-open',

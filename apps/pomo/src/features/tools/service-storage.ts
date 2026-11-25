@@ -20,18 +20,34 @@ export const DEFAULT_SERVICE_SETTINGS: ServiceSettings = {
   manual: false,
   start: '',
 }
-const settingsSchema = z.object({
+const draftSchema = z.object({
   branch: z.enum(['army', 'marines', 'navy', 'air']),
-  days: z.string().transform(normalizeServiceDays),
+  days: z.string(),
   manual: z.boolean(),
   start: z.string().refine((value) => value === '' || parseDate(value) !== null),
+})
+const storedDateTime = z.iso.datetime({offset: true})
+const parseStart = (value: unknown): string | null => {
+  if (typeof value !== 'string') {
+    return null
+  }
+  const trimmed = value.trim()
+  const date = storedDateTime.safeParse(trimmed).success
+    ? trimmed.slice(0, 'YYYY-MM-DD'.length)
+    : trimmed
+  return parseDate(date) === null ? null : date
+}
+const settingsSchema = draftSchema.extend({
+  days: z.union([z.string(), z.number()]).transform((value) => normalizeServiceDays(String(value))),
+  start: z
+    .string()
+    .transform((value) => (value.trim() === '' ? '' : parseStart(value)))
+    .pipe(z.string()),
 })
 const parseSettings = (value: unknown): ServiceSettings | null => {
   const result = settingsSchema.safeParse(value)
   return result.success ? result.data : null
 }
-const parseStart = (value: unknown): string | null =>
-  typeof value === 'string' && parseDate(value) !== null ? value : null
 
 export interface ServiceSettingsStorage {
   read(): Promise<ServiceSettings>
@@ -146,7 +162,6 @@ const runtimeStorage = createServiceSettingsStorage({
 export const readServiceSettings = runtimeStorage.read
 export const writeServiceSettings = runtimeStorage.write
 
-const draftSchema = settingsSchema.extend({days: z.string()})
 const parseDraft = (value: unknown): ServiceSettings | null => {
   const result = draftSchema.safeParse(value)
   return result.success ? result.data : null

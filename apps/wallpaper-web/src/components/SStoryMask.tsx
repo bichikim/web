@@ -18,20 +18,32 @@ export const SStoryMask = (props: SStoryMaskProps) => {
   )
   return (
     <div
-      class="pointer-events-none absolute inset-0"
+      class="pointer-events-none absolute inset-y-0"
       aria-hidden={props.outgoing || props.hidden || undefined}
       inert={Boolean(props.outgoing || props.transition)}
       data-story-mask={props.transition ? (props.outgoing ? 'outgoing' : 'incoming') : undefined}
       classList={{
-        '[--scene-side:-200%]': leftSide(),
-        '[--scene-side:200%]': !leftSide(),
         'animate-story-scene-cover': props.transition?.phase === 'cover',
         'animate-story-scene-reveal': props.transition?.phase === 'reveal',
+        'inset-x-0': !props.transition,
         invisible: props.hidden,
+        'story-scene-left': Boolean(props.transition && leftSide()),
+        'story-scene-right': Boolean(props.transition && !leftSide()),
       }}
       style={{'--wipe-direction': props.transition?.direction ?? 1}}
     >
-      {props.children}
+      <div
+        class="absolute inset-y-0"
+        classList={{
+          'animate-story-scene-content-cover': props.transition?.phase === 'cover',
+          'animate-story-scene-content-reveal': props.transition?.phase === 'reveal',
+          'inset-x-0': !props.transition,
+          'story-scene-content-left': Boolean(props.transition && leftSide()),
+          'story-scene-content-right': Boolean(props.transition && !leftSide()),
+        }}
+      >
+        {props.children}
+      </div>
     </div>
   )
 }

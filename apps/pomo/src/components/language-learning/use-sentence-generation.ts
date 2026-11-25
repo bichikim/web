@@ -3,6 +3,7 @@ import {createEffect} from 'solid-js'
 import * as m from '@paraglide/message'
 import {
   createLanguageLearningPrompt,
+  hasOverlongLanguageLearningTag,
   MINIMUM_RANDOM_LANGUAGE_LEARNING_WORDS,
   selectLanguageLearningPromptWords,
 } from '../../features/language-learning'
@@ -80,7 +81,11 @@ export const useSentenceGeneration = (props: UseSentenceGenerationProps) => {
     queueSentence([])
   }
   const handleGenerate = async () => {
-    if (props.state.textModelCheckActive()) {
+    if (
+      props.state.textModelCheckActive() ||
+      (props.state.wordSource() === 'direct' &&
+        hasOverlongLanguageLearningTag(props.state.tagInput()))
+    ) {
       return
     }
 

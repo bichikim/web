@@ -20,6 +20,7 @@ export interface SpeechMouthTrack {
 export interface CachedSpeech {
   readonly audio: Blob
   readonly mouth: SpeechMouthTrack
+  readonly mouthRevision?: number
 }
 
 export interface PreparedSpeechPlayback {

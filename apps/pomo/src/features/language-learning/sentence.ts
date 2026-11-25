@@ -15,8 +15,16 @@ const ENDING_PATTERN = /[.!?。！？…]$/u
 const INTERNAL_ENDING_PATTERN =
   /(?:[!?。！？]+(?![!?。！？])|(?<=\d)\.(?![\d.])|(?<!\d)\.(?!\.)).+/u
 const QUOTED_TEXT_PATTERN = /"[^"]*"|“[^”]*”|‘[^’]*’|「[^」]*」|『[^』]*』/gu
-const ENGLISH_ABBREVIATION_PATTERN = new RegExp(
-  `(?:^|\\s)(?:${ENGLISH_TITLE_ABBREVIATIONS.join('|')}|[A-Z])\\.\\s*$`,
+const ENGLISH_TITLE_END = new RegExp(
+  `(?:^|\\s)(?:${ENGLISH_TITLE_ABBREVIATIONS.join('|')})\\.\\s*$`,
+  'iu',
+)
+const ENGLISH_INITIAL_END = /(?:^|\s)[A-Z]\.\s*$/u
+const ENGLISH_PRONOUN_END = /\sI\.\s*$/u
+const NAMED_INITIAL_END = /(?:[A-Z][a-z]+\s+|\b[A-Z]\.\s+)[A-Z]\.\s*$/u
+const SINGLE_LETTER_LABEL_END = new RegExp(
+  `(?:^|\\s)(?:answer|category|choice|choose|level|letter|option|part|pick|plan|section|select|step|vitamin)` +
+    `\\s+[A-Z]\\.\\s*$`,
   'iu',
 )
 const INTERNAL_LATIN_ABBREVIATION_PATTERN = new RegExp(
@@ -30,10 +38,23 @@ const LEADING_MARKER_PATTERN = /^(?:[-*•]|\d+(?:\.|\)))\s+/u
 
 const hasMultipleEnglishSentences = (sentence: string) => {
   let previousSegment: string | undefined
+  let precedingTitle = false
 
   for (const {segment} of new Intl.Segmenter('en', {granularity: 'sentence'}).segment(sentence)) {
-    if (previousSegment !== undefined && !ENGLISH_ABBREVIATION_PATTERN.test(previousSegment)) {
-      return true
+    if (previousSegment !== undefined) {
+      const isTitle = ENGLISH_TITLE_END.test(previousSegment)
+      const isInitial =
+        ENGLISH_INITIAL_END.test(previousSegment) &&
+        !SINGLE_LETTER_LABEL_END.test(previousSegment) &&
+        (!ENGLISH_PRONOUN_END.test(previousSegment) ||
+          precedingTitle ||
+          NAMED_INITIAL_END.test(previousSegment))
+
+      if (!isTitle && !isInitial) {
+        return true
+      }
+
+      precedingTitle = isTitle
     }
 
     previousSegment = segment

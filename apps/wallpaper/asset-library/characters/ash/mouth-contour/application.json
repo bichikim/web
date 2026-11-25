@@ -1,0 +1,22 @@
+{
+  "sourceSha256": "230226a1bf79d01d1622b001f9425ca32973b53c370008cf920ac0ba2893d10d",
+  "sha256": "59e3549794559f45f8a36a072c99692ee3c253404dccea54a146364915ffe0b5",
+  "bytes": 20758355,
+  "strength": 0.4,
+  "targetExponent": 2.3,
+  "parents": ["Warp40@Part69", "Warp40@Part70"],
+  "guide": {
+    "part": "ArtMesh638",
+    "vertices": [0, 19, 20, 21, 22, 23, 24, 25, 26, 27, 45, 46, 47, 48, 49, 50, 51, 52, 28]
+  },
+  "openings": [0, 0.1, 0.25, 0.55, 0.65, 0.9, 1],
+  "forms": [-1, -0.3, 0, 0.45, 0.6, 0.9, 1],
+  "closedAndRoundFormsUnchanged": true,
+  "originalTexturesAndMeshesUnchanged": true,
+  "i": {
+    "form": 0.9,
+    "opening": 0.55,
+    "cornerDropLocal": 0.024,
+    "widthAndOpeningPreserved": true
+  }
+}

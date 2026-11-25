@@ -1,4 +1,4 @@
-import {differenceBy} from 'es-toolkit/array'
+import {differenceBy, uniqBy} from 'es-toolkit/array'
 import type {ParsedFeedItem} from './feed-parser'
 
 const MAXIMUM_FEED_ITEM_AGE_DAYS = 3
@@ -6,7 +6,7 @@ const HOURS_PER_DAY = 24
 const MINUTES_PER_HOUR = 60
 const SECONDS_PER_MINUTE = 60
 const MILLISECONDS_PER_SECOND = 1000
-const MAXIMUM_ITEMS_PER_SYNC = 20
+export const MAXIMUM_ITEMS_PER_SYNC = 20
 const MAXIMUM_FEED_ITEM_AGE_MS =
   MAXIMUM_FEED_ITEM_AGE_DAYS *
   HOURS_PER_DAY *
@@ -22,6 +22,7 @@ interface PlanFeedSyncOptions {
 }
 
 export interface FeedSyncPlan {
+  readonly deferredItems?: ReadonlyArray<ParsedFeedItem>
   readonly ignoredItems: ReadonlyArray<{
     readonly item: ParsedFeedItem
     readonly reason: 'stale' | 'historical'
@@ -55,11 +56,12 @@ export const planFeedSync = (options: PlanFeedSyncOptions): FeedSyncPlan => {
   const storedIds = new Set(options.storedItemIds)
   const matchedLegacyIds = new Set<string>()
   const isFirstSync = options.storedItemIds.length === 0
+  const items = uniqBy(options.items, (item) => item.id)
   const firstUndatedFeedItem = isFirstSync
-    ? options.items.find((item) => item.publishedAt === null)
+    ? items.find((item) => item.publishedAt === null)
     : undefined
-  const unseenItems = sortItems(
-    options.items.filter((item) => {
+  const unseen = sortItems(
+    items.filter((item) => {
       const isStoredItem = storedIds.has(item.id)
       const isStoredLegacyItem =
         item.legacyId !== undefined &&
@@ -75,7 +77,11 @@ export const planFeedSync = (options: PlanFeedSyncOptions): FeedSyncPlan => {
 
       return true
     }),
-  ).slice(-MAXIMUM_ITEMS_PER_SYNC)
+  )
+  const unseenItems = unseen.slice(-MAXIMUM_ITEMS_PER_SYNC)
+  const deferredItems = isFirstSync
+    ? []
+    : unseen.slice(0, -MAXIMUM_ITEMS_PER_SYNC).filter((item) => item.publishedAt === null)
 
   if (unseenItems.length === 0) {
     return {ignoredItems: [], itemsToProcess: []}
@@ -98,5 +104,9 @@ export const planFeedSync = (options: PlanFeedSyncOptions): FeedSyncPlan => {
     reason: staleIds.has(item.id) ? ('stale' as const) : ('historical' as const),
   }))
 
-  return {ignoredItems, itemsToProcess}
+  return {
+    ...(deferredItems.length === 0 ? {} : {deferredItems}),
+    ignoredItems,
+    itemsToProcess,
+  }
 }

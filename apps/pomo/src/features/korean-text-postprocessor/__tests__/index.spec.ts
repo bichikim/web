@@ -7,7 +7,29 @@ import {
   createKoreanRefinementMessages,
   createKoreanTextSegments,
   replaceUnrefinedSentences,
-} from '../index'
+} from '..'
+
+const TITLES = [
+  'Dr',
+  'Mr',
+  'Mrs',
+  'Ms',
+  'Prof',
+  'Rev',
+  'Hon',
+  'Gov',
+  'Pres',
+  'Sen',
+  'Rep',
+  'Gen',
+  'Lt',
+  'Col',
+  'Capt',
+  'Sgt',
+  'St',
+  'Mt',
+  'vs',
+]
 
 describe('containsForeignCjk', () => {
   it('should detect Han and Japanese kana without flagging Korean or Latin names', () => {
@@ -32,6 +54,49 @@ describe('containsForeignCjk', () => {
 })
 
 describe('createKoreanTextSegments', () => {
+  it.each(TITLES)('should preserve the complete sentence after %s.', (title) => {
+    const text = `${title}. Kim은 회의에 참석했습니다.`
+    expect(createKoreanTextSegments(text)).toEqual([{kind: 'text', text}])
+  })
+
+  it.each(TITLES)(
+    'should pass %s. and its contaminated sentence together for refinement',
+    (title) => {
+      const text = `${title}. Smith은 人生입니다.`
+      expect(createKoreanTextSegments(text)).toEqual([{kind: 'refining', text}])
+    },
+  )
+
+  it.each(['prof', 'PROF', 'mRs', 'VS'])('should recognize title casing %s', (title) => {
+    const text = `${title}. Kim은 회의에 참석했습니다.`
+    expect(createKoreanTextSegments(text)).toEqual([{kind: 'text', text}])
+  })
+
+  it('should preserve surrounding sentence boundaries and exact input text', () => {
+    const text = '안녕하세요! Prof. Smith은 人生입니다. 다음 문장입니다?'
+    expect(createKoreanTextSegments(text)).toEqual([
+      {kind: 'text', text: '안녕하세요!'},
+      {kind: 'refining', text: ' Prof. Smith은 人生입니다.'},
+      {kind: 'text', text: ' 다음 문장입니다?'},
+    ])
+  })
+
+  it.each(['xProf', 'Professor', 'etc'])(
+    'should retain sentence boundaries after non-title %s',
+    (word) => {
+      expect(createKoreanTextSegments(`${word}. Kim입니다.`)).toEqual([
+        {kind: 'text', text: `${word}.`},
+        {kind: 'text', text: ' Kim입니다.'},
+      ])
+    },
+  )
+
+  it('should retain the boundary when a title is followed by a number', () => {
+    expect(createKoreanTextSegments('Prof. 123명입니다.')).toEqual([
+      {kind: 'text', text: 'Prof.'},
+      {kind: 'text', text: ' 123명입니다.'},
+    ])
+  })
   it('should conceal only the contaminated sentence', () => {
     expect(
       createKoreanTextSegments(
@@ -126,6 +191,20 @@ describe('createForeignCjkTokenIds', () => {
 })
 
 describe('replaceUnrefinedSentences', () => {
+  it.each(['Jr.', 'Sr.'])('should preserve a clean sentence ending in %s', (suffix) => {
+    const cleanSentence = `그의 이름은 Robert Downey ${suffix}`
+    const unrefinedSentence = ' 다음은 人生에 관한 이야기입니다.'
+    const text = cleanSentence + unrefinedSentence
+
+    expect(createKoreanTextSegments(text)).toEqual([
+      {kind: 'text', text: cleanSentence},
+      {kind: 'refining', text: unrefinedSentence},
+    ])
+    expect(replaceUnrefinedSentences(text)).toBe(
+      `${cleanSentence} 답변의 일부 표현을 자연스러운 한국어로 바꾸지 못했어요.`,
+    )
+  })
+
   it('should preserve clean sentences and replace unresolved contamination', () => {
     expect(replaceUnrefinedSentences('괜찮아요. 人生은 길어요.')).toBe(
       '괜찮아요. 답변의 일부 표현을 자연스러운 한국어로 바꾸지 못했어요.',
@@ -137,4 +216,24 @@ describe('replaceUnrefinedSentences', () => {
       '좋아요. 국어·영어·수학을 공부해요.',
     )
   })
+})
+
+it('should retain the line break belonging to a replaced sentence', () => {
+  expect(replaceUnrefinedSentences('人生이에요.\n- 다음이에요.')).toBe(
+    '답변의 일부 표현을 자연스러운 한국어로 바꾸지 못했어요.\n- 다음이에요.',
+  )
+})
+
+it.each([
+  '배우 Robert Downey Jr.이 人生입니다.',
+  'Prof.는 人生을 설명해요.',
+  'Dr.가 人生을 말했어요.',
+])('should refine an abbreviation and its attached Korean particle as one sentence: %s', (text) => {
+  expect(createKoreanTextSegments(text)).toEqual([{kind: 'refining', text}])
+})
+
+it('should replace the entire contaminated sentence after an abbreviation with a Korean particle', () => {
+  expect(
+    replaceUnrefinedSentences('좋아요. 배우 Robert Downey Jr.이 人生입니다. 다음입니다.'),
+  ).toBe('좋아요. 답변의 일부 표현을 자연스러운 한국어로 바꾸지 못했어요. 다음입니다.')
 })

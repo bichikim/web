@@ -1,6 +1,13 @@
 import {mkdtemp, readdir, rm, writeFile} from 'node:fs/promises'
 import path from 'node:path'
-import {describe, expect, it, vi} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
+import {prepareE5Model} from '../model-cache'
+
+vi.mock('../model-cache', async () => {
+  const actual = await vi.importActual<typeof import('../model-cache')>('../model-cache')
+  return {...actual, prepareE5Model: vi.fn()}
+})
+afterEach(() => vi.clearAllMocks())
 
 const transformerEnvironment = {
   allowLocalModels: false,
@@ -18,6 +25,23 @@ import {resolveOptions} from '../config'
 import {CachedEmbeddingProvider, createLocalE5Provider} from '../embedding'
 
 describe('createLocalE5Provider', () => {
+  it('should finish preparing the shared default model before creating its local pipeline', async () => {
+    const prepared = Promise.withResolvers<void>()
+    vi.mocked(prepareE5Model).mockReturnValue(prepared.promise)
+    const options = resolveOptions({keyDetector: () => undefined}, '/project')
+    const pending = createLocalE5Provider(options)
+    expect(pipeline).not.toHaveBeenCalled()
+    prepared.resolve()
+    await pending
+    expect(prepareE5Model).toHaveBeenCalledOnce()
+    expect(transformerEnvironment.localModelPath).toBe(
+      `${path.dirname(options.modelPath)}${path.sep}`,
+    )
+    expect(pipeline).toHaveBeenCalledWith('feature-extraction', path.basename(options.modelPath), {
+      dtype: 'q8',
+      local_files_only: true,
+    })
+  })
   it('should force local-only model and WASM loading', async () => {
     const options = resolveOptions(
       {
@@ -30,6 +54,7 @@ describe('createLocalE5Provider', () => {
     )
     const provider = await createLocalE5Provider(options)
     const vectors = await provider.embed(['로그인에 실패했습니다.'])
+    expect(prepareE5Model).not.toHaveBeenCalled()
 
     expect(transformerEnvironment).toMatchObject({
       allowLocalModels: true,

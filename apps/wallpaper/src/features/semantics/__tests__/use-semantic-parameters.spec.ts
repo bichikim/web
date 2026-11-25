@@ -6,6 +6,49 @@ import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import {sendSemanticFrame} from '../channel'
 import {useSemanticParameters} from '../use-semantic-parameters'
 
+it('should release semantic numeric overrides during a state preview and resume the newest scores', async () => {
+  const player = {patchParameterBlends: vi.fn()}
+  const dispose = createRoot((cleanup) => {
+    useSemanticParameters({
+      bindings: () => [
+        {
+          enabled: true,
+          from: 0,
+          id: 'pose',
+          mode: 'range',
+          parameterId: 'angle',
+          text: '기쁨',
+          threshold: 0.5,
+          to: 10,
+        },
+      ],
+      parameters: () => [{defaultValue: 0, id: 'angle', maximum: 10, minimum: 0}],
+      player: () => player,
+      widgetId: () => 'state-preview',
+    })
+    return cleanup
+  })
+  try {
+    await sendSemanticFrame({scores: {pose: 1}, widgetId: 'state-preview'})
+    expect(player.patchParameterBlends).toHaveBeenLastCalledWith(
+      {angle: {mode: 'overwrite', value: 10}},
+      'after-physics',
+    )
+    await sendSemanticFrame({agentPreview: 'working', scores: {pose: 1}, widgetId: 'state-preview'})
+    expect(player.patchParameterBlends).toHaveBeenLastCalledWith(
+      {angle: undefined},
+      'after-physics',
+    )
+    await sendSemanticFrame({scores: {pose: 0.75}, widgetId: 'state-preview'})
+    expect(player.patchParameterBlends).toHaveBeenLastCalledWith(
+      {angle: {mode: 'overwrite', value: 5}},
+      'after-physics',
+    )
+  } finally {
+    dispose()
+  }
+})
+
 it('should apply analyzed scores to a player and release the override when its rule is disabled', async () => {
   const [bindings, setBindings] = createSignal<readonly SemanticBinding[]>([
     {

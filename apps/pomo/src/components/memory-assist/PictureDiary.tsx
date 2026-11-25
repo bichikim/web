@@ -1,6 +1,6 @@
 import {differenceBy} from 'es-toolkit/array'
 import {formatLocalDate} from 'src/utils/format-local-date'
-import {createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
+import {batch, createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
 import {
   createPictureDiaryEntry,
@@ -261,11 +261,18 @@ export const PictureDiary = (props: PictureDiaryProps) => {
       if (isDisposed) {
         return
       }
-      setEntries((currentEntries) => currentEntries.filter((entry) => entry.id !== entryId))
+      const currentEntries = entries()
+      const remainingEntries = currentEntries.filter((entry) => entry.id !== entryId)
       const currentView = view()
-      if (currentView.kind === 'entry' && currentView.id === entryId) {
-        setView({kind: 'writing'})
-      }
+      batch(() => {
+        setEntries(remainingEntries)
+        if (currentView.kind === 'entry' && currentView.id === entryId) {
+          const previousIndex = currentEntries.findIndex((entry) => entry.id === entryId)
+          // Entries are ordered newest first. Prefer the newer neighbor when both remain.
+          const adjacent = remainingEntries[previousIndex - 1] ?? remainingEntries[previousIndex]
+          setView(adjacent === undefined ? {kind: 'writing'} : {id: adjacent.id, kind: 'entry'})
+        }
+      })
       setMessage((current) => (current === m.picture_diary_delete_failed() ? null : current))
     } catch (error: unknown) {
       if (!isDisposed) {

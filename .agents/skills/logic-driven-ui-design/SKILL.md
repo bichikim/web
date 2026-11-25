@@ -1,6 +1,6 @@
 ---
 name: logic-driven-ui-design
-description: Design, implement, refine, or review frontend interfaces for hierarchy, interaction semantics, readability, and accessibility.
+description: Design or review visible UI and interactions for visual hierarchy, semantics, readability, and accessibility.
 ---
 
 # Logic-Driven UI Design

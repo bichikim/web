@@ -1,0 +1,175 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "junction-source.png"
+    }
+  },
+  "2": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "3": {
+    "class_type": "ImageCrop",
+    "inputs": {
+      "image": ["2", 0],
+      "x": 200,
+      "y": 16,
+      "width": 384,
+      "height": 640
+    }
+  },
+  "4": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": ["3", 0],
+      "upscale_method": "lanczos",
+      "width": 768,
+      "height": 1280,
+      "crop": "disabled"
+    }
+  },
+  "5": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "junction-mask.png"
+    }
+  },
+  "6": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["5", 0],
+      "channel": "red"
+    }
+  },
+  "7": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["4", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "8": {
+    "class_type": "SetLatentNoiseMask",
+    "inputs": {
+      "samples": ["7", 0],
+      "mask": ["6", 0]
+    }
+  },
+  "10": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+      "unet_name": "Qwen-Image-2.1-Turbo-Q4_K_S.gguf"
+    }
+  },
+  "11": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "12": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+  },
+  "13": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": ["11", 0],
+      "vae": ["12", 0],
+      "resolution": 0,
+      "prompt": "只修补原图中手掌下缘与前臂交接处缺少的极短手腕。严格保留原有大拇指、细长蓝色指甲、四个小的弯曲手指、手背和手掌主体的轮廓、像素位置、比例及所有绘画细节。不要重新设计手，不要画新指甲。编辑范围只有白色蒙版内的手腕接口：让原有手掌根部两侧细线平顺接到原有前臂两侧，填平原先的阶梯状剪切边缘，形成同一块连续皮肤。保持原有前臂的长度、宽度、角度、位置及轮廓完全不变。手腕不应增长、不应变细形成瓶颈、不应变粗肿胀，也不要画连接用长管或额外的肉块。不要添加新的手掌团块、肌肉、凸起或深皱纹；只是原插画中朴素、短小、自然的腕部过渡。腕部颜色必须直接延续现有前臂和原有手掌的浅象牙白肤色、极淡暖粉阴影，禁止整体变粉、变灰或变暗。侧边红棕色细线的线宽、深浅和笔触与原来的前臂轮廓一致，没有横向接缝、重描边、补丁边界。画布、构图、缩放、手指姿势和透明背景不变。输出相同尺寸RGBA图像。",
+      "negative_prompt": "",
+      "images.image_1": ["4", 0]
+    }
+  },
+  "16": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": ["10", 0],
+      "device": "auto",
+      "dtype": "default"
+    }
+  },
+  "18": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["24", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["18", 0],
+      "filename_prefix": "Wallpaper/thumb-junction/generated"
+    }
+  },
+  "20": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": ["16", 0],
+      "conditioning": ["13", 0]
+    }
+  },
+  "21": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 711112
+    }
+  },
+  "22": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "23": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0.0"
+    }
+  },
+  "24": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["21", 0],
+      "guider": ["20", 0],
+      "sampler": ["22", 0],
+      "sigmas": ["23", 0],
+      "latent_image": ["8", 0]
+    }
+  },
+  "25": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["4", 0],
+      "source": ["18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["6", 0]
+    }
+  },
+  "26": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["25", 0],
+      "filename_prefix": "Wallpaper/thumb-junction/composite"
+    }
+  },
+  "27": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["4", 0],
+      "filename_prefix": "Wallpaper/thumb-junction/reference"
+    }
+  }
+}

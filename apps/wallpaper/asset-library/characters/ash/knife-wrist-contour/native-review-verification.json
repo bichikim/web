@@ -1,0 +1,67 @@
+{
+  "sha256": "bb8715f612b470cb2eef22e3887ae7ecfe3635729195c147b53c98117c8399e9",
+  "source": "Actual Wallpaper Worker vertices matched against the original and corrected model",
+  "pointerInputUsed": false,
+  "mode": "review",
+  "frames": 6,
+  "maximumArmDifference": 0.00044052171097064274,
+  "maximumFingerDifference": 0.000474531409508927,
+  "maximumAttachmentDifference": 0.0004510401531661046,
+  "maximumSharedSeamError": 0,
+  "results": [
+    {
+      "name": "rest",
+      "head": [0, 0],
+      "sourceError": 0.0003485288898446015,
+      "armError": 0.0003485288898446015,
+      "fingerError": 0.0002119800753916934,
+      "anchorError": 0.0002119800753916934,
+      "seamError": 0
+    },
+    {
+      "name": "up",
+      "head": [0, 30],
+      "sourceError": 0.00035853259259965853,
+      "armError": 0.0003172954811816453,
+      "fingerError": 0.00035853259259965853,
+      "anchorError": 0.00020958664572390262,
+      "seamError": 0
+    },
+    {
+      "name": "down",
+      "head": [0, -30],
+      "sourceError": 0.0004949302110617282,
+      "armError": 0.00031800620217836695,
+      "fingerError": 0.000474531409508927,
+      "anchorError": 0.0004510401531661046,
+      "seamError": 0
+    },
+    {
+      "name": "left",
+      "head": [-30, 0],
+      "sourceError": 0.00044052171097064274,
+      "armError": 0.00044052171097064274,
+      "fingerError": 0.00028316712860032567,
+      "anchorError": 0.00021815958962179138,
+      "seamError": 0
+    },
+    {
+      "name": "right",
+      "head": [30, 0],
+      "sourceError": 0.00043494722922332585,
+      "armError": 0.00043494722922332585,
+      "fingerError": 0.0003139309960715764,
+      "anchorError": 0.000270133760295721,
+      "seamError": 0
+    },
+    {
+      "name": "up-again",
+      "head": [0, 30],
+      "sourceError": 0.000326424144077464,
+      "armError": 0.000326424144077464,
+      "fingerError": 0.0002269104559218249,
+      "anchorError": 0.00017087204241761356,
+      "seamError": 0
+    }
+  ]
+}

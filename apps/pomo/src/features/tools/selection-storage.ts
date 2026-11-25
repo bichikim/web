@@ -1,4 +1,5 @@
 import {z} from 'zod'
+import {normalizeStoredInteger} from 'src/utils/runtime-storage/normalize-stored-integer'
 
 import {createAuthoritativeWriter, restorePreferredValue} from '../preference-persistence'
 import {toolStorageAdapter, type ToolStorageAdapter} from './storage-adapter'
@@ -97,12 +98,21 @@ const unitSchema = z
   })
 const FIRST_YEAR = 1900
 const LAST_YEAR = 2050
+const LAST_MONTH = 12
 const movingSchema = z.object({
-  month: z.string().regex(/^(?:[1-9]|1[0-2])$/u),
+  month: z
+    .preprocess(normalizeStoredInteger, z.number().int().min(1).max(LAST_MONTH))
+    .transform(String),
   year: z
-    .string()
-    .regex(/^\d{4}$/u)
-    .refine((value) => Number(value) >= FIRST_YEAR && Number(value) <= LAST_YEAR),
+    .union([
+      z.number(),
+      z
+        .string()
+        .regex(/^\d{4}$/u)
+        .transform(Number),
+    ])
+    .pipe(z.number().int().min(FIRST_YEAR).max(LAST_YEAR))
+    .transform(String),
 })
 export interface ToolSelectionStorages {
   readonly unitSelectionStorage: SelectionStorage<UnitSelection>

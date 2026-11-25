@@ -11,7 +11,7 @@ import {
   getLocalizedWeatherLabel,
   getLocalizedWeatherLocationLabel,
   getLocalizedWeatherSceneModeOptions,
-} from '../index'
+} from '..'
 
 describe('scene localization', () => {
   it('should localize provider names and old Korean city names', () => {
@@ -172,4 +172,15 @@ it('should preserve every original city label and option order in both locales',
   expect(getLocalizedWeatherCityOptions({locale: 'ko'})).toEqual(
     expected.map(([value, , label]) => ({label, value})),
   )
+})
+
+it('should localize a Korean location saved under its provider alias', () => {
+  const location = {
+    country: 'KR',
+    id: 'openweather:35.5038,128.7464',
+    name: 'Miryang-si',
+    region: '',
+  } as const
+  expect(getLocalizedWeatherLocationLabel(location, {locale: 'ko'})).toBe('밀양')
+  expect(getLocalizedWeatherLocationLabel(location, {locale: 'en'})).toBe('Miryang')
 })

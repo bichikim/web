@@ -20,7 +20,11 @@ const handleKeyDown: JSX.EventHandler<HTMLDivElement, KeyboardEvent> = (event) =
     menu.hidePopover()
     return
   }
-  const choices = [...menu.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]')]
+  const choices = [
+    ...menu.querySelectorAll<HTMLButtonElement>(
+      '[role="menuitemradio"], [role="menuitemcheckbox"]',
+    ),
+  ]
   const active = menu.ownerDocument.activeElement
   const current = choices.findIndex((choice) => choice === active)
   let next: number
@@ -56,7 +60,9 @@ export const SExpressionMenu = (props: SExpressionMenuProps) => {
         title={props.preview.expressionId() ?? '표정'}
         class="flex h-[var(--control-size)] w-[var(--control-size)] shrink-0 items-center justify-center
           rounded-full border-0 bg-transparent hover:bg-lilac"
-        classList={{'bg-lilac! text-violet': props.preview.expressionId() !== null}}
+        classList={{
+          'bg-lilac! text-violet': props.preview.expressionId() !== null || props.preview.coatOff(),
+        }}
       >
         <SIcon name="face" />
       </button>
@@ -125,6 +131,27 @@ export const SExpressionMenu = (props: SExpressionMenuProps) => {
             </div>
           )}
         </For>
+        <div role="group" aria-label="의상" class="mt-3">
+          <p aria-hidden="true" class="px-3 pb-1 pt-1 text-[11px] font-600 text-muted">
+            의상
+          </p>
+          <div class="pl-3">
+            <button
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={props.preview.coatOff()}
+              tabIndex={-1}
+              onClick={() => props.preview.toggleCoat()}
+              class={OPTION_CLASSES}
+              classList={{'bg-lilac! text-violet': props.preview.coatOff()}}
+            >
+              외투 벗기
+              <span aria-hidden="true" classList={{'opacity-0': !props.preview.coatOff()}}>
+                <SIcon name="check" class="h-4 w-4" />
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
     </>
   )

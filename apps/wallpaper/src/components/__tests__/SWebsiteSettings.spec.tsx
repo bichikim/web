@@ -2,12 +2,23 @@
 import '@testing-library/jest-dom/vitest'
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterAll, afterEach, beforeAll, expect, it, vi} from 'vitest'
 import {createMonitorWallpaper, type WallpaperContent} from '@winter-love/wallpaper/settings/model'
 import type {WallpaperController} from '../../features/settings'
 import type {WallpaperLibraryController} from '../../features/library'
 import {SWebsiteSettings} from '../SWebsiteSettings'
 
+const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover')
+beforeAll(() => {
+  Object.defineProperty(HTMLElement.prototype, 'showPopover', {configurable: true, value: vi.fn()})
+})
+afterAll(() => {
+  if (original === undefined) {
+    Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')
+  } else {
+    Object.defineProperty(HTMLElement.prototype, 'showPopover', original)
+  }
+})
 afterEach(cleanup)
 const setup = () => {
   const [content, setContent] = createSignal<WallpaperContent>({mode: 'website', url: null})
@@ -66,7 +77,7 @@ const setup = () => {
 
 it('should remember a committed website address for the selected monitor', async () => {
   const {controller, library} = setup()
-  const input = screen.getByRole('textbox', {name: '웹사이트 주소'})
+  const input = screen.getByRole('combobox', {name: '웹사이트 주소'})
   fireEvent.input(input, {target: {value: 'https://example.net/'}})
   fireEvent.keyDown(input, {key: 'Enter'})
   await waitFor(() => expect(library.visit).toHaveBeenCalledWith('monitor', 'https://example.net/'))
@@ -75,7 +86,7 @@ it('should remember a committed website address for the selected monitor', async
 
 it('should delete one history row while retaining the remembered address and other rows', async () => {
   const {controller, library} = setup()
-  fireEvent.click(screen.getByText('방문 내역'))
+  fireEvent.click(screen.getByRole('button', {name: '방문 내역'}))
   fireEvent.click(screen.getByRole('button', {name: 'https://example.com/ 내역 삭제'}))
   await waitFor(() =>
     expect(screen.queryByRole('button', {name: 'https://example.com/'})).toBeNull(),
@@ -87,7 +98,7 @@ it('should delete one history row while retaining the remembered address and oth
 
 it('should reopen an individual history address', async () => {
   const {controller, library} = setup()
-  fireEvent.click(screen.getByText('방문 내역'))
+  fireEvent.click(screen.getByRole('button', {name: '방문 내역'}))
   fireEvent.click(screen.getByRole('button', {name: 'https://example.org/'}))
   await waitFor(() => expect(library.visit).toHaveBeenCalledWith('monitor', 'https://example.org/'))
   expect(controller.setContent).toHaveBeenCalledWith({mode: 'website', url: 'https://example.org/'})
@@ -112,7 +123,7 @@ it('should save website CSS and script together only when applied and preserve t
       url: null,
     }),
   )
-  const address = screen.getByRole('textbox', {name: '웹사이트 주소'})
+  const address = screen.getByRole('combobox', {name: '웹사이트 주소'})
   fireEvent.input(address, {target: {value: 'https://example.net/'}})
   fireEvent.keyDown(address, {key: 'Enter'})
   await waitFor(() =>
@@ -128,15 +139,13 @@ it('should save website CSS and script together only when applied and preserve t
 it('should save independent start and DOM-ready scripts without replacing the existing load script', async () => {
   const {controller} = setup()
   fireEvent.click(screen.getByText('사용자 코드'))
-  fireEvent.change(screen.getByRole('combobox', {name: '스크립트 실행 시점'}), {
-    target: {value: 'start'},
-  })
+  fireEvent.click(screen.getByRole('combobox', {name: '스크립트 실행 시점'}))
+  fireEvent.click(screen.getByRole('option', {name: '페이지 시작 전 스크립트'}))
   fireEvent.input(screen.getByRole('textbox', {name: '페이지 시작 전 스크립트'}), {
     target: {value: 'window.ready = true'},
   })
-  fireEvent.change(screen.getByRole('combobox', {name: '스크립트 실행 시점'}), {
-    target: {value: 'dom'},
-  })
+  fireEvent.click(screen.getByRole('combobox', {name: '스크립트 실행 시점'}))
+  fireEvent.click(screen.getByRole('option', {name: 'DOM 준비 후 스크립트'}))
   fireEvent.input(screen.getByRole('textbox', {name: 'DOM 준비 후 스크립트'}), {
     target: {value: 'document.body.dataset.ready = "yes"'},
   })

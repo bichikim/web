@@ -1,0 +1,21 @@
+{
+  "version": "0.8.50",
+  "repository": "CrispStrobe/CrispASR",
+  "platforms": {
+    "darwin-arm64": {
+      "archive": "crispasr-macos-arm64.tar.gz",
+      "target": "aarch64-apple-darwin",
+      "sha256": "5a09eb645748a060a6c2c40e74df95ab61390374e2e11100889ce4cbc1b0fc97"
+    },
+    "win32-x64": {
+      "archive": "crispasr-windows-x86_64-cpu.zip",
+      "target": "x86_64-pc-windows-msvc",
+      "sha256": "03565a3c60249ead81b6934f719af3ef09f48d28121d4231490db1c43522c53e"
+    },
+    "linux-x64": {
+      "archive": "crispasr-linux-x86_64.tar.gz",
+      "target": "x86_64-unknown-linux-gnu",
+      "sha256": "bd034b6b45088fb55a39900f2a6661322dc4f1ef89e55e93cb540fe25f307b26"
+    }
+  }
+}

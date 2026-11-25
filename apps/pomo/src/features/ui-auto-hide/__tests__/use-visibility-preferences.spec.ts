@@ -22,6 +22,7 @@ beforeEach(() => {
 })
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   vi.resetAllMocks()
   vi.unstubAllGlobals()
 })
@@ -32,11 +33,28 @@ it.each([null, JSON.stringify({enabled: false, seconds: 30})])(
     localStorage.setItem(key, JSON.stringify(stored))
     getItem.mockResolvedValue(native)
     const {result} = renderHook(useVisibilityPreferences, {wrapper: PreferenceProvider})
-    await waitFor(() => expect(setItem).toHaveBeenCalledWith(key, JSON.stringify(stored)))
+    await waitFor(() =>
+      expect(setItem).toHaveBeenCalledWith(key, JSON.stringify({preferences: stored, savedAt: 0})),
+    )
     expect(result.preferences()).toEqual(stored)
-    expect(getItem).not.toHaveBeenCalled()
+    expect(getItem).toHaveBeenCalledWith(key)
   },
 )
+
+it('should restore a newer native edit when its web mirror could not be written', async () => {
+  const previous = {enabled: false, seconds: 30}
+  localStorage.setItem(key, JSON.stringify(previous))
+  getItem.mockResolvedValue(JSON.stringify({preferences: stored, savedAt: 100}))
+  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    throw new Error('web storage unavailable')
+  })
+  const view = renderHook(useVisibilityPreferences, {wrapper: PreferenceProvider})
+
+  await waitFor(() => expect(view.result.preferences()).toEqual(stored))
+  expect(setItem).not.toHaveBeenCalled()
+  expect(JSON.parse(localStorage.getItem(key)!)).toEqual(previous)
+  vi.restoreAllMocks()
+})
 
 it('should restore native preferences when web storage is empty', async () => {
   getItem.mockResolvedValue(JSON.stringify(stored))
@@ -80,7 +98,10 @@ it('should persist the latest edit after an in-flight repair', async () => {
   result.onSecondsChange(90)
   pending.resolve()
   await waitFor(() =>
-    expect(setItem).toHaveBeenLastCalledWith(key, JSON.stringify({enabled: true, seconds: 90})),
+    expect(JSON.parse(setItem.mock.lastCall![1])).toMatchObject({
+      preferences: {enabled: true, seconds: 90},
+      savedAt: expect.any(Number),
+    }),
   )
   expect(result.preferences()).toEqual({enabled: true, seconds: 90})
 })

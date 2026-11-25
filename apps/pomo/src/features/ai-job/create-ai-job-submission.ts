@@ -13,6 +13,7 @@ import {
 export interface AiJobSubmissionOptions {
   readonly client: AiJobClient
   readonly session: AiJobSession
+  readonly canRetrySubmission: () => boolean
   readonly canSubmit: Accessor<boolean>
   readonly status: Accessor<AiTextJobViewStatus>
   readonly refreshJob: (jobId: string) => Promise<boolean>
@@ -73,7 +74,7 @@ export const createAiJobSubmission = (props: AiJobSubmissionOptions) => {
       if (saved?.jobId !== null && saved?.jobId !== undefined) {
         return props.refreshJob(saved.jobId)
       }
-      if (saved !== null) {
+      if (saved !== null && props.canRetrySubmission()) {
         return submitStored(saved)
       }
       return false
@@ -84,7 +85,7 @@ export const createAiJobSubmission = (props: AiJobSubmissionOptions) => {
     }
 
     const saved = props.session.restore()
-    if (saved === null) {
+    if (saved === null || !props.canRetrySubmission()) {
       return false
     }
     return submitStored({...saved, idempotencyKey: createAiJobIdempotencyKey(), jobId: null})

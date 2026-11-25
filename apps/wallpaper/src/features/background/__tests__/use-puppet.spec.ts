@@ -3,24 +3,36 @@ import {cleanup, renderHook, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {
+  configurePlayerBuffering,
   createDemoDocument,
   createPlayer,
+  flushPlayerInputs,
   type Player,
+  type PlayerInputChange,
   preparePuppetDocument,
 } from '@winter-love/puppet/player'
+import {createNativePlayer} from '@winter-love/puppet/native'
 import {SAMPLE_PUPPET_ID} from '../constants'
 import {usePuppet} from '../use-puppet'
 import type {PoffoTracking} from '@winter-love/wallpaper/settings/tracking'
+import {createNativeWidgetBackend} from '../../native-widget'
 
 vi.mock('@winter-love/puppet/player', () => ({
+  configurePlayerBuffering: vi.fn(),
   createDemoDocument: vi.fn(),
   createPlayer: vi.fn(),
+  flushPlayerInputs: vi.fn(),
   preparePuppetDocument: vi.fn(),
+}))
+vi.mock('@winter-love/puppet/native', () => ({createNativePlayer: vi.fn()}))
+vi.mock('../../native-widget', () => ({
+  createNativeWidgetBackend: vi.fn().mockResolvedValue(undefined),
 }))
 
 const player: Player = {
   clearParameterValues: vi.fn(),
   configureRenderer: vi.fn(),
+  createParameterDrag: vi.fn(),
   destroy: vi.fn(),
   getExpression: vi.fn(),
   getParameterValue: vi.fn(),
@@ -30,10 +42,12 @@ const player: Player = {
   patchParameterBlends: vi.fn(),
   patchParameterValues: vi.fn(),
   pause: vi.fn(),
+  pickPart: vi.fn(),
   play: vi.fn(),
   playGroup: vi.fn(),
   playMotion: vi.fn(),
   redraw: vi.fn(),
+  releaseParameterPhysics: vi.fn(() => []),
   resetMotionHistory: vi.fn(),
   resetParameters: vi.fn(),
   resetPhysics: vi.fn(),
@@ -73,15 +87,207 @@ const sample = actual.createDemoDocument()
 const prepared = await actual.preparePuppetDocument({document: sample})
 
 beforeEach(() => {
+  vi.mocked(configurePlayerBuffering).mockResolvedValue('applied')
   vi.mocked(createDemoDocument).mockReturnValue(sample)
   vi.mocked(preparePuppetDocument).mockResolvedValue(prepared)
   vi.mocked(createPlayer).mockResolvedValue(player)
+  vi.mocked(createNativePlayer).mockResolvedValue(player)
+  vi.mocked(flushPlayerInputs).mockResolvedValue('applied')
   vi.mocked(player.playMotion).mockReturnValue(true)
 })
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
+})
+
+it('should remain hidden through player creation until the configured first frame is submitted', async () => {
+  const submitted = Promise.withResolvers<PlayerInputChange>()
+  const started = Promise.withResolvers<void>()
+  vi.mocked(flushPlayerInputs).mockImplementationOnce(() => {
+    started.resolve()
+    return submitted.promise
+  })
+  const hook = renderHook(() =>
+    usePuppet({
+      assetId: () => SAMPLE_PUPPET_ID,
+      canvas: () => document.createElement('canvas'),
+      load: vi.fn(),
+      onError: vi.fn(),
+    }),
+  )
+  expect(hook.result.ready()).toBe(false)
+  await started.promise
+  expect(player.playMotion).toHaveBeenCalled()
+  expect(createPlayer).toHaveBeenCalledWith(
+    expect.objectContaining({buffering: true, gpuPresentation: 'auto', renderer: 'wgpu'}),
+  )
+  vi.mocked(createPlayer).mock.calls[0]![0].onAfterRender?.()
+  expect(hook.result.ready()).toBe(false)
+  submitted.resolve('applied')
+  await submitted.promise
+  expect(hook.result.ready()).toBe(true)
+  expect(configurePlayerBuffering).not.toHaveBeenCalled()
+  hook.cleanup()
+})
+
+it('should retry WebKit bitmap presentation on a fresh canvas if Worker Canvas fails', async () => {
+  vi.stubGlobal('isTauri', true)
+  vi.stubGlobal('webkit', {})
+  const transferred = Object.assign(document.createElement('canvas'), {
+    transferControlToOffscreen: vi.fn(),
+  })
+  const replacement = document.createElement('canvas')
+  const [canvas, setCanvas] = createSignal<HTMLCanvasElement>(transferred)
+  const started = Promise.withResolvers<void>()
+  const initialization = Promise.withResolvers<Player>()
+  const onError = vi.fn()
+  vi.mocked(createPlayer).mockImplementationOnce(() => {
+    started.resolve()
+    return initialization.promise
+  })
+  const hook = renderHook(() =>
+    usePuppet({
+      assetId: () => SAMPLE_PUPPET_ID,
+      canvas,
+      load: vi.fn(),
+      nativeSurface: true,
+      onError,
+    }),
+  )
+  await started.promise
+  const firstKey = hook.result.canvasKey()
+  expect(createPlayer).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({canvas: transferred, gpuPresentation: 'worker-canvas'}),
+  )
+  initialization.reject(new Error('Worker Canvas unavailable'))
+  await waitFor(() => expect(hook.result.canvasKey()).not.toBe(firstKey))
+  setCanvas(replacement)
+  await waitFor(() => expect(hook.result.ready()).toBe(true))
+  expect(createPlayer).toHaveBeenLastCalledWith(
+    expect.objectContaining({canvas: replacement, gpuPresentation: 'animation-frame'}),
+  )
+  expect(onError).not.toHaveBeenCalled()
+})
+
+it('should use the DirectX backend reported by the Windows widget host', async () => {
+  vi.stubGlobal('isTauri', true)
+  vi.spyOn(navigator, 'platform', 'get').mockReturnValue('Win32')
+  const backend = {kind: 'dx12' as const, open: vi.fn()}
+  vi.mocked(createNativeWidgetBackend).mockResolvedValueOnce(backend)
+  const hook = renderHook(() =>
+    usePuppet({
+      assetId: () => SAMPLE_PUPPET_ID,
+      canvas: () => document.createElement('canvas'),
+      load: vi.fn(),
+      nativeSurface: true,
+      onError: vi.fn(),
+    }),
+  )
+  await waitFor(() => expect(hook.result.ready()).toBe(true))
+  expect(createNativePlayer).toHaveBeenCalledWith(
+    expect.objectContaining({nativeBackend: backend, workerRuntime: 'rust'}),
+  )
+  expect(createPlayer).not.toHaveBeenCalled()
+})
+
+it('should use browser wgpu if the desktop player cannot open its surface', async () => {
+  vi.stubGlobal('isTauri', true)
+  vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel')
+  vi.spyOn(console, 'warn').mockImplementation(() => {})
+  vi.mocked(createNativeWidgetBackend).mockResolvedValueOnce({kind: 'metal', open: vi.fn()})
+  vi.mocked(createNativePlayer).mockRejectedValueOnce(new Error('Metal surface unavailable'))
+  const onError = vi.fn()
+  const canvas = document.createElement('canvas')
+  const hook = renderHook(() =>
+    usePuppet({
+      assetId: () => SAMPLE_PUPPET_ID,
+      canvas: () => canvas,
+      load: vi.fn(),
+      nativeSurface: true,
+      onError,
+    }),
+  )
+  await waitFor(() => expect(hook.result.ready()).toBe(true))
+  expect(createPlayer).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({canvas, gpuPresentation: 'auto', renderer: 'wgpu'}),
+  )
+  expect(onError).not.toHaveBeenCalled()
+})
+
+it('should retry on a fresh Pixi canvas when browser wgpu fails to start', async () => {
+  const original = document.createElement('canvas')
+  const replacement = document.createElement('canvas')
+  const [canvas, setCanvas] = createSignal(original)
+  const onError = vi.fn()
+  const started = Promise.withResolvers<void>()
+  const initialization = Promise.withResolvers<Player>()
+  vi.mocked(createPlayer).mockImplementationOnce(() => {
+    started.resolve()
+    return initialization.promise
+  })
+  const hook = renderHook(() =>
+    usePuppet({assetId: () => SAMPLE_PUPPET_ID, canvas, load: vi.fn(), onError}),
+  )
+  await started.promise
+  const firstKey = hook.result.canvasKey()
+  initialization.reject(new Error('WebGPU unavailable'))
+  await waitFor(() => expect(hook.result.canvasKey()).not.toBe(firstKey))
+  setCanvas(replacement)
+  await waitFor(() => expect(hook.result.ready()).toBe(true))
+  expect(createPlayer).toHaveBeenLastCalledWith(
+    expect.objectContaining({canvas: replacement, renderer: 'pixi'}),
+  )
+  expect(onError).not.toHaveBeenCalled()
+})
+
+it('should submit the configured first frame before enabling buffering in an inactive window', async () => {
+  vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+  const buffering = Promise.withResolvers<'applied'>()
+  vi.mocked(configurePlayerBuffering).mockReturnValueOnce(buffering.promise)
+  const hook = renderHook(() =>
+    usePuppet({
+      assetId: () => SAMPLE_PUPPET_ID,
+      canvas: () => document.createElement('canvas'),
+      load: vi.fn(),
+      onError: vi.fn(),
+    }),
+  )
+  await waitFor(() => expect(hook.result.ready()).toBe(true))
+  expect(createPlayer).toHaveBeenCalledWith(
+    expect.objectContaining({buffering: false, renderer: 'wgpu', workerRuntime: 'rust'}),
+  )
+  expect(configurePlayerBuffering).toHaveBeenCalledWith(player, {enabled: true})
+  expect(vi.mocked(player.redraw).mock.invocationCallOrder[0]).toBeLessThan(
+    vi.mocked(configurePlayerBuffering).mock.invocationCallOrder[0],
+  )
+  buffering.resolve('applied')
+  hook.cleanup()
+})
+
+it('should ignore a first frame that finishes after the widget is disposed', async () => {
+  const submitted = Promise.withResolvers<PlayerInputChange>()
+  const started = Promise.withResolvers<void>()
+  vi.mocked(flushPlayerInputs).mockImplementationOnce(() => {
+    started.resolve()
+    return submitted.promise
+  })
+  const hook = renderHook(() =>
+    usePuppet({
+      assetId: () => SAMPLE_PUPPET_ID,
+      canvas: () => document.createElement('canvas'),
+      load: vi.fn(),
+      onError: vi.fn(),
+    }),
+  )
+  await started.promise
+  hook.cleanup()
+  submitted.resolve('applied')
+  await submitted.promise
+  expect(hook.result.ready()).toBe(false)
+  expect(player.redraw).not.toHaveBeenCalled()
+  expect(player.destroy).toHaveBeenCalledOnce()
 })
 
 it('should resize the existing player when its container changes and stop observing on unmount', async () => {
@@ -110,6 +316,7 @@ it('should resize the existing player when its container changes and stop observ
   notify()
   expect(player.resize).toHaveBeenCalledOnce()
   expect(createPlayer).toHaveBeenCalledOnce()
+  expect(createPlayer).toHaveBeenCalledWith(expect.objectContaining({buffering: true}))
   expect(player.destroy).not.toHaveBeenCalled()
   hook.cleanup()
   expect(observer.disconnect).toHaveBeenCalledOnce()
@@ -320,14 +527,37 @@ it('should keep the current player during loading and ignore a superseded select
   const error = vi.fn()
   const hook = renderHook(() => usePuppet({assetId, canvas: () => canvas, load, onError: error}))
   await waitFor(() => expect(player.play).toHaveBeenCalledOnce())
+  await waitFor(() => expect(hook.result.ready()).toBe(true))
   setAssetId('slow')
+  expect(hook.result.ready()).toBe(false)
   await waitFor(() => expect(load).toHaveBeenCalledWith('slow'))
   expect(player.destroy).not.toHaveBeenCalled()
   setAssetId('first')
+  expect(hook.result.ready()).toBe(true)
   resolveSource('superseded-character')
   await completion
   expect(createPlayer).toHaveBeenCalledOnce()
   expect(preparePuppetDocument).toHaveBeenCalledOnce()
   expect(error).not.toHaveBeenCalled()
+  hook.cleanup()
+})
+
+it('should not reveal the previous character when a replacement fails to load', async () => {
+  const error = vi.fn()
+  const [assetId, setAssetId] = createSignal('first')
+  const load = vi.fn(async (id: string) => {
+    if (id === 'broken') {
+      throw new Error('Unavailable character')
+    }
+    return 'first-character'
+  })
+  const hook = renderHook(() =>
+    usePuppet({assetId, canvas: () => document.createElement('canvas'), load, onError: error}),
+  )
+  await waitFor(() => expect(hook.result.ready()).toBe(true))
+  setAssetId('broken')
+  await waitFor(() => expect(error).toHaveBeenCalledOnce())
+  expect(hook.result.ready()).toBe(false)
+  expect(player.destroy).not.toHaveBeenCalled()
   hook.cleanup()
 })

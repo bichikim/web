@@ -26,7 +26,7 @@ test('should fetch a preset MP3 and mouth JSON without speech synthesis', async 
     expect.objectContaining({signal: expect.any(AbortSignal)}),
   )
   expect(fetcher).toHaveBeenCalledWith(
-    `${preset.mouth}?v=${preset.cacheKey}`,
+    `${preset.mouth}?v=${preset.cacheKey}&mouth=2`,
     expect.objectContaining({signal: expect.any(AbortSignal)}),
   )
 })

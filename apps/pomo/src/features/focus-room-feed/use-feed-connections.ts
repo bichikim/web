@@ -1,6 +1,7 @@
-import {type Accessor, createSignal, onMount} from 'solid-js'
+import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
+import {subscribeWebStorageChange} from 'src/utils/subscribe-web-storage-change'
 
-import {type FeedConnectionRepository} from './repository'
+import {FEED_CONNECTIONS_STORAGE_KEY, type FeedConnectionRepository} from './repository'
 import {getFeedConnectionKey} from './feed-connection-key'
 import {type FeedUrlEnvironment} from './feed-request-url'
 import {feedSettingsRuntime, type FeedSettingsRuntime} from './settings-runtime'
@@ -55,23 +56,31 @@ export const useFeedConnections = (
     setFeedback({message, scope})
   let repository: FeedConnectionRepository | null = null
 
-  const saveConnections = (nextConnections: ReadonlyArray<FeedConnection>) => {
+  const saveConnections = (
+    update: (current: readonly FeedConnection[]) => readonly FeedConnection[] | null,
+  ) => {
     const currentRepository = repository
 
     if (currentRepository === null) {
       setMessage(m.settings_feed_store_not_ready())
-      return false
+      return null
     }
 
     try {
+      const currentConnections = currentRepository.list()
+      const nextConnections = update(currentConnections)
+      if (nextConnections === null) {
+        setConnections(currentConnections)
+        return null
+      }
       currentRepository.save(nextConnections)
       setConnections(nextConnections)
       globalThis.dispatchEvent(new CustomEvent(FEED_CONNECTIONS_CHANGED_EVENT))
-      return true
+      return currentConnections.length
     } catch (error: unknown) {
       console.error('Failed to save focus room feed connections.', error)
       setMessage(m.settings_feed_save_failed())
-      return false
+      return null
     }
   }
 
@@ -80,6 +89,18 @@ export const useFeedConnections = (
       const nextRepository = runtime.createConnections()
       repository = nextRepository
       setConnections(nextRepository.list())
+      const unsubscribe = subscribeWebStorageChange({
+        key: FEED_CONNECTIONS_STORAGE_KEY,
+        onChange: () => {
+          try {
+            setConnections(nextRepository.list())
+          } catch (error: unknown) {
+            console.error('Failed to refresh focus room feed connections.', error)
+            setMessage(m.settings_feed_load_failed())
+          }
+        },
+      })
+      onCleanup(unsubscribe)
     } catch (error: unknown) {
       console.error('Failed to load focus room feed connections.', error)
       setMessage(m.settings_feed_load_failed())
@@ -96,12 +117,10 @@ export const useFeedConnections = (
       return false
     }
 
-    const currentConnections = connections()
     const feedUrlEnvironment = getFeedUrlEnvironment()
     const connectionKey = getFeedConnectionKey(normalizedUrl.value, feedUrlEnvironment)
-
-    if (
-      currentConnections.some((connection) => {
+    const previousCount = saveConnections((currentConnections) => {
+      const duplicate = currentConnections.some((connection) => {
         const existingUrl = normalizeFeedUrl(connection.url)
 
         return (
@@ -109,26 +128,29 @@ export const useFeedConnections = (
           getFeedConnectionKey(existingUrl.value, feedUrlEnvironment) === connectionKey
         )
       })
-    ) {
-      setMessage(m.settings_feed_duplicate_url(), scope)
+      if (duplicate) {
+        setMessage(m.settings_feed_duplicate_url(), scope)
+        return null
+      }
+      const now = new Date().toISOString()
+      return [
+        ...currentConnections,
+        {
+          createdAt: now,
+          id: crypto.randomUUID(),
+          updatedAt: now,
+          url: normalizedUrl.value,
+          version: 1,
+          voiceId: DEFAULT_FEED_VOICE_ID,
+        },
+      ]
+    })
+
+    if (previousCount === null) {
       return false
     }
 
-    const now = new Date().toISOString()
-    const connection = {
-      createdAt: now,
-      id: crypto.randomUUID(),
-      updatedAt: now,
-      url: normalizedUrl.value,
-      version: 1,
-      voiceId: DEFAULT_FEED_VOICE_ID,
-    } satisfies FeedConnection
-
-    if (!saveConnections([...currentConnections, connection])) {
-      return false
-    }
-
-    if (currentConnections.length === 0) {
+    if (previousCount === 0) {
       requestPersistentStorage()
     }
 
@@ -150,20 +172,24 @@ export const useFeedConnections = (
   }
 
   const onDelete = (connectionId: string) => {
-    const nextConnections = connections().filter((connection) => connection.id !== connectionId)
-
-    if (saveConnections(nextConnections)) {
+    if (
+      saveConnections((current) =>
+        current.filter((connection) => connection.id !== connectionId),
+      ) !== null
+    ) {
       setMessage(m.settings_feed_deleted())
     }
   }
 
   const onVoiceChange = (connectionId: string, voiceId: FeedConnection['voiceId']) => {
     const updatedAt = new Date().toISOString()
-    const nextConnections = connections().map((connection) =>
-      connection.id === connectionId ? {...connection, updatedAt, voiceId} : connection,
+    const previousCount = saveConnections((current) =>
+      current.map((connection) =>
+        connection.id === connectionId ? {...connection, updatedAt, voiceId} : connection,
+      ),
     )
 
-    if (saveConnections(nextConnections)) {
+    if (previousCount !== null) {
       setMessage(m.settings_feed_voice_changed())
     }
   }

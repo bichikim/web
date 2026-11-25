@@ -1,0 +1,71 @@
+{
+  "beforeModelSha256": "af776c169d48771e5c0799433b39c187ecd0ac27655fbd35e3a4cf1261f9f9ca",
+  "modelSha256": "39c42242e036548546d1f90749248dc7d32e0233d0af6630d0c1646c04c44bbd",
+  "modelBytes": 18188988,
+  "notebook": {
+    "partId": "ArtMesh128",
+    "scale": 0.85,
+    "grip": [0.35873994380235674, 0.15432263500988483],
+    "originalVertices": [
+      0.05348041653633118, 0.2936207950115204, 0.6084977388381958, 0.04035141319036484,
+      0.9564985632896423, 0.7059553861618042, 0.43003565073013306, 0.9437813758850098,
+      0.5083396872374415, 0.5076866985926778
+    ]
+  },
+  "penArm": {
+    "deformerId": "coat-free:notes-left:pose-angle",
+    "angleDegrees": 14,
+    "pivot": {
+      "x": -0.1103241061324593,
+      "y": -0.1800248885526137
+    },
+    "originalChildren": ["coat-free:notes-left:ArtMesh70_Skinning", "Part27"]
+  },
+  "scope": "Shrink only the notebook about its grip; rotate the screen-left forearm, hand and pen about the elbow. Preserve all artwork, arm/hand length, existing glue and authored physics.",
+  "mechanism": "Uniformly scale the four painted notebook vertices; keep its unused translation anchor. Add one parent-space affine deformer around the existing pen-hand and bare-forearm branches, driven by the coat-off channel. Existing elbow contacts keep the elbow fixed after deformation.",
+  "review": {
+    "context": "notebook-pose-context.png",
+    "elbow": "notebook-pose-elbow.png",
+    "notebook": "notebook-pose-notebook.png",
+    "writing": "notebook-pose-writing.png",
+    "turn": "notebook-pose-turn.png",
+    "coat": "notebook-pose-coat.png"
+  },
+  "allTexturesUvsPhysicsExpressionsMotionsUnchanged": true,
+  "changedExistingBindings": ["coat-free:notes-left:elbow-seam"],
+  "contour": {
+    "partId": "ArtMesh1001",
+    "vertexIndex": 13,
+    "additionalWorldShift": [3.5, 2],
+    "maximumWorldShift": 22
+  },
+  "structureVerification": {
+    "allTexturesAndUvsUnchanged": true,
+    "allMeshesUnchangedExceptFourNotebookVertices": true,
+    "unusedNotebookTranslationAnchorUnchanged": true,
+    "allGluePhysicsMotionsExpressionsParametersUnchanged": true,
+    "allExistingBindingsUnchangedExceptElbowContour": true,
+    "existingSceneNodesAndHierarchyUnchangedInsideNewAssemblyWrapper": true
+  },
+  "checks": {
+    "browserRegression": {
+      "engines": ["Chromium", "WebKit"],
+      "buffering": [false, true],
+      "files": 16,
+      "passed": 32,
+      "failed": 0,
+      "scope": "Notebook grip and proportions, rigid pen arm rotation, preserved upper arm, painted elbow and wrist contact, writing, coat visibility, live head physics and interrupted action fades"
+    },
+    "oxlint": "passed",
+    "oxfmt": "passed",
+    "wallpaperTypecheck": "passed",
+    "wallpaperBuild": "passed",
+    "nativeWidget": {
+      "reloaded": true,
+      "servedModelSha256": "39c42242e036548546d1f90749248dc7d32e0233d0af6630d0c1646c04c44bbd",
+      "visiblePoseVerified": false,
+      "capture": "Isolated native-window capture was blank. Intermediate and final poses were visually reviewed in the real player in Chromium and WebKit.",
+      "restarted": true
+    }
+  }
+}

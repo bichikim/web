@@ -14,6 +14,10 @@ export const joinAudioChunks = (options: JoinAudioChunksOptions): Float32Array =
     return new Float32Array()
   }
 
-  const silenceLength = Math.round(options.sampleRate * options.silenceDuration)
+  const {sampleRate, silenceDuration} = options
+  const silenceLength = Math.round(sampleRate * silenceDuration)
+  if (sampleRate <= 0 || silenceDuration <= 0 || !Number.isSafeInteger(silenceLength)) {
+    return concatFloat32(chunks)
+  }
   return concatFloat32(intersperse(chunks, new Float32Array(silenceLength)))
 }

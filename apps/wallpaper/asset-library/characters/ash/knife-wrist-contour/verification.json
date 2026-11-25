@@ -1,0 +1,101 @@
+{
+  "sha256": "bb8715f612b470cb2eef22e3887ae7ecfe3635729195c147b53c98117c8399e9",
+  "poses": [
+    {
+      "name": "neutral",
+      "otherError": 0,
+      "fingerError": 0,
+      "anchorError": 0,
+      "newFoldovers": 0
+    },
+    {
+      "name": "-30,0",
+      "otherError": 0,
+      "fingerError": 0,
+      "anchorError": 0,
+      "newFoldovers": 0
+    },
+    {
+      "name": "30,0",
+      "otherError": 0,
+      "fingerError": 0,
+      "anchorError": 0,
+      "newFoldovers": 0
+    },
+    {
+      "name": "0,-30",
+      "otherError": 0,
+      "fingerError": 0,
+      "anchorError": 0,
+      "newFoldovers": 0
+    },
+    {
+      "name": "0,30",
+      "otherError": 0,
+      "fingerError": 0,
+      "anchorError": 0,
+      "newFoldovers": 0
+    },
+    {
+      "name": "-15,15",
+      "otherError": 0,
+      "fingerError": 0,
+      "anchorError": 0,
+      "newFoldovers": 0
+    },
+    {
+      "name": "15,-15",
+      "otherError": 0,
+      "fingerError": 0,
+      "anchorError": 0,
+      "newFoldovers": 0
+    },
+    {
+      "name": "fade-0.1",
+      "otherError": 0,
+      "fingerError": 0,
+      "anchorError": 0,
+      "newFoldovers": 0
+    },
+    {
+      "name": "fade-0.5",
+      "otherError": 0,
+      "fingerError": 0,
+      "anchorError": 0,
+      "newFoldovers": 0
+    },
+    {
+      "name": "fade-0.9",
+      "otherError": 0,
+      "fingerError": 0,
+      "anchorError": 0,
+      "newFoldovers": 0
+    },
+    {
+      "name": "physics--1",
+      "otherError": 0,
+      "fingerError": 0,
+      "anchorError": 0,
+      "newFoldovers": 0
+    },
+    {
+      "name": "physics-1",
+      "otherError": 0,
+      "fingerError": 0,
+      "anchorError": 0,
+      "newFoldovers": 0
+    }
+  ],
+  "maximumProtrusionBefore": 11,
+  "maximumProtrusionAfter": 4.5,
+  "maximumTipProtrusionAfter": 2.5,
+  "measurement": "Keep the gradual palm-to-wrist transition; measure the protruding lower tip separately below model row 1695",
+  "expressions": 28,
+  "coatStates": 2,
+  "visiblePartsCompared": 28659,
+  "allTexturesAndMeshesUnchanged": true,
+  "armAndAttachmentAnchorsUnchanged": true,
+  "fingersUnchanged": true,
+  "otherActionsAndCoatOnUnchanged": true,
+  "newSkinParts": 0
+}

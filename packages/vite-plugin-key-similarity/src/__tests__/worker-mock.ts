@@ -12,7 +12,6 @@ interface TestWorkerOptions {
 export class TestWorker {
   readonly #core: KeySimilarityCore
   readonly #initialization: Promise<unknown>
-  #errorListener: ErrorListener = () => undefined
   #messageListener: MessageListener = () => undefined
   #processing = Promise.resolve()
 
@@ -32,9 +31,7 @@ export class TestWorker {
   on(event: 'error', listener: ErrorListener): this
   on(event: 'message', listener: MessageListener): this
   on(event: 'error' | 'message', listener: ErrorListener | MessageListener): this {
-    if (event === 'error') {
-      this.#errorListener = listener as ErrorListener
-    } else {
+    if (event === 'message') {
       this.#messageListener = listener as MessageListener
     }
     return this
@@ -52,7 +49,12 @@ export class TestWorker {
           revision: job.revision,
         })
       } catch (error: unknown) {
-        this.#errorListener(error instanceof Error ? error : new Error(String(error)))
+        this.#messageListener({
+          error: error instanceof Error ? (error.stack ?? error.message) : String(error),
+          filePath: job.filePath,
+          identifier: job.identifier,
+          revision: job.revision,
+        })
       }
     })
   }

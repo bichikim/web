@@ -23,8 +23,7 @@ runs:
         pnpm exec oxlint apps/wallpaper-web/src apps/wallpaper-web/browser \
           apps/wallpaper-web/scripts apps/wallpaper-web/playwright.config.ts
         pnpm exec oxfmt --check apps/wallpaper-web .github/actions/wallpaper-web \
-          .github/workflows/wallpaper-web-deploy.yml \
-          .github/workflows/wallpaper-web-production-deploy.yml
+          .github/workflows/wallpaper-web-deploy.yml
     - name: Check Wallpaper behavior
       shell: bash
       env:

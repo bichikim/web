@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createMemo, Show} from 'solid-js'
 import type {SemanticAction, SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
@@ -20,9 +21,12 @@ interface SPoffoSemanticBindingProps {
 }
 export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
   const update = (patch: Partial<SemanticBinding>) => props.onChange?.({...props.value, ...patch})
-  const caption = () => props.label ?? '연결'
+  const caption = () => props.label ?? uiText('연결')
   const matching = () => (props.value.category ?? 'emotion') === 'emotion'
-  const scoreLabel = () => (props.score === -1 ? '제외' : `매칭 ${props.score?.toFixed(2)}`)
+  const scoreLabel = () =>
+    props.score === -1
+      ? uiText('제외')
+      : uiText('매칭 {value0}', {value0: String(props.score?.toFixed(2))})
   const targets = createMemo(() => semanticTargets(props.value))
   const available = () =>
     targets().some((target) =>
@@ -43,12 +47,15 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
     >
       <div class="flex items-center gap-2">
         <SSwitch
-          label={`${caption()} 사용`}
+          label={uiText('{value0} 사용', {value0: String(caption())})}
           checked={props.value.enabled}
           onChange={props.onChange === undefined ? undefined : handleEnabled}
         />
         <Show when={matching() && props.score !== undefined}>
-          <output aria-label={`${caption()} 매칭 점수`} class="text-xs text-stone-600">
+          <output
+            aria-label={uiText('{value0} 매칭 점수', {value0: String(caption())})}
+            class="text-xs text-stone-600"
+          >
             {scoreLabel()}
           </output>
         </Show>
@@ -61,12 +68,12 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
         />
         <button
           type="button"
-          aria-label={`${caption()} 삭제`}
+          aria-label={uiText('{value0} 삭제', {value0: String(caption())})}
           onClick={() => props.onRemove?.()}
           disabled={props.onRemove === undefined}
           class="cursor-pointer border-0 bg-transparent text-xs text-stone-600 disabled:opacity-40"
         >
-          삭제
+          {uiText('삭제')}
         </button>
       </div>
       <Show when={matching()}>
@@ -84,10 +91,10 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
         onChange={props.onChange === undefined ? undefined : handleActions}
       />
       <label class="grid gap-1 text-xs text-stone-600">
-        그룹
+        {uiText('그룹')}
         <input
-          aria-label={`${caption()} 그룹`}
-          placeholder="기본 그룹"
+          aria-label={uiText('{value0} 그룹', {value0: String(caption())})}
+          placeholder={uiText('기본 그룹')}
           maxLength={128}
           value={props.value.exclusiveGroup ?? ''}
           disabled={props.onChange === undefined}

@@ -1,6 +1,6 @@
 ---
 name: cleanup-branches
-description: Plan and, only after confirmation, delete remote and matching local branches whose PR is merged or closed and whose commits and file changes are fully accounted for; use for branch cleanup.
+description: Plan cleanup of merged or closed PR branches. Delete eligible remote and matching local branches only after confirmation.
 ---
 
 # Cleanup branches

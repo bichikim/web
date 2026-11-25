@@ -162,12 +162,12 @@ export const RandomEventSettings = () => {
     }
   }
   const handlePreferenceSaved = () => {
-    saveQueue.settle(true)
+    const settled = saveQueue.settle(true)
     if (!saveQueue.hasPending() && !pendingSave.hasPending()) {
       edited = false
-    }
-    if (!isDisposed && message() !== m.settings_random_saved()) {
-      setMessage(null)
+      if (!isDisposed && settled !== null) {
+        setMessage(m.settings_random_saved())
+      }
     }
   }
   const [storedSettings, setStoredSettings] = usePreference(
@@ -191,11 +191,10 @@ export const RandomEventSettings = () => {
 
   const saveSettings = (nextSettings: RandomEventSettingsValue) => {
     saveQueue.enqueue(nextSettings)
-    setStoredSettings(nextSettings)
+    setStoredSettings(nextSettings, {rollbackOnError: true})
 
     if (!isDisposed) {
       setSettings(nextSettings)
-      setMessage(m.settings_random_saved())
     }
   }
 

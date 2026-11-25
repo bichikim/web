@@ -14,8 +14,6 @@ const resolveStrategy = (strategies: CacheStrategyConfig, destination: CacheDest
   strategies[destination] ?? strategies.default ?? 'cache-first'
 
 export const registerFetchHandler = (options: RoutingOptions): void => {
-  const apiPath = `${options.origin}/api/`
-
   self.addEventListener('fetch', (event: ServiceWorkerFetchEvent) => {
     const {method, url} = event.request
 
@@ -23,13 +21,14 @@ export const registerFetchHandler = (options: RoutingOptions): void => {
       return
     }
 
-    const requestUrl = new URL(url)
+    const {origin, pathname} = new URL(url)
 
     if (
-      requestUrl.origin !== options.origin ||
-      url.startsWith(apiPath) ||
-      requestUrl.pathname.startsWith('/instruments/') ||
-      requestUrl.pathname.startsWith('/_vercel/')
+      origin !== options.origin ||
+      pathname === '/api' ||
+      pathname.startsWith('/api/') ||
+      pathname.startsWith('/instruments/') ||
+      pathname.startsWith('/_vercel/')
     ) {
       return
     }

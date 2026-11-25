@@ -1,3 +1,4 @@
+import {subscribeEvent} from 'src/utils/subscribe-event'
 import {usesRemotePublicOrigin} from './runtime-origin'
 export * from './parse-retry-after-seconds'
 export * from './runtime-origin'
@@ -74,7 +75,29 @@ const apiBaseURL = usesRemotePublicOrigin()
   ? new URL('/api/', import.meta.env.VITE_POMO_PUBLIC_ORIGIN).href
   : '/api/'
 
-export const apiFetch = createResponseFetch(sharedFetch.create({baseURL: apiBaseURL}))
+const rawApiFetch = createResponseFetch(sharedFetch.create({baseURL: apiBaseURL}))
+const webSessionEvents = new EventTarget()
+const WEB_SESSION_UNAUTHORIZED = 'web-session-unauthorized'
+const HTTP_UNAUTHORIZED = 401
+
+export const subscribeWebSessionUnauthorized = (listener: () => void) =>
+  subscribeEvent(webSessionEvents, WEB_SESSION_UNAUTHORIZED, listener)
+
+export interface ApiRequestInit extends HttpRequestInit {
+  readonly recheckWebSessionOnUnauthorized?: boolean
+}
+
+export const apiFetch = async (
+  input: RequestInfo | URL,
+  init?: ApiRequestInit,
+): Promise<Response> => {
+  const {recheckWebSessionOnUnauthorized, ...options} = init ?? {}
+  const response = await rawApiFetch(input, options)
+  if (recheckWebSessionOnUnauthorized && response.status === HTTP_UNAUTHORIZED) {
+    webSessionEvents.dispatchEvent(new Event(WEB_SESSION_UNAUTHORIZED))
+  }
+  return response
+}
 
 const audioBaseURL = usesBundledProductAssets
   ? '/audio/'

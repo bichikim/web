@@ -1,0 +1,14 @@
+{
+  "buzz": {
+    "file": "ggml-buzzasr-korean-q8_0.bin",
+    "url": "https://huggingface.co/wavu/buzzasr-korean-ggml/resolve/fa357cc2a65ffbc78170bcfefec0d09438d2e957/ggml-buzzasr-korean-q8_0.bin",
+    "bytes": 1656558447,
+    "sha256": "08455afa063f7e0b931965adbdf83216ab8fe9ff7d09dcc15dd90016350e35aa"
+  },
+  "vad": {
+    "file": "ggml-silero-v5.1.2.bin",
+    "url": "https://huggingface.co/ggml-org/whisper-vad/resolve/9ffd54a1e1ee413ddf265af9913beaf518d1639b/ggml-silero-v5.1.2.bin",
+    "bytes": 885098,
+    "sha256": "29940d98d42b91fbd05ce489f3ecf7c72f0a42f027e4875919a28fb4c04ea2cf"
+  }
+}

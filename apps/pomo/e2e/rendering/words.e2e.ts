@@ -119,3 +119,40 @@ test('should persist saved words, memorized filters, and deletion after reload',
   await expect(dialog).not.toBeVisible()
   await expect(page.getByRole('button', {exact: true, name: '생각 보조'})).toBeFocused()
 })
+
+test('should deduplicate English words when the browser lowercases I in Turkish', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'pomo:focus-room-playlist:v1',
+      JSON.stringify({savedAt: 1788912000000, trackIds: [], version: 1}),
+    )
+    const lowerCase = String.prototype.toLocaleLowerCase
+    if ('I'.toLocaleLowerCase() !== 'ı') {
+      // oxlint-disable-next-line eslint/no-extend-native -- Emulate Turkish case mapping when the test browser has a different installed locale.
+      String.prototype.toLocaleLowerCase = function toLocaleLowerCase(locales) {
+        return lowerCase.call(this, locales ?? 'tr-TR')
+      }
+    }
+  })
+  await page.goto('/')
+  await page.getByRole('button', {exact: true, name: '시작하기'}).click()
+  const dialog = await openWords(page)
+  const input = dialog.getByRole('textbox', {name: '모르는 단어'})
+  const save = dialog.getByRole('button', {exact: true, name: '단어 저장'})
+  await input.fill('I')
+  await save.click()
+  const original = dialog.getByRole('button', {exact: true, name: 'I'})
+  await expect(original).toBeVisible()
+  await input.fill('i')
+  await save.click()
+  await expect(input).toBeEmpty()
+  await expect(dialog.getByRole('tab', {exact: true, name: '전체 1'})).toBeVisible()
+  await original.click()
+  await dialog.getByRole('button', {name: '선택한 1개 단어를 외운 단어로 이동'}).click()
+  await dialog.getByRole('tab', {exact: true, name: '외운 단어 1'}).click()
+  await original.click()
+  await dialog.getByRole('button', {name: '선택한 1개 단어 삭제'}).click()
+  await expect(dialog.getByRole('tab', {exact: true, name: '전체 0'})).toBeVisible()
+})

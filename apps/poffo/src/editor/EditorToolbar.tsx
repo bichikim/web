@@ -31,6 +31,7 @@ export interface EditorToolbarProps {
   readonly onWorkspaceChange?: (workspace: 'animation' | 'modeling') => void
   readonly panelVisibility?: EditorPanelVisibility
   readonly playerStatus: PlayerCanvasStatus
+  readonly workspaceNavigationActive?: boolean
   readonly onStudioOpen?: WorkspaceNavigationAction
   readonly onViewerOpen?: WorkspaceNavigationAction
   readonly onExport: () => void
@@ -48,7 +49,12 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
   <BaseHeader
     owner="editor"
     navigation={
-      <Show when={props.onStudioOpen !== undefined || props.onViewerOpen !== undefined}>
+      <Show
+        when={
+          props.workspaceNavigationActive !== false &&
+          (props.onStudioOpen !== undefined || props.onViewerOpen !== undefined)
+        }
+      >
         <WorkspaceNavigation
           current="editor"
           onStudioOpen={props.onStudioOpen}

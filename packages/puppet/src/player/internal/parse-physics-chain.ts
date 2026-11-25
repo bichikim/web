@@ -79,7 +79,7 @@ const isChain = (value: unknown, parameterIds: ReadonlySet<string>) => {
 
 /**
  * Chains with unique IDs whose inputs and outputs name parameters (an output never feeds its
- * own chain), plus optional non-negative `fps`, non-zero `[x, y]` gravity and `[x, y]` wind.
+ * own chain), plus optional non-negative `fps` and finite `[x, y]` gravity and wind vectors.
  */
 export const hasValidPhysicsChains = (
   physics: Record<string, unknown>,
@@ -97,8 +97,6 @@ export const hasValidPhysicsChains = (
         physics.fps >= 0 &&
         physics.fps <= MAXIMUM_PUPPET_FRAMES_PER_SECOND)) &&
     isVector(physics.gravity) &&
-    (physics.gravity === undefined ||
-      (physics.gravity as Array<number>).some((part) => part !== 0)) &&
     isVector(physics.wind)
   )
 }

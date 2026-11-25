@@ -24,10 +24,10 @@
       }
     ],
     "security": {
-      "capabilities": ["manager", "background", "widget", "codex-bubble"],
+      "capabilities": ["manager", "background", "widget", "codex-bubble", "storage-origin"],
       "csp": {
         "default-src": "'self'",
-        "connect-src": "'self' ipc: http://ipc.localhost blob: https://storage.pomofi.io https://cdn.jsdelivr.net asset: http://asset.localhost",
+        "connect-src": "'self' ipc: http://ipc.localhost blob: https://storage.pomofi.io https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co asset: http://asset.localhost",
         "img-src": "'self' blob: data:",
         "media-src": "'self' blob: data:",
         "script-src": "'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net",
@@ -36,12 +36,17 @@
       },
       "assetProtocol": {
         "enable": true,
-        "scope": ["$RESOURCE/semantic-models/**/*"]
+        "scope": ["$APPCACHE/semantic-models/**/*", "$APPCACHE/conversation-models/**/*"]
+      },
+      "headers": {
+        "Cross-Origin-Embedder-Policy": "require-corp",
+        "Cross-Origin-Opener-Policy": "same-origin"
       }
     }
   },
   "bundle": {
     "active": false,
+    "externalBin": ["../.cache/whisper-runtime/crispasr"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -50,7 +55,10 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "../.cache/semantic-models/": "semantic-models/"
+      "licenses/dictation.txt": "dictation-runtime/LICENSE.txt",
+      "../.cache/whisper-runtime/libraries/": "whisper-runtime/",
+      "licenses/semantic-model.txt": "licenses/semantic-model.txt",
+      "licenses/voice-model.txt": "licenses/voice-model.txt"
     }
   }
 }

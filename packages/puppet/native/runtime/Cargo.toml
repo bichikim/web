@@ -1,0 +1,19 @@
+[package]
+name = "poffo-runtime"
+description = "Poffo model runtime: parameters, keyforms, deformers, skinning, glue, motions and physics."
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+poffo-format.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rayon = { version = "=1.12.0", optional = true }
+
+[dev-dependencies]
+serde.workspace = true
+serde_json.workspace = true
+
+[features]
+parallel = ["dep:rayon"]

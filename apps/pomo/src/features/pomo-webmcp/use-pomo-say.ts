@@ -99,13 +99,16 @@ export const usePSay = (props: UsePSayProps): PSayController => {
   createEffect(() => {
     const pendingText = pendingSpeechText()
 
-    if (pendingText === null || !voice.isPlaying()) {
+    const isPlaying = voice.isPlaying()
+    if (pendingText === null || (!isPlaying && !voice.isGenerating())) {
       return
     }
 
-    setPendingSpeechText(null)
     setSpeechText(pendingText)
-    setIsPreparing(false)
+    if (isPlaying) {
+      setPendingSpeechText(null)
+      setIsPreparing(false)
+    }
   })
 
   onMount(() => {

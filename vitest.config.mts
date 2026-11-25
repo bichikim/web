@@ -7,6 +7,7 @@ export default {
   test: {
     ...baseConfig.test,
     environment: 'jsdom',
+    exclude: [...configDefaults.exclude, '**/.cache/**'],
     // Shared inputs and files read outside the module graph can affect every unit test.
     forceRerunTriggers: [
       ...configDefaults.forceRerunTriggers,

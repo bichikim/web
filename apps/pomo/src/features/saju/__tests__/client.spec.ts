@@ -20,9 +20,6 @@ function createReading() {
     gender: 'N',
     question: '제 일은 어떨까요?',
   })
-  if (result.type !== 'generate') {
-    throw new Error('Expected a generated reading')
-  }
   return {...result.request, modelId: 'cloud' as const, requestId: 'saju-1'}
 }
 
@@ -37,7 +34,12 @@ it('should generate a cloud reading from calculated messages without creating a 
     expect(Worker).not.toHaveBeenCalled()
     expect(onResponse).toHaveBeenCalledExactlyOnceWith({requestId: 'saju-1', type: 'started'})
     expect(requestCloudText).toHaveBeenCalledExactlyOnceWith(
-      {maximumTokens: 768, messages: request.messages, requestId: expect.any(String)},
+      {
+        maximumTokens: 2048,
+        messages: request.messages,
+        requestId: expect.any(String),
+        temperature: 0.2,
+      },
       expect.any(AbortSignal),
     )
     pending.resolve(CLOUD_TEXT_RESPONSE)
@@ -71,6 +73,23 @@ it('should report cloud failures with the active reading request ID', async () =
   }
 })
 
+it('should remove reference-only wording from the completed cloud reading', async () => {
+  const pending = Promise.withResolvers<CloudTextResponse>()
+  vi.mocked(requestCloudText).mockReturnValue(pending.promise)
+  const onResponse = vi.fn()
+  const client = createSajuClient(onResponse, 'cloud')
+  const text = '함께 일할 때는 역할을 먼저 정해 보세요.\n\n돈을 쓸 때도 우선순위를 살펴보세요.'
+  try {
+    client.generate(createReading())
+    pending.resolve({...CLOUD_TEXT_RESPONSE, text: `항목을 정리해 보면 ${text}`})
+    await pending.promise
+    expect(onResponse).toHaveBeenLastCalledWith({requestId: 'saju-1', text, type: 'complete'})
+    expect(requestCloudText).toHaveBeenCalledOnce()
+  } finally {
+    client.dispose()
+  }
+})
+
 it('should abort the cloud reading and ignore a late answer when disposed', async () => {
   const pending = Promise.withResolvers<CloudTextResponse>()
   vi.mocked(requestCloudText).mockReturnValue(pending.promise)
@@ -83,6 +102,22 @@ it('should abort the cloud reading and ignore a late answer when disposed', asyn
   pending.resolve(CLOUD_TEXT_RESPONSE)
   await pending.promise
   expect(onResponse).toHaveBeenCalledExactlyOnceWith({requestId: 'saju-1', type: 'started'})
+})
+
+it('should not turn a nonempty cloud response into an empty completed reading', async () => {
+  const pending = Promise.withResolvers<CloudTextResponse>()
+  vi.mocked(requestCloudText).mockReturnValue(pending.promise)
+  const onResponse = vi.fn()
+  const client = createSajuClient(onResponse, 'cloud')
+  const text = '아래 내용을 참고해 보면, '
+  try {
+    client.generate(createReading())
+    pending.resolve({...CLOUD_TEXT_RESPONSE, text})
+    await pending.promise
+    expect(onResponse).toHaveBeenLastCalledWith({requestId: 'saju-1', text, type: 'complete'})
+  } finally {
+    client.dispose()
+  }
 })
 
 it.each([undefined, 'gemma-4-e2b'] as const)(

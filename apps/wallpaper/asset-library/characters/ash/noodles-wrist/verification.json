@@ -1,0 +1,36 @@
+{
+  "sourceModelSha256": "5676ced34f7f9ac1ce64a82ebc83edb2e2bdce36c5e19275279905fdfb0562c1",
+  "modelSha256": "5003d5c7b92bf3dba89c0447b5854c2ad397222b36fe03389eff4fe954363b3b",
+  "bytes": 20656601,
+  "originalPartsPreserved": 1025,
+  "newParts": [
+    "coat-free:noodles-left:wrist",
+    "coat-free:noodles-left:wrist-replaced",
+    "coat-free:noodles-left:wrist-contact"
+  ],
+  "originalFingersCupArmMeshesAndTexturesUnchanged": true,
+  "originalSceneAndGlueAndBindingsRetained": true,
+  "otherActionsPreserved": true,
+  "wristLength": "Original hand and arm positions retained; only the local palm-root and wrist surface is replaced",
+  "alphaBoundary": "Generated wrist silhouette deterministically registered to the current hand and arm contours; local ComfyUI alpha compositing",
+  "materialSource": "Previously generated local Qwen Image 2.1 Turbo wrist artwork, with boundary colour matching and local line cleanup",
+  "comfyPromptId": "f15a9d50-0b82-4df6-bb03-64303be4a2e3",
+  "checks": {
+    "browser": "4 files, 8 tests passed; both buffering modes, coat on/off, neutral and opposing movement inputs",
+    "build": "Tauri debug macOS app build passed",
+    "lint": "Targeted oxlint and oxfmt passed"
+  },
+  "native": {
+    "appPid": 9912,
+    "resource": {
+      "bytes": 20656601,
+      "sha256": "5003d5c7b92bf3dba89c0447b5854c2ad397222b36fe03389eff4fe954363b3b"
+    },
+    "modelMatched": true,
+    "pose": "ash:noodles",
+    "coatRemoved": true,
+    "pointerInputUsed": false,
+    "capture": "applied.png",
+    "detail": "applied-detail.png"
+  }
+}

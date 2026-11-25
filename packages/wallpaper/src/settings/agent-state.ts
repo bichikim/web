@@ -1,17 +1,11 @@
 import {z} from 'zod'
+import {SEMANTIC_ACTION_LIMIT, type SemanticAction, semanticActionSchema} from './semantics'
+import type {AgentState} from './agent-states'
+export {AGENT_STATES, type AgentState} from './agent-states'
 
-export const AGENT_STATES = [
-  {label: '연결됨', value: 'connected'},
-  {label: '작업 중', value: 'working'},
-  {label: '도구 처리 중', value: 'tool'},
-  {label: '질문', value: 'question'},
-  {label: '승인 대기', value: 'approval'},
-  {label: '응답 도착', value: 'response'},
-  {label: '중단', value: 'interrupted'},
-  {label: '도구 오류', value: 'error'},
-] as const
-export type AgentState = (typeof AGENT_STATES)[number]['value']
 export interface AgentStateBinding {
+  /** Character behaviors held together while this state has priority; omission uses the legacy parameter. */
+  readonly actions?: readonly SemanticAction[]
   readonly parameterId: string | null
   readonly on?: number
   readonly off?: number
@@ -20,6 +14,7 @@ export type AgentStateBindings = Partial<Record<AgentState, AgentStateBinding>>
 export type AgentSignals = Partial<Record<AgentState, boolean>>
 const binding = z
   .object({
+    actions: z.array(semanticActionSchema).max(SEMANTIC_ACTION_LIMIT).optional(),
     off: z.number().finite().optional(),
     on: z.number().finite().optional(),
     parameterId: z.string().min(1).nullable(),

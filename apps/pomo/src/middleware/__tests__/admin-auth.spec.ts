@@ -16,6 +16,8 @@ it.each([
   ['/admin/', true],
   ['/admin/albums', true],
   ['/admin/login', false],
+  ['/admin/login/', false],
+  ['/admin/login/extra', true],
   ['/admin/reset-password', true],
   ['/admin-login', false],
   ['/', false],

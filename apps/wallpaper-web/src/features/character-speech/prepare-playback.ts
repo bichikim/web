@@ -1,5 +1,5 @@
 import {prepareSpeechLine} from './configuration'
-import {createMouthTrack, MOUTH_DURATION_TOLERANCE} from './mouth-track'
+import {createMouthTrack, MOUTH_DURATION_TOLERANCE, MOUTH_TRACK_REVISION} from './mouth-track'
 import {loadPresetSpeech} from './presets'
 import type {CachedSpeech, PreparedSpeechPlayback, SpeechCache} from './types'
 
@@ -22,9 +22,28 @@ interface PrepareSpeechPlaybackOptions {
   readonly signal: AbortSignal
 }
 
+const makeClip = (compressed: Blob, audio: AudioBuffer, text: string): CachedSpeech => ({
+  audio: compressed,
+  mouth: createMouthTrack({sampleRate: audio.sampleRate, samples: audio.getChannelData(0)}, text),
+  mouthRevision: MOUTH_TRACK_REVISION,
+})
+
+const storeClip = async (
+  options: PrepareSpeechPlaybackOptions,
+  key: string,
+  clip: CachedSpeech,
+) => {
+  const stored = await options.cache.write(key, clip)
+  if (!stored.ok) {
+    options.onCacheError?.()
+  }
+  options.signal.throwIfAborted()
+}
+
 const readCachedPlayback = async (
   key: string,
   options: PrepareSpeechPlaybackOptions,
+  text: string,
 ): Promise<PreparedSpeechPlayback | null> => {
   const cached = await options.cache.read(key)
   options.signal.throwIfAborted()
@@ -36,12 +55,12 @@ const readCachedPlayback = async (
   if (clip === null) {
     return null
   }
+  let audio: AudioBuffer
   try {
-    const audio = await options.context.decodeAudioData(await clip.audio.arrayBuffer())
+    audio = await options.context.decodeAudioData(await clip.audio.arrayBuffer())
     if (Math.abs(audio.duration - clip.mouth.duration) > MOUTH_DURATION_TOLERANCE) {
       throw new Error('Cached speech duration differs from mouth track')
     }
-    return {audio, mouth: clip.mouth}
   } catch (cause) {
     options.signal.throwIfAborted()
     console.warn('Cached speech decode failed; regenerating', cause)
@@ -51,6 +70,13 @@ const readCachedPlayback = async (
     }
     return null
   }
+  options.signal.throwIfAborted()
+  if (clip.mouthRevision === MOUTH_TRACK_REVISION) {
+    return {audio, mouth: clip.mouth}
+  }
+  const updated = makeClip(clip.audio, audio, text)
+  await storeClip(options, key, updated)
+  return {audio, mouth: updated.mouth}
 }
 
 export const prepareSpeechPlayback = async (
@@ -68,7 +94,7 @@ export const prepareSpeechPlayback = async (
   if (preset !== null) {
     return preset
   }
-  const cached = await readCachedPlayback(key, options)
+  const cached = await readCachedPlayback(key, options, text)
   options.signal.throwIfAborted()
   if (cached !== null) {
     return cached
@@ -77,14 +103,7 @@ export const prepareSpeechPlayback = async (
   options.signal.throwIfAborted()
   const audio = await options.context.decodeAudioData(await compressed.arrayBuffer())
   options.signal.throwIfAborted()
-  const clip: CachedSpeech = {
-    audio: compressed,
-    mouth: createMouthTrack({sampleRate: audio.sampleRate, samples: audio.getChannelData(0)}, text),
-  }
-  const stored = await options.cache.write(key, clip)
-  if (!stored.ok) {
-    options.onCacheError?.()
-  }
-  options.signal.throwIfAborted()
+  const clip = makeClip(compressed, audio, text)
+  await storeClip(options, key, clip)
   return {audio, mouth: clip.mouth}
 }

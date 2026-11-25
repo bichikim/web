@@ -202,6 +202,32 @@ describe('desktop safe area', () => {
     expect(windowMocks.getCurrentWindow).not.toHaveBeenCalled()
   })
 
+  it.each([false, true])(
+    'should remove an independently registered listener after a sibling fails when disposed first=%s',
+    async (disposedFirst) => {
+      const pending = createDeferred<() => void>()
+      const removeListener = vi.fn()
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+      windowMocks.onResized.mockReturnValueOnce(pending.promise)
+      windowMocks.onScaleChanged.mockRejectedValueOnce(new Error('scale listener failed'))
+      const view = render(() => {
+        useDesktopSafeAreaTop(() => 'desktop')
+        return null
+      })
+      await vi.waitFor(() => expect(consoleError).toHaveBeenCalledOnce())
+      if (disposedFirst) {
+        view.unmount()
+      }
+      pending.resolve(removeListener)
+      await pending.promise
+      if (!disposedFirst) {
+        view.unmount()
+      }
+      expect(removeListener).toHaveBeenCalledOnce()
+      consoleError.mockRestore()
+    },
+  )
+
   it('should report native window initialization failures only while mounted', async () => {
     const mountedError = new Error('window unavailable')
     const disposedError = new Error('listener unavailable')

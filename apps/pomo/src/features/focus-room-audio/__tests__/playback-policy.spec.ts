@@ -90,6 +90,31 @@ describe('resolveManualNavigation', () => {
     ).toEqual({index: 2, shuffleHistory: [0], shuffleQueue: [1], type: 'select'})
   })
 
+  it('should skip absolute shuffle positions that are no longer valid', () => {
+    expect(
+      resolveManualNavigation({
+        currentIndex: 0,
+        direction: 'next',
+        repeatMode: 'none',
+        shuffleEnabled: true,
+        shuffleHistory: [],
+        shuffleQueue: [3, 0, 2, 1],
+        trackCount: 3,
+      }),
+    ).toEqual({index: 2, shuffleHistory: [0], shuffleQueue: [1], type: 'select'})
+    expect(
+      resolveManualNavigation({
+        currentIndex: 0,
+        direction: 'next',
+        repeatMode: 'none',
+        shuffleEnabled: true,
+        shuffleHistory: [],
+        shuffleQueue: [3, 0],
+        trackCount: 3,
+      }),
+    ).toEqual({type: 'none'})
+  })
+
   it('should stop repeat-disabled shuffled navigation after the queue is consumed', () => {
     expect(
       resolveManualNavigation({

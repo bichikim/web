@@ -8,7 +8,7 @@ test('should own controls independently from mutable maps and omit integrated si
     ...state,
     adjustments: {
       ...state.adjustments,
-      blends: {'after-physics': new Map(), 'before-physics': blends},
+      blends: {'after-physics': new Map(), 'before-physics': blends, interaction: new Map()},
     },
   })
   blends.set('p', {mode: 'overwrite', value: 1, weight: 1})

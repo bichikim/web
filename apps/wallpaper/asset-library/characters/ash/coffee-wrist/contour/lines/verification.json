@@ -1,0 +1,36 @@
+{
+  "sourceModelSha256": "4d3b7185cc43713a64229cb6f564e22c88a8a6a13d3e85ab41bfa75a85dc993f",
+  "modelSha256": "5676ced34f7f9ac1ce64a82ebc83edb2e2bdce36c5e19275279905fdfb0562c1",
+  "bytes": 20355751,
+  "promptId": "4cb02ddf-2edc-4804-ab62-806ce85a2e0d",
+  "changedPixels": 1560,
+  "editRange": [690, 736],
+  "method": "Match duplicate interior contour strokes to intact hand and lower wrist RGB profiles; local ComfyUI compositing",
+  "alphaUnchanged": true,
+  "cupRgbaUnchanged": true,
+  "outsideMaskRgbaUnchanged": true,
+  "riggingUnchanged": true,
+  "otherPartsUnchanged": true,
+  "native": {
+    "appPid": 91350,
+    "resource": {
+      "bytes": 20355751,
+      "sha256": "5676ced34f7f9ac1ce64a82ebc83edb2e2bdce36c5e19275279905fdfb0562c1"
+    },
+    "partCount": 1025,
+    "expandedHandMeshSha256": "528151fe4d6045f6ebc9d1b6165d7bdb56d91af5702e6059465d1f674c18ee02",
+    "resourceMatched": true,
+    "meshMatched": true,
+    "pose": "ash:coffee",
+    "coatRemoved": true,
+    "pointerInputUsed": false,
+    "capture": "lines/applied.png",
+    "detailCapture": "lines/applied-detail.png",
+    "review": "Both marked duplicate contour stubs removed; cup and single hand outline retained"
+  },
+  "checks": {
+    "browser": "2 wrist integration cases passed; cup artwork and joint checks retained",
+    "build": "Tauri macOS debug app build passed",
+    "lint": "Targeted oxlint and oxfmt passed"
+  }
+}

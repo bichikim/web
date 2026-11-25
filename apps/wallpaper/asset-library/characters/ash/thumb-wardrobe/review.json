@@ -1,0 +1,15 @@
+{
+  "scope": "Restore the original coat-on thumb hand; retain the repaired bare hand.",
+  "nativeCoatOnReviewed": true,
+  "pointerInputUsed": false,
+  "beforeRegression": {
+    "testsFailed": 2,
+    "log": "/private/tmp/thumb-coat-before-tests.log"
+  },
+  "afterRegression": {
+    "testsPassed": 4,
+    "filesPassed": 2,
+    "log": "/private/tmp/thumb-coat-after-tests.log"
+  },
+  "bareHandArtworkAndGeometryUnchanged": true
+}

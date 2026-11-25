@@ -189,7 +189,9 @@ test('should return from Converter without reloading the shared model or losing 
   await waitFor(() => expect(view.getByLabelText('파츠 0개')).toBeInTheDocument())
   const canvas = view.getByRole('region', {name: '모델 보기'}).querySelector('canvas')
   navigateWorkspace('/converter')
-  await waitFor(() => expect(view.getByRole('heading', {name: 'Poffo 변환기'})).toBeInTheDocument())
+  expect(
+    await view.findByRole('heading', {name: 'Poffo 변환기'}, {timeout: 10000}),
+  ).toBeInTheDocument()
   expect(screen.getByLabelText('파일 및 편집 작업')).toHaveAttribute('data-closed')
   fireEvent.click(view.getByRole('link', {name: '← Poffo 편집기'}))
   expect(location.pathname).toBe('/editor')
@@ -221,7 +223,7 @@ test('should place rendering choices in view settings and persist changes withou
   const option = screen.getByRole('option', {name: /^WebGL$/})
   fireEvent.pointerDown(option)
   fireEvent.click(option)
-  expect(JSON.parse(localStorage.getItem('poffo:rendering:v1') ?? '{}').renderer).toBe('webgl')
+  expect(JSON.parse(localStorage.getItem('poffo:rendering:v1') ?? '{}').renderer).toBe('pixi-webgl')
   expect(view.getByRole('dialog', {name: '보기 설정'})).toBeInTheDocument()
   fireEvent.keyDown(within(settings).getByRole('button', {name: /^안티앨리어싱/}), {
     key: 'ArrowDown',

@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {Match, Show, Switch} from 'solid-js'
 import type {BackgroundMedia, MediaFit} from '@winter-love/wallpaper/model'
 import {useMediaUrl} from '../features/settings/use-media-url'
@@ -20,7 +21,9 @@ export const SMediaPreview = (props: SMediaPreviewProps) => {
       when={media.url()}
       fallback={
         <p class="m-0 px-5 text-center text-sm text-stone-600">
-          {media.failed() ? '미리보기를 불러올 수 없어요.' : '사진·동영상을 추가해 주세요.'}
+          {media.failed()
+            ? uiText('미리보기를 불러올 수 없어요.')
+            : uiText('사진·동영상을 추가해 주세요.')}
         </p>
       }
     >

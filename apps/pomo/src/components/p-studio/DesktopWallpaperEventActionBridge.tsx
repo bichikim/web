@@ -5,10 +5,30 @@ import {
   isDesktopMusicActionConnectionMessage,
 } from '../../features/desktop-mode/desktop-music-actions'
 import {usePEvents} from '../../features/focus-room-dialogue/event-context'
-import {onCleanup, onMount} from 'solid-js'
+import {createEffect, on, onCleanup, onMount} from 'solid-js'
+import {useOptionalSoundEffects} from '../../features/sound-effects/context'
+import {runSoundEffectsEventAction} from '../../features/sound-effects/run-sound-effects-event-action'
 
 export const DesktopWallpaperEventActionBridge = () => {
   const events = usePEvents()
+  const soundEffects = useOptionalSoundEffects()
+
+  createEffect(
+    on(
+      () => soundEffects?.status(),
+      (status) => {
+        if (soundEffects === undefined || status === 'loading') {
+          return
+        }
+
+        // The runner retains actions while the home-owned playback catalog is loading.
+        const unregister = events.registerEventActionHandler?.((actionId) =>
+          runSoundEffectsEventAction(soundEffects, actionId),
+        )
+        onCleanup(() => unregister?.())
+      },
+    ),
+  )
 
   onMount(() => {
     const channel = createDesktopMusicActionChannel()

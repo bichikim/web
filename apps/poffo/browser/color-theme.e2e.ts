@@ -371,6 +371,16 @@ test('should preview, cancel, apply and restore color themes from the editor men
   await dialog.getByRole('textbox', {exact: true, name: '패널'}).fill('#202030')
   await dialog.getByRole('button', {exact: true, name: '적용'}).click()
   await expect(dialog).not.toBeVisible()
+
+  await menu.click()
+  await page.getByRole('button', {exact: true, name: '색 테마'}).click()
+  const panel = dialog.getByRole('textbox', {exact: true, name: '패널'})
+  await panel.fill('#334455')
+  await panel.press('Tab')
+  await expect(dialog).toHaveCSS('background-color', 'rgb(51, 68, 85)')
+  await dialog.getByRole('button', {exact: true, name: '취소'}).click()
+  await expect(page.locator('html')).toHaveCSS('--puppet-color-panel', '#202030')
+
   await page.reload()
   await menu.click()
   await page.getByRole('button', {exact: true, name: '색 테마'}).click()

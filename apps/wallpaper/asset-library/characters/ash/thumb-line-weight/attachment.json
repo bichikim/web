@@ -1,0 +1,24 @@
+{
+  "scope": "Line weight only: thumb-up hand and wrist",
+  "source": "../thumb-hand-wrist/hand.png",
+  "model": "../../../../../wallpaper-web/public/models/white-cat/model.poffo",
+  "unchanged": [
+    "silhouette alpha",
+    "nail pixels",
+    "skin outside stroke vicinity",
+    "mesh",
+    "glue",
+    "physics",
+    "all other parts"
+  ],
+  "workflow": "Local ComfyUI core morphology, masked composite, original alpha and nail restoration",
+  "verification": "verification.json",
+  "reference": "Original arm in thumb-hand-wrist/thumb-whole-reference.png",
+  "nativeReview": {
+    "restarted": true,
+    "thumbsUpOn": true,
+    "loadedModelMatches": true,
+    "screenshot": "app-hand.png",
+    "review": "Hand and wrist stroke weight reviewed against existing forearm at actual app scale"
+  }
+}

@@ -3,6 +3,8 @@ import {useEvent} from '@winter-love/solid-use/event'
 import {createInactivityController} from './create-inactivity-controller'
 import {useVisibilityPreferences} from './use-visibility-preferences'
 
+const isSuspended = () => document.visibilityState === 'hidden'
+
 const hasVisibleOverlay = () =>
   Array.from(
     document.querySelectorAll(
@@ -18,7 +20,7 @@ export const useUiAutoHide = () => {
     const inactivity = createInactivityController({
       enabled: () => settings.preferences().enabled,
       isBlocked: hasVisibleOverlay,
-      isSuspended: () => document.visibilityState === 'hidden',
+      isSuspended,
       onHiddenChange: setHidden,
       schedule: (expire, milliseconds) => {
         const timeout = globalThis.setTimeout(expire, milliseconds)
@@ -29,7 +31,13 @@ export const useUiAutoHide = () => {
     for (const event of ['pointermove', 'pointerdown', 'keydown', 'wheel', 'scroll'] as const) {
       useEvent(globalThis.window, event, inactivity.wake, {capture: true, passive: true})
     }
-    useEvent(document, 'visibilitychange', inactivity.wake)
+    useEvent(document, 'visibilitychange', () => {
+      if (isSuspended()) {
+        inactivity.dispose()
+      } else {
+        inactivity.wake()
+      }
+    })
     const overlayObserver = new MutationObserver(() => {
       if (hasVisibleOverlay()) {
         inactivity.wake()

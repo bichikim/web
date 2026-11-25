@@ -1,0 +1,64 @@
+{
+  "poses": [
+    {
+      "pose": "rest",
+      "id": "coat-free:heart-right:hand",
+      "folded": 0
+    },
+    {
+      "pose": "rest",
+      "id": "coat-free:heart-right:ArtMesh994",
+      "folded": 0
+    },
+    {
+      "pose": "left",
+      "id": "coat-free:heart-right:hand",
+      "folded": 0
+    },
+    {
+      "pose": "left",
+      "id": "coat-free:heart-right:ArtMesh994",
+      "folded": 0
+    },
+    {
+      "pose": "right",
+      "id": "coat-free:heart-right:hand",
+      "folded": 0
+    },
+    {
+      "pose": "right",
+      "id": "coat-free:heart-right:ArtMesh994",
+      "folded": 0
+    },
+    {
+      "pose": "up",
+      "id": "coat-free:heart-right:hand",
+      "folded": 0
+    },
+    {
+      "pose": "up",
+      "id": "coat-free:heart-right:ArtMesh994",
+      "folded": 0
+    },
+    {
+      "pose": "down",
+      "id": "coat-free:heart-right:hand",
+      "folded": 0
+    },
+    {
+      "pose": "down",
+      "id": "coat-free:heart-right:ArtMesh994",
+      "folded": 0
+    },
+    {
+      "pose": "joint-close",
+      "id": "coat-free:heart-right:hand",
+      "folded": 0
+    },
+    {
+      "pose": "joint-close",
+      "id": "coat-free:heart-right:ArtMesh994",
+      "folded": 0
+    }
+  ]
+}

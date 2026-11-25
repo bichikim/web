@@ -58,7 +58,17 @@ const parseCachedSpeech = (value: unknown): CachedSpeech | null => {
     return null
   }
   const mouth = parseMouthTrack(value.mouth)
-  return mouth === null ? null : {audio: value.audio, mouth}
+  if (mouth === null) {
+    return null
+  }
+  const mouthRevision = 'mouthRevision' in value ? value.mouthRevision : undefined
+  return {
+    audio: value.audio,
+    mouth,
+    ...(typeof mouthRevision === 'number' && Number.isInteger(mouthRevision)
+      ? {mouthRevision}
+      : {}),
+  }
 }
 
 /** IndexedDB 접근을 작업 시점까지 미루고 접근 거부도 기존 실패 결과로 반환한다. */

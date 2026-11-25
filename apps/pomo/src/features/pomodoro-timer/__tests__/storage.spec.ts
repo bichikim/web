@@ -4,6 +4,8 @@ import {afterEach, expect, it, vi} from 'vitest'
 
 import {type PomodoroTimerConfig, type PomodoroTimerState, stopPomodoroTimer} from '../model'
 import {
+  POMODORO_TIMER_CONFIG_STORAGE_KEY,
+  POMODORO_TIMER_STORAGE_KEY,
   type PomodoroTimerStorage,
   readPomodoroTimerConfig,
   readPomodoroTimerState,
@@ -52,6 +54,47 @@ it('should persist state and configuration through one injected store', () => {
 
   expect(readPomodoroTimerState(storage)).toEqual(STATE)
   expect(readPomodoroTimerConfig(storage)).toEqual(CONFIG)
+})
+
+it('should restore decimal strings in a saved timer configuration', () => {
+  const storage = createStorage()
+  storage.setItem(
+    POMODORO_TIMER_CONFIG_STORAGE_KEY,
+    JSON.stringify({
+      focusSeconds: '10',
+      focusSessionsPerCycle: '2',
+      longBreakSeconds: '6',
+      shortBreakSeconds: '4',
+    }),
+  )
+  expect(readPomodoroTimerConfig(storage)).toEqual(CONFIG)
+  storage.setItem(
+    POMODORO_TIMER_CONFIG_STORAGE_KEY,
+    JSON.stringify({...CONFIG, focusSeconds: '0x10'}),
+  )
+  expect(readPomodoroTimerConfig(storage)).toBeNull()
+})
+
+it('should restore decimal strings in paused and running timer snapshots', () => {
+  const storage = createStorage()
+  storage.setItem(
+    POMODORO_TIMER_STORAGE_KEY,
+    JSON.stringify({
+      ...STATE,
+      completedFocusSessions: '1',
+      remainingSeconds: '4',
+    }),
+  )
+  expect(readPomodoroTimerState(storage)).toEqual(STATE)
+  storage.setItem(
+    POMODORO_TIMER_STORAGE_KEY,
+    JSON.stringify({
+      ...RUNNING_STATE,
+      completedFocusSessions: '0',
+      endsAt: '1000',
+    }),
+  )
+  expect(readPomodoroTimerState(storage)).toEqual(RUNNING_STATE)
 })
 
 it('should restore an expired idle state with preserved remaining progress', () => {

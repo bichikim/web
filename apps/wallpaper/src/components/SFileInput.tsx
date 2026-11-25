@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createSignal, Show} from 'solid-js'
 
 interface SFileInputProps {
@@ -23,7 +24,11 @@ export const SFileInput = (props: SFileInputProps) => {
     const files = Array.from(event.currentTarget.files ?? [])
     event.currentTarget.value = ''
     if (!props.disabled && files.length > 0) {
-      setName(files.length === 1 ? files[0]!.name : `파일 ${files.length}개`)
+      setName(
+        files.length === 1
+          ? files[0]!.name
+          : uiText('파일 {value0}개', {value0: String(files.length)}),
+      )
       trigger()?.focus()
       return props.onFiles?.(files)
     }
@@ -37,7 +42,7 @@ export const SFileInput = (props: SFileInputProps) => {
         aria-disabled={props.disabled ?? false}
         onClick={handleOpen}
       >
-        {props.label ?? '파일 가져오기'}
+        {props.label ?? uiText('파일 가져오기')}
       </button>
       <Show when={name()}>
         {(name) => (

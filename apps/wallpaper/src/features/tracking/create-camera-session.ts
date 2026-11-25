@@ -1,6 +1,7 @@
 import type {FacePosition} from './types'
 
 interface CreateCameraSessionOptions {
+  readonly pose?: boolean
   readonly video: HTMLVideoElement
   readonly onPoint: (point: FacePosition) => void
   readonly onError: (cause: unknown) => void
@@ -15,8 +16,10 @@ interface CameraSession {
   readonly update: () => void
 }
 const DETECTION_MILLISECONDS = 100
+const FRAME_WIDTH = {pose: 480, position: 320}
+const VIDEO_SIZE = {height: 480, width: 640}
 
-/** Starts local face detection and releases camera access on cancellation or failure. */
+/** Starts local camera tracking and releases capture on cancellation or failure. */
 export const createCameraSession = (options: CreateCameraSessionOptions): CameraSession => {
   const worker = new Worker(new URL('./face-worker.ts', import.meta.url), {type: 'module'})
   let stream: MediaStream | null = null
@@ -58,13 +61,22 @@ export const createCameraSession = (options: CreateCameraSessionOptions): Camera
     }
     busy = true
     previous = timestamp
-    createImageBitmap(options.video, {resizeHeight: 240, resizeQuality: 'low', resizeWidth: 320})
+    const width = options.pose ? FRAME_WIDTH.pose : FRAME_WIDTH.position
+    const height = Math.round(
+      (width * (options.video.videoHeight || VIDEO_SIZE.height)) /
+        (options.video.videoWidth || VIDEO_SIZE.width),
+    )
+    createImageBitmap(options.video, {
+      resizeHeight: height,
+      resizeQuality: 'low',
+      resizeWidth: width,
+    })
       .then((bitmap) => {
         if (stopped) {
           bitmap.close()
           return
         }
-        worker.postMessage({bitmap, timestamp}, [bitmap])
+        worker.postMessage({bitmap, timestamp, type: 'frame'}, [bitmap])
       })
       .catch(fail)
   }
@@ -101,7 +113,11 @@ export const createCameraSession = (options: CreateCameraSessionOptions): Camera
     }
     const acquired = await navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: {frameRate: {ideal: 15, max: 15}, height: {ideal: 480}, width: {ideal: 640}},
+      video: {
+        frameRate: {ideal: 15, max: 15},
+        height: {ideal: VIDEO_SIZE.height},
+        width: {ideal: VIDEO_SIZE.width},
+      },
     })
     if (stopped) {
       acquired.getTracks().forEach((track) => track.stop())
@@ -115,6 +131,7 @@ export const createCameraSession = (options: CreateCameraSessionOptions): Camera
       callback = options.video.requestVideoFrameCallback?.(frame) ?? 0
     }
   }
+  worker.postMessage({pose: options.pose ?? false, type: 'start'})
   start().catch(fail)
   return {stop, update}
 }

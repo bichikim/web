@@ -1,0 +1,17 @@
+[package]
+name = "poffo-format"
+description = "Poffo model format: typed document, validation, and reading JSON and web-written .poffo files."
+version.workspace = true
+edition.workspace = true
+
+[features]
+# Bounded PNG → RGBA8 decoding (`image` module) shared by the renderer and importers.
+png = ["dep:png"]
+
+[dependencies]
+brotli-decompressor.workspace = true
+png = { workspace = true, optional = true }
+serde.workspace = true
+sha2.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true

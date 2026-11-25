@@ -1,0 +1,454 @@
+{
+  "beforeModelSha256": "3cccf8763e2820499b32ef4e06c9d632559b67bcb65f48353bb10ed60840f83e",
+  "modelSha256": "7ed8bd78a1f9df44e6f7d0e242fd3d1b06f5498892121b33a93f404d0795b088",
+  "modelBytes": 18165916,
+  "scope": "Join the other ten bare-arm gestures using painted upper-arm thickness centers, rigid forearms and localized wrist surface contacts. Preserve the accepted notebook pose, all raster artwork, fingers and held objects.",
+  "actions": [
+    {
+      "id": "coffee",
+      "expression": "커피 들기",
+      "branches": [
+        {
+          "group": "coffee-left",
+          "upperArm": "ArtMesh849",
+          "forearm": "coat-free:coffee-left:ArtMesh900",
+          "hand": "ArtMesh960",
+          "rotationDegrees": 2.5444437451708134e-14,
+          "wristBandWorldUnits": 98.47169124657637
+        }
+      ]
+    },
+    {
+      "id": "microphone",
+      "expression": "마이크 들기",
+      "branches": [
+        {
+          "group": "microphone-left",
+          "upperArm": "ArtMesh849",
+          "forearm": "coat-free:microphone-left:ArtMesh900",
+          "hand": "ArtMesh979",
+          "rotationDegrees": 0,
+          "wristBandWorldUnits": 101.43284497963666
+        }
+      ]
+    },
+    {
+      "id": "knife",
+      "expression": "칼 들기",
+      "branches": [
+        {
+          "group": "knife-left",
+          "upperArm": "ArtMesh849",
+          "forearm": "coat-free:knife-left:ArtMesh900",
+          "hand": "ArtMesh849",
+          "rotationDegrees": -2.5444437451708134e-14,
+          "wristBandWorldUnits": 95.92103710217005
+        }
+      ]
+    },
+    {
+      "id": "thumb",
+      "expression": "엄지 척",
+      "branches": [
+        {
+          "group": "thumb-left",
+          "upperArm": "ArtMesh849",
+          "forearm": "coat-free:thumb-left:ArtMesh900",
+          "hand": "ArtMesh902",
+          "rotationDegrees": 0,
+          "wristBandWorldUnits": 106.11855723629978
+        }
+      ]
+    },
+    {
+      "id": "heart",
+      "expression": "손하트",
+      "branches": [
+        {
+          "group": "heart-right",
+          "upperArm": "ArtMesh863",
+          "forearm": "coat-free:heart-right:ArtMesh994",
+          "hand": "ArtMesh990",
+          "rotationDegrees": 0,
+          "wristBandWorldUnits": 96.33643132482031
+        }
+      ]
+    },
+    {
+      "id": "paws",
+      "expression": "고양이 손",
+      "branches": [
+        {
+          "group": "paws-right",
+          "upperArm": "ArtMesh863",
+          "forearm": "coat-free:paws-right:ArtMesh994",
+          "hand": "ArtMesh860",
+          "rotationDegrees": -1.3952842531412306,
+          "wristBandWorldUnits": 109.93801186412055
+        },
+        {
+          "group": "paws-left",
+          "upperArm": "ArtMesh849",
+          "forearm": "coat-free:paws-left:ArtMesh900",
+          "hand": "ArtMesh871",
+          "rotationDegrees": -7.109955551624109,
+          "wristBandWorldUnits": 110
+        }
+      ]
+    },
+    {
+      "id": "fists",
+      "expression": "주먹 쥐기",
+      "branches": [
+        {
+          "group": "fists-right",
+          "upperArm": "ArtMesh863",
+          "forearm": "coat-free:fists-right:ArtMesh994",
+          "hand": "ArtMesh1034",
+          "rotationDegrees": -4.3745465522007985,
+          "wristBandWorldUnits": 102.1619071054612
+        },
+        {
+          "group": "fists-left",
+          "upperArm": "ArtMesh849",
+          "forearm": "coat-free:fists-left:ArtMesh900",
+          "hand": "ArtMesh849",
+          "rotationDegrees": -6.917816920991354,
+          "wristBandWorldUnits": 100.15200880740518
+        }
+      ]
+    },
+    {
+      "id": "gamepad",
+      "expression": "게임패드 들기",
+      "branches": [
+        {
+          "group": "gamepad-right",
+          "upperArm": "ArtMesh877",
+          "forearm": "coat-free:gamepad-right:ArtMesh994",
+          "hand": "ArtMesh31",
+          "rotationDegrees": 4.207454868926472,
+          "wristBandWorldUnits": 67.27690770649085
+        },
+        {
+          "group": "gamepad-left",
+          "upperArm": "ArtMesh876",
+          "forearm": "coat-free:gamepad-left:ArtMesh900",
+          "hand": "ArtMesh884",
+          "rotationDegrees": -4.765172231773732,
+          "wristBandWorldUnits": 68.6535756421979
+        }
+      ]
+    },
+    {
+      "id": "cuffs",
+      "expression": "수갑 찬 손",
+      "branches": [
+        {
+          "group": "cuffs-right",
+          "upperArm": "ArtMesh907",
+          "forearm": "coat-free:cuffs-right:ArtMesh994",
+          "hand": "ArtMesh922",
+          "rotationDegrees": -3.5920276685643295,
+          "wristBandWorldUnits": 110
+        },
+        {
+          "group": "cuffs-left",
+          "upperArm": "ArtMesh906",
+          "forearm": "coat-free:cuffs-left:ArtMesh900",
+          "hand": "ArtMesh945",
+          "rotationDegrees": 4.786385806667984,
+          "wristBandWorldUnits": 110
+        }
+      ]
+    },
+    {
+      "id": "noodles",
+      "expression": "컵라면 들기",
+      "branches": [
+        {
+          "group": "noodles-right",
+          "upperArm": "ArtMesh889",
+          "forearm": "coat-free:noodles-right:ArtMesh994",
+          "hand": "ArtMesh889",
+          "rotationDegrees": 3.6082505720588327,
+          "wristBandWorldUnits": 110
+        },
+        {
+          "group": "noodles-left",
+          "upperArm": "ArtMesh888",
+          "forearm": "coat-free:noodles-left:ArtMesh900",
+          "hand": "ArtMesh49",
+          "rotationDegrees": 4.45175260615755,
+          "wristBandWorldUnits": 93.5754586376704
+        }
+      ]
+    }
+  ],
+  "mechanism": {
+    "elbow": "Sample the actually displayed upper-arm and forearm painted thickness centers after authored deformation. Translate the whole forearm to join them.",
+    "wrist": "Move each gesture hand and prop assembly by one common translation. Preserve every native hand and prop shape and grip. Weld only the terminal wrist band to a guide under the native hand transform.",
+    "pairedHands": "Keep the shared object and both hands together; fit each forearm by rigid elbow rotation without changing its length.",
+    "physics": "Retain authored pendulum chains and rigid FK rotations. Remove cloned whole-forearm physics warps; allow only localized wrist flex.",
+    "transition": "Keep contacts independent of gesture opacity. Let the forearm inherit its existing pose opacity from the first visible portion of the fade.",
+    "contour": "Pose-and-coat gated corrections at only the exposed distal upper-arm contour vertex; use the opposite cap corner for the vertical cat-paw pose."
+  },
+  "removedForearmBodyWarpBindings": [
+    "coat-free:coffee-left:moc3:blend:Warp92@ArtMesh70_Skinning:3",
+    "coat-free:coffee-left:moc3:blend:Warp92@ArtMesh70_Skinning:4",
+    "coat-free:coffee-left:moc3:blend:Warp92@ArtMesh70_Skinning:5",
+    "coat-free:microphone-left:moc3:blend:Warp92@ArtMesh70_Skinning:3",
+    "coat-free:microphone-left:moc3:blend:Warp92@ArtMesh70_Skinning:4",
+    "coat-free:microphone-left:moc3:blend:Warp92@ArtMesh70_Skinning:5",
+    "coat-free:knife-left:moc3:blend:Warp92@ArtMesh70_Skinning:3",
+    "coat-free:knife-left:moc3:blend:Warp92@ArtMesh70_Skinning:4",
+    "coat-free:knife-left:moc3:blend:Warp92@ArtMesh70_Skinning:5",
+    "coat-free:thumb-left:moc3:blend:Warp92@ArtMesh70_Skinning:3",
+    "coat-free:thumb-left:moc3:blend:Warp92@ArtMesh70_Skinning:4",
+    "coat-free:thumb-left:moc3:blend:Warp92@ArtMesh70_Skinning:5",
+    "coat-free:heart-right:moc3:blend:Warp92@ArtMesh158_Skinning:3",
+    "coat-free:heart-right:moc3:blend:Warp92@ArtMesh158_Skinning:4",
+    "coat-free:heart-right:moc3:blend:Warp92@ArtMesh158_Skinning:5",
+    "coat-free:paws-left:moc3:blend:Warp92@ArtMesh70_Skinning:3",
+    "coat-free:paws-left:moc3:blend:Warp92@ArtMesh70_Skinning:4",
+    "coat-free:paws-left:moc3:blend:Warp92@ArtMesh70_Skinning:5",
+    "coat-free:paws-right:moc3:blend:Warp92@ArtMesh158_Skinning:3",
+    "coat-free:paws-right:moc3:blend:Warp92@ArtMesh158_Skinning:4",
+    "coat-free:paws-right:moc3:blend:Warp92@ArtMesh158_Skinning:5",
+    "coat-free:fists-left:moc3:blend:Warp92@ArtMesh70_Skinning:3",
+    "coat-free:fists-left:moc3:blend:Warp92@ArtMesh70_Skinning:4",
+    "coat-free:fists-left:moc3:blend:Warp92@ArtMesh70_Skinning:5",
+    "coat-free:fists-right:moc3:blend:Warp92@ArtMesh158_Skinning:3",
+    "coat-free:fists-right:moc3:blend:Warp92@ArtMesh158_Skinning:4",
+    "coat-free:fists-right:moc3:blend:Warp92@ArtMesh158_Skinning:5",
+    "coat-free:gamepad-left:moc3:blend:Warp92@ArtMesh70_Skinning:3",
+    "coat-free:gamepad-left:moc3:blend:Warp92@ArtMesh70_Skinning:4",
+    "coat-free:gamepad-left:moc3:blend:Warp92@ArtMesh70_Skinning:5",
+    "coat-free:gamepad-right:moc3:blend:Warp92@ArtMesh158_Skinning:3",
+    "coat-free:gamepad-right:moc3:blend:Warp92@ArtMesh158_Skinning:4",
+    "coat-free:gamepad-right:moc3:blend:Warp92@ArtMesh158_Skinning:5",
+    "coat-free:cuffs-left:moc3:blend:Warp92@ArtMesh70_Skinning:3",
+    "coat-free:cuffs-left:moc3:blend:Warp92@ArtMesh70_Skinning:4",
+    "coat-free:cuffs-left:moc3:blend:Warp92@ArtMesh70_Skinning:5",
+    "coat-free:cuffs-right:moc3:blend:Warp92@ArtMesh158_Skinning:3",
+    "coat-free:cuffs-right:moc3:blend:Warp92@ArtMesh158_Skinning:4",
+    "coat-free:cuffs-right:moc3:blend:Warp92@ArtMesh158_Skinning:5",
+    "coat-free:noodles-left:moc3:blend:Warp92@ArtMesh70_Skinning:3",
+    "coat-free:noodles-left:moc3:blend:Warp92@ArtMesh70_Skinning:4",
+    "coat-free:noodles-left:moc3:blend:Warp92@ArtMesh70_Skinning:5",
+    "coat-free:noodles-right:moc3:blend:Warp92@ArtMesh158_Skinning:3",
+    "coat-free:noodles-right:moc3:blend:Warp92@ArtMesh158_Skinning:4",
+    "coat-free:noodles-right:moc3:blend:Warp92@ArtMesh158_Skinning:5"
+  ],
+  "removedLegacyUpperArmLinkCount": 432,
+  "addedReferenceParts": 120,
+  "addedJointLinks": 1059,
+  "scopeVerification": {
+    "allOriginalTexturesUvsTrianglesPreserved": true,
+    "originalHandFingerPropShapesPreserved": true,
+    "notebookPartsBindingsAndJointsUnchanged": true,
+    "allPhysicsChainsAndExpressionsUnchanged": true,
+    "forearmCorePhysicsWarpsReplaced": 45,
+    "legacyUpperArmWarpsReplaced": 432,
+    "newElbowWristBranches": 15
+  },
+  "regression": "../../../../visual/__tests__/ash-arm-actions.integration.tsx",
+  "review": {
+    "browsers": ["Chromium", "WebKit"],
+    "buffering": [false, true],
+    "poses": 10,
+    "forearms": 15,
+    "fadeSamples": [0.25, 0.5, 1],
+    "headPhysicsReversalsPerPose": [1, -1, 1],
+    "maximumAllowedJointError": 0.01,
+    "maximumAllowedRigidCoreLengthError": 0.02,
+    "poseImages": [
+      "arm-actions/poses-1.png",
+      "arm-actions/poses-2.png",
+      "arm-actions/poses-3.png",
+      "arm-actions/poses-4.png"
+    ],
+    "elbowImages": [
+      "arm-actions/elbows-1.png",
+      "arm-actions/elbows-2.png",
+      "arm-actions/elbows-3.png",
+      "arm-actions/elbows-4.png",
+      "arm-actions/elbows-5.png"
+    ]
+  },
+  "contourAdjustments": [
+    {
+      "group": "coffee-left",
+      "partId": "ArtMesh849",
+      "vertexIndex": 13,
+      "worldShift": [21.82114802027649, 0],
+      "localDelta": [-20.909389950461403, 6.2417876303723006],
+      "paintedShift": 12.5
+    },
+    {
+      "group": "microphone-left",
+      "partId": "ArtMesh849",
+      "vertexIndex": 13,
+      "worldShift": [25.31253170352073, 0],
+      "localDelta": [-24.2548923425351, 7.240473651232151],
+      "paintedShift": 14.5
+    },
+    {
+      "group": "knife-left",
+      "partId": "ArtMesh849",
+      "vertexIndex": 13,
+      "worldShift": [20.94830209946543, 0],
+      "localDelta": [-20.073014352443003, 5.992116125157736],
+      "paintedShift": 12
+    },
+    {
+      "group": "thumb-left",
+      "partId": "ArtMesh849",
+      "vertexIndex": 13,
+      "worldShift": [14.838380653788013, 0],
+      "localDelta": [-14.218385166313539, 4.244415588653396],
+      "paintedShift": 8.5
+    },
+    {
+      "group": "heart-right",
+      "partId": "ArtMesh863",
+      "vertexIndex": 13,
+      "worldShift": [-20.94830209946543, 0],
+      "localDelta": [20.073053184892963, 5.991986038662844],
+      "paintedShift": -12
+    },
+    {
+      "group": "paws-right",
+      "partId": "ArtMesh863",
+      "vertexIndex": 13,
+      "worldShift": [-6.982767366488477, 0],
+      "localDelta": [6.691017728298036, 1.9973286795540162],
+      "paintedShift": -4
+    },
+    {
+      "group": "paws-left",
+      "partId": "ArtMesh849",
+      "vertexIndex": 16,
+      "worldShift": [-30.508474576271187, 0],
+      "localDelta": [29.23373193363723, -8.72673697345192],
+      "paintedShift": -18
+    },
+    {
+      "group": "fists-right",
+      "partId": "ArtMesh863",
+      "vertexIndex": 13,
+      "worldShift": [-21.82114802027649, 0],
+      "localDelta": [20.909430400930397, 6.241652123607423],
+      "paintedShift": -12.5
+    },
+    {
+      "group": "fists-left",
+      "partId": "ArtMesh849",
+      "vertexIndex": 13,
+      "worldShift": [17.456918416221193, 0],
+      "localDelta": [-16.727511960369085, 4.993430104297886],
+      "paintedShift": 10
+    },
+    {
+      "group": "gamepad-right",
+      "partId": "ArtMesh877",
+      "vertexIndex": 13,
+      "worldShift": [-19.20261025784331, 0],
+      "localDelta": [-0.009444149931232104, -5.1443498350067784e-9],
+      "paintedShift": -11
+    },
+    {
+      "group": "gamepad-left",
+      "partId": "ArtMesh876",
+      "vertexIndex": 13,
+      "worldShift": [27.931069465953907, 0],
+      "localDelta": [0.013736939479484678, -1.1417378154021662e-8],
+      "paintedShift": 16
+    },
+    {
+      "group": "cuffs-right",
+      "partId": "ArtMesh907",
+      "vertexIndex": 13,
+      "worldShift": [-22.693993941087548, 0],
+      "localDelta": [-0.012348649651154897, -1.198617605169261e-8],
+      "paintedShift": -13
+    },
+    {
+      "group": "cuffs-left",
+      "partId": "ArtMesh906",
+      "vertexIndex": 13,
+      "worldShift": [25.31253170352073, 0],
+      "localDelta": [0.013773551711715931, 7.28962257223742e-9],
+      "paintedShift": 14.5
+    },
+    {
+      "group": "noodles-right",
+      "partId": "ArtMesh889",
+      "vertexIndex": 13,
+      "worldShift": [-18.329764337032252, 0],
+      "localDelta": [-0.01010408439712207, -3.4252789493649516e-10],
+      "paintedShift": -10.5
+    },
+    {
+      "group": "noodles-left",
+      "partId": "ArtMesh888",
+      "vertexIndex": 13,
+      "worldShift": [27.931069465953907, 0],
+      "localDelta": [0.015396696861880221, -1.1484709794284953e-7],
+      "paintedShift": 16
+    }
+  ],
+  "checks": {
+    "finalRenderedTestsPassed": 8,
+    "existingNotebookAndCoatTestsPassed": 18,
+    "originalArtworkAndGripComparisonPassed": true,
+    "scopeVerificationPassed": true,
+    "oxlintPassed": true,
+    "oxfmtPassed": true,
+    "wallpaperTypecheckPassed": true
+  },
+  "desktop": {
+    "restarted": true,
+    "processId": 54369,
+    "servedModelSha256": "7ed8bd78a1f9df44e6f7d0e242fd3d1b06f5498892121b33a93f404d0795b088",
+    "servedModelBytes": 18165916
+  },
+  "nativeReview": {
+    "date": "2026-11-08",
+    "timezone": "Asia/Seoul",
+    "application": "Wallpaper native macOS app",
+    "surface": "Poffo widget WKWebView",
+    "modelSha256": "7ed8bd78a1f9df44e6f7d0e242fd3d1b06f5498892121b33a93f404d0795b088",
+    "input": "Manual execution through Widget > Behavior; face horizontal default direction set through the app UI to -30 and +30.",
+    "poseConnections": {
+      "9": "Hold Notes",
+      "10": "Thumbs Up",
+      "11": "Hold Coffee",
+      "12": "Hold Game Controller",
+      "13": "Hold Instant Noodles",
+      "14": "Handcuffed Hands",
+      "15": "Hold Microphone",
+      "16": "Finger Heart",
+      "17": "Make a Fist",
+      "18": "Hold Knife",
+      "19": "Leash Pose",
+      "20": "Cat Paws",
+      "25": "Game Controller + Left Button",
+      "26": "Game Controller + Right Button",
+      "27": "Notes + Writing"
+    },
+    "faceHorizontalValues": [-30, 30],
+    "observedPoseDirectionCombinations": 30,
+    "coatDuringArmReview": "off",
+    "observation": "No visible wrist or elbow separation in the inspected native widget states.",
+    "continuousHardwareCursorFollowVerified": false,
+    "limitations": "Automated pointer movements did not establish continuous hardware-cursor following. App direction controls were used for the native end-angle review; this review does not claim observation of every animation frame.",
+    "restored": {
+      "faceHorizontalDefault": 0,
+      "trackingInput": "off",
+      "coat": "on",
+      "manualPreview": "cleared"
+    },
+    "characterAssetModifiedDuringNativeReview": false
+  }
+}

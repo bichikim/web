@@ -59,6 +59,7 @@ export const PAutomaticVoiceSettings = () => {
     null,
   )
   const [message, setMessage] = createSignal<string | null>(null)
+  let failedSaveValue: AutomaticDialogueSettingsValue | null = null
   const saveQueue = createPreferenceSaveQueue({
     equal: areAutomaticDialogueSettingsEqual,
     initial: DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
@@ -75,22 +76,20 @@ export const PAutomaticVoiceSettings = () => {
 
     if (isSaveError) {
       const settled = saveQueue.settle(false)
-      if (settled.value !== null && !settled.hasPending) {
+      if (!settled.hasPending) {
+        failedSaveValue = settled.value
         setFailedSettings(settled.committed)
+        setMessage(m.settings_dialogue_automatic_save_failed())
       }
+      return
     }
-    setMessage(
-      isSaveError
-        ? m.settings_dialogue_automatic_save_failed()
-        : m.settings_dialogue_automatic_load_failed(),
-    )
+    setMessage(m.settings_dialogue_automatic_load_failed())
   }
   const handlePreferenceSaved = () => {
     const settled = saveQueue.settle(true)
-    if (settled.value !== null) {
-      if (!settled.hasPending) {
-        setFailedSettings(null)
-      }
+    if (settled.value !== null && !settled.hasPending) {
+      failedSaveValue = null
+      setFailedSettings(null)
       setMessage(m.settings_dialogue_automatic_saved())
     }
   }
@@ -111,6 +110,14 @@ export const PAutomaticVoiceSettings = () => {
       return
     }
 
+    if (
+      failedSaveValue !== null &&
+      areAutomaticDialogueSettingsEqual(currentSettings, failedSaveValue)
+    ) {
+      failedSaveValue = null
+      saveQueue.clearFailure()
+      setMessage(null)
+    }
     if (saveQueue.synchronize(currentSettings)) {
       setFailedSettings(null)
     }
@@ -122,8 +129,10 @@ export const PAutomaticVoiceSettings = () => {
       return
     }
 
+    failedSaveValue = null
     saveQueue.clearFailure()
     setFailedSettings(null)
+    setMessage(null)
     saveQueue.enqueue(nextSettings)
     setStoredSettings(nextSettings, {rollbackOnError: true})
   }

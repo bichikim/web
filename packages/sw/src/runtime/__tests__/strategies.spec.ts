@@ -130,6 +130,25 @@ describe('createStrategyHandlers', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  it.each(['cache-first', 'stale-while-revalidate'] as const)(
+    'should return an uncached 503 when the network fails on a %s cache miss',
+    async (strategy) => {
+      const {event} = createFetchEvent('https://example.com/cover.png')
+      const handlers = createStrategyHandlers({cacheStore, log})
+      fetchMock.mockRejectedValue(new Error('offline'))
+
+      const response = await handlers[strategy](event, 'image')
+
+      expect(response.status).toBe(503)
+      expect(response.headers.get('Cache-Control')).toContain('no-store')
+      await expect(response.json()).resolves.toMatchObject({
+        error: 'Network request failed',
+        url: event.request.url,
+      })
+      expect(put).not.toHaveBeenCalled()
+    },
+  )
+
   it('should fetch and cache a cache-first miss', async () => {
     const networkResponse = new Response('network')
     const {event} = createFetchEvent('https://example.com/image.png')

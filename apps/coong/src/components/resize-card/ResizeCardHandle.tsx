@@ -10,7 +10,7 @@ export interface ResizeCardHandleProps extends ComponentProps<'button'> {
 export const ResizeCardHandle = (props: ResizeCardHandleProps) => {
   const [innerProps, restProps] = splitProps(props, ['resizeType'])
   const [isStart, setIsStart] = createSignal(false)
-  const {startResize, updateSize} = useContext(ResizeCardContext)
+  const {startResize, stopResize, updateSize} = useContext(ResizeCardContext)
 
   const handleMouseDown: ResizeCardHandleProps['onMouseDown'] = (event: MouseEvent) => {
     setIsStart(true)
@@ -56,12 +56,17 @@ export const ResizeCardHandle = (props: ResizeCardHandleProps) => {
     })
   }
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (event: TouchEvent) => {
+    const touch = event.changedTouches[0]
     setIsStart(false)
+    if (touch !== undefined) {
+      stopResize({x: touch.clientX, y: touch.clientY})
+    }
   }
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (event: MouseEvent) => {
     setIsStart(false)
+    stopResize({x: event.clientX, y: event.clientY})
   }
 
   const globalTarget = createMemo(() => (isStart() ? getWindow() : null))

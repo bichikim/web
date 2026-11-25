@@ -13,6 +13,7 @@ it('should bind the bundled preset to actual character actions', async () => {
     if (!result.ok) throw new Error('Invalid bundled character');
     console.log(JSON.stringify({
       expressions: result.document.expressions.map(item => item.id),
+      parameters: result.document.parameters.map(item => item.id),
       motions: result.document.motions.map(item => item.id)
     }));
   `
@@ -24,9 +25,24 @@ it('should bind the bundled preset to actual character actions', async () => {
     new URL('../../../../../wallpaper-web/public/models/white-cat/model.poffo', import.meta.url)
       .pathname,
   ])
-  const document: {readonly expressions: readonly string[]; readonly motions: readonly string[]} =
-    JSON.parse(stdout)
+  const document: {
+    readonly expressions: readonly string[]
+    readonly motions: readonly string[]
+    readonly parameters: readonly string[]
+  } = JSON.parse(stdout)
   const profile = builtinConnectionProfile('builtin:ash')!
+  for (const binding of Object.values(profile.connections.trackingBindings ?? {})) {
+    if (typeof binding?.parameterId === 'string') {
+      expect(document.parameters).toContain(binding.parameterId)
+    }
+  }
+  for (const binding of Object.values(profile.connections.agentBindings ?? {})) {
+    for (const action of binding?.actions ?? []) {
+      expect(action.kind === 'expression' ? document.expressions : document.motions).toContain(
+        action.id,
+      )
+    }
+  }
   for (const binding of profile.connections.semanticBindings ?? []) {
     for (const action of semanticTargets(binding)) {
       const ids = action.kind === 'expression' ? document.expressions : document.motions

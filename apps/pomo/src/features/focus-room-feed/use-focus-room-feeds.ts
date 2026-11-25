@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import {usePreference} from 'src/hooks/use-preference'
 import {createAutomaticDialoguePreferenceOptions} from '../focus-room-dialogue/automatic-dialogue-settings'
 import {useAutoPreparePreference} from './use-auto-prepare-preference'
@@ -142,7 +143,7 @@ export const usePFeeds = (props: UsePFeedsProps): PFeedController => {
       await syncController.sync()
     },
     onInitializationFailure() {
-      feedState.setState({message: '피드 기능을 시작하지 못했어요.', status: 'error'})
+      feedState.setState({message: m.feed_initialize_failed(), status: 'error'})
     },
     pollingIntervalMs: FEED_POLLING_INTERVAL_MS,
     refresh: syncController.sync,

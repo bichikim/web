@@ -37,6 +37,11 @@ const renderWebsite = async () => {
   return controller!
 }
 
+const selectStage = async (label: string) => {
+  await userEvent.click(screen.getByRole('combobox', {name: '스크립트 실행 시점'}))
+  await userEvent.click(screen.getByRole('option', {name: label}))
+}
+
 it('should save multiline website code, reopen it, and clear it through settings', async () => {
   const controller = await renderWebsite()
   await controller.setContent({mode: 'website', url: 'https://example.com/'})
@@ -47,9 +52,9 @@ it('should save multiline website code, reopen it, and clear it through settings
   const script = 'document.title = "custom";\ndocument.body.dataset.custom = "yes";'
   await userEvent.fill(screen.getByRole('textbox', {name: '사용자 CSS'}), css)
   await userEvent.fill(screen.getByRole('textbox', {name: '로드 완료 후 스크립트'}), script)
-  await userEvent.selectOptions(screen.getByRole('combobox', {name: '스크립트 실행 시점'}), 'start')
+  await selectStage('페이지 시작 전 스크립트')
   await userEvent.fill(screen.getByRole('textbox', {name: '페이지 시작 전 스크립트'}), scriptStart)
-  await userEvent.selectOptions(screen.getByRole('combobox', {name: '스크립트 실행 시점'}), 'dom')
+  await selectStage('DOM 준비 후 스크립트')
   await userEvent.fill(screen.getByRole('textbox', {name: 'DOM 준비 후 스크립트'}), scriptDom)
   expect(controller.current()?.content).toEqual({mode: 'website', url: 'https://example.com/'})
   await userEvent.click(screen.getByRole('button', {name: '저장 후 새로고침'}))
@@ -71,19 +76,13 @@ it('should save multiline website code, reopen it, and clear it through settings
     await userEvent.click(screen.getByText('사용자 코드'))
     expect(screen.getByRole('textbox', {name: '사용자 CSS'})).toHaveValue(css)
     expect(screen.getByRole('textbox', {name: '로드 완료 후 스크립트'})).toHaveValue(script)
-    await userEvent.selectOptions(
-      screen.getByRole('combobox', {name: '스크립트 실행 시점'}),
-      'start',
-    )
+    await selectStage('페이지 시작 전 스크립트')
     expect(screen.getByRole('textbox', {name: '페이지 시작 전 스크립트'})).toHaveValue(scriptStart)
     await userEvent.fill(screen.getByRole('textbox', {name: '페이지 시작 전 스크립트'}), '')
-    await userEvent.selectOptions(screen.getByRole('combobox', {name: '스크립트 실행 시점'}), 'dom')
+    await selectStage('DOM 준비 후 스크립트')
     expect(screen.getByRole('textbox', {name: 'DOM 준비 후 스크립트'})).toHaveValue(scriptDom)
     await userEvent.fill(screen.getByRole('textbox', {name: 'DOM 준비 후 스크립트'}), '')
-    await userEvent.selectOptions(
-      screen.getByRole('combobox', {name: '스크립트 실행 시점'}),
-      'load',
-    )
+    await selectStage('로드 완료 후 스크립트')
     await userEvent.fill(screen.getByRole('textbox', {name: '사용자 CSS'}), '')
     await userEvent.fill(screen.getByRole('textbox', {name: '로드 완료 후 스크립트'}), '')
     await userEvent.click(screen.getByRole('button', {name: '저장 후 새로고침'}))

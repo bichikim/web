@@ -2,6 +2,7 @@ import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 import {SCodexSpeech} from '../../src/components/SCodexSpeech'
+import {SSpeechOverflow} from '../../src/components/SSpeechOverflow'
 import type {VoiceStatus} from '../../src/features/voice/readout'
 import 'virtual:uno.css'
 
@@ -47,8 +48,10 @@ it.each(['bottom', 'top'] as const)(
     ).toBeCloseTo(compact.right - 1, 1)
   },
 )
-it('should replace the loading icon with the speaker in one slot without shifting the header', () => {
+it('should keep icon-only playback beside status in the footer without selecting the bubble', () => {
   const [status, setStatus] = createSignal<VoiceStatus>('generating')
+  const select = vi.fn()
+  const toggle = vi.fn(() => setStatus(status() === 'paused' ? 'playing' : 'paused'))
   render(() => (
     <SCodexSpeech
       activity={{
@@ -58,29 +61,49 @@ it('should replace the loading icon with the speaker in one slot without shiftin
         sessionId: 'chat',
         text: '숫자와 특수기호 전처리를 적용하고 있습니다.',
         title: '코드 뷰어를 클로드에 적용',
-        tool: null,
+        tool: 'Bash',
       }}
       voiceState={status()}
+      onVoiceToggle={toggle}
+      onSelect={select}
       onDismiss={() => undefined}
       tone="sky"
     />
   ))
-  const indicator = screen.getByRole('img', {name: '음성 생성 중'})
+  const indicator = screen.getByRole('button', {name: '음성 일시정지'})
   const bounds = indicator.getBoundingClientRect()
+  const footer = indicator.closest('footer')!
+  expect(footer).not.toBeNull()
+  expect(indicator.textContent).toBe('')
+  const tool = screen.getByText('Bash').getBoundingClientRect()
+  const phase = screen.getByText('작업 중').getBoundingClientRect()
+  expect(bounds.y + bounds.height / 2).toBeCloseTo(tool.y + tool.height / 2, 1)
+  expect(bounds.y + bounds.height / 2).toBeCloseTo(phase.y + phase.height / 2, 1)
+  expect(tool.right).toBeLessThan(bounds.left)
+  expect(bounds.right).toBeLessThan(phase.left)
   expect(indicator.querySelectorAll('svg')).toHaveLength(1)
-  const spinner = indicator.querySelector('svg')!
-  expect(getComputedStyle(spinner).animationName).toBe('spin')
-  expect(spinner.getBoundingClientRect().width).toBeGreaterThan(0)
+  expect(indicator.querySelector('svg')!.getBoundingClientRect().width).toBeGreaterThan(0)
+  const loading = indicator.querySelector('circle')!
+  expect(loading).toBeVisible()
+  expect(getComputedStyle(loading).animationName).not.toBe('none')
+  expect(loading.getAnimations()[0]?.playState).toBe('running')
+  expect(indicator).toHaveAccessibleDescription('음성 준비 중')
   setStatus('playing')
-  expect(screen.getByRole('img', {name: '말풍선 읽는 중'}).getBoundingClientRect().width).toBe(
+  expect(indicator.querySelector('circle')).toBeNull()
+  expect(screen.getByRole('button', {name: '음성 일시정지'}).getBoundingClientRect().width).toBe(
     bounds.width,
   )
   expect(indicator.querySelectorAll('svg')).toHaveLength(1)
-  expect(indicator.contains(spinner)).toBe(false)
-  expect(getComputedStyle(indicator.querySelector('svg')!).animationName).toBe('none')
-  setStatus('buffering')
+  fireEvent.click(indicator)
+  expect(screen.getByRole('button', {name: '음성 재생'})).toBe(indicator)
+  expect(indicator.getBoundingClientRect().width).toBe(bounds.width)
+  fireEvent.click(indicator)
+  expect(screen.getByRole('button', {name: '음성 일시정지'})).toBe(indicator)
+  expect(toggle).toHaveBeenCalledTimes(2)
+  expect(select).not.toHaveBeenCalled()
   expect(indicator.querySelectorAll('svg')).toHaveLength(1)
-  expect(getComputedStyle(indicator.querySelector('svg')!).animationName).toBe('spin')
+  setStatus('idle')
+  expect(screen.getByRole('button', {name: '음성 재생'})).toBe(indicator)
 })
 
 it('should expose separate selectable, open and close header targets in a narrow bubble', async () => {
@@ -99,6 +122,9 @@ it('should expose separate selectable, open and close header targets in a narrow
           tool: null,
         }}
         chatLabel="매우 긴 제목을 가진 Codex 대화"
+        headerActions={
+          <SSpeechOverflow items={[{id: 'other', status: '작업 중', title: '다른 대화'}]} />
+        }
         onSelect={select}
         onOpen={open}
         onDismiss={dismiss}
@@ -111,8 +137,12 @@ it('should expose separate selectable, open and close header targets in a narrow
     name: '매우 긴 제목을 가진 Codex 대화 Codex에서 열기',
   })
   const close = screen.getByRole('button', {name: '매우 긴 제목을 가진 Codex 대화 알림 닫기'})
-  for (const button of [openButton, close]) {
+  const overflow = screen.getByRole('button', {name: '다른 대화 1개'})
+  for (const button of [overflow, openButton, close]) {
     const bounds = button.getBoundingClientRect()
+    expect(bounds.height).toBe(24)
+    expect(bounds.width).toBeGreaterThanOrEqual(24)
+    expect(bounds.y).toBe(close.getBoundingClientRect().y)
     expect(
       button.contains(
         document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2),

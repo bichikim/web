@@ -71,10 +71,10 @@ const simulate = (physicsOptions: PuppetPhysicsOptions | undefined, frames: numb
 }
 
 describe('physics options', () => {
-  test('should accept finite vectors with a gravity direction', () => {
+  test('should accept finite vectors including disabled gravity', () => {
     expect(isValidPhysicsOptions({})).toBe(true)
     expect(isValidPhysicsOptions({gravity: [0, -1], wind: [0, 0]})).toBe(true)
-    expect(isValidPhysicsOptions({gravity: [0, 0]})).toBe(false)
+    expect(isValidPhysicsOptions({gravity: [0, 0]})).toBe(true)
     expect(isValidPhysicsOptions({wind: [Number.POSITIVE_INFINITY, 0]})).toBe(false)
   })
 

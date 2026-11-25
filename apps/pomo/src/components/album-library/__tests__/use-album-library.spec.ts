@@ -2,8 +2,14 @@
 
 import {cleanup, renderHook, waitFor} from '@solidjs/testing-library'
 import {cookieName, getLocale, setLocale} from '@paraglide/runtime'
+import {setAppLocale} from 'src/features/locale'
 import {revalidate} from '@solidjs/router'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {
+  deleteCustomAlbum,
+  readCustomAlbums,
+  type ResolvedCustomAlbum,
+} from '../../../features/custom-albums'
 import {
   loadBundledPAlbums,
   type PResolvedAlbum,
@@ -14,6 +20,10 @@ import {useAlbumLibrary} from '../use-album-library'
 vi.mock('../../../features/focus-room-audio', () => ({
   loadBundledPAlbums: vi.fn(),
   publishedAlbumCatalogQuery: vi.fn(),
+}))
+vi.mock('../../../features/custom-albums', () => ({
+  deleteCustomAlbum: vi.fn(),
+  readCustomAlbums: vi.fn(),
 }))
 vi.mock('@solidjs/router', async () => {
   const actual = await vi.importActual<typeof import('@solidjs/router')>('@solidjs/router')
@@ -30,6 +40,7 @@ const album = (title: string): PResolvedAlbum => ({
 })
 
 beforeEach(() => {
+  vi.mocked(readCustomAlbums).mockResolvedValue([])
   vi.mocked(loadBundledPAlbums).mockImplementation(async (options) => [
     album(`bundled-${options?.locale}`),
   ])
@@ -38,6 +49,27 @@ beforeEach(() => {
     status: 'ready',
   }))
   publishedAlbumCatalogQuery.keyFor = (locale) => `catalog-${locale}`
+})
+
+it('should keep a deleted album out of the list when an earlier reload completes later', async () => {
+  const deleted = {...album('deleted'), customCoverImage: null}
+  const retained = {...album('retained'), customCoverImage: null}
+  const stale = Promise.withResolvers<ReadonlyArray<ResolvedCustomAlbum>>()
+  vi.mocked(readCustomAlbums)
+    .mockResolvedValueOnce([deleted])
+    .mockReturnValueOnce(stale.promise)
+    .mockResolvedValue([retained])
+  const {result} = renderHook(useAlbumLibrary)
+  await waitFor(() => expect(result.customAlbums()).toEqual([deleted]))
+
+  const reload = result.reloadCustomAlbums()
+  await result.deleteCustomAlbum(deleted.id)
+  expect(deleteCustomAlbum).toHaveBeenCalledExactlyOnceWith(deleted.id)
+  stale.resolve([deleted])
+  await reload
+
+  expect(result.customAlbums()).toEqual([retained])
+  expect(result.isCustomAlbumsLoading()).toBe(false)
 })
 afterEach(() => {
   cleanup()
@@ -78,6 +110,27 @@ it('should load the selected locale after the runtime requests a document reload
   await next.result.retryLibrary()
   expect(loadBundledPAlbums).toHaveBeenLastCalledWith({locale: 'en'})
   expect(revalidate).toHaveBeenLastCalledWith('catalog-en')
+})
+
+it('should replace the mounted catalog and discard an older locale response', async () => {
+  await setAppLocale('ko', {reload: false})
+  const korean = Promise.withResolvers<Awaited<ReturnType<typeof publishedAlbumCatalogQuery>>>()
+  vi.mocked(publishedAlbumCatalogQuery).mockReturnValueOnce(korean.promise)
+  const {result} = renderHook(useAlbumLibrary)
+  await waitFor(() => expect(publishedAlbumCatalogQuery).toHaveBeenCalledWith('ko'))
+
+  try {
+    await setAppLocale('en', {reload: false})
+    const titles = () => result.albums().map((item) => item.title)
+    await waitFor(() => expect(titles()).toEqual(['bundled-en', 'published-en']))
+    korean.resolve({albums: [album('published-ko')], status: 'ready'})
+    await korean.promise
+    expect(titles()).toEqual(['bundled-en', 'published-en'])
+    await result.retryCatalog()
+    expect(revalidate).toHaveBeenLastCalledWith('catalog-en')
+  } finally {
+    await setAppLocale('ko', {reload: false})
+  }
 })
 
 it('should keep bundled albums and expose the error when the published catalog query rejects', async () => {

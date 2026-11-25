@@ -97,3 +97,21 @@ it('should settle active playback before the next timer starts another delayed-e
 
   view.cleanup()
 })
+
+it('should preserve the original deadline after saving the same delayed-end duration', async () => {
+  const view = renderHook(() =>
+    usePEventController({isDelayedEndEventEnabled: true, isPlaybackEnabled: true}),
+  )
+  await vi.waitFor(() => expect(view.result.isLoading()).toBe(false))
+  view.result.registerEventActionExecutor?.(vi.fn())
+  view.result.startDelayedEndEvent()
+  await vi.advanceTimersByTimeAsync(30_000)
+  await view.result.setDelayedEndEventDuration(1)
+  expect(playback.playSequence).not.toHaveBeenCalled()
+
+  await vi.advanceTimersByTimeAsync(30_000)
+
+  expect(playback.playSequence).toHaveBeenCalledOnce()
+  expect(view.result.delayedEndEventIsRunning()).toBe(false)
+  view.cleanup()
+})

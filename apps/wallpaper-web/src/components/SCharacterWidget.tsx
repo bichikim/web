@@ -66,9 +66,9 @@ export const SCharacterWidget = (props: SCharacterWidgetProps) => {
       onPointerLeave={interaction.handleLeave}
       onPointerDown={interaction.handlePress}
       onPointerMove={interaction.handleMove}
-      onPointerUp={() => props.preview.release()}
-      onPointerCancel={() => props.preview.release()}
-      onLostPointerCapture={() => props.preview.release()}
+      onPointerUp={interaction.handleRelease}
+      onPointerCancel={interaction.handleRelease}
+      onLostPointerCapture={interaction.handleRelease}
       onKeyDown={interaction.handleKeyDown}
       onFocus={interaction.handleFocus}
       onBlur={interaction.handleLeave}
@@ -104,6 +104,7 @@ export const SCharacterWidget = (props: SCharacterWidgetProps) => {
           classList={{'opacity-0': props.preview.phase() !== 'ready'}}
         >
           <SPuppetCharacter
+            coatOff={props.preview.coatOff()}
             expressionId={expressionId()}
             motionId={motionId()}
             playing={playing()}

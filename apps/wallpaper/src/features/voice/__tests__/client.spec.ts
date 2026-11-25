@@ -1,17 +1,61 @@
 import {afterEach, expect, it, vi} from 'vitest'
 import {DEFAULT_POFFO_VOICE} from '@winter-love/wallpaper/settings/voice'
 import {createVoiceClient} from '../client'
+import * as alignment from '../align-speech-shapes'
+import type {LipSyncCue} from '../../lipsync/types'
+import type {VoiceAudio} from '../synthesis'
 
 const {local, chatgpt, player} = vi.hoisted(() => ({
   chatgpt: {dispose: vi.fn(), generate: vi.fn()},
   local: {dispose: vi.fn(), generate: vi.fn()},
-  player: {dispose: vi.fn(), enqueue: vi.fn()},
+  player: {dispose: vi.fn(), enqueue: vi.fn(), setPaused: vi.fn()},
 }))
 vi.mock('../resident-synthesis', () => ({createResidentSynthesis: vi.fn(() => local)}))
 vi.mock('../synthesis', () => ({createSynthesis: vi.fn(() => local)}))
 vi.mock('../live-synthesis', () => ({createLiveSynthesis: () => chatgpt}))
 vi.mock('../audio-player', () => ({createAudioPlayer: () => player}))
-afterEach(() => vi.clearAllMocks())
+afterEach(() => {
+  vi.clearAllMocks()
+  vi.restoreAllMocks()
+})
+it('should schedule generated audio while vowel alignment is still pending', async () => {
+  const audio = {sampleRate: 16000, samples: new Float32Array(1600).fill(0.1), text: '아'}
+  local.generate.mockResolvedValueOnce(audio)
+  const alignmentResult = Promise.withResolvers<readonly LipSyncCue[]>()
+  const align = vi
+    .spyOn(alignment, 'alignSpeechShapes')
+    .mockReturnValueOnce(alignmentResult.promise)
+  const client = createVoiceClient({analyzeSpeech: () => true})
+  const signal = new AbortController().signal
+  const prepared = await client.prepare('원문', DEFAULT_POFFO_VOICE, signal, {status: vi.fn()})
+  await client.play(prepared, DEFAULT_POFFO_VOICE, signal)
+  expect(prepared.samples).toBe(audio.samples)
+  const [scheduled, , , callbacks] = player.enqueue.mock.lastCall as [
+    VoiceAudio,
+    number,
+    AbortSignal,
+    {onScheduled: () => void},
+  ]
+  expect(scheduled.samples).toBe(audio.samples)
+  expect(align).not.toHaveBeenCalled()
+  callbacks.onScheduled()
+  expect(align).toHaveBeenCalledWith({audio, signal, text: '아'})
+  expect(scheduled.shapeCues).toBeUndefined()
+  const cues: readonly LipSyncCue[] = [{end: 0.1, shape: 'a', start: 0}]
+  alignmentResult.resolve(cues)
+  await alignmentResult.promise
+  expect(scheduled.shapeCues).toBe(cues)
+  client.dispose()
+})
+
+it('should pause the shared audio player without disposing synthesis models', async () => {
+  const client = createVoiceClient({retainLocalModel: true})
+  await client.setPaused(true)
+  await client.setPaused(false)
+  expect(player.setPaused.mock.calls).toEqual([[true], [false]])
+  expect(local.dispose).not.toHaveBeenCalled()
+  client.dispose()
+})
 
 it('should route local and ChatGPT narration independently without replacing the local synthesis client', async () => {
   const client = createVoiceClient()
@@ -45,7 +89,7 @@ it('should route ChatGPT settings speech separately and apply its playback speed
   })
   expect(local.generate).not.toHaveBeenCalled()
   await client.play(audio, voice, signal)
-  expect(player.enqueue).toHaveBeenCalledWith(audio, 80, signal, 1.25)
+  expect(player.enqueue).toHaveBeenCalledWith(audio, 80, signal, {onStart: undefined, speed: 1.25})
   client.dispose()
   expect(chatgpt.dispose).toHaveBeenCalledOnce()
 })
@@ -54,9 +98,12 @@ it('should apply ChatGPT playback speed and preserve the existing locally synthe
   const audio = {sampleRate: 24_000, samples: Float32Array.of(0.1)}
   const signal = new AbortController().signal
   await client.play(audio, {...DEFAULT_POFFO_VOICE, provider: 'chatgpt', speed: 1.5}, signal)
-  expect(player.enqueue).toHaveBeenLastCalledWith(audio, 80, signal, 1.5)
+  expect(player.enqueue).toHaveBeenLastCalledWith(audio, 80, signal, {
+    onStart: undefined,
+    speed: 1.5,
+  })
   await client.play(audio, {...DEFAULT_POFFO_VOICE, speed: 1.5}, signal)
-  expect(player.enqueue).toHaveBeenLastCalledWith(audio, 80, signal, 1)
+  expect(player.enqueue).toHaveBeenLastCalledWith(audio, 80, signal, {onStart: undefined, speed: 1})
   client.dispose()
 })
 

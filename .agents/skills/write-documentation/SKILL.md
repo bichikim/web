@@ -1,6 +1,6 @@
 ---
 name: write-documentation
-description: Write or edit codebase documentation without duplicating code, keeping it beside its subject.
+description: Write or organize codebase documentation beside its subject and link to source for implementation details.
 ---
 
 # Write Documentation

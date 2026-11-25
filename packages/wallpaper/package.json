@@ -12,6 +12,7 @@
     "@winter-love/supertonic": "workspace:*",
     "dexie": "^4.4.4",
     "es-toolkit": "catalog:",
+    "fflate": "0.8.3",
     "pixi.js": "^8.22.0",
     "zod": "catalog:"
   },

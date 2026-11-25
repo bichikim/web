@@ -1,3 +1,4 @@
+import {hasOverlongLanguageLearningTag} from '../../features/language-learning'
 import {Show} from 'solid-js'
 
 import * as m from '@paraglide/message'
@@ -70,7 +71,11 @@ export const LanguageLearningEditorView = (props: LanguageLearningEditorViewProp
           progressLabel={props.state.generationStatus().progressLabel}
         />
         <LanguageLearningGenerateButton
-          disabled={props.state.isBusy()}
+          disabled={
+            props.state.isBusy() ||
+            (props.state.wordSource() === 'direct' &&
+              hasOverlongLanguageLearningTag(props.state.tagInput()))
+          }
           onPress={props.onGenerate}
         />
       </section>

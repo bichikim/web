@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render} from '@solidjs/testing-library'
-import {createRoot, createSignal} from 'solid-js'
+import {createRoot, createSignal, Show} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {createPlayer} from '../create-player'
 import {createShakaPlayer} from '../player/shaka'
@@ -43,6 +43,43 @@ describe('createPlayer', () => {
     video.volume = 0.4
     fireEvent.timeUpdate(video)
     expect(view.getByRole('status').textContent).toBe('12:0.4')
+  })
+
+  it('should return the idle media state when the video is detached', () => {
+    const player = createPlayerApi()
+    vi.mocked(createShakaPlayer).mockReturnValue(player)
+    const view = render(() => {
+      const [element, setElement] = createSignal<HTMLVideoElement | null>(null)
+      const [visible, setVisible] = createSignal(true)
+      const [state, , , mediaEvents] = createPlayer(element)
+
+      const detachVideo = () => {
+        setElement(null)
+        setVisible(false)
+      }
+
+      return (
+        <>
+          <button onClick={detachVideo}>Detach video</button>
+          <Show when={visible()}>
+            <video ref={setElement} {...mediaEvents} />
+          </Show>
+          <output>
+            {state().currentTime}:{state().volume}
+          </output>
+        </>
+      )
+    })
+    const video = view.container.querySelector('video')!
+    video.currentTime = 15
+    video.volume = 0.5
+    fireEvent.timeUpdate(video)
+    expect(view.getByRole('status').textContent).toBe('15:0.5')
+
+    fireEvent.click(view.getByRole('button', {name: 'Detach video'}))
+    expect(view.container.querySelector('video')).toBeNull()
+    expect(view.getByRole('status').textContent).toBe('0:1')
+    expect(player.destroy).toHaveBeenCalledOnce()
   })
 
   afterEach(() => {

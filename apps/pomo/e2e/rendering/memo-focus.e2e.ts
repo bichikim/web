@@ -40,3 +40,24 @@ test('should focus the nested memo editor and restore focus when closed', async 
   await expect(create).toBeFocused()
   await expect(parent).toBeVisible()
 })
+
+test('should reopen the chosen calendar month and date after switching panels', async ({page}) => {
+  await page.clock.setFixedTime(new Date('2026-09-04T10:30:00Z'))
+  await page.goto('/')
+  await page.getByRole('button', {exact: true, name: '시작하기'}).click()
+  await page.getByRole('button', {exact: true, name: '생각 보조'}).click()
+  const dialog = page.getByRole('dialog', {exact: true, name: 'Pomofi 생각 보조'})
+  const calendarTab = dialog.getByRole('tab', {name: '캘린더'})
+  await calendarTab.click()
+  await dialog.getByRole('button', {name: '다음 달'}).click()
+  const day = dialog.getByRole('button', {name: /^2026년 10월 8일,/u})
+  await day.click()
+  await expect(day).toHaveAttribute('aria-pressed', 'true')
+
+  await dialog.getByRole('tab', {name: '메모'}).click()
+  await expect(dialog.getByRole('grid')).not.toBeAttached()
+  await calendarTab.click()
+
+  await expect(dialog.getByRole('heading', {exact: true, name: '2026년 10월'})).toBeVisible()
+  await expect(day).toHaveAttribute('aria-pressed', 'true')
+})

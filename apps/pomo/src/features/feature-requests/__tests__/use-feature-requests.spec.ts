@@ -428,7 +428,7 @@ it('should refresh after creating and update the request after voting', async ()
   expect(result.requests()).toEqual([
     {...REQUEST, voteCount: REQUEST.voteCount + 1, votedByCurrentUser: true},
   ])
-  expect(result.votingRequestId()).toBeNull()
+  expect(result.isVoting(REQUEST.id)).toBe(false)
   cleanup()
 })
 
@@ -446,7 +446,7 @@ it('should expose unavailable states when requests cannot be loaded or submitted
   })
   await expect(result.voteRequest(REQUEST.id)).resolves.toEqual({status: 'unavailable'})
   expect(result.isSubmitting()).toBe(false)
-  expect(result.votingRequestId()).toBeNull()
+  expect(result.isVoting(REQUEST.id)).toBe(false)
   cleanup()
 })
 
@@ -493,12 +493,39 @@ it('should ignore a previous session vote and preserve the new pending vote stat
   previousVote.resolve({status: 'voted'})
   await staleVote
   expect(result.requests()).toEqual([REQUEST])
-  expect(result.votingRequestId()).toBe(REQUEST.id)
+  expect(result.isVoting(REQUEST.id)).toBe(true)
 
   currentVote.resolve({status: 'voted'})
   await newVote
   expect(result.requests()).toEqual([{...REQUEST, voteCount: 3, votedByCurrentUser: true}])
-  expect(result.votingRequestId()).toBeNull()
+  expect(result.isVoting(REQUEST.id)).toBe(false)
+})
+
+it('should reuse a pending vote for one card while another card is voting', async () => {
+  const first = Promise.withResolvers<{status: 'voted'}>()
+  const second = Promise.withResolvers<{status: 'voted'}>()
+  const secondRequest = {...REQUEST, id: 'second-request'}
+  apiMocks.listFeatureRequests.mockResolvedValue({
+    hasMore: false,
+    requests: [REQUEST, secondRequest],
+  })
+  apiMocks.voteFeatureRequest.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise)
+  const {result} = renderHook(() => useFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+  const firstVote = result.voteRequest(REQUEST.id)
+  const secondVote = result.voteRequest(secondRequest.id)
+
+  try {
+    expect(result.voteRequest(REQUEST.id)).toBe(firstVote)
+    first.resolve({status: 'voted'})
+    await firstVote
+    expect(result.voteRequest(secondRequest.id)).toBe(secondVote)
+    expect(apiMocks.voteFeatureRequest).toHaveBeenCalledTimes(2)
+  } finally {
+    first.resolve({status: 'voted'})
+    second.resolve({status: 'voted'})
+    await Promise.all([firstVote, secondVote])
+  }
 })
 
 it('should not refresh a new session after a prior session creation completes', async () => {

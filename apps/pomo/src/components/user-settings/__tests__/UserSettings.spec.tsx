@@ -62,6 +62,7 @@ it('should show the signed-in email and account management entry', async () => {
   expect(screen.queryByRole('heading', {name: '사용자'})).toBeNull()
   expect(screen.queryByText('현재 로그인 상태와 연결된 계정을 확인할 수 있어요.')).toBeNull()
   expect(screen.getByRole('status').textContent).toContain('계정 확인 중…')
+  expect(screen.queryByRole('link', {name: '로그인 / 가입'})).toBeNull()
   setSettingsState({
     email: 'pomo@example.com',
     kind: 'authenticated',

@@ -16,7 +16,7 @@ interface ExportFailure {
   readonly error: string
 }
 
-/** Lossless web Poffo v1 file. Concurrent calls own separate Workers. */
+/** Lossless Poffo file with shared numeric storage. Concurrent calls own separate Workers. */
 export const serializePoffoDocument = async (
   document: PuppetDocument,
   options: SerializePoffoDocumentOptions = {},

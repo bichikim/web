@@ -1,21 +1,27 @@
+import {ENGLISH_TITLE_ABBREVIATIONS} from 'src/utils/english-title-abbreviation'
+
 import {createTokenIdsMatching} from '../text-generation/create-token-ids-matching'
 // oxlint-disable eslint-js/camelcase -- Transformers.js tokenizer options are fixed external contracts.
 
 import type {TextTokenVocabulary} from '../text-generation/runtime'
 
 const FOREIGN_CJK_PATTERN = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
+const SENTENCE_CONTINUATION_ABBREVIATIONS = ENGLISH_TITLE_ABBREVIATIONS.filter(
+  (abbreviation) => abbreviation !== 'Jr' && abbreviation !== 'Sr',
+)
 const SENTENCE_CONTENT_PATTERN = [
   String.raw`(?<!\S)\d+\.(?=\s+\S)`,
   String.raw`[^.!?\n。！？]`,
   String.raw`(?<=[\p{Script=Latin}\p{N}])\.(?=[\p{Script=Latin}\p{N}])`,
-  String.raw`(?<=\b(?:Mr|Dr))\.(?=\s+\p{L})`,
+  String.raw`(?<=\b(?:${SENTENCE_CONTINUATION_ABBREVIATIONS.join('|')}))\.(?=\s+\p{L})`,
+  String.raw`(?<=\b(?:${ENGLISH_TITLE_ABBREVIATIONS.join('|')}))\.(?=\p{Script=Hangul})`,
 ].join('|')
 const SENTENCE_PATTERN_SOURCE = [
   '(?:',
   SENTENCE_CONTENT_PATTERN,
   String.raw`)+[.!?\n。！？]*|[.!?\n。！？]+`,
 ].join('')
-const SENTENCE_PATTERN = new RegExp(SENTENCE_PATTERN_SOURCE, 'gu')
+const SENTENCE_PATTERN = new RegExp(SENTENCE_PATTERN_SOURCE, 'giu')
 const REFINEMENT_FALLBACK = '답변의 일부 표현을 자연스러운 한국어로 바꾸지 못했어요.'
 
 interface RefiningKoreanTextSegment {
@@ -57,6 +63,13 @@ export const createKoreanRefinementMessages = (text: string): Array<KoreanRefine
 export const createForeignCjkTokenIds = (tokenizer: TextTokenVocabulary): Array<number> =>
   createTokenIdsMatching(tokenizer, containsForeignCjk)
 
+/** Keeps the separators surrounding a sentence when replacing its content. */
+export const replaceKoreanSegmentText = (source: string, replacement: string): string => {
+  const leading = source.match(/^\s*/u)?.[0] ?? ''
+  const trailing = source.match(/\s*$/u)?.[0] ?? ''
+  return `${leading}${replacement}${trailing}`
+}
+
 /** Replaces unresolved foreign-script sentences with a safe Korean fallback. */
 export const replaceUnrefinedSentences = (text: string): string =>
   createKoreanTextSegments(text)
@@ -65,10 +78,6 @@ export const replaceUnrefinedSentences = (text: string): string =>
         return segment.text
       }
 
-      const leadingWhitespace = segment.text.slice(
-        0,
-        segment.text.length - segment.text.trimStart().length,
-      )
-      return `${leadingWhitespace}${REFINEMENT_FALLBACK}`
+      return replaceKoreanSegmentText(segment.text, REFINEMENT_FALLBACK)
     })
     .join('')

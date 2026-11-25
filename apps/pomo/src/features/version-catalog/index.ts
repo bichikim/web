@@ -65,8 +65,8 @@ export interface VersionCatalog {
 }
 
 /** Fetches and validates the public Pomofi version catalog. */
-export const loadVersionCatalog = (): Promise<VersionCatalog> =>
-  loadPublicJson(VERSION_CATALOG_PATHS[getLocale()], VERSION_CATALOG_SCHEMA, {
+export const loadVersionCatalog = (locale = getLocale()): Promise<VersionCatalog> =>
+  loadPublicJson(VERSION_CATALOG_PATHS[locale], VERSION_CATALOG_SCHEMA, {
     formatFetchFailure: ({status}) =>
       status === undefined
         ? 'Failed to fetch version catalog.'

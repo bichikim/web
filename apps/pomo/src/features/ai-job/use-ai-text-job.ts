@@ -123,7 +123,10 @@ export const useAiTextJob = (props: UseAiTextJobProps): AiTextJobController => {
     job,
     onComplete: (text) => props.onComplete(text),
     onError: (errorMessage) => setState((current) => ({...current, errorMessage})),
-    onResult: (result) => setState((current) => ({...current, errorMessage: null, result})),
+    onLoadError: (errorMessage) =>
+      setState((current) => ({...current, errorMessage, status: 'error'})),
+    onResult: (result) =>
+      setState((current) => ({...current, errorMessage: null, result, status: 'succeeded'})),
     result: jobResult,
     session,
   })
@@ -241,8 +244,10 @@ export const useAiTextJob = (props: UseAiTextJobProps): AiTextJobController => {
     }
     return false
   }
-  const {submit, retry} = createAiJobSubmission({
-    canSubmit: () => executionMode() === 'server' && !isBusy() && serverAvailable(),
+  const canUseServer = () => executionMode() === 'server' && serverAvailable()
+  const {submit, retry: retrySubmission} = createAiJobSubmission({
+    canRetrySubmission: canUseServer,
+    canSubmit: () => canUseServer() && !isBusy(),
     client,
     onAccepted: (nextJob, revision) => {
       autoSpeakJobId = nextJob.id
@@ -260,6 +265,13 @@ export const useAiTextJob = (props: UseAiTextJobProps): AiTextJobController => {
     session,
     status: jobStatus,
   })
+  const retry = async (): Promise<boolean> => {
+    const currentJob = job()
+    if (jobStatus() === 'error' && currentJob?.status === 'succeeded') {
+      return refreshJob(currentJob.id)
+    }
+    return retrySubmission()
+  }
   onCleanup(session.dispose)
 
   return {

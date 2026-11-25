@@ -1,0 +1,38 @@
+{
+  "modelSha256": "7b3b8114c06175ad0be3456479c73f6c423e57066e0781cc47516e431cef320d",
+  "browser": {
+    "filesPassed": 5,
+    "testsPassed": 10,
+    "buffering": [false, true],
+    "gazeAndPhysicsDirections": 3,
+    "livePhysicsReversals": 3,
+    "forearmCoreTolerance": 0.02,
+    "forearmOutlineHandCoverageMinimum": 230,
+    "previousModelCoverage": 0
+  },
+  "native": {
+    "modelAndGuideDataMatch": true,
+    "poses": [
+      {
+        "action": "coffee",
+        "matched": true,
+        "coatRemoved": true,
+        "systemPointerMoved": false
+      },
+      {
+        "action": "noodles",
+        "matched": true,
+        "coatRemoved": true,
+        "systemPointerMoved": false
+      }
+    ],
+    "systemPointerMoved": false,
+    "previewCleared": true,
+    "observerRemoved": true,
+    "scope": "Model identity and two action snapshots. Gaze reversal and live physics verified in the browser renderer."
+  },
+  "reviews": {
+    "native": "app-review.png",
+    "closeup": "render-review.png"
+  }
+}

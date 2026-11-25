@@ -1,0 +1,8 @@
+{
+  "method": "Restore original RGBA outside the binary edit mask; match the generated wrist RGB to the existing forearm only around the wrist fold and its short assembly overlap. Keep generated silhouette alpha and all finger/cup pixels.",
+  "restoredOriginalPixels": 408387,
+  "matchedWristPixels": 5142,
+  "transition": [762, 795],
+  "generatorOutput": "hand-generated.png",
+  "nativeComposite": "hand-comfy.png"
+}

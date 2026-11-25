@@ -1,0 +1,12 @@
+{
+  "crop": {
+    "x": 2480,
+    "y": 1280,
+    "width": 224,
+    "height": 224
+  },
+  "editAtlasY": [1420, 1468],
+  "hand": "ArtMesh125",
+  "arm": "coat-free:notes-right:ArtMesh994",
+  "scope": "Input guides only. Final output preserves all original pixels outside the edit mask and clips generated alpha to original hand alpha."
+}

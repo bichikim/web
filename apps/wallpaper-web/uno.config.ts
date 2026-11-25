@@ -7,18 +7,20 @@ interface StoryMotion {
 }
 
 const WIPE_COMPOSITION = {
+  center: 50,
   far: 156.83791,
   halfWidth: 37.7523357,
   slant: 16.6159198,
   spread: 15.5114436,
 }
-const planeClip = (shift: number) => {
-  const {halfWidth, slant} = WIPE_COMPOSITION
-  const point = (offset: number, y: string) =>
-    `calc(50% + ${offset}vw + (${shift}vw * var(--wipe-direction))) ${y}`
-  return `polygon(${point(-slant - halfWidth, '0')},${point(-slant + halfWidth, '0')},
-    ${point(slant + halfWidth, '100%')},${point(slant - halfWidth, '100%')})`
-}
+// A full-height sheared rectangle has the same edges as the original polygon.
+// Counter-transform its contents to keep artwork and scenes in viewport coordinates.
+const PLANE_SHEAR = `calc(${WIPE_COMPOSITION.slant / WIPE_COMPOSITION.center} * var(--story-aspect,1))`
+const planeTransform = (shift: number) =>
+  `translateX(calc(${shift}vw * var(--wipe-direction))) matrix(1,0,${PLANE_SHEAR},1,0,0)`
+const planeCounter = (shift: number) =>
+  `translateX(calc(var(--wipe-center,0%) - (${shift}vw * var(--wipe-direction))))
+    matrix(1,0,calc(-1 * ${PLANE_SHEAR}),1,0,0)`
 
 const STORY_MOTION: Record<string, StoryMotion> = {
   'desktop-wallpaper': {
@@ -134,32 +136,38 @@ const STORY_MOTION: Record<string, StoryMotion> = {
   'story-plane-cover-back': {
     delay: 'calc(var(--wipe-index) * 32ms)',
     duration: '440ms',
-    frames: `{from{clip-path:${planeClip(WIPE_COMPOSITION.far)}}to{clip-path:${planeClip(-WIPE_COMPOSITION.spread)}}}`,
+    frames: `{from{transform:${planeTransform(WIPE_COMPOSITION.far)}}
+      to{transform:${planeTransform(-WIPE_COMPOSITION.spread)}}}`,
   },
   'story-plane-cover-front': {
     delay: 'calc(var(--wipe-index) * 32ms)',
     duration: '440ms',
-    frames: `{from{clip-path:${planeClip(WIPE_COMPOSITION.far)}}to{clip-path:${planeClip(WIPE_COMPOSITION.spread)}}}`,
+    frames: `{from{transform:${planeTransform(WIPE_COMPOSITION.far)}}
+      to{transform:${planeTransform(WIPE_COMPOSITION.spread)}}}`,
   },
   'story-plane-cover-mid': {
     delay: 'calc(var(--wipe-index) * 32ms)',
     duration: '440ms',
-    frames: `{from{clip-path:${planeClip(WIPE_COMPOSITION.far)}}to{clip-path:${planeClip(0)}}}`,
+    frames: `{from{transform:${planeTransform(WIPE_COMPOSITION.far)}}
+      to{transform:${planeTransform(0)}}}`,
   },
   'story-plane-reveal-back': {
     delay: 'calc(var(--wipe-index) * 32ms)',
     duration: '580ms',
-    frames: `{from{clip-path:${planeClip(-WIPE_COMPOSITION.spread)}}to{clip-path:${planeClip(-WIPE_COMPOSITION.far)}}}`,
+    frames: `{from{transform:${planeTransform(-WIPE_COMPOSITION.spread)}}
+      to{transform:${planeTransform(-WIPE_COMPOSITION.far)}}}`,
   },
   'story-plane-reveal-front': {
     delay: 'calc(var(--wipe-index) * 32ms)',
     duration: '580ms',
-    frames: `{from{clip-path:${planeClip(WIPE_COMPOSITION.spread)}}to{clip-path:${planeClip(-WIPE_COMPOSITION.far)}}}`,
+    frames: `{from{transform:${planeTransform(WIPE_COMPOSITION.spread)}}
+      to{transform:${planeTransform(-WIPE_COMPOSITION.far)}}}`,
   },
   'story-plane-reveal-mid': {
     delay: 'calc(var(--wipe-index) * 32ms)',
     duration: '580ms',
-    frames: `{from{clip-path:${planeClip(0)}}to{clip-path:${planeClip(-WIPE_COMPOSITION.far)}}}`,
+    frames: `{from{transform:${planeTransform(0)}}
+      to{transform:${planeTransform(-WIPE_COMPOSITION.far)}}}`,
   },
   'story-reveal': {
     duration: '640ms',
@@ -179,26 +187,14 @@ const STORY_MOTION: Record<string, StoryMotion> = {
   'story-scene-cover': {
     delay: '64ms',
     duration: '440ms',
-    frames: `{from{clip-path:polygon(
-      var(--scene-side) 0,calc(50% - 16.6159198vw + (156.8379100vw * var(--wipe-direction))) 0,
-      calc(50% + 16.6159198vw + (156.8379100vw * var(--wipe-direction))) 100%,
-      var(--scene-side) 100%)}
-      to{clip-path:polygon(
-      var(--scene-side) 0,calc(50% - 16.6159198vw + (15.5114436vw * var(--wipe-direction))) 0,
-      calc(50% + 16.6159198vw + (15.5114436vw * var(--wipe-direction))) 100%,
-      var(--scene-side) 100%)}}`,
+    frames: `{from{transform:${planeTransform(WIPE_COMPOSITION.far)}}
+      to{transform:${planeTransform(WIPE_COMPOSITION.spread)}}}`,
   },
   'story-scene-reveal': {
     delay: '64ms',
     duration: '580ms',
-    frames: `{from{clip-path:polygon(
-      var(--scene-side) 0,calc(50% - 16.6159198vw + (15.5114436vw * var(--wipe-direction))) 0,
-      calc(50% + 16.6159198vw + (15.5114436vw * var(--wipe-direction))) 100%,
-      var(--scene-side) 100%)}
-      to{clip-path:polygon(
-      var(--scene-side) 0,calc(50% - 16.6159198vw + (-156.8379100vw * var(--wipe-direction))) 0,
-      calc(50% + 16.6159198vw + (-156.8379100vw * var(--wipe-direction))) 100%,
-      var(--scene-side) 100%)}}`,
+    frames: `{from{transform:${planeTransform(WIPE_COMPOSITION.spread)}}
+      to{transform:${planeTransform(-WIPE_COMPOSITION.far)}}}`,
   },
   'story-split-cover': {
     delay: 'calc(var(--panel-order) * 70ms)',
@@ -234,7 +230,49 @@ const STORY_MOTION: Record<string, StoryMotion> = {
       100%{transform:translate(-52%,-62%) rotate(-23deg) scale(1.5)}}`,
   },
 }
-const storyEntries = Object.entries(STORY_MOTION)
+const PLANE_SHIFTS = {
+  back: -WIPE_COMPOSITION.spread,
+  front: WIPE_COMPOSITION.spread,
+  mid: 0,
+}
+const PLANE_CONTENT: Record<string, StoryMotion> = Object.fromEntries(
+  Object.entries(PLANE_SHIFTS).flatMap(([layer, shift]) => [
+    [
+      `story-plane-content-cover-${layer}`,
+      {
+        delay: 'calc(var(--wipe-index) * 32ms)',
+        duration: '440ms',
+        frames: `{from{transform:${planeCounter(WIPE_COMPOSITION.far)}}
+      to{transform:${planeCounter(shift)}}}`,
+      },
+    ],
+    [
+      `story-plane-content-reveal-${layer}`,
+      {
+        delay: 'calc(var(--wipe-index) * 32ms)',
+        duration: '580ms',
+        frames: `{from{transform:${planeCounter(shift)}}
+      to{transform:${planeCounter(-WIPE_COMPOSITION.far)}}}`,
+      },
+    ],
+  ]),
+)
+const storyEntries = Object.entries({
+  ...STORY_MOTION,
+  ...PLANE_CONTENT,
+  'story-scene-content-cover': {
+    delay: '64ms',
+    duration: '440ms',
+    frames: `{from{transform:${planeCounter(WIPE_COMPOSITION.far)}}
+      to{transform:${planeCounter(WIPE_COMPOSITION.spread)}}}`,
+  },
+  'story-scene-content-reveal': {
+    delay: '64ms',
+    duration: '580ms',
+    frames: `{from{transform:${planeCounter(WIPE_COMPOSITION.spread)}}
+      to{transform:${planeCounter(-WIPE_COMPOSITION.far)}}}`,
+  },
+})
 
 export default defineConfig({
   preflights: [
@@ -263,6 +301,10 @@ export default defineConfig({
     'page-width': 'mx-auto w-full max-w-340 px-6 sm:px-10',
     'section-label': 'text-[11px] font-700 tracking-[0.18em] uppercase text-violet',
     'section-title': 'text-9 sm:text-13 font-750 leading-[1.24] tracking-[-0.055em] text-balance',
+    'speech-composer': [
+      '[transition-property:grid-template-rows,opacity]',
+      'duration-250 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+    ].join(' '),
     'story-copy-surface': [
       'absolute -inset-x-5 -inset-y-4 bg-white/20 backdrop-blur-md',
       [
@@ -278,6 +320,10 @@ export default defineConfig({
       '0_28%,2%_26%,2%_21%,0_23%)]',
     ].join(''),
     'story-plane': 'absolute -inset-y-[18%] -left-[42vmax] w-[calc(100%+84vmax)]',
+    'story-plane-content':
+      'absolute inset-y-0 left-1/2 w-[var(--story-width)] [--wipe-center:-50%]',
+    'story-plane-shape': `absolute inset-y-0 left-[calc(50%_-_${WIPE_COMPOSITION.halfWidth}vw)]
+      w-[${WIPE_COMPOSITION.halfWidth * 2}vw] overflow-hidden`,
     'story-print-dots': [
       '[background-image:radial-gradient(circle,currentColor_50%,transparent_54%)]',
       '[background-size:clamp(4px,1dvh,8px)_clamp(4px,1dvh,8px)]',
@@ -286,6 +332,10 @@ export default defineConfig({
         'radial-gradient(ellipse_at_85%_85%,#000,transparent_60%)]',
       ].join(''),
     ].join(' '),
+    'story-scene-content-left': 'left-[calc(250vw_-_var(--story-width)/2)] w-[var(--story-width)]',
+    'story-scene-content-right': 'left-[calc(var(--story-width)/-2)] w-[var(--story-width)]',
+    'story-scene-left': 'left-[calc(50%_-_250vw)] w-[250vw] overflow-hidden',
+    'story-scene-right': 'left-1/2 w-[250vw] overflow-hidden',
     'story-split-bottom': [
       '[clip-path:polygon(0_65.9%,45%_52.9%,48%_49.9%,71%_41.9%,74%_43.9%,',
       '100%_35.9%,100%_100%,0_100%)]',

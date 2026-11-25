@@ -1,4 +1,6 @@
 export * from './create-hit-mask'
+export * from './create-hit-mask-reader'
+export * from './extract-alpha'
 export * from './resolve-clip-polygon'
 export * from './types'
 export * from './use-native-hit-test'

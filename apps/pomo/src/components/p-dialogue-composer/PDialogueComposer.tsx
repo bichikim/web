@@ -254,6 +254,10 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
     }
   }
   const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Enter' && event.isComposing) {
+      event.preventDefault()
+    }
+
     if (event.key === 'Escape' && !event.isComposing) {
       event.preventDefault()
       collapse()

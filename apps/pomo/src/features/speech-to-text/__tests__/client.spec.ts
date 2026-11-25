@@ -2,7 +2,8 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {createWorkerHarness} from 'src/__tests__/create-worker-harness'
 
-import {createSpeechRecognizer} from '../index'
+import {createSpeechRecognizer} from '..'
+import {createSpeechModelOwner} from '../speech-model-owner'
 import type {SpeechWorkerResponse} from '../messages'
 
 const FakeWorker = createWorkerHarness<SpeechWorkerResponse>()
@@ -198,13 +199,51 @@ describe('createSpeechRecognizer', () => {
 
     await expect(recognizer.prepare()).resolves.toEqual({
       error: {
-        code: 'worker-failed',
+        code: 'request-failed',
         detail: 'post failed',
         phase: 'prepare',
         retryable: true,
       },
       ok: false,
     })
+  })
+
+  it('should keep a prepared recognizer usable after one send failure', async () => {
+    const createRecognizer = vi.fn(createSpeechRecognizer)
+    const owner = createSpeechModelOwner({
+      createRecognizer,
+      isDisposed: () => false,
+      language: 'korean',
+      modelId: 'whisper-tiny',
+      onBackendChange: vi.fn(),
+      onError: vi.fn(),
+      onStateChange: vi.fn(),
+      preferredBackend: 'wasm',
+    })
+    const preparation = owner.prepare()
+    const worker = getWorker()
+    worker.emitMessage({backend: 'wasm', requestId: 1, type: 'ready'})
+    await preparation
+
+    worker.postMessage.mockImplementationOnce(() => {
+      throw new DOMException('post failed', 'DataCloneError')
+    })
+    const audio = Float32Array.of(0.1)
+    await expect(owner.transcribe(audio)).resolves.toMatchObject({
+      error: {code: 'request-failed'},
+      ok: false,
+    })
+    expect(createRecognizer).toHaveBeenCalledOnce()
+    expect(worker.terminate).not.toHaveBeenCalled()
+
+    const retry = owner.transcribe(audio)
+    await Promise.resolve()
+    worker.emitMessage({backend: 'wasm', requestId: 3, text: '안녕하세요', type: 'complete'})
+    await expect(retry).resolves.toEqual({
+      ok: true,
+      value: {backend: 'wasm', text: '안녕하세요'},
+    })
+    owner.dispose()
   })
 
   it('should resolve pending work on worker failure', async () => {

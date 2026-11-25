@@ -1,17 +1,29 @@
 import {createByteReader} from './create-byte-reader'
 import {MAX_VALUE_DEPTH, VALUE_TAG} from './tags'
+import type {PoffoVersion} from './types'
 
 interface DecodeValueOptions {
   /** Borrowed, fully decoded metadata bytes. */
   readonly bytes: Uint8Array
   /** Original data URLs in the asset index's order. */
   readonly assets: ReadonlyArray<string>
+  /** Container version; omission reads v1 and rejects numeric array references. */
+  readonly version?: PoffoVersion
 }
 
 /** Reads one complete value, rejecting truncation, invalid references and trailing data. */
 export const decodeValue = (options: DecodeValueOptions): unknown => {
   const reader = createByteReader(options.bytes)
   const strings: string[] = []
+  const numberArrays: number[][] = []
+  const MAX_NUMERIC_BYTES = 536_870_912
+  let numericBytes = 0
+  const reserveNumbers = (length: number) => {
+    numericBytes += length * Float64Array.BYTES_PER_ELEMENT
+    if (options.version === 2 && numericBytes > MAX_NUMERIC_BYTES) {
+      throw new SyntaxError('Poffo numeric arrays exceed the decoding budget')
+    }
+  }
   const decoder = new TextDecoder('utf-8', {fatal: true, ignoreBOM: true})
   const definedString = (value: unknown) => {
     if (typeof value !== 'string') {
@@ -23,7 +35,10 @@ export const decodeValue = (options: DecodeValueOptions): unknown => {
   const packedArray = (tag: number) => {
     const format = numberReader(reader, tag)
     const length = reader.length(format.width)
-    return Array.from({length}, () => finiteNumber(format.read()))
+    reserveNumbers(length)
+    const values = Array.from({length}, () => finiteNumber(format.read()))
+    numberArrays.push(values)
+    return values
   }
   const read = (depth: number): unknown => {
     if (depth > MAX_VALUE_DEPTH) {
@@ -51,6 +66,15 @@ export const decodeValue = (options: DecodeValueOptions): unknown => {
       }
       case VALUE_TAG.reference:
         return definedReference(strings, reader.uint32())
+      case VALUE_TAG.numberReference: {
+        const values = numberArrays[reader.uint32()]
+        if (options.version !== 2 || values === undefined) {
+          throw new SyntaxError('Invalid Poffo numeric array reference')
+        }
+        reserveNumbers(values.length)
+        // Independent arrays retain JSON-style editing ownership after restoring shared storage.
+        return values.slice()
+      }
       case VALUE_TAG.asset:
         return definedString(definedReference(options.assets, reader.uint32()))
       case VALUE_TAG.array: {

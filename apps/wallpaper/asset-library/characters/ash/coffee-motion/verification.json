@@ -1,0 +1,184 @@
+{
+  "sourceSha256": "8ed5591a27305813c7e72b46cdbb765cb6bd38ca976c7c5b47ca6e2fe4f27d76",
+  "sha256": "5534e361358f1ddff124e0cf71bb0ba5d16cb9fee1d9108219a9060dab56dfde",
+  "bytes": 20808914,
+  "partId": "coat-free:coffee:hand",
+  "anchorId": "coat-free:coffee-left:joint:hand",
+  "anchor": 1046,
+  "removedMixedMotionLinks": 2092,
+  "restError": 6.821210263296962e-13,
+  "allTexturesPreserved": true,
+  "handFingerAndCupPixelsPreserved": true,
+  "otherPartDataPreserved": true,
+  "method": "One coherent coffee hand and cup under the original hand transform, translated as a whole from the existing wrist anchor; no per-vertex mixing of independently moving cup surfaces.",
+  "poses": [
+    {
+      "pose": "rest",
+      "oldFlips": 0,
+      "newFlips": 0,
+      "anchorError": 0,
+      "originalCupOpacity": 0
+    },
+    {
+      "pose": "up",
+      "oldFlips": 0,
+      "newFlips": 0,
+      "anchorError": 0,
+      "originalCupOpacity": 0
+    },
+    {
+      "pose": "down",
+      "oldFlips": 0,
+      "newFlips": 0,
+      "anchorError": 0,
+      "originalCupOpacity": 0
+    },
+    {
+      "pose": "physics-up",
+      "oldFlips": 12,
+      "newFlips": 0,
+      "anchorError": 0,
+      "originalCupOpacity": 0
+    },
+    {
+      "pose": "physics-down",
+      "oldFlips": 28,
+      "newFlips": 0,
+      "anchorError": 0,
+      "originalCupOpacity": 0
+    },
+    {
+      "pose": "physics-x",
+      "oldFlips": 57,
+      "newFlips": 0,
+      "anchorError": 0,
+      "originalCupOpacity": 0
+    },
+    {
+      "pose": "turn-left",
+      "oldFlips": 39,
+      "newFlips": 0,
+      "anchorError": 0,
+      "originalCupOpacity": 0
+    },
+    {
+      "pose": "turn-right",
+      "oldFlips": 57,
+      "newFlips": 0,
+      "anchorError": 0,
+      "originalCupOpacity": 0
+    }
+  ],
+  "otherActions": [
+    {
+      "expression": "울먹이는 눈",
+      "error": 0
+    },
+    {
+      "expression": "필기 동작",
+      "error": 0
+    },
+    {
+      "expression": "작아지기",
+      "error": 0
+    },
+    {
+      "expression": "얼굴 그림자",
+      "error": 0
+    },
+    {
+      "expression": "눈의 하이라이트 끄기",
+      "error": 0
+    },
+    {
+      "expression": "화남",
+      "error": 0
+    },
+    {
+      "expression": "노트 들기",
+      "error": 0
+    },
+    {
+      "expression": "게임패드 들기",
+      "error": 0
+    },
+    {
+      "expression": "수갑 찬 손",
+      "error": 0
+    },
+    {
+      "expression": "안경",
+      "error": 0
+    },
+    {
+      "expression": "반짝이는 눈",
+      "error": 0
+    },
+    {
+      "expression": "손하트",
+      "error": 0
+    },
+    {
+      "expression": "땀방울",
+      "error": 0
+    },
+    {
+      "expression": "컵라면 들기",
+      "error": 0
+    },
+    {
+      "expression": "눈물",
+      "error": 0
+    },
+    {
+      "expression": "엄지 척",
+      "error": 0
+    },
+    {
+      "expression": "하트 눈",
+      "error": 0
+    },
+    {
+      "expression": "목줄 동작",
+      "error": 0
+    },
+    {
+      "expression": "고양이 손",
+      "error": 0
+    },
+    {
+      "expression": "홍조",
+      "error": 0
+    },
+    {
+      "expression": "마이크 들기",
+      "error": 0
+    },
+    {
+      "expression": "긴장",
+      "error": 0
+    },
+    {
+      "expression": "왼손 버튼 누르기",
+      "error": 0
+    },
+    {
+      "expression": "오른손 버튼 누르기",
+      "error": 0
+    },
+    {
+      "expression": "칼 들기",
+      "error": 0
+    },
+    {
+      "expression": "주먹 쥐기",
+      "error": 0
+    },
+    {
+      "expression": "외투 벗기",
+      "error": 0
+    }
+  ],
+  "coatOnOriginalPreserved": true,
+  "controllerWristPartsPreserved": true
+}

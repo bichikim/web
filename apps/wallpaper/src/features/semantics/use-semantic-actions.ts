@@ -6,6 +6,8 @@ import {useSemanticFrame} from './use-semantic-frame'
 import {selectSemanticActions} from './select-actions'
 
 interface UseSemanticActionsProps {
+  /** Channels owned by a higher-priority state behavior; omission leaves all semantic actions available. */
+  readonly reservedParameters?: Accessor<ReadonlySet<string>>
   /** Widget providing live matching scores and manual execution requests. */
   readonly widgetId: Accessor<string | undefined>
   /** User's text-to-action connections; omitted means no semantic actions. */
@@ -20,13 +22,20 @@ export const useSemanticActions = (props: UseSemanticActionsProps) => {
     enabled: () => props.bindings()?.some((binding) => binding.enabled) ?? false,
     widgetId: props.widgetId,
   })
-  const selected = createMemo(() =>
-    selectSemanticActions({
+  const selected = createMemo(() => {
+    const selections = selectSemanticActions({
       actions: props.actions(),
       bindings: props.bindings() ?? [],
       frame: current(),
-    }),
-  )
+    })
+    const reserved = props.reservedParameters?.()
+    const blocked = new Set(
+      selections
+        .filter((selection) => selection.action.parameterIds?.some((id) => reserved?.has(id)))
+        .map((selection) => selection.group),
+    )
+    return selections.filter((selection) => !blocked.has(selection.group))
+  })
   createEffect(() => {
     const player = props.player()
     if (player === null) {

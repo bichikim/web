@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {afterEach, expect, it, vi} from 'vitest'
 
-import {apiFetch, httpFetch} from '..'
+import {apiFetch, httpFetch, subscribeWebSessionUnauthorized} from '..'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -158,4 +158,24 @@ it('should preserve a caller-requested single GET attempt', async () => {
   const response = await apiFetch('admin/music', {retry: false})
   expect(response.status).toBe(503)
   expect(fetchMock).toHaveBeenCalledOnce()
+})
+
+it('should notify web authentication only for opted-in unauthorized API responses', async () => {
+  const listener = vi.fn()
+  const unsubscribe = subscribeWebSessionUnauthorized(listener)
+  const response = new Response(null, {status: 401})
+  const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(response)
+  vi.stubGlobal('fetch', fetchMock)
+
+  try {
+    await expect(apiFetch('account')).resolves.toBe(response)
+    expect(listener).not.toHaveBeenCalled()
+    await expect(
+      apiFetch('calendar/events', {credentials: 'include', recheckWebSessionOnUnauthorized: true}),
+    ).resolves.toBe(response)
+    expect(listener).toHaveBeenCalledOnce()
+    expect(fetchMock.mock.calls[1]?.[1]).not.toHaveProperty('recheckWebSessionOnUnauthorized')
+  } finally {
+    unsubscribe()
+  }
 })

@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import type {CameraSurface} from '../features/tracking/types'
 import type {Accessor, JSX} from 'solid-js'
 import type {PoffoPlacement} from '@winter-love/wallpaper/settings/model'
@@ -8,6 +9,7 @@ import type {
   PoffoDisplayOptions,
   PoffoLipSyncControls,
   PoffoMotionControls,
+  PoffoTouchControls,
 } from '../features/background/types'
 import type {
   PoffoTracking,
@@ -18,7 +20,12 @@ import type {
 const PERCENT = 100
 
 interface SPositionedPoffoProps
-  extends PoffoDisplayOptions, PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
+  extends
+    PoffoDisplayOptions,
+    PoffoMotionControls,
+    PoffoLipSyncControls,
+    PoffoAgentControls,
+    PoffoTouchControls {
   readonly children?: JSX.Element
   readonly assetId: Accessor<string | null>
   readonly placement?: Accessor<PoffoPlacement | undefined>
@@ -40,7 +47,7 @@ export const SPositionedPoffo = (props: SPositionedPoffoProps) => {
   return (
     <div
       role="group"
-      aria-label="Poffo 위치"
+      aria-label={uiText('Poffo 위치')}
       tabindex={props.onChange === undefined ? undefined : 0}
       class="relative h-full w-full overflow-hidden touch-none
             focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-blue-700"
@@ -68,6 +75,7 @@ export const SPositionedPoffo = (props: SPositionedPoffoProps) => {
           assetId={props.assetId}
           fit={props.fit}
           load={props.load}
+          touch={props.touch}
           agentBindings={props.agentBindings}
           semanticBindings={props.semanticBindings}
           lipsync={props.lipsync}

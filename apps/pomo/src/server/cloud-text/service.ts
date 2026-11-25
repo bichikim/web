@@ -35,8 +35,16 @@ export const generateCloudText = async (
   }
   getApiAiProviders()
   const now = new Date()
+  const {temperature} = request
+  const sampling = temperature === undefined ? {} : {temperature}
   const requestHash = createHash('sha256')
-    .update(JSON.stringify({maximumTokens: request.maximumTokens, messages: request.messages}))
+    .update(
+      JSON.stringify({
+        maximumTokens: request.maximumTokens,
+        messages: request.messages,
+        ...sampling,
+      }),
+    )
     .digest('hex')
   const reservation = await reserveCloudText({
     now,
@@ -50,6 +58,7 @@ export const generateCloudText = async (
           max_output_tokens: request.maximumTokens,
           model: CLOUD_TEXT_MODEL,
           reasoning: {effort: 'none'},
+          ...sampling,
         },
         generationMilliseconds: API_AI_POLICY.cloudGenerationMilliseconds,
         id: request.requestId,

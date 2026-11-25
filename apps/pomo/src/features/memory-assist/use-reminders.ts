@@ -179,8 +179,10 @@ const verifyMemoAfterPlayback = (options: VerifyMemoAfterPlaybackOptions) => {
     kind: options.kind,
     memo: getMemoAfterSkippingReminder({
       kind: options.kind,
-      memo: currentMemo,
-      now: new Date(),
+      memo: isVirtualOccurrence
+        ? applyReminderSchedule(currentMemo, invalidatedReminder.memo)
+        : currentMemo,
+      now: options.kind === 'exact' ? new Date(scheduledAt) : new Date(),
       random: options.random,
     }),
     scheduledAt: isVirtualOccurrence ? invalidatedReminder.scheduledAt : scheduledAt,
@@ -259,6 +261,7 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
   let clientPreparation: Promise<SupertonicClient> | null = null
   let repository: PDialogueRepository | null = null
   let isDisposed = false
+  let cancelGeneration: SupertonicClient['cancelGeneration'] | undefined
 
   const loadAutomaticDialogueSettings = async () => {
     const settings = automaticSettings()
@@ -336,6 +339,41 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
     setRetryAfter(memo)
   }
 
+  const isMemoDeleted = (memoId: string) =>
+    !memos().some((memo) => memo.id === memoId && !isMemoryMemoDeletionPending(memo))
+
+  const generateMemoDialogue = async (
+    memo: MemoryMemo,
+    memoRepository: PDialogueRepository,
+  ): Promise<string | null> => {
+    const settings = await (props.loadSettings ?? loadAutomaticDialogueSettings)()
+
+    if (isDisposed || isMemoDeleted(memo.id)) {
+      return null
+    }
+
+    const currentClient = await getClient(settings.modelId)
+
+    if (isDisposed || isMemoDeleted(memo.id)) {
+      return null
+    }
+
+    const {cancelGeneration: cancelCurrentGeneration} = currentClient
+    cancelGeneration = cancelCurrentGeneration
+    try {
+      return await createMemoryMemoDialogue({
+        client: currentClient,
+        language: getLocale(),
+        memo,
+        modelId: settings.modelId,
+        repository: memoRepository,
+        voiceId: settings.voiceId,
+      })
+    } finally {
+      cancelGeneration = undefined
+    }
+  }
+
   const deliver = async (memo: MemoryMemo) => {
     const now = new Date()
     const kind = getDueMemoryReminder(memo, now)
@@ -355,26 +393,10 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
     }
 
     if (dialogueId === null) {
-      const settings = await (props.loadSettings ?? loadAutomaticDialogueSettings)()
-
-      if (isDisposed) {
+      generatedDialogueId = await generateMemoDialogue(memo, repository)
+      if (generatedDialogueId === null) {
         return
       }
-
-      const currentClient = await getClient(settings.modelId)
-
-      if (isDisposed) {
-        return
-      }
-
-      generatedDialogueId = await createMemoryMemoDialogue({
-        client: currentClient,
-        language: getLocale(),
-        memo,
-        modelId: settings.modelId,
-        repository,
-        voiceId: settings.voiceId,
-      })
       dialogueId = generatedDialogueId
     }
 
@@ -505,14 +527,14 @@ export const useMemoryReminders = (props: UseMemoryRemindersProps): MemoryRemind
     }
 
     let currentDeliveryState = deliveryState()
-    if (
-      currentDeliveryState.status === 'pending' &&
-      !currentMemoIds.has(currentDeliveryState.memoId)
-    ) {
+    const pendingMemoId =
+      currentDeliveryState.status === 'pending' ? currentDeliveryState.memoId : null
+    if (pendingMemoId !== null && isMemoDeleted(pendingMemoId)) {
       currentDeliveryState = transitionDeliveryState(currentDeliveryState, {
         type: 'memo-removed',
       })
       setDeliveryState(currentDeliveryState)
+      cancelGeneration?.()
     }
 
     if (currentDeliveryState.status !== 'idle') {

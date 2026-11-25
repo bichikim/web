@@ -1,0 +1,15 @@
+{
+  "sourceSha256": "59e3549794559f45f8a36a072c99692ee3c253404dccea54a146364915ffe0b5",
+  "sha256": "797259b9b1322bcea9eb58d17321d3b21efc4d8d936e9fb33a7e20a69135b299",
+  "bytes": 20817628,
+  "bindingId": "speech:mouth-contour",
+  "parameterIds": ["ParamMouthOpenY", "ParamMouthForm"],
+  "form": -0.6,
+  "opening": 0.65,
+  "horizontalContraction": 0.18,
+  "verticalCoordinatesUnchanged": true,
+  "closedAndOtherVowelKeyformsPreserved": true,
+  "originalArtworkPreserved": true,
+  "forms": [-1, -0.8, -0.6, -0.3, 0, 0.45, 0.6, 0.9, 1],
+  "openings": [0, 0.1, 0.25, 0.55, 0.65, 0.9, 1]
+}

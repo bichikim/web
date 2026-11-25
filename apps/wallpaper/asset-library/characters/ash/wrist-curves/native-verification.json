@@ -1,0 +1,63 @@
+{
+  "source": "Actual Wallpaper Worker frames compared with complete scene and glue evaluation",
+  "pointerInputUsed": false,
+  "headInput": "temporary head parameter preview before physics",
+  "poses": [
+    {
+      "pose": "coffee-left",
+      "maximumVertexError": 0.0004677301603805972,
+      "parts": {
+        "coat-free:noodles-left:ArtMesh900": 0.0004677301603805972,
+        "ArtMesh49": 0.0003203207879778347,
+        "ArtMesh48": 0.0003284632016402611,
+        "coat-free:coffee-left:ArtMesh900": 0.000408258713378018,
+        "coat-free:coffee:hand": 0.0004240692405801383,
+        "coat-free:noodles-left:wrist-contour:skin": 0.00014499705685011577
+      },
+      "head": -30,
+      "body": -10
+    },
+    {
+      "pose": "coffee-right",
+      "maximumVertexError": 0.0005581335667557141,
+      "parts": {
+        "coat-free:noodles-left:ArtMesh900": 0.0003089435736001178,
+        "ArtMesh49": 0.0002959158928206307,
+        "ArtMesh48": 0.0002912952322731144,
+        "coat-free:coffee-left:ArtMesh900": 0.00045910605649623903,
+        "coat-free:coffee:hand": 0.0005581335667557141,
+        "coat-free:noodles-left:wrist-contour:skin": 0.00014289974296843866
+      },
+      "head": 30,
+      "body": 10
+    },
+    {
+      "pose": "noodles-left",
+      "maximumVertexError": 0.0005213863373683125,
+      "parts": {
+        "coat-free:noodles-left:ArtMesh900": 0.0005188986970097176,
+        "ArtMesh49": 0.00018488010073269834,
+        "ArtMesh48": 0.00019032606951441267,
+        "coat-free:coffee-left:ArtMesh900": 0.00041591720810174593,
+        "coat-free:coffee:hand": 0.0005213863373683125,
+        "coat-free:noodles-left:wrist-contour:skin": 0.0003562038227755693
+      },
+      "head": -30,
+      "body": -10
+    },
+    {
+      "pose": "noodles-right",
+      "maximumVertexError": 0.0005041226595494663,
+      "parts": {
+        "coat-free:noodles-left:ArtMesh900": 0.0002780051590889343,
+        "ArtMesh49": 0.0001658285800658632,
+        "ArtMesh48": 0.00016221283817685617,
+        "coat-free:coffee-left:ArtMesh900": 0.000427764007326914,
+        "coat-free:coffee:hand": 0.0005041226595494663,
+        "coat-free:noodles-left:wrist-contour:skin": 0.00034461725772416685
+      },
+      "head": 30,
+      "body": 10
+    }
+  ]
+}

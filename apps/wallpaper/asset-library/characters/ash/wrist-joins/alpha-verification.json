@@ -1,0 +1,21 @@
+{
+  "promptId": "0b24d2a2-56d8-4c13-9e90-12010a1ad1fd",
+  "records": [
+    {
+      "name": "noodles",
+      "dimensions": [640, 768],
+      "changedAlphaPixels": 7213,
+      "rgbChanged": 0,
+      "outsideWristChanged": 0,
+      "maximumComfyAlphaError": 1
+    },
+    {
+      "name": "coffee",
+      "dimensions": [1024, 1536],
+      "changedAlphaPixels": 776,
+      "rgbChanged": 0,
+      "outsideWristChanged": 0,
+      "maximumComfyAlphaError": 1
+    }
+  ]
+}

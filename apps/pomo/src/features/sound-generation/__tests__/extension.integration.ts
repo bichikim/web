@@ -7,6 +7,37 @@ import {createWave} from './create-wave'
 vi.mock('../runtime', () => ({generateSound: vi.fn()}))
 afterEach(() => vi.resetAllMocks())
 
+it.each([
+  [32767, 32767],
+  [-32767, -32768],
+  [12000, 16971],
+])(
+  'should retain level-matched sample %s and saturate only overflowing connection samples',
+  async (sample, midpoint) => {
+    vi.mocked(generateSound).mockImplementation(async (_prompt, seconds) =>
+      createWave(seconds, sample),
+    )
+
+    const result = await generateExtendedSound('steady tone', 121, vi.fn(), {
+      connectionSeconds: 1,
+    })
+    const connectionStart = 44 + 119 * 44100 * 4
+    const connection = new DataView(
+      await result.slice(connectionStart, connectionStart + 44100 * 4).arrayBuffer(),
+    )
+    const tail = new DataView(await result.slice(-4).arrayBuffer())
+
+    expect(vi.mocked(generateSound).mock.calls.map((call) => call[1])).toEqual([120, 3])
+    expect(result.size).toBe(44 + 121 * 44100 * 4)
+    for (const channel of [0, 2]) {
+      expect(connection.getInt16(channel, true)).toBe(sample)
+      expect(connection.getInt16(22050 * 4 + channel, true)).toBe(midpoint)
+      expect(connection.getInt16(44099 * 4 + channel, true)).toBe(sample)
+      expect(tail.getInt16(channel, true)).toBe(sample)
+    }
+  },
+)
+
 it('should extend sequentially using the previous tail and write exactly 300 seconds', async () => {
   let calls = 0
   vi.mocked(generateSound).mockImplementation(async (_prompt, seconds, _progress, options) => {

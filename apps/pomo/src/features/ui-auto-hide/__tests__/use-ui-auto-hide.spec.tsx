@@ -139,3 +139,19 @@ it('should keep the UI visible while a manual tooltip popover is open', () => {
     tooltip.remove()
   }
 })
+
+it('should suspend inactivity on hidden tabs without revealing an already hidden interface', () => {
+  const visibility = vi.spyOn(document, 'visibilityState', 'get')
+  const {result} = renderHook(useUiAutoHide, {wrapper: PreferenceProvider})
+  result.onEnabledChange(true)
+  vi.advanceTimersByTime(30_000)
+  expect(result.hidden()).toBe(true)
+  visibility.mockReturnValue('hidden')
+  document.dispatchEvent(new Event('visibilitychange'))
+  expect(result.hidden()).toBe(true)
+  expect(vi.getTimerCount()).toBe(0)
+  visibility.mockReturnValue('visible')
+  document.dispatchEvent(new Event('visibilitychange'))
+  expect(result.hidden()).toBe(false)
+  visibility.mockRestore()
+})

@@ -164,3 +164,17 @@ it('should skip ordering when every recent release has been viewed', () => {
   expect(releases).toEqual([])
   expect(sortCount).toBe(0)
 })
+
+it('should recover reminders from an old viewed marker whose release is still in the future', () => {
+  const releases = selectNoticeReleases({
+    catalog,
+    now: new Date('2026-09-02T16:00:00Z'),
+    viewedRelease: {
+      formatVersion: 1,
+      releasedAt: '2099-01-01T00:00:00Z',
+      version: '2099. 01. 01 00:00',
+    },
+  })
+
+  expect(releases).toEqual(catalog.releases)
+})

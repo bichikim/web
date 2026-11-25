@@ -17,6 +17,9 @@ const VIEWED_RELEASE_SCHEMA = z.object({
   releasedAt: z.string().datetime({offset: true}),
   version: z.string().regex(VERSION_PATTERN),
 })
+const STORED_VIEWED_RELEASE_SCHEMA = VIEWED_RELEASE_SCHEMA.extend({
+  formatVersion: z.union([z.literal(1), z.literal('1')]).transform(() => 1 as const),
+})
 
 export interface ViewedRelease {
   readonly formatVersion: 1
@@ -42,7 +45,7 @@ interface ViewedReleaseRepository {
 }
 
 const parseViewedRelease = (value: unknown): ViewedRelease | null => {
-  const result = VIEWED_RELEASE_SCHEMA.safeParse(value)
+  const result = STORED_VIEWED_RELEASE_SCHEMA.safeParse(value)
   return result.success ? result.data : null
 }
 
@@ -89,15 +92,23 @@ export const createViewedReleaseRepository = (
       const usesTossStorage = options.storage.usesTossStorage()
 
       return writeQueue.run(async () => {
+        const now = Date.now()
+        const releasedAt = Date.parse(parsedValue.releasedAt)
+        if (releasedAt > now) {
+          return
+        }
+        const isNewerOrEqual = (current: ViewedRelease | null): current is ViewedRelease => {
+          if (current === null) {
+            return false
+          }
+          const currentTime = Date.parse(current.releasedAt)
+          return currentTime <= now && currentTime >= releasedAt
+        }
         if (usesTossStorage) {
           let storedValue: ViewedRelease
           try {
             const currentValue = parseViewedRelease(await options.storage.readToss())
-            storedValue =
-              currentValue !== null &&
-              Date.parse(currentValue.releasedAt) >= Date.parse(parsedValue.releasedAt)
-                ? currentValue
-                : parsedValue
+            storedValue = isNewerOrEqual(currentValue) ? currentValue : parsedValue
             if (storedValue === parsedValue) {
               await options.storage.writeToss(storedValue)
             }
@@ -113,10 +124,7 @@ export const createViewedReleaseRepository = (
 
         try {
           const currentValue = parseViewedRelease(options.storage.readWeb())
-          if (
-            currentValue !== null &&
-            Date.parse(currentValue.releasedAt) >= Date.parse(parsedValue.releasedAt)
-          ) {
+          if (isNewerOrEqual(currentValue)) {
             return
           }
 

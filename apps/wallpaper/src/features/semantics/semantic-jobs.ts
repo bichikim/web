@@ -13,5 +13,9 @@ export const semanticJobs = (
         ?.filter((binding) => binding.category !== 'menu')
         .map((binding) => ({...binding})) ?? []
     const randomActions = widget.speech?.randomActions
-    return {id: widget.id, input, signature: JSON.stringify([input, bindings, randomActions])}
+    return {
+      id: widget.id,
+      input,
+      signature: JSON.stringify([widget.assetId, input, bindings, randomActions]),
+    }
   })

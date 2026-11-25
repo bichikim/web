@@ -28,6 +28,7 @@ const createWindow = () => {
   vi.mocked(isTauri).mockReturnValue(true)
   vi.mocked(invoke).mockResolvedValue(false)
   vi.mocked(getCurrentWebview).mockReturnValue({
+    listen: vi.fn().mockResolvedValue(vi.fn()),
     setFocus: vi.fn().mockResolvedValue(undefined),
   } as unknown as ReturnType<typeof getCurrentWebview>)
   vi.mocked(getCurrentWindow).mockReturnValue(
@@ -39,6 +40,20 @@ afterEach(() => {
   cleanup()
   vi.clearAllMocks()
   vi.restoreAllMocks()
+})
+
+it('should open adjustment on a request to this widget and release the event subscription', async () => {
+  const window = createWindow()
+  const stop = vi.fn()
+  const listen = vi.mocked(getCurrentWebview().listen).mockResolvedValue(stop)
+  const {result, cleanup: dispose} = renderHook(() => useWidgetResize({onSave: vi.fn()}))
+  expect(listen).toHaveBeenCalledWith('poffo-adjustment', expect.any(Function))
+  const callback = listen.mock.calls[0]![1]
+  await callback({event: 'poffo-adjustment', id: 1, payload: null})
+  expect(result.editing()).toBe(true)
+  expect(window.setResizable).toHaveBeenCalledWith(true)
+  dispose()
+  expect(stop).toHaveBeenCalledOnce()
 })
 
 it('should enable handles only during adjustment and persist logical size on completion', async () => {

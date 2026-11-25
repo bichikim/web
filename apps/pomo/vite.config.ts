@@ -133,7 +133,6 @@ const DEV_CLIENT_WARMUP_FILES = [
   './src/components/p-studio/PStudio.tsx',
   './src/components/p-studio/SceneCanvas.tsx',
   './src/entry-client.tsx',
-  './src/routes/index.tsx',
 ] as const
 const SHARED_STATIC_ROUTES = [
   '/',

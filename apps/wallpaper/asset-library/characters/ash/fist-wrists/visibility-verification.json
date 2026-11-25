@@ -1,0 +1,340 @@
+{
+  "results": [
+    {
+      "expression": "Tearful Eyes",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Tearful Eyes",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Writing",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Writing",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Shrink",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Shrink",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Face Shadow",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Face Shadow",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hold Coffee",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hold Coffee",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hide Eye Highlights",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hide Eye Highlights",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Anger",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Anger",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hold Notes",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hold Notes",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hold Game Controller",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hold Game Controller",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Handcuffed Hands",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Handcuffed Hands",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Glasses",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Glasses",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Starry Eyes",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Starry Eyes",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Finger Heart",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Finger Heart",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Sweat Drop",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Sweat Drop",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hold Instant Noodles",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hold Instant Noodles",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Tears",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Tears",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Thumbs Up",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Thumbs Up",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Heart Eyes",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Heart Eyes",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Leash Pose",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Leash Pose",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Cat Paws",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Cat Paws",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Blush",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Blush",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hold Microphone",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hold Microphone",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Nervous",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Nervous",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Left Hand Button Press",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Left Hand Button Press",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Right Hand Button Press",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Right Hand Button Press",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hold Knife",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Hold Knife",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "Make a Fist",
+      "side": "left",
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "expression": "Make a Fist",
+      "side": "right",
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "expression": "외투 벗기",
+      "side": "left",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "expression": "외투 벗기",
+      "side": "right",
+      "expected": 0,
+      "actual": 0
+    }
+  ]
+}

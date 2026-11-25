@@ -1,5 +1,6 @@
 import {advanceEyeBlink} from '../eye-blink'
 import {evaluatePhysics} from '../internal/physics'
+import {releasePhysics} from '../internal/release-physics'
 import {evaluatePose} from '../internal/pose'
 import {applyLipSync} from '../lip-sync'
 import {resolveParameterValue} from '../parameter-value'
@@ -70,14 +71,28 @@ export const createRuntimeFrame = (options: CreateRuntimeFrameOptions) => {
       parameterValues: state.parameterValues,
     })
     motionHistory.record(mix.motionParameterValues)
+    const baseValues = lookAndBreath.apply(
+      state.document,
+      adjustments.applyBlends(state.document, mix.parameterValues),
+    )
+    if (state.physicsRelease !== undefined && state.chainState !== undefined) {
+      const released = releasePhysics({
+        baseValues,
+        chainState: state.chainState,
+        document: state.document,
+        physicsOptions: adjustments.physicsOptions(),
+        physicsState: state.physicsState,
+        values: state.physicsRelease,
+      })
+      state.chainState = released.chainState
+      state.physicsState = released.physicsState
+    }
+    state.physicsRelease = undefined
     const result = evaluatePhysics({
       chainState: state.chainState,
       deltaTime,
       document: state.document,
-      parameterValues: lookAndBreath.apply(
-        state.document,
-        adjustments.applyBlends(state.document, mix.parameterValues),
-      ),
+      parameterValues: baseValues,
       physicsOptions: adjustments.physicsOptions(),
       physicsState: state.physicsState,
       settle: settlePhysics,
@@ -97,7 +112,8 @@ export const createRuntimeFrame = (options: CreateRuntimeFrameOptions) => {
       effects.soundLevel !== undefined && state.document.mouthShapes === undefined
         ? effects.soundLevel
         : state.lipSyncLevel
-    const effected = level === undefined ? shaped : applyLipSync(state.document, shaped, level)
+    const narrated = level === undefined ? shaped : applyLipSync(state.document, shaped, level)
+    const effected = adjustments.applyBlends(state.document, narrated, 'interaction')
     const pose = evaluatePose({
       deltaTime,
       document: state.document,

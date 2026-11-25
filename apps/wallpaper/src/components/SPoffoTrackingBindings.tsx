@@ -1,5 +1,9 @@
+import {interfaceLanguage, localizeMessage, text as uiText} from '../features/localization'
+import {parameterName} from '../features/builtin-assets/parameter-name'
+
 import {createMemo, createSignal, For, Show} from 'solid-js'
 import type {
+  PoffoTracking,
   PoffoTrackingBinding,
   PoffoTrackingBindings,
 } from '@winter-love/wallpaper/settings/tracking'
@@ -12,6 +16,7 @@ import {type ParameterSource, useParameters} from '../features/tracking/use-para
 import {SSelect} from './SSelect'
 
 interface SPoffoTrackingBindingsProps {
+  readonly mode?: PoffoTracking
   readonly source?: ParameterSource
   readonly disclosure?: boolean
   readonly assetId: string | null
@@ -36,36 +41,54 @@ export const SPoffoTrackingBindings = (props: SPoffoTrackingBindingsProps) => {
       <Show when={source().error()}>
         {(message) => (
           <p role="alert" class="m-0 text-xs text-red-700">
-            {message()}
+            {localizeMessage(message() ?? '')}
           </p>
         )}
       </Show>
-      <For each={TRACKING_AXES}>
+      <For
+        each={TRACKING_AXES.filter((axis) => axis.key !== 'headZ' || props.mode === 'camera-pose')}
+      >
         {(axis) => {
           const binding = () => props.value?.[axis.key]
           const selected = () => binding()?.parameterId
           const automatic = () => resolveTrackingParameter(source().parameters(), axis.key)
           const automaticLabel = () => {
             const parameter = automatic()
-            return parameter?.name || parameter?.id || '연결 없음'
+            return parameter === undefined
+              ? uiText('연결 없음')
+              : parameterName(parameter, interfaceLanguage.language())
           }
           const options = () => [
             {
-              label: `자동 · ${automaticLabel()}`,
+              get label() {
+                return uiText('자동 · {value0}', {value0: String(automaticLabel())})
+              },
               value: 'auto',
             },
-            {label: '사용 안 함', value: 'none'},
+            {
+              get label() {
+                return uiText('사용 안 함')
+              },
+              value: 'none',
+            },
             ...source()
               .parameters()
               .map((parameter) => ({
-                label: parameter.name || parameter.id,
+                label: parameterName(parameter, interfaceLanguage.language()),
                 value: `id:${parameter.id}`,
               })),
             ...(typeof selected() === 'string' &&
             !source()
               .parameters()
               .some((parameter) => parameter.id === selected())
-              ? [{label: `${selected()} (없음)`, value: `id:${selected()}`}]
+              ? [
+                  {
+                    get label() {
+                      return uiText('{value0} (없음)', {value0: String(selected())})
+                    },
+                    value: `id:${selected()}`,
+                  },
+                ]
               : []),
           ]
           const value = () =>
@@ -89,9 +112,9 @@ export const SPoffoTrackingBindings = (props: SPoffoTrackingBindingsProps) => {
           const handleBlend = (blend: 'add' | 'overwrite') => update(axis.key, {blend})
           return (
             <div class="grid grid-cols-[6rem_minmax(0,1fr)_auto] items-center gap-2 py-1 text-[13px]">
-              <span>{axis.label}</span>
+              <span>{localizeMessage(axis.label)}</span>
               <SSelect
-                label={`${axis.label} 파라미터`}
+                label={uiText('{value0} 파라미터', {value0: String(localizeMessage(axis.label))})}
                 value={value()}
                 options={options()}
                 onChange={handleChange}
@@ -99,19 +122,29 @@ export const SPoffoTrackingBindings = (props: SPoffoTrackingBindingsProps) => {
               <button
                 type="button"
                 class="wallpaper-file-button aria-pressed:bg-blue-50 aria-pressed:text-blue-800"
-                aria-label={`${axis.label} 방향 반전`}
+                aria-label={uiText('{value0} 방향 반전', {
+                  value0: String(localizeMessage(axis.label)),
+                })}
                 aria-pressed={inverted()}
                 onClick={handleInvert}
               >
-                {inverted() ? '반전됨' : '반전'}
+                {inverted() ? uiText('반전됨') : uiText('반전')}
               </button>
               <div class="col-start-2 col-span-2">
                 <SSelect
-                  label={`${axis.label} 적용 방식`}
+                  label={uiText('{value0} 적용 방식', {
+                    value0: String(localizeMessage(axis.label)),
+                  })}
                   value={binding()?.blend ?? 'overwrite'}
                   options={[
-                    {label: '덮어쓰기', value: 'overwrite'},
-                    {label: '더하기', value: 'add'},
+                    {
+                      label: uiText('덮어쓰기'),
+                      value: 'overwrite',
+                    },
+                    {
+                      label: uiText('더하기'),
+                      value: 'add',
+                    },
                   ]}
                   onChange={handleBlend}
                 />
@@ -126,15 +159,17 @@ export const SPoffoTrackingBindings = (props: SPoffoTrackingBindingsProps) => {
     <Show
       when={props.disclosure !== false}
       fallback={
-        <section aria-label="입력과 파라미터 연결" class="grid gap-2">
-          <h3 class="m-0 text-[13px] font-medium text-stone-700">입력과 파라미터 연결</h3>
+        <section aria-label={uiText('입력과 파라미터 연결')} class="grid gap-2">
+          <h3 class="m-0 text-[13px] font-medium text-stone-700">
+            {uiText('입력과 파라미터 연결')}
+          </h3>
           {fields}
         </section>
       }
     >
-      <details onToggle={handleToggle}>
-        <summary class="wallpaper-disclosure">입력과 파라미터 연결</summary>
-        {fields}
+      <details class="wallpaper-disclosure-panel" onToggle={handleToggle}>
+        <summary class="wallpaper-disclosure">{uiText('입력과 파라미터 연결')}</summary>
+        <div class="wallpaper-disclosure-content">{fields}</div>
       </details>
     </Show>
   )

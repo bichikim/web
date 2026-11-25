@@ -34,15 +34,21 @@ export const MemoryMemoList = () => {
 
   const handleEdit = async (memo: MemoryMemo, edit: MemoryMemoEdit) => {
     const now = new Date()
+    const reminder = edit.reminder
     const hasPendingExactReminder =
-      edit.exactReminderAt === memo.exactReminderAt &&
-      edit.exactReminderAdvanceMinutes === memo.exactReminderAdvanceMinutes &&
+      reminder !== null &&
+      reminder.exactReminderAt === memo.exactReminderAt &&
+      reminder.exactReminderAdvanceMinutes === memo.exactReminderAdvanceMinutes &&
       memo.nextExactReminderAt !== null &&
       Date.parse(memo.nextExactReminderAt) > now.getTime()
 
     if (
-      edit.exactEnabled &&
-      !isFirstReminderInFuture(edit.exactReminderAt, edit.exactReminderAdvanceMinutes, now) &&
+      reminder?.exactEnabled &&
+      !isFirstReminderInFuture(
+        reminder.exactReminderAt,
+        reminder.exactReminderAdvanceMinutes,
+        now,
+      ) &&
       !hasPendingExactReminder
     ) {
       return m.memory_memo_invalid_time()
@@ -57,19 +63,26 @@ export const MemoryMemoList = () => {
             return currentMemo
           }
 
+          const settings = reminder ?? currentMemo
           const editedMemo = editMemoryMemo({
-            exactReminderAdvanceMinutes: edit.exactReminderAdvanceMinutes,
-            exactReminderAt: edit.exactReminderAt,
-            exactReminderRepeatIntervalMinutes: edit.exactReminderRepeatIntervalMinutes,
-            exactReminderRepeatUntilMinutes: edit.exactReminderRepeatUntilMinutes,
+            exactReminderAdvanceMinutes: settings.exactReminderAdvanceMinutes,
+            exactReminderAt: settings.exactReminderAt,
+            exactReminderRepeatIntervalMinutes: settings.exactReminderRepeatIntervalMinutes,
+            exactReminderRepeatUntilMinutes: settings.exactReminderRepeatUntilMinutes,
             memo: currentMemo,
             now,
             random: Math.random,
-            recallMode: edit.recallMode,
+            recallMode: settings.recallMode,
             text: edit.text,
           })
           removedDialogueId = editedMemo.dialogueId === null ? currentMemo.dialogueId : null
-          return editedMemo
+          return reminder === null
+            ? {
+                ...editedMemo,
+                nextExactReminderAt: currentMemo.nextExactReminderAt,
+                nextExactReminderRearmed: currentMemo.nextExactReminderRearmed,
+              }
+            : editedMemo
         }),
       )
       setMessage(null)

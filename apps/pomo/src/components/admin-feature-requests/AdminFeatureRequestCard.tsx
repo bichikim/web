@@ -24,7 +24,10 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
     untrack(() => props.request.targetVoteCount?.toString() ?? '10'),
   )
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
+  const [targetError, setTargetError] = createSignal(false)
   const requiresTarget = () => status() === 'voting' || status() === 'confirmed'
+  const visibleError = () =>
+    targetError() && requiresTarget() ? m.admin_feature_request_target_invalid() : errorMessage()
   const isApproving = createMemo(
     () => props.request.status === 'requested' && status() !== 'requested',
   )
@@ -32,6 +35,7 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
   const handleSave = async (event: SubmitEvent) => {
     event.preventDefault()
     setErrorMessage(null)
+    setTargetError(false)
     const targetRequired = requiresTarget()
     const parsedTarget = targetRequired ? Number(targetVoteCount()) : null
 
@@ -39,7 +43,7 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
       targetRequired &&
       (parsedTarget === null || !Number.isInteger(parsedTarget) || parsedTarget < 1)
     ) {
-      setErrorMessage(m.admin_feature_request_target_invalid())
+      setTargetError(true)
       return
     }
 
@@ -139,7 +143,7 @@ export const AdminFeatureRequestCard = (props: AdminFeatureRequestCardProps) => 
                 ? m.admin_feature_request_approve()
                 : m.admin_feature_request_save()}
           </button>
-          <Show when={errorMessage()}>
+          <Show when={visibleError()}>
             {(message) => (
               <span class="text-sm text-#ff9e8f" role="alert">
                 {message()}

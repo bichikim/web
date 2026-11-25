@@ -23,6 +23,7 @@ import {
   getSceneLayerStructure,
   type InheritedGroupEffect,
   inheritGroupEffects,
+  type SceneContainer,
 } from './scene-layers'
 import {getSpatialPartPose, type SpatialPartPose} from './spatial-part'
 import {getDrawOrderedPartStates} from './scene-draw-order'
@@ -84,6 +85,7 @@ interface StaticMaskStructure {
   readonly maskPartIds: ReadonlySet<string>
   readonly partById: ReadonlyMap<string, PuppetPart>
   readonly planByPartId: Map<string, PartMaskRenderPlan | undefined>
+  readonly spatialParts: ReadonlyArray<PuppetPart>
 }
 
 const createPartMaskPlan = (options: CreatePartMaskPlanOptions): PartMaskRenderPlan | undefined => {
@@ -164,6 +166,7 @@ const getStaticMaskStructure = (document: PuppetDocument): StaticMaskStructure =
       ]),
       partById,
       planByPartId: new Map(),
+      spatialParts: document.parts.filter((part) => part.spatial !== undefined),
     }
     maskStructureByDocument.set(document, structure)
   }
@@ -200,29 +203,76 @@ export interface FrameAdjustments {
 
 interface InheritedSample {
   readonly composition: PuppetDocument['colorComposition']
-  readonly properties: ReadonlyArray<ResolvedGroupRenderProperties>
+  readonly properties: ResolvedGroupRenderProperties
+  readonly parent: InheritedGroupEffect
   readonly result: InheritedGroupEffect
 }
 
-const inheritedSamples = new WeakMap<ReadonlyArray<PuppetSceneContainerNode>, InheritedSample>()
+const inheritedSamples = new WeakMap<PuppetSceneContainerNode, InheritedSample>()
+const EMPTY_INHERITED_EFFECT: InheritedGroupEffect = {effect: IDENTITY_COLOR_EFFECT, layerIds: []}
 
 const inheritFrameEffects = (
-  groups: ReadonlyArray<PuppetSceneContainerNode>,
-  resolve: (group: PuppetSceneContainerNode) => ResolvedGroupRenderProperties,
+  group: PuppetSceneContainerNode,
+  properties: ResolvedGroupRenderProperties,
+  parent: InheritedGroupEffect,
   composition: PuppetDocument['colorComposition'],
 ): InheritedGroupEffect => {
-  const previous = inheritedSamples.get(groups)
+  const previous = inheritedSamples.get(group)
   if (
     previous !== undefined &&
     previous.composition === composition &&
-    groups.every((group, index) => resolve(group) === previous.properties[index])
+    previous.properties === properties &&
+    previous.parent === parent
   ) {
     return previous.result
   }
-  const properties = groups.map(resolve)
-  const result = inheritGroupEffects(groups, resolve, composition)
-  inheritedSamples.set(groups, {composition, properties, result})
+  const result = inheritGroupEffects([group], () => properties, composition, parent)
+  inheritedSamples.set(group, {composition, parent, properties, result})
   return result
+}
+
+interface InheritedFrame {
+  readonly indexByNode: ReadonlyMap<PuppetSceneContainerNode, number>
+  readonly parentIndices: ReadonlyArray<number>
+  readonly values: Array<InheritedGroupEffect>
+}
+
+const inheritedFrames = new WeakMap<ReadonlyArray<SceneContainer>, InheritedFrame>()
+
+const getInheritedFrame = (containers: ReadonlyArray<SceneContainer>): InheritedFrame => {
+  let frame = inheritedFrames.get(containers)
+  if (frame === undefined) {
+    const indexByNode = new Map(containers.map(({node}, index) => [node, index]))
+    frame = {
+      indexByNode,
+      parentIndices: containers.map(({parent}) =>
+        parent === undefined ? -1 : indexByNode.get(parent)!,
+      ),
+      values: [],
+    }
+    inheritedFrames.set(containers, frame)
+  }
+  return frame
+}
+
+const createInheritedResolver = (
+  containers: ReadonlyArray<SceneContainer>,
+  resolve: (group: PuppetSceneContainerNode) => ResolvedGroupRenderProperties,
+  composition: PuppetDocument['colorComposition'],
+): ((groups: ReadonlyArray<PuppetSceneContainerNode>) => InheritedGroupEffect) => {
+  const frame = getInheritedFrame(containers)
+  for (let index = 0; index < containers.length; index += 1) {
+    const {node} = containers[index]!
+    const parent = frame.parentIndices[index]!
+    const outer = parent < 0 ? EMPTY_INHERITED_EFFECT : frame.values[parent]!
+    frame.values[index] = inheritFrameEffects(node, resolve(node), outer, composition)
+  }
+  return (groups) => {
+    const parent = groups.at(-1)
+    return parent === undefined
+      ? EMPTY_INHERITED_EFFECT
+      : frame.values[frame.indexByNode.get(parent)!]!
+  }
 }
 
 interface PropertySample {
@@ -288,6 +338,30 @@ const getRuleOrderedPartStates = (
     getDrawOrderedPartStates(document, parameterValues),
   )
 
+const orderSpatialStates = (
+  states: ReturnType<typeof getRuleOrderedPartStates>,
+  partById: ReadonlyMap<string, PuppetPart>,
+  poses: PartRenderFrame['spatialPoses'],
+) => {
+  if (poses.size === 0) {
+    return states
+  }
+  const groups = new Map<string, Array<(typeof states)[number]>>()
+  for (const state of states) {
+    const groupId = partById.get(state.partId)?.spatial?.groupId
+    if (groupId !== undefined) {
+      groups.set(groupId, [...(groups.get(groupId) ?? []), state])
+    }
+  }
+  for (const group of groups.values()) {
+    group.sort((first, second) => poses.get(first.partId)!.depth - poses.get(second.partId)!.depth)
+  }
+  return states.map((state) => {
+    const groupId = partById.get(state.partId)?.spatial?.groupId
+    return groupId === undefined ? state : (groups.get(groupId)?.shift() ?? state)
+  })
+}
+
 /** Combines a part override, pose selection and the motion's whole-model opacity. */
 const resolveFrameOpacity = (
   partId: string,
@@ -311,24 +385,11 @@ export const getPartRenderFrame = (
   const states = getRuleOrderedPartStates(document, parameterValues)
 
   const poseByPartId = new Map(
-    document.parts.flatMap((part) => {
+    maskStructure.spatialParts.flatMap((part) => {
       const pose = getSpatialPartPose({document, parameterValues, part, posedScene})
       return pose === undefined ? [] : [[part.id, pose] as const]
     }),
   )
-  const spatialGroups = new Map<string, Array<(typeof states)[number]>>()
-  for (const state of states) {
-    const groupId = maskStructure.partById.get(state.partId)?.spatial?.groupId
-    if (groupId !== undefined) {
-      spatialGroups.set(groupId, [...(spatialGroups.get(groupId) ?? []), state])
-    }
-  }
-  for (const group of spatialGroups.values()) {
-    group.sort(
-      (first, second) =>
-        poseByPartId.get(first.partId)!.depth - poseByPartId.get(second.partId)!.depth,
-    )
-  }
   const sceneLayers = getSceneLayerStructure(document)
   const resolveSceneGroup = (group: PuppetSceneGroupNode) => {
     const composed = composeParameterGroupProperties({document, group, parameterValues})
@@ -349,11 +410,13 @@ export const getPartRenderFrame = (
     resolvedGroups.set(group, resolved)
     return resolved
   }
+  const inheritedOf = createInheritedResolver(
+    sceneLayers.containers,
+    resolveGroup,
+    document.colorComposition,
+  )
   const inheritedByPartId = new Map(
-    [...sceneLayers.groupsByPartId].map(([partId, groups]) => [
-      partId,
-      inheritFrameEffects(groups, resolveGroup, document.colorComposition),
-    ]),
+    [...sceneLayers.groupsByPartId].map(([partId, groups]) => [partId, inheritedOf(groups)]),
   )
   const layerIdsOf = (partId: string) => inheritedByPartId.get(partId)?.layerIds ?? []
   const overrideColors = (
@@ -371,10 +434,7 @@ export const getPartRenderFrame = (
           own,
         })
   const orderedStates = gatherLayers(
-    states.map((state) => {
-      const groupId = maskStructure.partById.get(state.partId)?.spatial?.groupId
-      return groupId === undefined ? state : (spatialGroups.get(groupId)?.shift() ?? state)
-    }),
+    orderSpatialStates(states, maskStructure.partById, poseByPartId),
     (state) => layerIdsOf(state.partId),
   )
 
@@ -424,7 +484,7 @@ export const getPartRenderFrame = (
   })
   const layers = new Map(
     sceneLayers.layers.map(({ancestors, group, visible}): [string, LayerRenderPlan] => {
-      const inherited = inheritFrameEffects(ancestors, resolveGroup, document.colorComposition)
+      const inherited = inheritedOf(ancestors)
       const {offscreen: _offscreen, ...composed} = composeColorEffects(
         resolveGroup(group),
         inherited.effect,

@@ -134,3 +134,17 @@ describe('albumCreationServices', () => {
     )
   })
 })
+
+it('should send the configured URL without uploading the prepared file', async () => {
+  const cover = new File(['cover'], 'cover.webp', {type: 'image/webp'})
+  coverMocks.uploadAlbumCover.mockClear()
+
+  await albumCreationServices.createAlbum(createDraft({hasCoverFile: true}), cover)
+
+  expect(coverMocks.uploadAlbumCover).not.toHaveBeenCalled()
+  expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body))).toMatchObject({
+    coverDraftId: null,
+    coverImageUrl: 'https://example.com/configured.jpg',
+    coverReservationId: null,
+  })
+})

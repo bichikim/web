@@ -8,8 +8,9 @@ export type StoredTimestampedField<Field extends string, Value> = Readonly<Recor
 export const createTimestampedFieldCodec = <Field extends string, Value>(
   field: Field,
   valueSchema: z.ZodType<Value>,
+  timeSchema: z.ZodType<number> = z.number().finite().nonnegative(),
 ) => {
-  const storedSchema = z.object({[field]: valueSchema, savedAt: z.number().finite().nonnegative()})
+  const storedSchema = z.object({[field]: valueSchema, savedAt: timeSchema})
   const parseValue = (value: unknown): Value | null => {
     const parsed = valueSchema.safeParse(value)
     return parsed.success ? parsed.data : null

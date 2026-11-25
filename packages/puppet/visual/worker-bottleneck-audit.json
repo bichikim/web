@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-11-04T21:44:33.875911+09:00",
+  "scope": "Why the preceding partial Worker mapping optimization did not measurably reduce whole-Worker time; identify a validated way to increase actual playback FPS without changing rendering results.",
+  "outcome": {
+    "additionalFPSSpeedupVerified": false,
+    "productionChangesRetained": false,
+    "explanation": "The earlier isolated mapping saving was about 0.116 ms, while the whole Worker still evaluates parent grids, JS playback/physics/Glue, display plans and packets. Two additional numeric prototypes regressed and were rolled back. No frame-discard or frame-supply bottleneck was reproduced in the observed steady-playback trace. Do not claim that all possible future optimizations have been ruled out."
+  },
+  "environment": {
+    "cpu": "Apple M5 Pro",
+    "browser": "Chrome 156.0.8078.80",
+    "renderer": "ANGLE Metal / WebGL",
+    "viewport": {
+      "width": 900,
+      "height": 700
+    },
+    "resolution": 1,
+    "antialiasing": "ssaa",
+    "cpuThrottle": 1,
+    "model": "white-cat-idle-english.poffo",
+    "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+    "parts": 852,
+    "vertices": 34452,
+    "physicsChains": 25,
+    "motion": "Idle:0",
+    "seed": 42,
+    "concurrentLoad": "Other browser/Node/WebKit CPU and GPU workloads were observed. They were not terminated. Different profiler/instrumentation modes also have different overhead; do not attribute the measured FPS spread to code or CPU load alone."
+  },
+  "baseline": {
+    "playerSHA256": "0bbdd6b69502389ec80360c4e1c6808b13f3fab1c86d21fc90bc7fcb49232f48",
+    "workerSHA256": "2edd89c5d9633460a204497f347fa33a5f018729337da91f84fa39b723d690bb",
+    "kernelSHA256": "057998aa2815d5eabc33b7975b4b06478395f3dc429cdaa7f5086117122fa793"
+  },
+  "reasonPreviousOptimizationWasSmall": {
+    "isolatedMappingCPUMillisBefore": 0.47928024999999996,
+    "isolatedMappingCPUMillisAfter": 0.36326649999999994,
+    "isolatedSavingMillis": 0.11601375000000003,
+    "interpretation": "That experiment replayed warm map_vertices calls after parent grid samples were current. It excluded parent refresh and the rest of the Worker. The approximately 0.116 ms isolated saving is less than 1% of a 12-13 ms round trip as a rough budget comparison, not a measurement of full-Worker CPU savings. UV packing is on the host and overlaps Worker computation; lowering it does not automatically improve a CPU-limited producer."
+  },
+  "numericCPUProfile": {
+    "sampledMillis": 23320.732,
+    "samples": 17591,
+    "selfPercentByFunction": {
+      "wasm-function[1]": 21.746071263972333,
+      "": 13.031554927178101,
+      "wasm-function[3]": 6.42603328231721,
+      "Ws": 6.403941351412126,
+      "Er": 4.961928296247304,
+      "Cs": 4.067462376395389,
+      "Is": 3.9346878134013976,
+      "(idle)": 3.650417148140976,
+      "hi": 2.512532625476765,
+      "Ei": 2.3083151935368065,
+      "(garbage collector)": 2.2912145296296873,
+      "update": 2.080380667296378,
+      "Hs": 1.5032632766415737,
+      "_c": 1.3863630009555445,
+      "U": 1.138424814452651
+    }
+  },
+  "functionIdentification": {
+    "runtimeSectionsIdentical": true,
+    "method": "Recompile the original kernel with the same Rust optimization flags and keep its Wasm name section. Non-custom Wasm sections are byte-identical to the shipped baseline. Read names by function index.",
+    "functions": {
+      "wasm-function[0]": "coordinate",
+      "wasm-function[1]": "sample_node (recursive parent transform evaluation, including inlined grid/keyform evaluation)",
+      "wasm-function[3]": "map_vertices"
+    },
+    "note": "CPU self samples for sample_node are not exclusively local keyform interpolation; avoid equating the whole function with a single arithmetic subloop."
+  },
+  "actualPlaybackProfile": {
+    "updatedModelFPS": 55.11863503065849,
+    "rafHz": 113.03652359370834,
+    "main": {
+      "sampledMillis": 15571.498,
+      "samples": 11126,
+      "selfPercentByFunction": {
+        "(idle)": 68.69384692468252,
+        "c.emit": 2.725299775268892,
+        "(program)": 2.7204768609930787,
+        "Nv": 2.3078897097761564,
+        "Iv": 2.206313098457194,
+        "onBufferUpdate": 1.604932293604636,
+        "updateElement": 1.1822947284840546,
+        "set vertices": 1.1746204507748708,
+        "Dr.t.onmessage": 1.1710305585242986,
+        "Ad": 0.8756126096538689,
+        "Dy": 0.8077835542861708,
+        "calculateSpriteMatrix": 0.7574993748193013,
+        "": 0.7487526248277462,
+        "update": 0.7485150112082987,
+        "qv": 0.6649970349673486
+      }
+    },
+    "worker": {
+      "sampledMillis": 15489.363,
+      "samples": 10824,
+      "selfPercentByFunction": {
+        "wasm-function[1]": 17.491752243136144,
+        "": 15.152262878725226,
+        "(idle)": 14.332306628749032,
+        "Ws": 5.376444467083637,
+        "wasm-function[3]": 5.259409312054989,
+        "Is": 3.9716868924822797,
+        "wr": 3.7945459732591975,
+        "Cs": 2.6610196946123605,
+        "Ei": 2.2649349750535253,
+        "kr": 1.794915646305145,
+        "Er": 1.7443712824084503,
+        "update": 1.5713622309710218,
+        "(garbage collector)": 1.5182289936648783,
+        "Hs": 1.203968168348821,
+        "Ha": 1.0895283427730371
+      }
+    }
+  },
+  "frameSupplyTrace": {
+    "instrumentation": "Host-side Worker request/response events, with no extra worker-side timing fields. Date.now resolution is 1 ms. Published model frames are measured, not physical monitor presentation.",
+    "updatedModelFPS": 75.58034910923159,
+    "rafHz": 120.03545744773025,
+    "producedFPS": 75.64699844707042,
+    "measureMillis": 15003.900000000001,
+    "inputRequests": 0,
+    "errors": [],
+    "roundTripMillis": {
+      "count": 1135,
+      "mean": 13.097797356828194,
+      "median": 13,
+      "p95": 17,
+      "minimum": 8,
+      "maximum": 31
+    },
+    "simulationDeltaMillis": {
+      "count": 1135,
+      "mean": 13.234168717304515,
+      "median": 12.838623046875,
+      "p95": 16.556396484375,
+      "minimum": 10.093017578125,
+      "maximum": 34.08056640625
+    },
+    "nextRequestGapMillis": {
+      "count": 1134,
+      "mean": 0.13139329805996472,
+      "median": 0.0,
+      "p95": 1,
+      "minimum": 0,
+      "maximum": 7
+    }
+  },
+  "processingTrace": {
+    "instrumentation": "Temporary worker wrapper timestamps message reception and response posting, and the host records request/response events. Date.now resolution is 1 ms. Worker processing is elapsed wall time, including OS descheduling; outside-Worker time includes dispatch, queues, cloning and host receipt, not only data-copy CPU cost.",
+    "updatedModelFPS": 79.43486341200216,
+    "rafHz": 120.10151675625985,
+    "producedFPS": 79.63469954637196,
+    "measureMillis": 10008.2,
+    "inputRequests": 0,
+    "errors": [],
+    "roundTripMillis": {
+      "count": 797,
+      "mean": 12.397741530740277,
+      "median": 12,
+      "p95": 17,
+      "minimum": 8,
+      "maximum": 27
+    },
+    "simulationDeltaMillis": {
+      "count": 797,
+      "mean": 12.57968082212594,
+      "median": 12.142822265625,
+      "p95": 15.869873046875,
+      "minimum": 10.312255859375,
+      "maximum": 29.490966796875
+    },
+    "nextRequestGapMillis": {
+      "count": 796,
+      "mean": 0.1884422110552764,
+      "median": 0.0,
+      "p95": 1,
+      "minimum": 0,
+      "maximum": 8
+    },
+    "workerProcessingMillis": {
+      "count": 797,
+      "mean": 11.286072772898368,
+      "median": 11,
+      "p95": 15,
+      "minimum": 7,
+      "maximum": 26
+    },
+    "outsideWorkerMillis": {
+      "count": 797,
+      "mean": 1.111668757841907,
+      "median": 1,
+      "p95": 4,
+      "minimum": 0,
+      "maximum": 11
+    }
+  },
+  "rejectedExperiments": [
+    {
+      "name": "Independent local-grid revision cache",
+      "change": "Reuse local keyform coordinates when only parent transforms change. Preserve the original Float64 operation order.",
+      "quality": "20 unit tests passed, including independent parent/child inputs, influence changes and the existing interpolation/memory cases.",
+      "diagnostic": {
+        "stats": {
+          "nodes": 193,
+          "worldChanges": 69480,
+          "localChanges": 45876,
+          "parentOnly": 23604,
+          "worldPoints": 19183258,
+          "parentOnlyPoints": 5684361
+        },
+        "stateBytes": 51174
+      },
+      "method": "One Chrome, actual model, 1,200 warmup frames per variant, 6 ABBA samples per variant, each 300 full Worker round trips.",
+      "wholeWorkerMillisPerFrame": {
+        "before": {
+          "count": 6,
+          "mean": 9.95099912111111,
+          "median": 9.744569931666666,
+          "p95": 10.99702875,
+          "minimum": 9.264154583333333,
+          "maximum": 10.99702875
+        },
+        "candidate": {
+          "count": 6,
+          "mean": 9.876170857222222,
+          "median": 10.080868126666665,
+          "p95": 10.416348333333334,
+          "minimum": 9.098687083333333,
+          "maximum": 10.416348333333334
+        }
+      },
+      "medianRegressionPercent": 3.4511342969292036,
+      "status": "Rolled back. The cache saved some interpolation work but did not improve measured total throughput; added memory/management cost is a possible explanation, not an isolated proof."
+    },
+    {
+      "name": "Unrolled common corner counts",
+      "change": "Specialize one, two and four interpolation corners and reuse the origin load without reordering Float64 accumulation.",
+      "quality": "20 unit tests passed. Captured-model grid replay output bits matched.",
+      "method": "Replay all 852 actual frame-121 map_vertices calls, invalidating captured node world versions every iteration so recursive parent refresh is included. Six ABBA samples per variant, 600 iterations each. Measure Node thread CPU time to exclude OS descheduling. This is a native computation experiment, not a full Worker/FPS benchmark.",
+      "nativeCPUMillisPerFrame": {
+        "before": {
+          "count": 6,
+          "mean": 3.7150405555555555,
+          "median": 3.7161541666666666,
+          "p95": 3.8476999999999997,
+          "minimum": 3.576103333333333,
+          "maximum": 3.8476999999999997
+        },
+        "candidate": {
+          "count": 6,
+          "mean": 4.148353055555555,
+          "median": 4.101320833333333,
+          "p95": 4.358076666666666,
+          "minimum": 4.041646666666666,
+          "maximum": 4.358076666666666
+        }
+      },
+      "medianRegressionPercent": 10.364657906863828,
+      "status": "Rolled back. No FPS improvement claimed."
+    }
+  ],
+  "validation": {
+    "productionSourcesMatchTaskStart": true,
+    "previousTrackedPatchUnchanged": true,
+    "restoredPlayerSHA256": "0bbdd6b69502389ec80360c4e1c6808b13f3fab1c86d21fc90bc7fcb49232f48",
+    "restoredTransformTestsPassed": 17,
+    "existingPixelProof": "No new rendering claim is needed: all production source bytes and the complete built artifact were restored to the earlier validated baseline. The earlier playback-throughput.json remains unchanged.",
+    "format": "passed",
+    "oxlint": "passed",
+    "remoteCI": "not run"
+  },
+  "artifacts": {
+    "directory": "/private/tmp/puppet-worker-total-bsx7jyb1",
+    "numericProfiles": "numeric-profile/*.cpuprofile",
+    "playbackProfiles": "fps-profile/*.cpuprofile",
+    "wholeWorkerExperiment": "rejected-local-grid/compute-paired.json",
+    "nativeExperiment": "grid-replay.json",
+    "frameSupplyRaw": "fps-diagnostic.json",
+    "processingRaw": "fps-timing.json"
+  },
+  "remainingLimits": [
+    "No validated additional FPS improvement was obtained in this investigation.",
+    "One model and one physical machine were profiled.",
+    "Steady playback traces do not rule out bottlenecks during other input patterns or on different hardware.",
+    "No speculative production optimization or altered frame pacing was retained."
+  ]
+}

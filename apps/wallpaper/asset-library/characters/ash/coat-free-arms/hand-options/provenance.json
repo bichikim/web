@@ -1,0 +1,31 @@
+{
+  "tool": "ChatGPT image generation",
+  "appliedToModel": false,
+  "referenceRoles": {
+    "reference-notebook-hand.png": "Actual complete original hand; primary brushwork, outline and skin-color reference.",
+    "reference-pen-hand.png": "Actual original incomplete hand; existing fingers and long tapered pen to preserve."
+  },
+  "palette": {
+    "base": "#FFF8F4",
+    "shadow": "#F8E4E0",
+    "edgeShadow": "#F4E0D8"
+  },
+  "brief": "Restore only the missing back of the pen-holding hand and short wrist. Match the complete original notebook-holding hand, including warm ivory skin, faint pale pink shadow and fine muted red-brown contours. Keep the original fingers, pale blue nails, pose and long thin tapered pen. No palm lifelines, clothing, torso, extra fingers, text or heavy outlines. Transparent background; review only.",
+  "variants": [
+    {
+      "file": "option-1.png",
+      "shape": "Conservative slender wrist; smooth back of hand.",
+      "generation": "exec-8d4807cd-21fe-4191-89c8-8883178ad648.png"
+    },
+    {
+      "file": "option-2.png",
+      "shape": "Gently rounded hand transitioning to a narrow wrist.",
+      "generation": "exec-138e3150-33e9-4ace-b65e-313dc54be960.png"
+    },
+    {
+      "file": "option-3.png",
+      "shape": "Straighter wrist transition; narrow smooth hand silhouette.",
+      "generation": "exec-0b425558-c51f-4fa5-b0eb-d989700014f3.png"
+    }
+  ]
+}

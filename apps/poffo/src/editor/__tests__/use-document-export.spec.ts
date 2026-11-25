@@ -192,7 +192,7 @@ test('should not let an older atlas completion cancel a newer Poffo export', asy
     expect(exporting.pending()).toBe('puppet-model.poffo')
     finishNative(new Blob(['native']))
     await latest
-    expect(names).toEqual(['puppet-model.json', 'puppet-model.poffo'])
+    expect(names).toEqual(['puppet-model.poffo'])
   } finally {
     finishNative(new Blob(['native']))
     await latest

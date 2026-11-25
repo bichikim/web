@@ -14,6 +14,7 @@ export default mergeConfig(baseConfig, {
           // 브라우저 전용 테스트는 각 브라우저 프로젝트에서 실행한다.
           exclude: [
             ...configDefaults.exclude,
+            '**/.cache/**',
             '**/visual/**',
             'apps/wallpaper-web/src/**/*.integration.tsx',
           ],
@@ -28,6 +29,7 @@ export default mergeConfig(baseConfig, {
       './apps/coong/vitest.storybook.config.mts',
       './apps/pomo/vitest.storybook.config.mts',
       './apps/pomo/vitest.browser.config.mts',
+      './apps/pomo/vitest.album-editor.config.mts',
       './apps/wallpaper/vitest.browser.config.ts',
       './apps/wallpaper-web/vitest.browser.config.ts',
       ...visualRegressionProjects,

@@ -1,0 +1,117 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-contour-original.png"
+    }
+  },
+  "2": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "10": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+      "unet_name": "Qwen-Image-2.1-Turbo-Q4_K_S.gguf"
+    }
+  },
+  "11": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "12": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+  },
+  "13": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": ["11", 0],
+      "vae": ["12", 0],
+      "resolution": 0,
+      "prompt": "图1是原角色手掌和前臂的局部，必须在原位置修复腕关节；图2是已经确认正确的自然手腕解剖参考，且已经和图1对齐。请只把图1掌根与前臂的错误接缝重画成图2那样自然连续的腕关节。最重要的是忠实保留图2的手腕外形：小指下方外轮廓是一条圆润的弧线，不能凹成尖锐V字、Z字、台阶或细脖子。手掌底部向前臂自然过渡，只有很短很柔和的弧形掌根阴影，不能把原来的长直线一直延伸到腕部。前臂已经在图1中，不要另外生成一根长手腕，不要变细或变粗，不要拉伸肌肤。保持图1前臂的两侧位置、实际宽度、角度和轮廓笔触，与图2正确形状协调。手指、蓝色指甲、咖啡杯及其大小位置完全保持图1，只修复掌根和腕部连接。红棕色轮廓线的粗细和抗锯齿必须与图1原前臂一致，浅象牙白皮肤和暖粉色柔和阴影也必须与图1一致，不能重画整个手或前臂。输出图1相同尺寸480x640的RGBA透明背景局部插画。不是孤立的手或手腕素材，而是在同一幅原画中把手腕自然地与现有前臂连成一体，周围透明区域保持透明。",
+      "negative_prompt": "",
+      "images.image_1": ["2", 0],
+      "images.image_2": ["31", 0]
+    }
+  },
+  "16": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": ["10", 0],
+      "device": "auto",
+      "dtype": "default"
+    }
+  },
+  "18": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["24", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["18", 0],
+      "filename_prefix": "Wallpaper/coffee-wrist/continuous"
+    }
+  },
+  "20": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": ["16", 0],
+      "conditioning": ["13", 0]
+    }
+  },
+  "21": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 1110415
+    }
+  },
+  "22": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "23": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0.0"
+    }
+  },
+  "24": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["21", 0],
+      "guider": ["20", 0],
+      "sampler": ["22", 0],
+      "sigmas": ["23", 0],
+      "latent_image": ["13", 2]
+    }
+  },
+  "30": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-contour-anatomy.png"
+    }
+  },
+  "31": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["30", 0],
+      "alpha": ["30", 1]
+    }
+  }
+}

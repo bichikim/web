@@ -2,6 +2,8 @@ import type {Accessor} from 'solid-js'
 import type {Observer} from 'gsap/Observer'
 import {STORY_CUTS} from './frame'
 
+const ACTION_CONTROL_SELECTOR = 'button,a[href],[role="button"]'
+
 interface ConnectStoryInputProps {
   /** Mounted stage whose document owns viewport-wide gestures. */
   readonly target: HTMLElement
@@ -9,6 +11,8 @@ interface ConnectStoryInputProps {
   readonly chapter: Accessor<number>
   /** True until the complete cover-and-reveal animation has finished. */
   readonly transitioning: Accessor<boolean>
+  /** A pixel hit has given the character ownership of the current pointer. */
+  readonly dragging?: Accessor<boolean>
   /** Requests a destination without queuing input received during a transition. */
   readonly request: (chapter: number) => void
 }
@@ -19,14 +23,19 @@ const isControl = (event: Event) =>
     event.target.closest('[popover],input,textarea,select,[contenteditable]'),
   )
 
-const ignoreCheck = (event: Event, pointer: boolean) =>
+const isTouch = (event: Event) =>
+  event.type.startsWith('touch') || ('pointerType' in event && event.pointerType === 'touch')
+
+const ignoreCheck = (event: Event, pointer: boolean, dragging: boolean) =>
   isControl(event) ||
   (event instanceof WheelEvent &&
     (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY))) ||
   Boolean(
     pointer &&
     event.target instanceof Element &&
-    event.target.closest('button,a[href],[role="button"],[data-character-drag]'),
+    (event.target.closest('[data-character-drag]')
+      ? dragging || !isTouch(event)
+      : event.target.closest(ACTION_CONTROL_SELECTOR)),
   )
 
 const keyboardChapter = (event: KeyboardEvent, chapter: number) => {
@@ -68,7 +77,7 @@ export const connectStoryInput = (props: ConnectStoryInputProps) => {
       isControl(event) ||
       (event.key === ' ' &&
         event.target instanceof Element &&
-        event.target.closest('button,[role="button"]'))
+        event.target.closest(ACTION_CONTROL_SELECTOR))
     ) {
       return
     }
@@ -94,7 +103,7 @@ export const connectStoryInput = (props: ConnectStoryInputProps) => {
       allowClicks: true,
       capture: true,
       dragMinimum: 12,
-      ignoreCheck,
+      ignoreCheck: (event, pointer) => ignoreCheck(event, pointer, props.dragging?.() === true),
       lockAxis: true,
       onDown: handleBackward,
       onUp: handleForward,

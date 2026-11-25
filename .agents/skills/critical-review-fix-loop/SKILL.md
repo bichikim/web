@@ -1,6 +1,6 @@
 ---
 name: critical-review-fix-loop
-description: Run only when explicitly invoked as $critical-review-fix-loop; use $critical-review to fix P0/P1/P2 findings until verification passes, then report fixes, verification gaps, and remaining P3/P4 findings.
+description: Use only on explicit invocation to review and fix authorized P0–P2 findings, rerun verification, and report remaining findings and gaps.
 disable-model-invocation: true
 ---
 

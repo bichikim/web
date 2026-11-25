@@ -6,7 +6,11 @@ import {reportClientError} from '../../client-error-reporter'
 import {getInitialAppsInTossLocale} from '../bootstrap'
 import {prepareAppsInTossLocale} from '..'
 
-vi.mock('@paraglide/runtime', () => ({getTextDirection: vi.fn(), setLocale: vi.fn()}))
+vi.mock('@paraglide/runtime', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@paraglide/runtime')>()),
+  getTextDirection: vi.fn(),
+  setLocale: vi.fn(),
+}))
 vi.mock('../../client-error-reporter', () => ({reportClientError: vi.fn()}))
 vi.mock('../bootstrap', () => ({getInitialAppsInTossLocale: vi.fn()}))
 

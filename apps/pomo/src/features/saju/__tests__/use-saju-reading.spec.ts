@@ -62,11 +62,20 @@ describe('useSajuReading', () => {
 
   afterEach(() => cleanup())
 
-  it('should answer a broad future question without loading a model', () => {
-    reading.submit({birth, gender: 'N', question: '나의 미래는?'})
+  it('should display the device model answer for a broad future question', async () => {
+    const question = '나의 미래는?'
+    reading.submit({birth, gender: 'N', question})
+    await flush()
+
+    expect(mocks.downloaded).toHaveBeenCalledExactlyOnceWith('gemma-4-e2b')
+    expect(mocks.generate).toHaveBeenCalledOnce()
+    const request = mocks.generate.mock.lastCall?.[0]
+    expect(request.messages[1]).toEqual({content: question, role: 'user'})
+
+    const text = '일, 재물, 관계 중 어떤 부분이 궁금하세요?'
+    receive?.({requestId: request.requestId, text, type: 'complete'})
     expect(reading.status()).toBe('complete')
-    expect(reading.answer()).toContain('재물, 일, 관계')
-    expect(mocks.downloaded).not.toHaveBeenCalled()
+    expect(reading.answer()).toBe(text)
   })
 
   it('should select a cloud client and complete without downloading a device model', async () => {

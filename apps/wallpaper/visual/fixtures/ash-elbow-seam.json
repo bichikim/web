@@ -1,0 +1,9 @@
+{
+  "partId": "ArtMesh1001",
+  "vertexIndex": 13,
+  "maximumWorldShift": 22,
+  "tip": {
+    "triangle": [13, 14, 40],
+    "weights": [0.5670754495249768, 0.024448223112353458, 0.40847632736266976]
+  }
+}

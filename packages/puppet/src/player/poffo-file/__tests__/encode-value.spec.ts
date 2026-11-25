@@ -10,6 +10,7 @@ const restore = (source: unknown) => {
       (asset) => asset.prefix + Buffer.from(asset.bytes).toString('base64'),
     ),
     bytes: new Uint8Array(Buffer.concat(encoded.parts)),
+    version: encoded.version,
   })
 }
 
@@ -84,5 +85,40 @@ test('should preserve values across output chunk boundaries and oversized string
     padding: 'x'.repeat(1_048_551),
     positions: Array.from({length: 16}, (_, index) => index + 0.1),
   }
+  expect(restore(source)).toEqual(source)
+})
+
+test('should store equal coordinate arrays once even when the source arrays are distinct', () => {
+  const coordinates = [0.25, 0.5, 0.75, 1]
+  const source = [coordinates, [...coordinates]]
+  const encoded = encodeValue(source)
+  expect(encoded.version).toBe(2)
+  // Array header, one four-element f32 definition, and one u32 reference.
+  expect(encoded.byteLength).toBe(5 + 5 + 16 + 5)
+  expect(restore(source)).toEqual(source)
+  expect(source).toEqual([coordinates, coordinates])
+})
+
+test.each([
+  [0, 255],
+  [0, 256, 65535],
+  [65536, 4294967295],
+  [-2147483648, 2147483647],
+  [0.5, -0, Math.fround(0.1)],
+  [0.1, Number.MIN_VALUE, Number.MAX_VALUE],
+])('should reference repeated arrays without losing numeric precision: %j', (...values) => {
+  const actual = restore([values, [...values]]) as number[][]
+  for (const coordinates of actual) {
+    values.forEach((value, index) => expect(Object.is(coordinates[index], value)).toBe(true))
+  }
+  expect(actual[0]).not.toBe(actual[1])
+  actual[0]![0] = 123
+  expect(Object.is(actual[1]![0], values[0])).toBe(true)
+})
+
+test('should keep distinct signed zeros and close float64 values in separate definitions', () => {
+  const source = [[0], [-0], [0.1], [Math.fround(0.1)], []]
+  const encoded = encodeValue(source)
+  expect(encoded.version).toBe(1)
   expect(restore(source)).toEqual(source)
 })

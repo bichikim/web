@@ -1,0 +1,14 @@
+{
+  "resource": {
+    "sha256": "230226a1bf79d01d1622b001f9425ca32973b53c370008cf920ac0ba2893d10d",
+    "bytes": 20676384
+  },
+  "packedCoordinates": 94424,
+  "frames": 63,
+  "maxSurfaceGap": 0,
+  "headAngles": [-24, 24],
+  "wristPhysicsRange": [0.00853123506038032, 0.059167234296060404],
+  "inputMethod": "Temporary before-physics gaze overrides in the real app Worker; physical pointer unchanged",
+  "pointerInputUsed": false,
+  "previewAndObserverRemoved": true
+}

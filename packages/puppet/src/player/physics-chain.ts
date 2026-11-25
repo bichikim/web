@@ -14,7 +14,7 @@ import {boundParameterValue} from './parameter-value'
 type Vector = readonly [number, number]
 type Values = Readonly<Record<string, number>>
 
-/** One pendulum's end point and velocity (chain units, `y` down) and the gravity it last felt. */
+/** One pendulum's end point, velocity, and last reference direction (chain units, `y` down). */
 export interface ChainPendulumState {
   readonly gravity: Vector
   readonly position: Vector
@@ -40,13 +40,14 @@ export interface ChainsState {
 }
 
 interface ChainRoot {
-  /** Gravity direction turned by the inputs' tilt. */
+  /** Unit gravity turned by the inputs' tilt, or zero when gravity is disabled. */
   readonly gravity: Vector
+  readonly direction: Vector
   readonly position: Vector
 }
 
 interface ChainWorld {
-  /** Unit gravity direction in the untilted frame. */
+  /** Unit gravity in the untilted frame, or zero when gravity is disabled. */
   readonly gravity: Vector
   readonly parameters: ReadonlyMap<string, PuppetParameter>
   readonly step: number
@@ -90,7 +91,7 @@ const getWorld = (
   parameters: ReadonlyMap<string, PuppetParameter>,
   deltaTime = 1 / DEFAULT_PUPPET_CHAIN_FPS,
 ): ChainWorld => ({
-  gravity: unit(physics?.gravity ?? DEFAULT_PUPPET_CHAIN_GRAVITY, DEFAULT_PUPPET_CHAIN_GRAVITY),
+  gravity: unit(physics?.gravity ?? DEFAULT_PUPPET_CHAIN_GRAVITY, [0, 0]),
   parameters,
   step: physics?.fps === 0 ? deltaTime : 1 / (physics?.fps ?? DEFAULT_PUPPET_CHAIN_FPS),
   wind: physics?.wind ?? [0, 0],
@@ -145,8 +146,16 @@ const getRoot = (chain: PuppetPhysicsChain, world: ChainWorld, values: Values): 
     {angle: 0, x: 0, y: 0},
   )
   const tilt = (-sum.angle * Math.PI) / HALF_TURN_DEGREES
-  return {gravity: rotate(world.gravity, tilt), position: rotate([sum.x, sum.y], tilt)}
+  const gravity = rotate(world.gravity, tilt)
+  return {
+    direction: gravityReference(gravity),
+    gravity,
+    position: rotate([sum.x, sum.y], tilt),
+  }
 }
+
+const gravityReference = (gravity: Vector): Vector =>
+  gravity[0] === 0 && gravity[1] === 0 ? DEFAULT_PUPPET_CHAIN_GRAVITY : gravity
 
 /** Moves end points within the threshold onto `x = 0`, steadying a chain at rest. */
 const snap = (point: Vector, chain: PuppetPhysicsChain): Vector =>
@@ -161,9 +170,9 @@ const force = (root: ChainRoot, world: ChainWorld, acceleration: number) =>
 const hangPendulums = (chain: PuppetPhysicsChain, root: ChainRoot, world: ChainWorld) =>
   chain.pendulums.reduce<Array<ChainPendulumState>>((placed, pendulum) => {
     const parent = placed.at(-1)?.position ?? root.position
-    const along = unit(force(root, world, pendulum.acceleration), root.gravity)
+    const along = unit(force(root, world, pendulum.acceleration), root.direction)
     const position = snap(add(parent, scale(along, pendulum.length)), chain)
-    return [...placed, {gravity: root.gravity, position, velocity: [0, 0]}]
+    return [...placed, {gravity: root.direction, position, velocity: [0, 0]}]
   }, [])
 
 /**
@@ -180,14 +189,14 @@ const stepPendulums = (
   chain.pendulums.reduce<Array<ChainPendulumState>>((placed, pendulum, index) => {
     const parent = placed.at(-1)?.position ?? root.position
     const previous = state.pendulums[index] ?? {
-      gravity: root.gravity,
+      gravity: root.direction,
       position: parent,
       velocity: [0, 0],
     }
     const time = pendulum.reaction * world.step * REACTION_RATE
     const turned = rotate(
       subtract(previous.position, parent),
-      angleBetween(previous.gravity, root.gravity) / AIR_RESISTANCE,
+      angleBetween(previous.gravity, root.direction) / AIR_RESISTANCE,
     )
     const moved = add(
       add(parent, turned),
@@ -197,14 +206,14 @@ const stepPendulums = (
       ),
     )
     const position = snap(
-      add(parent, scale(unit(subtract(moved, parent), root.gravity), pendulum.length)),
+      add(parent, scale(unit(subtract(moved, parent), root.direction), pendulum.length)),
       chain,
     )
     const velocity =
       time === 0
         ? previous.velocity
         : scale(subtract(position, previous.position), pendulum.mobility / time)
-    return [...placed, {gravity: root.gravity, position, velocity}]
+    return [...placed, {gravity: root.direction, position, velocity}]
   }, [])
 
 /**
@@ -223,7 +232,7 @@ const read = (
   if (output.axis === 'angle') {
     const reference =
       output.pendulumIndex === 0
-        ? world.gravity
+        ? gravityReference(world.gravity)
         : subtract(at(output.pendulumIndex - 1), at(output.pendulumIndex - 2))
     reading = angleBetween(reference, segment)
   }
@@ -388,3 +397,104 @@ export const matchesChains = (state: ChainsState, physics: PuppetPhysics | undef
       chainState.current.length === chain.outputs.length
     )
   })
+
+/** Inverts an authored output's scale, reflection and blend at the displayed value. */
+const heldReadings = (chain: PuppetPhysicsChain, world: ChainWorld, base: Values, held: Values) =>
+  chain.outputs.flatMap((output) => {
+    const parameter = world.parameters.get(output.parameterId)
+    const value = held[output.parameterId]
+    if (
+      parameter === undefined ||
+      value === undefined ||
+      !Number.isFinite(value) ||
+      output.scale === 0 ||
+      output.weight <= 0
+    ) {
+      return []
+    }
+    const target =
+      (boundParameterValue(parameter, value) - readValue(parameter, base) * (1 - output.weight)) /
+      output.weight
+    return [{output, value: (target / output.scale) * (output.reflect === true ? -1 : 1)}]
+  })
+
+/** Keeps a segment at its authored length while honoring a positional output. */
+const positionSegment = (segment: Vector, length: number, x?: number, y?: number): Vector => {
+  if (x !== undefined && y !== undefined) {
+    return scale(unit([x, y], unit(segment, [0, 1])), length)
+  }
+  if (x !== undefined) {
+    const bounded = clamp(x, -length, length)
+    return [
+      bounded,
+      Math.sqrt(Math.max(0, length * length - bounded * bounded)) * (segment[1] < 0 ? -1 : 1),
+    ]
+  }
+  if (y !== undefined) {
+    const bounded = clamp(y, -length, length)
+    return [
+      Math.sqrt(Math.max(0, length * length - bounded * bounded)) * (segment[0] < 0 ? -1 : 1),
+      bounded,
+    ]
+  }
+  return segment
+}
+
+/** Starts existing chains at the held output pose; unrelated chains retain their inertia. */
+export const releaseChains = (options: {
+  readonly physics: PuppetPhysics | undefined
+  readonly parameters: ReadonlyMap<string, PuppetParameter>
+  readonly state: ChainsState
+  readonly baseValues: Values
+  readonly values: Values
+}): {readonly state: ChainsState; readonly parameterIds: ReadonlyArray<string>} => {
+  const world = getWorld(options.physics, options.parameters)
+  const chains = new Map(options.state.chains)
+  const parameterIds: string[] = []
+  const heldChains = (options.physics?.chains ?? []).flatMap((chain) => {
+    const previous = chains.get(chain.id)
+    const readings = heldReadings(chain, world, options.baseValues, options.values)
+    return previous === undefined || readings.length === 0 ? [] : [{chain, previous, readings}]
+  })
+  for (const {chain, previous, readings} of heldChains) {
+    const pendulums = chain.pendulums.reduce<Array<ChainPendulumState>>(
+      (placed, pendulum, index) => {
+        const at = (items: ReadonlyArray<ChainPendulumState>, index: number) =>
+          items[index]?.position ?? previous.root
+        const parent = at(placed, index - 1)
+        const reference = index === 0 ? world.gravity : subtract(parent, at(placed, index - 2))
+        const oldReference =
+          index === 0
+            ? world.gravity
+            : subtract(at(previous.pendulums, index - 1), at(previous.pendulums, index - 2))
+        const oldSegment = subtract(
+          at(previous.pendulums, index),
+          at(previous.pendulums, index - 1),
+        )
+        const outputs = readings.filter(({output}) => output.pendulumIndex === index)
+        const angle =
+          outputs.find(({output}) => output.axis === 'angle')?.value ??
+          angleBetween(oldReference, oldSegment)
+        const segment = positionSegment(
+          scale(rotate(unit(reference, world.gravity), angle), pendulum.length),
+          pendulum.length,
+          outputs.find(({output}) => output.axis === 'x')?.value,
+          outputs.find(({output}) => output.axis === 'y')?.value,
+        )
+        return [
+          ...placed,
+          {
+            gravity: previous.pendulums[index]!.gravity,
+            position: add(parent, segment),
+            velocity: [0, 0],
+          },
+        ]
+      },
+      [],
+    )
+    const current = readAll(chain, pendulums, previous.root, world)
+    chains.set(chain.id, {...previous, current, pendulums, previous: current})
+    parameterIds.push(...readings.map(({output}) => output.parameterId))
+  }
+  return {parameterIds, state: {...options.state, chains}}
+}

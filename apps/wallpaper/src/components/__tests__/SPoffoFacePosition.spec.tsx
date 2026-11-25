@@ -19,6 +19,7 @@ test('should drag the face anchor over the rendered character and save on releas
     height: 100,
     width: 200,
   } as DOMRect)
+  Object.defineProperty(handle, 'hasPointerCapture', {value: vi.fn(() => true)})
   Object.defineProperty(handle, 'setPointerCapture', {value: vi.fn()})
   Object.defineProperty(handle, 'releasePointerCapture', {value: vi.fn()})
   const pointer = (type: string, x: number, y: number) => {

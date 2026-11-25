@@ -1,11 +1,14 @@
+import {execFile} from 'node:child_process'
 import {mkdir, mkdtemp, readdir, readFile, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import path from 'node:path'
+import {promisify} from 'node:util'
 import {build, mergeConfig} from 'vite'
 import {afterEach, describe, expect, it} from 'vitest'
 import {createConfig} from '@winter-love/vite-lib-config'
 
 const directories: string[] = []
+const execFileAsync = promisify(execFile)
 
 afterEach(async () => {
   await Promise.all(
@@ -44,6 +47,36 @@ const createLibrary = async (source: string) => {
 }
 
 describe('library declaration build', () => {
+  it.each(['absolute', 'relative'])(
+    'should emit JS and declarations under an explicit %s root from another cwd',
+    async (rootKind) => {
+      const {root} = await createLibrary("export {value} from './feature'\n")
+      await writeFile(path.join(root, 'package.json'), JSON.stringify({name: 'library'}))
+      await writeFile(path.join(root, 'src/feature.ts'), 'export const value: number = 42')
+      const cwd = path.dirname(path.dirname(root))
+      const script = `
+      import {build, mergeConfig} from ${JSON.stringify(import.meta.resolve('vite'))}
+      import {createConfig} from ${JSON.stringify(new URL('../index.mjs', import.meta.url).href)}
+      const config = createConfig({
+        root: ${JSON.stringify(rootKind === 'absolute' ? root : path.relative(cwd, root))},
+        entry: {feature: 'src/feature.ts'},
+      })({command: 'build', mode: 'test'})
+      await build(mergeConfig(config, {configFile: false, logLevel: 'silent'}))
+    `
+
+      await execFileAsync(process.execPath, ['--input-type=module', '--eval', script], {cwd})
+
+      await Promise.all(
+        ['index.mjs', 'index.js', 'index.d.ts', 'feature.mjs', 'feature.js', 'feature.d.ts'].map(
+          async (file) => {
+            expect(await readFile(path.join(root, 'dist', file), 'utf8')).toContain('value')
+          },
+        ),
+      )
+      await expect(readdir(path.join(cwd, 'dist'))).rejects.toMatchObject({code: 'ENOENT'})
+    },
+  )
+
   it('should emit library declarations without checking sibling files or nested tests', async () => {
     const {root, config} = await createLibrary('export const value: number = 42')
     await build(config)

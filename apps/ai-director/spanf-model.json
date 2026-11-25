@@ -1,0 +1,6 @@
+{
+  "file": "spanf.onnx",
+  "size": 603772,
+  "sha256": "1bfee2f39e38b4ff2cbcdbebe9578cdbb168024fc0066b9b77035b450b331b0a",
+  "url": "https://raw.githubusercontent.com/bichikim/web/488ec5619e5ac0122488dd4e5a2f8641f0a5855c/apps/ai-director/src-tauri/models/spanf.onnx"
+}

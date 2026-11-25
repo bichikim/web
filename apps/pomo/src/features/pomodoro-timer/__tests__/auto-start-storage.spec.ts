@@ -373,6 +373,30 @@ describe('auto-start-storage', () => {
     },
   )
 
+  it('should retain a newer web timestamp when an earlier native write cannot update its web mirror', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    const key = 'pomo:timer-auto-start:v2'
+    const initial = JSON.stringify({isEnabled: false, savedAt: 100})
+    localStorage.setItem(key, initial)
+    storageMocks.getItem.mockResolvedValue(JSON.stringify({isEnabled: true, savedAt: 20}))
+    storageMocks.setItem.mockResolvedValue()
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('web mirror unavailable')
+    })
+
+    await expect(writeAutoStartPreference(true)).resolves.toBeUndefined()
+    expect(storageMocks.setItem).toHaveBeenCalledWith(
+      key,
+      JSON.stringify({isEnabled: true, savedAt: 20}),
+    )
+    await expect(readAutoStartPreference()).resolves.toBe(false)
+    expect(localStorage.getItem(key)).toBe(initial)
+    expect(storageMocks.setItem).toHaveBeenLastCalledWith(
+      key,
+      JSON.stringify({isEnabled: false, savedAt: 100}),
+    )
+  })
+
   it('should compare the current browser value after a later write fails', async () => {
     Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
     localStorage.setItem(

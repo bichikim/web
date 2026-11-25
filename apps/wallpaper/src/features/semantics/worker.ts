@@ -18,7 +18,10 @@ const load = async (request: SemanticRequest) => {
     if (!path.startsWith(localPrefix)) {
       throw new Error('Embedding assets must be bundled locally')
     }
-    return fetchAsset(`${request.modelPath}${path.slice(localPrefix.length)}`, init)
+    return fetchAsset(`${request.modelPath}${path.slice(localPrefix.length)}`, {
+      ...init,
+      cache: 'no-store',
+    })
   }
   env.useBrowserCache = false
   const {wasm} = env.backends.onnx

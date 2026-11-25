@@ -22,3 +22,14 @@ test('should interpolate cached frames against the playback clock', () => {
   expect(sampleMouthTrack(track, 0.25)).toEqual({form: 0, open: 0.5})
   expect(sampleMouthTrack(track, 0.75)).toEqual({form: 0.5, open: 0.5})
 })
+
+test('should retain a short vowel and release into a final bilabial closure', () => {
+  const audio = (length: number) => ({
+    sampleRate: 1000,
+    samples: new Float32Array(length).fill(0.1),
+  })
+  const short = createMouthTrack(audio(50), '빠')
+  expect(sampleMouthTrack(short, 0.02).open).toBeGreaterThan(0.2)
+  const final = createMouthTrack(audio(200), '암')
+  expect(sampleMouthTrack(final, 0.18).open).toBeLessThan(sampleMouthTrack(final, 0.1).open * 0.8)
+})

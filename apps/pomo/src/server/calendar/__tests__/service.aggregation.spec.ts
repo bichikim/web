@@ -194,3 +194,53 @@ it('should propagate repository failures before making any provider request', as
   await expect(service.listEvents(RANGE)).rejects.toBe(error)
   expect(provider.listEvents).not.toHaveBeenCalled()
 })
+
+it('should sort an all-day event before later times on the same display day', async () => {
+  vi.mocked(repository.listConnections).mockResolvedValue([connection('seoul')])
+  vi.mocked(provider.listEvents).mockResolvedValue({
+    events: [
+      {...event('breakfast'), end: '2026-09-05T00:00:00.000Z', start: '2026-09-04T23:00:00.000Z'},
+      {
+        ...event('midnight'),
+        end: '2026-09-04T15:30:00.000Z',
+        start: '2026-09-04T15:00:00.000Z',
+      },
+      {...event('all-day'), allDay: true, end: '2026-09-06', start: '2026-09-05'},
+      {...event('meeting'), end: '2026-09-05T02:00:00.000Z', start: '2026-09-05T01:00:00.000Z'},
+      {
+        ...event('previous-day'),
+        end: '2026-09-04T15:00:00.000Z',
+        start: '2026-09-04T14:00:00.000Z',
+      },
+    ],
+    truncated: false,
+    unavailableCalendars: 0,
+  })
+
+  const result = await service.listEvents({
+    ...RANGE,
+    displayTimeZone: 'Asia/Seoul',
+    end: '2026-09-05T15:00:00.000Z',
+  })
+
+  expect(result.events.map(({title}) => title)).toEqual([
+    'previous-day',
+    'all-day',
+    'midnight',
+    'breakfast',
+    'meeting',
+  ])
+})
+
+it('should keep listing valid events when a provider sends an invalid all-day start', async () => {
+  vi.mocked(repository.listConnections).mockResolvedValue([connection('provider')])
+  vi.mocked(provider.listEvents).mockResolvedValue({
+    events: [{...event('invalid'), allDay: true, start: 'invalid'}, event('valid')],
+    truncated: false,
+    unavailableCalendars: 0,
+  })
+
+  const result = await service.listEvents(RANGE)
+
+  expect(result.events.map(({title}) => title)).toEqual(['valid', 'invalid'])
+})

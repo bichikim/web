@@ -1,11 +1,13 @@
 import {PInput} from 'src/components/p-input/PInput'
 import {cx} from 'class-variance-authority'
 import {TextField} from '@kobalte/core/text-field'
-import {createSignal, For} from 'solid-js'
+import {createMemo, createSignal, For} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {
+  hasOverlongLanguageLearningTag,
   LANGUAGE_LEARNING_TAG_DELIMITER_PATTERN,
+  MAXIMUM_LANGUAGE_LEARNING_TAG_LENGTH,
   MAXIMUM_LANGUAGE_LEARNING_TAGS,
   parseLanguageLearningTags,
 } from '../../features/language-learning'
@@ -44,7 +46,12 @@ export const LanguageLearningTagInput = (props: LanguageLearningTagInputProps) =
   const maximumTags = () =>
     Math.min(props.maximumTags ?? MAXIMUM_LANGUAGE_LEARNING_TAGS, MAXIMUM_LANGUAGE_LEARNING_TAGS)
 
+  const isOverlong = createMemo(() => hasOverlongLanguageLearningTag(props.inputValue))
   const commitInput = (input: string) => {
+    if (hasOverlongLanguageLearningTag(input)) {
+      props.onInputChange(input)
+      return
+    }
     const nextTags = parseLanguageLearningTags([...props.tags, input].join(',')).slice(
       0,
       maximumTags(),
@@ -78,6 +85,7 @@ export const LanguageLearningTagInput = (props: LanguageLearningTagInputProps) =
       class="grid gap-1.5"
       disabled={props.disabled}
       onChange={handleInputChange}
+      validationState={isOverlong() ? 'invalid' : 'valid'}
       value={props.inputValue}
     >
       <TextField.Label class="text-sm leading-5 font-650 text-muted-foreground">
@@ -110,7 +118,11 @@ export const LanguageLearningTagInput = (props: LanguageLearningTagInputProps) =
           class={INPUT_CLASS}
           disabled={props.disabled || props.tags.length >= maximumTags()}
           maxlength="300"
-          onBlur={() => commitInput(props.inputValue)}
+          onBlur={() => {
+            if (!isComposing()) {
+              commitInput(props.inputValue)
+            }
+          }}
           onCompositionEnd={() => setIsComposing(false)}
           onCompositionStart={() => setIsComposing(true)}
           onKeyDown={(event) => {
@@ -137,6 +149,9 @@ export const LanguageLearningTagInput = (props: LanguageLearningTagInputProps) =
       <TextField.Description class="text-sm leading-5 font-400 text-muted-foreground">
         {props.description ?? m.learning_editor_tags_hint()}
       </TextField.Description>
+      <TextField.ErrorMessage class="text-sm text-danger">
+        {m.learning_tag_too_long({maximum: MAXIMUM_LANGUAGE_LEARNING_TAG_LENGTH})}
+      </TextField.ErrorMessage>
     </TextField>
   )
 }

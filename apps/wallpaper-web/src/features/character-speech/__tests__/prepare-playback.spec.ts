@@ -56,8 +56,8 @@ test('should commit MP3 with decoded-audio mouth frames before playback', async 
   expect(ready).toHaveBeenCalledWith(expect.objectContaining({audio: decoded}))
 })
 
-test('should replay a cached MP3 with its saved mouth track without creating speech', async () => {
-  vi.mocked(cache.read).mockResolvedValue({ok: true, value: {audio: mp3, mouth}})
+test('should replay a cached MP3 with its current mouth track without creating speech', async () => {
+  vi.mocked(cache.read).mockResolvedValue({ok: true, value: {audio: mp3, mouth, mouthRevision: 2}})
   const generate = vi.fn()
   const context = {decodeAudioData: vi.fn().mockResolvedValue(decoded)}
   const playback = await prepareSpeechPlayback({
@@ -71,6 +71,26 @@ test('should replay a cached MP3 with its saved mouth track without creating spe
   expect(playback.mouth).toBe(mouth)
   expect(generate).not.toHaveBeenCalled()
   expect(cache.write).not.toHaveBeenCalled()
+})
+
+test('should update an older mouth track using cached audio without synthesizing it again', async () => {
+  vi.mocked(cache.read).mockResolvedValue({ok: true, value: {audio: mp3, mouth}})
+  const generate = vi.fn()
+  const playback = await prepareSpeechPlayback({
+    ...resources(),
+    context: {decodeAudioData: vi.fn().mockResolvedValue(decoded)},
+    generate,
+    input: '암',
+    signal: new AbortController().signal,
+  })
+  expect(playback.audio).toBe(decoded)
+  expect(playback.mouth.frames.some((value) => value > 0.1)).toBe(true)
+  expect(generate).not.toHaveBeenCalled()
+  expect(cache.write).toHaveBeenCalledWith(expect.any(String), {
+    audio: mp3,
+    mouth: playback.mouth,
+    mouthRevision: 2,
+  })
 })
 
 test('should discard a corrupt MP3 and regenerate both audio and mouth frames', async () => {

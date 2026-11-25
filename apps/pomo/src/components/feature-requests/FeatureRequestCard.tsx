@@ -1,5 +1,6 @@
 import {createUniqueId, Show} from 'solid-js'
 import * as m from '@paraglide/message'
+import {getLocale} from '@paraglide/runtime'
 
 import {PButton} from '../p-button/PButton'
 import type {FeatureRequest, FeatureRequestStatus} from '../../features/feature-requests'
@@ -59,7 +60,7 @@ export const FeatureRequestCard = (props: FeatureRequestCardProps) => {
           class="flex-none text-xs leading-5 text-muted-foreground"
           dateTime={props.request.createdAt}
         >
-          {new Intl.DateTimeFormat(undefined, {dateStyle: 'medium'}).format(
+          {new Intl.DateTimeFormat(getLocale(), {dateStyle: 'medium'}).format(
             new Date(props.request.createdAt),
           )}
         </time>

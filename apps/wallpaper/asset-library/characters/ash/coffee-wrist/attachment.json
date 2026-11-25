@@ -1,0 +1,190 @@
+{
+  "beforeSha256": "c90d6279f0c3fe7e7a0906929d10ef0124e922042779b3ac91105551bee4f3a6",
+  "modelSha256": "707b9f092dc322eda70a1f13c6413c2660779b218f70b0a81c12988ba4f64b06",
+  "modelBytes": 20049485,
+  "partId": "coat-free:coffee:hand",
+  "guideId": "coat-free:coffee:wrist-guide",
+  "textureSha256": "52699f234471ddfd08479628095b3463a64e05f27a3eb356ae32c72ad5ffa783",
+  "promptId": "eeee0bcc-87a1-4a17-907c-e9781625ab0e",
+  "compositePromptId": "c4c85e18-f1b1-4ba0-a90f-19416cff6f2f",
+  "generator": "local Qwen-Image-2.1-Turbo Q4_K_S in ComfyUI",
+  "handOriginalPartIds": [
+    "ArtMesh950",
+    "ArtMesh952",
+    "ArtMesh954",
+    "ArtMesh956",
+    "ArtMesh958",
+    "ArtMesh960",
+    "ArtMesh961",
+    "ArtMesh106",
+    "ArtMesh107",
+    "ArtMesh108",
+    "ArtMesh109",
+    "ArtMesh110",
+    "ArtMesh103",
+    "ArtMesh104",
+    "ArtMesh105",
+    "ArtMesh111",
+    "ArtMesh112",
+    "ArtMesh962",
+    "ArtMesh963",
+    "ArtMesh964"
+  ],
+  "originalMeshesAndTexturesPreserved": true,
+  "fit": {
+    "fold": [260, 786],
+    "handHeight": 796,
+    "previousHeight": 864,
+    "widthBlend": [710, 782],
+    "surfaceBlend": [776, 786],
+    "colorBlend": [762, 795],
+    "underlapPixels": 10,
+    "boundarySource": "Existing forearm alpha contour in the neutral coffee pose; same world row and camera scale",
+    "preserve": [
+      "original fingers",
+      "original cup",
+      "existing forearm mesh and artwork",
+      "other actions"
+    ]
+  },
+  "fold": [260, 786],
+  "shift": [10.068782485693191, 10.77368687018543],
+  "joinRatio": 0.777027027027027,
+  "centerOffset": -5.735449152359706,
+  "vertices": 1401,
+  "samples": [
+    {
+      "vertexIndex": 1374,
+      "strength": 0.8960000000000001,
+      "triangle": [65, 33, 66],
+      "weights": [0.12691865999012406, 0.4218242224485265, 0.4512571175613494]
+    },
+    {
+      "vertexIndex": 1375,
+      "strength": 0.8960000000000001,
+      "triangle": [65, 33, 66],
+      "weights": [0.07708615343904501, 0.6553939267457777, 0.2675199198151773]
+    },
+    {
+      "vertexIndex": 1376,
+      "strength": 0.8960000000000001,
+      "triangle": [65, 33, 66],
+      "weights": [0.17675116654120307, 0.1882545181512754, 0.6349943153075216]
+    },
+    {
+      "vertexIndex": 1377,
+      "strength": 0.8960000000000001,
+      "triangle": [37, 65, 66],
+      "weights": [0.02837236062674996, 0.18366009015918378, 0.7879675492140663]
+    },
+    {
+      "vertexIndex": 1378,
+      "strength": 0.8960000000000001,
+      "triangle": [37, 65, 66],
+      "weights": [0.17461304604415853, 0.012250019425768135, 0.8131369345300734]
+    },
+    {
+      "vertexIndex": 1379,
+      "strength": 0.8960000000000001,
+      "triangle": [37, 66, 35],
+      "weights": [0.21275906501878825, 0.517797897661283, 0.2694430373199287]
+    },
+    {
+      "vertexIndex": 1380,
+      "strength": 0.8960000000000001,
+      "triangle": [37, 66, 35],
+      "weights": [0.24258539728267145, 0.19779039426695205, 0.5596242084503764]
+    },
+    {
+      "vertexIndex": 1381,
+      "strength": 0.8960000000000001,
+      "triangle": [35, 36, 37],
+      "weights": [0.65949540447357, 0.1343321471407289, 0.20617244838570106]
+    },
+    {
+      "vertexIndex": 1382,
+      "strength": 0.8960000000000001,
+      "triangle": [35, 36, 37],
+      "weights": [0.4513779295311757, 0.48606109359536737, 0.06256097687345691]
+    },
+    {
+      "vertexIndex": 1388,
+      "strength": 1,
+      "triangle": [65, 33, 66],
+      "weights": [0.31309600411066785, 0.44687094739328426, 0.2400330484960479]
+    },
+    {
+      "vertexIndex": 1389,
+      "strength": 1,
+      "triangle": [65, 33, 66],
+      "weights": [0.26109686683997657, 0.6905958562251991, 0.048307276934824284]
+    },
+    {
+      "vertexIndex": 1390,
+      "strength": 1,
+      "triangle": [65, 33, 66],
+      "weights": [0.3650951413813591, 0.2031460385613693, 0.43175882005727156]
+    },
+    {
+      "vertexIndex": 1391,
+      "strength": 1,
+      "triangle": [37, 65, 66],
+      "weights": [0.025406898637318393, 0.3786570426716377, 0.5959360586910439]
+    },
+    {
+      "vertexIndex": 1392,
+      "strength": 1,
+      "triangle": [37, 65, 66],
+      "weights": [0.17800587472504947, 0.19979436016720353, 0.622199765107747]
+    },
+    {
+      "vertexIndex": 1393,
+      "strength": 1,
+      "triangle": [37, 65, 66],
+      "weights": [0.3306048508127805, 0.020931677662769363, 0.64846347152445]
+    },
+    {
+      "vertexIndex": 1394,
+      "strength": 1,
+      "triangle": [37, 66, 35],
+      "weights": [0.3759438759952785, 0.3566937470645861, 0.2673623769401354]
+    },
+    {
+      "vertexIndex": 1395,
+      "strength": 1,
+      "triangle": [37, 66, 35],
+      "weights": [0.40706700531411133, 0.022772873957477544, 0.5701601207284112]
+    },
+    {
+      "vertexIndex": 1396,
+      "strength": 1,
+      "triangle": [35, 36, 37],
+      "weights": [0.3884547667456048, 0.3419912244917739, 0.26955400876262126]
+    },
+    {
+      "vertexIndex": 1397,
+      "strength": 1,
+      "triangle": [35, 36, 37],
+      "weights": [0.17128870593616244, 0.709012733835723, 0.11969856022811454]
+    },
+    {
+      "vertexIndex": 1398,
+      "strength": 1,
+      "triangle": [36, 2, 3],
+      "weights": [0.9589017161329687, 0.03411119630140887, 0.00698708756562242]
+    },
+    {
+      "vertexIndex": 1399,
+      "strength": 1,
+      "triangle": [36, 2, 3],
+      "weights": [0.7639859520261937, 0.20202271661431787, 0.03399133135948845]
+    },
+    {
+      "vertexIndex": 1400,
+      "strength": 1,
+      "triangle": [36, 2, 3],
+      "weights": [0.5690701879194187, 0.3699342369272269, 0.060995575153354464]
+    }
+  ],
+  "unmodifiedActions": ["노트 들기", "필기 동작", "엄지 척", "컵라면"]
+}

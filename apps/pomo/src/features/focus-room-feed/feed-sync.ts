@@ -1,7 +1,7 @@
 // oxlint-disable no-await-in-loop -- A response stream must be read and size-checked in order.
 import {getErrorMessage} from 'src/utils/get-error-message'
 
-import {planFeedSync} from './plan-sync'
+import {MAXIMUM_ITEMS_PER_SYNC, planFeedSync} from './plan-sync'
 import type {FeedGenerationSettings} from './generation-settings'
 import {type FeedConnection, normalizeFeedDocumentUrl} from './schema'
 import {
@@ -13,7 +13,7 @@ import {
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
 import {
   cleanFeedText,
-  createFeedScript,
+  composeFeedScript,
   extractArticleText,
   type ParsedFeedItem,
   parseFeedXml,
@@ -118,7 +118,7 @@ const resolveContent = async (options: ResolveContentOptions) => {
   const feedContent = cleanFeedText(options.item.content)
 
   if (options.item.contentKind === 'full' && feedContent.length > 0) {
-    return options.item.content
+    return feedContent
   }
 
   if (options.item.link.length === 0) {
@@ -184,7 +184,7 @@ const processFeedItem = async (options: ProcessFeedItemOptions): Promise<string 
     return null
   }
 
-  const script = createFeedScript(itemTitle, content)
+  const script = composeFeedScript(itemTitle, content)
 
   if (script.length > MAXIMUM_FEED_SCRIPT_LENGTH) {
     const item = {
@@ -245,8 +245,8 @@ const processFeedItem = async (options: ProcessFeedItemOptions): Promise<string 
     version: 1,
     voiceId: generationSettings.voiceId,
   } satisfies FeedDialogueJob
-  await options.repository.queue(job, item)
-  return options.autoPrepare === false ? null : jobId
+  const queued = await options.repository.queue(job, item)
+  return queued && options.autoPrepare !== false ? jobId : null
 }
 
 interface CreateIgnoredItemOptions {
@@ -273,20 +273,71 @@ const createIgnoredItem = (options: CreateIgnoredItemOptions): FeedItemRecord =>
   version: 1,
 })
 
+const processItems = async (
+  options: SynchronizeFeedsOptions,
+  connection: FeedConnection,
+  feedTitle: string,
+  items: ReadonlyArray<ParsedFeedItem>,
+) => {
+  const nowIso = options.now.toISOString()
+  const queuedIds = await Promise.all(
+    items.map((item) =>
+      processFeedItem({
+        autoPrepare: options.autoPrepare,
+        connection,
+        createId: options.createId,
+        feedTitle,
+        fetcher: options.fetcher,
+        item,
+        nowIso,
+        repository: options.repository,
+        resolveGenerationSettings: options.resolveGenerationSettings,
+      }),
+    ),
+  )
+  return queuedIds.filter((jobId): jobId is string => jobId !== null)
+}
+
 const synchronizeConnection = async (
   options: SynchronizeFeedsOptions,
   connection: FeedConnection,
 ): Promise<ReadonlyArray<string>> => {
+  const [storedItems, backlog] = await Promise.all([
+    options.repository.listItems(connection.id),
+    options.repository.loadBacklog(connection.id),
+  ])
+  const storedIds = new Set(storedItems.map((item) => item.feedItemId))
+  if (backlog !== undefined) {
+    const pending = backlog.items.filter((item) => !storedIds.has(item.id))
+    const jobs = await processItems(
+      options,
+      connection,
+      backlog.feedTitle,
+      pending.slice(0, MAXIMUM_ITEMS_PER_SYNC),
+    )
+    const remaining = pending.slice(MAXIMUM_ITEMS_PER_SYNC)
+    await options.repository.replaceBacklog({
+      connectionId: connection.id,
+      expectedRevision: backlog.revision,
+      next: remaining.length === 0 ? null : {feedTitle: backlog.feedTitle, items: remaining},
+    })
+    return jobs
+  }
   const xml = await fetchText(options.fetcher, connection.url, MAXIMUM_FEED_BYTES)
   const feed = parseFeedXml(xml, connection.url)
-  const storedItems = await options.repository.listItems(connection.id)
-  const {ignoredItems, itemsToProcess} = planFeedSync({
+  const {deferredItems, ignoredItems, itemsToProcess} = planFeedSync({
     items: feed.items,
     now: options.now,
-    storedItemIds: storedItems.map((item) => item.feedItemId),
+    storedItemIds: [...storedIds],
     subscriptionCreatedAt: connection.createdAt,
   })
 
+  if (deferredItems !== undefined) {
+    await options.repository.replaceBacklog({
+      connectionId: connection.id,
+      next: {feedTitle: feed.title, items: deferredItems},
+    })
+  }
   if (ignoredItems.length === 0 && itemsToProcess.length === 0) {
     return []
   }
@@ -310,22 +361,7 @@ const synchronizeConnection = async (
     )
   }
 
-  const queuedIds = await Promise.all(
-    itemsToProcess.map((item) =>
-      processFeedItem({
-        autoPrepare: options.autoPrepare,
-        connection,
-        createId: options.createId,
-        feedTitle: feed.title,
-        fetcher: options.fetcher,
-        item,
-        nowIso,
-        repository: options.repository,
-        resolveGenerationSettings: options.resolveGenerationSettings,
-      }),
-    ),
-  )
-  return queuedIds.filter((jobId): jobId is string => jobId !== null)
+  return processItems(options, connection, feed.title, itemsToProcess)
 }
 
 /** Fetches every subscription once and persists only previously unseen feed items. */

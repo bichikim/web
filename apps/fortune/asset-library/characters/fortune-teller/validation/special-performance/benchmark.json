@@ -1,0 +1,289 @@
+{
+  "configuration": {
+    "antialiasing": "msaa",
+    "cpuRates": [1],
+    "measureMillis": 5000,
+    "model": "apps/fortune/public/models/fortune-teller/model.poffo",
+    "modes": ["main"],
+    "motion": "Idle:0",
+    "resolution": 1,
+    "runs": 2,
+    "viewport": {
+      "height": 700,
+      "width": 900
+    },
+    "warmupMillis": 2000
+  },
+  "variants": [
+    {
+      "name": "original-before",
+      "model": "/Users/bichi/.codex/worktrees/064e/web/apps/wallpaper-web/public/models/white-cat/model.poffo",
+      "playerRoot": "file:///tmp/fortune-special/player-before/"
+    },
+    {
+      "name": "fortune-before",
+      "model": "/Users/bichi/.codex/worktrees/064e/web/apps/fortune/public/models/fortune-teller/model.poffo",
+      "playerRoot": "file:///tmp/fortune-special/player-before/"
+    },
+    {
+      "name": "fortune-after",
+      "model": "/Users/bichi/.codex/worktrees/064e/web/apps/fortune/public/models/fortune-teller/model.poffo",
+      "playerRoot": "file:///Users/bichi/.codex/worktrees/064e/web/packages/puppet/"
+    },
+    {
+      "name": "original-after",
+      "model": "/Users/bichi/.codex/worktrees/064e/web/apps/wallpaper-web/public/models/white-cat/model.poffo",
+      "playerRoot": "file:///Users/bichi/.codex/worktrees/064e/web/packages/puppet/"
+    }
+  ],
+  "results": [
+    {
+      "variant": "original-before",
+      "computation": "main",
+      "cpu": 1,
+      "run": 1,
+      "buffering": {
+        "enabled": false,
+        "framesAhead": 0,
+        "status": "disabled"
+      },
+      "canvasSize": {
+        "height": 700,
+        "width": 900
+      },
+      "chains": 25,
+      "hardwareConcurrency": 15,
+      "motion": "Idle:0",
+      "parameters": 265,
+      "parts": 852,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "vertices": 34452,
+      "duration": 5024.9,
+      "errors": [],
+      "frameP95": 25.099999999998545,
+      "observedModelFPS": 53.53340364982388,
+      "rafFPS": 53.53340364982388,
+      "updatedFPS": 53.732412585325086,
+      "heapBytes": 222812616,
+      "scriptSeconds": 5.023574,
+      "taskSeconds": 5.059184999999999
+    },
+    {
+      "variant": "fortune-before",
+      "computation": "main",
+      "cpu": 1,
+      "run": 1,
+      "buffering": {
+        "enabled": false,
+        "framesAhead": 0,
+        "status": "disabled"
+      },
+      "canvasSize": {
+        "height": 700,
+        "width": 900
+      },
+      "chains": 40,
+      "hardwareConcurrency": 15,
+      "motion": "Idle:0",
+      "parameters": 284,
+      "parts": 510,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "vertices": 37946,
+      "duration": 5000,
+      "errors": [],
+      "frameP95": 33.400000000000546,
+      "observedModelFPS": 34.6,
+      "rafFPS": 34.6,
+      "updatedFPS": 34.8,
+      "heapBytes": 183112092,
+      "scriptSeconds": 5.023909,
+      "taskSeconds": 5.049127
+    },
+    {
+      "variant": "fortune-after",
+      "computation": "main",
+      "cpu": 1,
+      "run": 1,
+      "buffering": {
+        "enabled": false,
+        "framesAhead": 0,
+        "status": "disabled"
+      },
+      "canvasSize": {
+        "height": 700,
+        "width": 900
+      },
+      "chains": 40,
+      "hardwareConcurrency": 15,
+      "motion": "Idle:0",
+      "parameters": 284,
+      "parts": 510,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "vertices": 37946,
+      "duration": 5012.4,
+      "errors": [],
+      "frameP95": 25.099999999999454,
+      "observedModelFPS": 44.090655175165594,
+      "rafFPS": 44.090655175165594,
+      "updatedFPS": 44.29016040220254,
+      "heapBytes": 322096872,
+      "scriptSeconds": 5.017716,
+      "taskSeconds": 5.046213999999999
+    },
+    {
+      "variant": "original-after",
+      "computation": "main",
+      "cpu": 1,
+      "run": 1,
+      "buffering": {
+        "enabled": false,
+        "framesAhead": 0,
+        "status": "disabled"
+      },
+      "canvasSize": {
+        "height": 700,
+        "width": 900
+      },
+      "chains": 25,
+      "hardwareConcurrency": 15,
+      "motion": "Idle:0",
+      "parameters": 265,
+      "parts": 852,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "vertices": 34452,
+      "duration": 5016.5,
+      "errors": [],
+      "frameP95": 25.100000000000364,
+      "observedModelFPS": 50.63291139240506,
+      "rafFPS": 50.63291139240506,
+      "updatedFPS": 50.8322535632413,
+      "heapBytes": 223935788,
+      "scriptSeconds": 5.0168919999999995,
+      "taskSeconds": 5.052001000000001
+    },
+    {
+      "variant": "original-after",
+      "computation": "main",
+      "cpu": 1,
+      "run": 2,
+      "buffering": {
+        "enabled": false,
+        "framesAhead": 0,
+        "status": "disabled"
+      },
+      "canvasSize": {
+        "height": 700,
+        "width": 900
+      },
+      "chains": 25,
+      "hardwareConcurrency": 15,
+      "motion": "Idle:0",
+      "parameters": 265,
+      "parts": 852,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "vertices": 34452,
+      "duration": 5024.999999999999,
+      "errors": [],
+      "frameP95": 25.100000000000364,
+      "observedModelFPS": 51.14427860696518,
+      "rafFPS": 51.14427860696518,
+      "updatedFPS": 51.34328358208956,
+      "heapBytes": 249596968,
+      "scriptSeconds": 5.024482,
+      "taskSeconds": 5.057920000000001
+    },
+    {
+      "variant": "fortune-after",
+      "computation": "main",
+      "cpu": 1,
+      "run": 2,
+      "buffering": {
+        "enabled": false,
+        "framesAhead": 0,
+        "status": "disabled"
+      },
+      "canvasSize": {
+        "height": 700,
+        "width": 900
+      },
+      "chains": 40,
+      "hardwareConcurrency": 15,
+      "motion": "Idle:0",
+      "parameters": 284,
+      "parts": 510,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "vertices": 37946,
+      "duration": 5007.400000000001,
+      "errors": [],
+      "frameP95": 25.300000000000182,
+      "observedModelFPS": 42.137636298278544,
+      "rafFPS": 42.137636298278544,
+      "updatedFPS": 42.337340735711145,
+      "heapBytes": 152836836,
+      "scriptSeconds": 5.029179,
+      "taskSeconds": 5.055601
+    },
+    {
+      "variant": "fortune-before",
+      "computation": "main",
+      "cpu": 1,
+      "run": 2,
+      "buffering": {
+        "enabled": false,
+        "framesAhead": 0,
+        "status": "disabled"
+      },
+      "canvasSize": {
+        "height": 700,
+        "width": 900
+      },
+      "chains": 40,
+      "hardwareConcurrency": 15,
+      "motion": "Idle:0",
+      "parameters": 284,
+      "parts": 510,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "vertices": 37946,
+      "duration": 5033.199999999999,
+      "errors": [],
+      "frameP95": 33.399999999999636,
+      "observedModelFPS": 33.37836763887786,
+      "rafFPS": 33.37836763887786,
+      "updatedFPS": 33.57704839863308,
+      "heapBytes": 182440192,
+      "scriptSeconds": 5.066936999999999,
+      "taskSeconds": 5.089072
+    },
+    {
+      "variant": "original-before",
+      "computation": "main",
+      "cpu": 1,
+      "run": 2,
+      "buffering": {
+        "enabled": false,
+        "framesAhead": 0,
+        "status": "disabled"
+      },
+      "canvasSize": {
+        "height": 700,
+        "width": 900
+      },
+      "chains": 25,
+      "hardwareConcurrency": 15,
+      "motion": "Idle:0",
+      "parameters": 265,
+      "parts": 852,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+      "vertices": 34452,
+      "duration": 5008.300000000001,
+      "errors": [],
+      "frameP95": 25.100000000000364,
+      "observedModelFPS": 53.11183435497074,
+      "rafFPS": 53.11183435497074,
+      "updatedFPS": 53.31150290517739,
+      "heapBytes": 236850868,
+      "scriptSeconds": 5.002631,
+      "taskSeconds": 5.0365839999999995
+    }
+  ]
+}

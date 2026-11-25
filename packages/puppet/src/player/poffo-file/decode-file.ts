@@ -16,8 +16,12 @@ const checkedSection = async (source: Blob, hash: string, signal?: AbortSignal):
   return source
 }
 
-/** Reads a complete v1 file by content, validating offsets, checksums, lengths and value tags. */
-export const decodeFile = async (source: Blob, signal?: AbortSignal): Promise<unknown> => {
+/** Reads v1 and v2 files by content, validating offsets, checksums, lengths and value tags. */
+export const decodeFile = async (
+  source: Blob,
+  signal?: AbortSignal,
+  onRuntimeSection?: (section: Blob) => void,
+): Promise<unknown> => {
   signal?.throwIfAborted()
   const header = decodeHeader(
     new Uint8Array(
@@ -78,5 +82,7 @@ export const decodeFile = async (source: Blob, signal?: AbortSignal): Promise<un
     offset += asset.encodedLength
   }
   signal?.throwIfAborted()
-  return decodeValue({assets, bytes: metadata})
+  const document = decodeValue({assets, bytes: metadata, version: header.version})
+  onRuntimeSection?.(source.slice(0, metadataEnd))
+  return document
 }

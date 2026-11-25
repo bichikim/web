@@ -1,5 +1,5 @@
 import type {APIEvent} from '@solidjs/start/server'
-import {cloudTextRequestSchema} from 'src/features/cloud-text/contracts'
+import {CLOUD_TEXT_LIMITS, cloudTextRequestSchema} from 'src/features/cloud-text/contracts'
 import {resolveUserRequestOrUnavailable} from 'src/server/auth/resolve-user-request-or-unavailable'
 import {readCloudTextUsage} from 'src/server/cloud-text/quota'
 import {generateCloudText} from 'src/server/cloud-text/service'
@@ -19,7 +19,6 @@ const HTTP_UNAUTHORIZED = 401
 const HTTP_CONFLICT = 409
 const HTTP_TOO_MANY_REQUESTS = 429
 const HTTP_SERVICE_UNAVAILABLE = 503
-const MAXIMUM_BODY_BYTES = 200_000
 
 const authenticate = async (request: Request) => {
   const resolved = await resolveUserRequestOrUnavailable(request, {
@@ -109,7 +108,7 @@ export const POST = async (event: APIEvent): Promise<Response> => {
   let body: unknown
   try {
     const text = await event.request.text()
-    if (new TextEncoder().encode(text).length > MAXIMUM_BODY_BYTES) {
+    if (new TextEncoder().encode(text).length > CLOUD_TEXT_LIMITS.bodyBytes) {
       return noStoreJson(
         {error: 'invalid_request'},
         {cookies: identity.cookies, status: HTTP_BAD_REQUEST},

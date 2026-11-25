@@ -1,6 +1,6 @@
 ---
 name: solidstart
-description: Apply repository SolidStart conventions for routes, SSR/browser boundaries, client-only APIs, server functions, and Solid Router queries or actions.
+description: Apply SolidStart conventions when changing routes, SSR or browser boundaries, server functions, or Solid Router queries and actions.
 ---
 
 # SolidStart

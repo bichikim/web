@@ -1,4 +1,4 @@
-import {Show} from 'solid-js'
+import {createEffect, createSignal, Show} from 'solid-js'
 import {SDesktopDock} from './SDesktopDock'
 import {SDesktopSlideshow} from './SDesktopSlideshow'
 import {SDesktopWallpaperVideo} from './SDesktopWallpaperVideo'
@@ -6,11 +6,20 @@ import {SDesktopWallpaperVideo} from './SDesktopWallpaperVideo'
 interface SDesktopPreviewProps {
   /** Display the looping window wallpaper; omitted uses the music-cover album. */
   readonly live?: boolean
-  /** Pause the live wallpaper during scene transitions; omitted keeps it playing. */
+  /** Pause the slideshow and live wallpaper during scene transitions; omitted keeps them playing. */
   readonly playing?: boolean
 }
 
 export const SDesktopPreview = (props: SDesktopPreviewProps) => {
+  const [albumMounted, setAlbumMounted] = createSignal(false)
+  const [videoMounted, setVideoMounted] = createSignal(false)
+  createEffect(() => {
+    if (props.live) {
+      setVideoMounted(true)
+    } else {
+      setAlbumMounted(true)
+    }
+  })
   return (
     <section
       aria-label="Poffo Wallpaper 데스크톱 미리보기"
@@ -23,9 +32,16 @@ export const SDesktopPreview = (props: SDesktopPreviewProps) => {
           shadow-[0_24px_60px_-20px_#25232c80]"
       >
         <div class="relative h-full w-full overflow-hidden rounded-[clamp(5px,0.7vw,10px)] bg-lilac">
-          <Show when={props.live} fallback={<SDesktopSlideshow />}>
-            <SDesktopWallpaperVideo playing={props.playing} />
-          </Show>
+          <div hidden={props.live} class="absolute inset-0">
+            <Show when={albumMounted()}>
+              <SDesktopSlideshow playing={!props.live && props.playing !== false} />
+            </Show>
+          </div>
+          <div hidden={!props.live} class="absolute inset-0">
+            <Show when={videoMounted()}>
+              <SDesktopWallpaperVideo playing={props.live && props.playing !== false} />
+            </Show>
+          </div>
           <div
             class="absolute inset-x-0 top-0 flex h-[clamp(24px,3dvh,30px)] items-center
               bg-white/45 px-[3%] text-[clamp(7px,1.1dvh,11px)] text-ink backdrop-blur-md"

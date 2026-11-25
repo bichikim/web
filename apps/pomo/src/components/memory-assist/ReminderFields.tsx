@@ -1,4 +1,6 @@
 import {PInput} from 'src/components/p-input/PInput'
+import {normalizePasteNumericInput} from '@winter-love/supertonic/normalize-paste-numeric-input'
+import {normalizeClockInput, readFormattedPaste} from 'src/utils/formatted-input-paste'
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 
@@ -48,10 +50,36 @@ const getRecallOptions = (): ReadonlyArray<PSelectOption<MemoryRecallMode>> => [
 const getWholeMinutes = (value: number, minimum: number) =>
   Number.isFinite(value) ? Math.max(minimum, Math.trunc(value)) : minimum
 
+type ReminderMinuteField =
+  | 'exactReminderAdvanceMinutes'
+  | 'exactReminderRepeatIntervalMinutes'
+  | 'exactReminderRepeatUntilMinutes'
+
+const normalizeMinutesInput = (value: string): string | null => {
+  const normalized = normalizePasteNumericInput(value).trim()
+  return /^\d+$/u.test(normalized) && Number.isSafeInteger(Number(normalized)) ? normalized : null
+}
+
 export const ReminderFields = (props: ReminderFieldsProps) => {
   const updateDraft = (changes: Partial<ReminderDraft>) => {
     const currentDraft = props.draft()
     props.onChange({...currentDraft, ...changes})
+  }
+  const handleTimePaste = (event: ClipboardEvent) => {
+    const reminderTime = readFormattedPaste(event, normalizeClockInput)
+    if (reminderTime !== null) {
+      updateDraft({reminderTime})
+    }
+  }
+  const handleMinutesPaste = (
+    event: ClipboardEvent,
+    field: ReminderMinuteField,
+    minimum: number,
+  ) => {
+    const minutes = readFormattedPaste(event, normalizeMinutesInput)
+    if (minutes !== null) {
+      updateDraft({[field]: getWholeMinutes(Number(minutes), minimum)})
+    }
   }
 
   const handleExactEnabledChange = (exactEnabled: boolean) => {
@@ -86,6 +114,7 @@ export const ReminderFields = (props: ReminderFieldsProps) => {
               unstyled
               class={INPUT_CLASSES}
               onInput={(event) => updateDraft({reminderTime: event.currentTarget.value})}
+              onPaste={handleTimePaste}
               type="time"
               value={props.draft().reminderTime}
             />
@@ -116,6 +145,7 @@ export const ReminderFields = (props: ReminderFieldsProps) => {
                 exactReminderAdvanceMinutes: getWholeMinutes(event.currentTarget.valueAsNumber, 0),
               })
             }
+            onPaste={(event) => handleMinutesPaste(event, 'exactReminderAdvanceMinutes', 0)}
             type="number"
             value={props.draft().exactReminderAdvanceMinutes}
           />
@@ -144,6 +174,9 @@ export const ReminderFields = (props: ReminderFieldsProps) => {
                     ),
                   })
                 }
+                onPaste={(event) =>
+                  handleMinutesPaste(event, 'exactReminderRepeatIntervalMinutes', 1)
+                }
                 type="number"
                 value={props.draft().exactReminderRepeatIntervalMinutes}
               />
@@ -162,6 +195,7 @@ export const ReminderFields = (props: ReminderFieldsProps) => {
                     ),
                   })
                 }
+                onPaste={(event) => handleMinutesPaste(event, 'exactReminderRepeatUntilMinutes', 0)}
                 type="number"
                 value={props.draft().exactReminderRepeatUntilMinutes}
               />

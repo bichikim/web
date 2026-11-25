@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PTooltipContent, PTooltipProvider} from '../../tooltip'
 
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
@@ -23,7 +24,7 @@ class TestPointerEvent extends MouseEvent {
   }
 }
 
-const renderTrack = () => {
+const renderTrack = (accessibleName = 'One · Artist · 밀어서 삭제') => {
   const onRemove = vi.fn()
   const onSelect = vi.fn()
   render(() => (
@@ -37,7 +38,7 @@ const renderTrack = () => {
   ))
 
   return {
-    button: screen.getByRole('button', {name: 'One · Artist · 밀어서 삭제'}),
+    button: screen.getByRole('button', {name: accessibleName}),
     onRemove,
     onSelect,
   }
@@ -69,6 +70,22 @@ describe('PSwipeTrackItem', () => {
   afterEach(() => {
     cleanup()
     vi.unstubAllGlobals()
+  })
+
+  it('should announce the English swipe hint and the ready-to-delete state', () => {
+    const originalGetLocale = getLocale
+    overwriteGetLocale(() => 'en')
+    try {
+      const {button} = renderTrack('One · Artist · Swipe to delete')
+      fireEvent.pointerDown(button, {button: 0, clientX: 0, clientY: 0, pointerId: 1})
+      fireEvent.pointerMove(button, {clientX: 64, clientY: 0, pointerId: 1})
+
+      expect(screen.getByText('One, release to delete')).toHaveAttribute('aria-live', 'polite')
+      fireEvent.pointerCancel(button, {pointerId: 1})
+      expect(screen.queryByText('One, release to delete')).toBeNull()
+    } finally {
+      overwriteGetLocale(originalGetLocale)
+    }
   })
 
   it.each([false, true])('should show the full title on hover when current is %s', (current) => {
@@ -117,7 +134,7 @@ describe('PSwipeTrackItem', () => {
     const {button, onRemove, onSelect} = renderTrack()
 
     swipe(button, 63)
-    fireEvent.click(button)
+    fireEvent.click(button, {detail: 1})
 
     expect(onRemove).not.toHaveBeenCalled()
     expect(onSelect).not.toHaveBeenCalled()
@@ -179,7 +196,7 @@ describe('PSwipeTrackItem', () => {
     expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('80px')
 
     fireEvent.pointerCancel(button, {pointerId: 1})
-    fireEvent.click(button)
+    fireEvent.click(button, {detail: 1})
 
     expect(button.style.transform).toBe('')
     expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('0px')
@@ -217,7 +234,7 @@ describe('PSwipeTrackItem', () => {
     expect(button.closest('li')?.style.getPropertyValue('--pomo-swipe-offset')).toBe('40px')
 
     fireEvent(button, new TestPointerEvent('lostpointercapture', {pointerId: 1}))
-    fireEvent.click(button)
+    fireEvent.click(button, {detail: 1})
 
     expect(onRemove).not.toHaveBeenCalled()
     expect(onSelect).not.toHaveBeenCalled()
@@ -269,4 +286,20 @@ describe('PSwipeTrackItem', () => {
     expect(button.textContent).toContain('One')
     expect(button.textContent).toContain('Artist')
   })
+})
+
+it('should accept keyboard activation after a pointer swipe is cancelled', () => {
+  vi.stubGlobal('PointerEvent', TestPointerEvent)
+  try {
+    const {button, onRemove, onSelect} = renderTrack()
+    fireEvent.pointerDown(button, {button: 0, clientX: 0, clientY: 0, pointerId: 1})
+    fireEvent.pointerMove(button, {clientX: 65, clientY: 0, pointerId: 1})
+    fireEvent.pointerCancel(button, {pointerId: 1})
+    fireEvent.click(button, {detail: 0})
+    expect(onRemove).not.toHaveBeenCalled()
+    expect(onSelect).toHaveBeenCalledOnce()
+  } finally {
+    cleanup()
+    vi.unstubAllGlobals()
+  }
 })

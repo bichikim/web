@@ -16,8 +16,8 @@ import type {CreateFeatureRequestInput, FeatureRequest} from './types'
 export interface FeatureRequestsController extends FeatureRequestListView {
   readonly createRequest: (input: CreateFeatureRequestInput) => Promise<CreateFeatureRequestResult>
   readonly isSubmitting: () => boolean
+  readonly isVoting: (requestId: string) => boolean
   readonly voteRequest: (requestId: string) => Promise<VoteFeatureRequestResult>
-  readonly votingRequestId: () => string | null
 }
 
 const preserveCurrentVotesInRefresh = (
@@ -62,11 +62,13 @@ export const useFeatureRequests = (): FeatureRequestsController => {
     refresh,
   } = list
   const [isSubmitting, setIsSubmitting] = createSignal(false)
-  const [votingRequestId, setVotingRequestId] = createSignal<string | null>(null)
+  const [pendingVotes, setPendingVotes] = createSignal(
+    new Map<string, Promise<VoteFeatureRequestResult>>(),
+  )
   createEffect(
     on(scope, () => {
       setIsSubmitting(false)
-      setVotingRequestId(null)
+      setPendingVotes(new Map())
     }),
   )
   const createRequest = async (
@@ -103,28 +105,35 @@ export const useFeatureRequests = (): FeatureRequestsController => {
     }))
   }
 
-  const voteRequest = async (requestId: string): Promise<VoteFeatureRequestResult> => {
+  const voteRequest = (requestId: string): Promise<VoteFeatureRequestResult> => {
+    const existing = pendingVotes().get(requestId)
+    if (existing !== undefined) {
+      return existing
+    }
     const session = scope()
-    setVotingRequestId(requestId)
-
-    try {
-      const result = await voteFeatureRequest(requestId)
-
-      if (result.status === 'voted' || result.status === 'already-voted') {
-        await invalidateFeatureRequestPages()
-        if (session === scope()) {
-          updateRequestVote(requestId, result.status === 'voted')
+    const isCurrent = () => session === scope() && pendingVotes().get(requestId) === pending
+    const pending: Promise<VoteFeatureRequestResult> = Promise.resolve().then(async () => {
+      try {
+        const result = await voteFeatureRequest(requestId)
+        if (result.status === 'voted' || result.status === 'already-voted') {
+          await invalidateFeatureRequestPages()
+          if (isCurrent()) {
+            updateRequestVote(requestId, result.status === 'voted')
+          }
+        }
+        return result
+      } catch {
+        return {status: 'unavailable'}
+      } finally {
+        if (isCurrent()) {
+          const next = new Map(pendingVotes())
+          next.delete(requestId)
+          setPendingVotes(next)
         }
       }
-
-      return result
-    } catch {
-      return {status: 'unavailable'}
-    } finally {
-      if (session === scope()) {
-        setVotingRequestId(null)
-      }
-    }
+    })
+    setPendingVotes((current) => new Map(current).set(requestId, pending))
+    return pending
   }
 
   return {
@@ -133,12 +142,12 @@ export const useFeatureRequests = (): FeatureRequestsController => {
     isLoading,
     isLoadingMore,
     isSubmitting,
+    isVoting: (requestId) => pendingVotes().has(requestId),
     loadFailed,
     loadMore,
     loadMoreFailed,
     refresh,
     requests,
     voteRequest,
-    votingRequestId,
   }
 }

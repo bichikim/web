@@ -9,7 +9,12 @@ export const readVtubeSettings = (
   if (!archive.entries.has(path)) {
     return undefined
   }
-  const settings = archive.readJson(path)
+  let settings: Record<string, unknown>
+  try {
+    settings = archive.readJson(path)
+  } catch {
+    return undefined
+  }
   const references = jsonObject(settings.FileReferences)
   return resolveCubismAsset(path, jsonString(references.Model)) === modelPath ? settings : undefined
 }

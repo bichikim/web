@@ -1,0 +1,32 @@
+[package]
+name = "poffo-gpu"
+version.workspace = true
+edition.workspace = true
+[lib]
+crate-type = ["cdylib", "rlib"]
+[dependencies]
+poffo-runtime.workspace = true
+wgpu = { version = "=29.0.4", default-features = false, features = ["std", "webgpu", "wgsl"] }
+wasm-bindgen = "=0.2.129"
+wasm-bindgen-futures = "=0.4.79"
+web-sys = { version = "=0.3.106", features = [
+  "HtmlCanvasElement",
+  "OffscreenCanvas",
+  "ImageBitmap",
+  "console",
+] }
+js-sys = "=0.3.106"
+serde.workspace = true
+serde_json.workspace = true
+bytemuck = { version = "=1.25.2", features = ["derive"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6.4"
+objc2-metal = { version = "0.3.2", default-features = false, features = [
+  "std",
+  "MTLCommandBuffer",
+] }
+wgpu = { version = "=29.0.4", default-features = false, features = ["std", "metal", "wgsl"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+wgpu = { version = "=29.0.4", default-features = false, features = ["std", "dx12", "wgsl"] }

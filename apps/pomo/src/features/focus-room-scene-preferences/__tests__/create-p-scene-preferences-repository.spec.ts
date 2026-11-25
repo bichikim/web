@@ -1,4 +1,5 @@
 import {describe, expect, it, vi} from 'vitest'
+import {DEFAULT_P_SCENE_PREFERENCES} from '../model'
 import {
   createPScenePreferencesRepository,
   type PScenePreferencesStorage,
@@ -107,6 +108,53 @@ describe('createPScenePreferencesRepository', () => {
 
     await expect(repository.read()).resolves.toEqual(preferences)
     expect(writeWeb).toHaveBeenCalledWith('pomo:focus-room-scene-preferences:v1', preferences)
+  })
+
+  it('should load defaults when native and browser reads both fail', async () => {
+    const writeWeb = vi.fn<PScenePreferencesStorage['writeWeb']>().mockReturnValue(null)
+    const repository = createPScenePreferencesRepository({
+      storage: {
+        readToss: vi.fn(async () => {
+          throw new Error('native unavailable')
+        }),
+        readWeb: () => {
+          throw new Error('browser unavailable')
+        },
+        usesTossStorage: () => true,
+        writeToss: vi.fn(async () => undefined),
+        writeWeb,
+      },
+    })
+
+    await expect(repository.read()).resolves.toEqual(DEFAULT_P_SCENE_PREFERENCES)
+    expect(writeWeb).not.toHaveBeenCalled()
+  })
+
+  it('should reject a write when both native and web storage fail', async () => {
+    const {storage} = createRepository()
+    const webError = new Error('web unavailable')
+    const nativeError = new Error('native unavailable')
+    storage.writeToss.mockRejectedValueOnce(nativeError)
+    const repository = createPScenePreferencesRepository({
+      storage: {...storage, writeWeb: () => webError},
+    })
+
+    await expect(repository.write(preferences)).rejects.toThrow(
+      'Failed to persist scene preferences.',
+    )
+  })
+
+  it('should restore a changed preference from successful native storage when the web mirror fails', async () => {
+    const {storage} = createRepository()
+    storage.writeToss.mockImplementation(async (_key, value) => {
+      storage.readToss.mockResolvedValue(value)
+    })
+    const repository = createPScenePreferencesRepository({
+      storage: {...storage, writeWeb: () => new Error('web unavailable')},
+    })
+
+    await expect(repository.write(preferences)).resolves.toBeUndefined()
+    await expect(repository.read()).resolves.toEqual(preferences)
   })
 
   it('should preserve browser preferences after a native write fails', async () => {

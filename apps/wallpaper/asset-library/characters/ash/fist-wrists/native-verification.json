@@ -1,0 +1,163 @@
+{
+  "source": "Actual Wallpaper app Worker frames and live physics",
+  "pointerInputUsed": false,
+  "sha256": "f32f821cd54c98c8a925dd40418322b72db8a276a352787d623c45a7ac47236f",
+  "poses": [
+    {
+      "name": "rest",
+      "maximumVertexError": 0.0009121600401158503,
+      "contacts": [
+        {
+          "side": "left",
+          "bodyError": 0.00040147111712940386,
+          "contactError": 0.00026313925537231164,
+          "columns": 63,
+          "visibleConnectionParts": ["coat-free:fists-left:ArtMesh900", "coat-free:fists-left:hand"]
+        },
+        {
+          "side": "right",
+          "bodyError": 0.0005670614082191605,
+          "contactError": 0.0001886513901668977,
+          "columns": 54,
+          "visibleConnectionParts": [
+            "coat-free:fists-right:ArtMesh994",
+            "coat-free:fists-right:hand"
+          ]
+        }
+      ],
+      "head": [0, 0],
+      "body": [0, 0],
+      "physics": [0.01198802113902526, 0.0085628722421609, 0.01198802113902526]
+    },
+    {
+      "name": "up",
+      "maximumVertexError": 0.0005688750838999113,
+      "contacts": [
+        {
+          "side": "left",
+          "bodyError": 0.00031844375303080596,
+          "contactError": 0.0002740383884499165,
+          "columns": 63,
+          "visibleConnectionParts": ["coat-free:fists-left:ArtMesh900", "coat-free:fists-left:hand"]
+        },
+        {
+          "side": "right",
+          "bodyError": 0.0002669303048605798,
+          "contactError": 0.0002026776633850734,
+          "columns": 54,
+          "visibleConnectionParts": [
+            "coat-free:fists-right:ArtMesh994",
+            "coat-free:fists-right:hand"
+          ]
+        }
+      ],
+      "head": [0, 30],
+      "body": [0, 10],
+      "physics": [0, 0, 0]
+    },
+    {
+      "name": "down",
+      "maximumVertexError": 0.0006882289740133274,
+      "contacts": [
+        {
+          "side": "left",
+          "bodyError": 0.00034671778530537267,
+          "contactError": 0.00024970030179075417,
+          "columns": 63,
+          "visibleConnectionParts": ["coat-free:fists-left:ArtMesh900", "coat-free:fists-left:hand"]
+        },
+        {
+          "side": "right",
+          "bodyError": 0.00024658242364239413,
+          "contactError": 0.00031048165413415725,
+          "columns": 54,
+          "visibleConnectionParts": [
+            "coat-free:fists-right:ArtMesh994",
+            "coat-free:fists-right:hand"
+          ]
+        }
+      ],
+      "head": [0, -30],
+      "body": [0, -10],
+      "physics": [0, 0, 0]
+    },
+    {
+      "name": "left",
+      "maximumVertexError": 0.0004945136943206307,
+      "contacts": [
+        {
+          "side": "left",
+          "bodyError": 0.0003184782058269775,
+          "contactError": 0.0002638079307303288,
+          "columns": 63,
+          "visibleConnectionParts": ["coat-free:fists-left:ArtMesh900", "coat-free:fists-left:hand"]
+        },
+        {
+          "side": "right",
+          "bodyError": 0.0003129645056105801,
+          "contactError": 0.00024398683290718755,
+          "columns": 54,
+          "visibleConnectionParts": [
+            "coat-free:fists-right:ArtMesh994",
+            "coat-free:fists-right:hand"
+          ]
+        }
+      ],
+      "head": [-30, 0],
+      "body": [-10, 0],
+      "physics": [-0.00793966920826496, -0.005671192291617829, -0.00793966920826496]
+    },
+    {
+      "name": "right",
+      "maximumVertexError": 0.0005288903175824089,
+      "contacts": [
+        {
+          "side": "left",
+          "bodyError": 0.00030246201777117676,
+          "contactError": 0.00019580098127692795,
+          "columns": 63,
+          "visibleConnectionParts": ["coat-free:fists-left:ArtMesh900", "coat-free:fists-left:hand"]
+        },
+        {
+          "side": "right",
+          "bodyError": 0.0003521474486660736,
+          "contactError": 0.00024714245365055733,
+          "columns": 54,
+          "visibleConnectionParts": [
+            "coat-free:fists-right:ArtMesh994",
+            "coat-free:fists-right:hand"
+          ]
+        }
+      ],
+      "head": [30, 0],
+      "body": [10, 0],
+      "physics": [0.007349556352328622, 0.005249683108806158, 0.007349556352328622]
+    },
+    {
+      "name": "up-again",
+      "maximumVertexError": 0.00048645439119354705,
+      "contacts": [
+        {
+          "side": "left",
+          "bodyError": 0.0002253453653793258,
+          "contactError": 0.0002416496565292102,
+          "columns": 63,
+          "visibleConnectionParts": ["coat-free:fists-left:ArtMesh900", "coat-free:fists-left:hand"]
+        },
+        {
+          "side": "right",
+          "bodyError": 0.00033626546155574033,
+          "contactError": 0.00025330266058833973,
+          "columns": 54,
+          "visibleConnectionParts": [
+            "coat-free:fists-right:ArtMesh994",
+            "coat-free:fists-right:hand"
+          ]
+        }
+      ],
+      "head": [0, 30],
+      "body": [0, 10],
+      "physics": [-0.003040265835127223, -0.002171618453662302, -0.003040265835127223]
+    }
+  ]
+}

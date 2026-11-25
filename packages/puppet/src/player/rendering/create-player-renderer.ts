@@ -1,7 +1,14 @@
+import type {NativePlayerSurface} from '../native-backend'
+import type {GeometryConnection} from '../geometry/types'
 import {createRenderLoop} from './create-render-loop'
 import type {ComputedRenderFrame} from '../internal/compute-render-frame'
 import type {PlayerViewCamera} from '../view-camera'
-import type {PlayerRenderingInfo, PlayerRenderingOptions} from '../rendering-options'
+import type {
+  PlayerAlphaCapture,
+  PlayerFramePresentation,
+  PlayerRenderingInfo,
+  PlayerRenderingOptions,
+} from '../rendering-options'
 import 'pixi.js/unsafe-eval'
 import {Application, Container, RendererType, UPDATE_PRIORITY, type WebGLRenderer} from 'pixi.js'
 import type {PuppetParameterValueMap} from '../../deformation'
@@ -20,18 +27,24 @@ import {renderMaskGroups} from './render-mask-groups'
 import {configureBackdropCopies} from './backdrop-copies'
 import {configureResolvedTargets} from './resolved-targets'
 import {configureFilterResolves} from './filter-resolves'
+import {configureBatchGradients} from './configure-batch-gradients'
 import type {RuntimeLayer, RuntimePart} from './types'
+import {createPartPicker} from './create-part-picker'
 
 const MINIMUM_MASK_RESOLUTION = 0.01
 const MILLISECONDS_PER_SECOND = 1000
 
 export interface CreatePlayerRendererOptions extends PlayerRenderingOptions {
+  /** Optional asynchronous sampling of resident wgpu frame alpha. */
+  readonly alphaCapture?: PlayerAlphaCapture | undefined
   /** Uniform sizing within the screen; omitted to show the whole framed rectangle. */
   readonly fit?: PuppetFit
   readonly externalRendering?: () => boolean
   readonly canvas: HTMLCanvasElement
+  /** Receives asynchronous GPU failures; omitted, callers observe them through flush. */
+  readonly onRenderError?: (cause: Error) => void
   readonly document: PuppetDocument
-  readonly onAfterRender?: () => void
+  readonly onAfterRender?: (() => void) | undefined
   readonly onBeforeRender?: () => void
   readonly resolution?: number
   readonly framing?: PuppetFraming
@@ -42,13 +55,15 @@ export interface CreatePlayerRendererOptions extends PlayerRenderingOptions {
 const getRendererPreference = (options: CreatePlayerRendererOptions): Array<'webgl' | 'webgpu'> => {
   switch (options.renderer) {
     case undefined:
-      return options.onAfterRender === undefined ? ['webgl', 'webgpu'] : ['webgl']
     case 'auto':
+    case 'pixi':
       return ['webgl', 'webgpu']
-    case 'webgl':
+    case 'pixi-webgl':
       return ['webgl']
-    case 'webgpu':
+    case 'pixi-webgpu':
       return ['webgpu']
+    case 'wgpu':
+      throw new Error('The wgpu renderer cannot be initialized by Pixi')
     default: {
       const exhaustive: never = options.renderer
       throw new Error(`Unknown renderer preference: ${exhaustive}`)
@@ -57,6 +72,24 @@ const getRendererPreference = (options: CreatePlayerRendererOptions): Array<'web
 }
 
 export interface PlayerRenderer {
+  /** Borrows the native playback transport on the same device as this renderer. */
+  readonly nativePlayback?: NativePlayerSurface['playback'] | undefined
+  /** Creates a lease for geometry on this device; omitted, geometry remains independently evaluated. */
+  readonly connectGeometry?: () => Promise<GeometryConnection | undefined>
+  /** Starts drawing a completed successor without changing the displayed frame. */
+  readonly prepareFrame?: (frame: ComputedRenderFrame) => void
+  /** Releases device geometry and resolves once an in-flight draw no longer borrows the coordinates. */
+  readonly releasePreparedFrame?: (frame: ComputedRenderFrame) => void | Promise<void>
+
+  /** Submits a prepared frame and resolves once it is displayed, when presentation is asynchronous. */
+  readonly presentFrame?:
+    | ((frame: ComputedRenderFrame) => Promise<PlayerFramePresentation>)
+    | undefined
+  /** Waits for pending presentation; omitted by synchronous renderers. */
+  flush?(): Promise<void>
+  /** Whether prepared images wait for the next display refresh; omitted, display immediately. */
+  /** Cancels pending display without changing the last displayed image. */
+  cancelPresentation?(): void
   /** Borrows a computed frame for this call; copies its vertices into owned GPU geometry. */
   applyPreparedFrame(frame: ComputedRenderFrame): void
   applyFrame(
@@ -70,6 +103,12 @@ export interface PlayerRenderer {
   getPaintOrder(): ReadonlyArray<string>
   /** Deformed vertices of the last applied frame in document coordinates. */
   getPartVertices(partId: string): ArrayLike<number> | undefined
+  /** Reads renderer-owned geometry from the image shown on the canvas. */
+  readonly hitTestDisplayed?:
+    | ((point: {readonly x: number; readonly y: number}) => string | undefined)
+    | undefined
+  /** Returns a painted part at document coordinates. */
+  pickPart(point: {readonly x: number; readonly y: number}): string | undefined
   getRenderingInfo(): PlayerRenderingInfo
   /** Converts canvas CSS pixels to document coordinates. */
   toDocumentPoint(point: {readonly x: number; readonly y: number}): {x: number; y: number}
@@ -160,6 +199,7 @@ const createApplication = async (options: CreatePlayerRendererOptions) => {
   ) {
     configureResolvedTargets(application.renderer as WebGLRenderer)
     configureFilterResolves(application.renderer as WebGLRenderer)
+    configureBatchGradients(application.renderer as WebGLRenderer)
   }
   const presentation = replaceBackBufferPresentation(
     (application.renderer as {backBuffer?: unknown} | undefined)?.backBuffer,
@@ -221,13 +261,25 @@ export const createPlayerRenderer = async (
   let destroyed = false
   let running = true
   let masksDirty = false
+  const restoreContext = () => {
+    // Restored render textures have storage again, but their mask pixels were lost.
+    masksDirty = true
+    redraw()
+  }
   const destroy = () => {
     if (destroyed) {
       return
     }
     destroyed = true
+    options.canvas.removeEventListener('webglcontextrestored', restoreContext)
     native = undefined
     destroyRuntimeFilters([...partById.values(), ...layerById.values()])
+    for (const {mesh} of partById.values()) {
+      // Mask-only parts never enter the display tree destroyed by Application.
+      if (mesh.parent === null) {
+        mesh.destroy({texture: true, textureSource: true})
+      }
+    }
     application.destroy(
       {removeView: false},
       {children: true, context: false, texture: true, textureSource: true},
@@ -284,9 +336,16 @@ export const createPlayerRenderer = async (
       renderMasks()
     }
   }
+  const submitRender = () => {
+    const {renderer} = application
+    if (renderer?.type !== undefined && renderer.type === RendererType.WEBGL) {
+      const webgl = renderer as WebGLRenderer
+      webgl.gl.flush()
+    }
+  }
   const renderLoop = createRenderLoop({
     externalRendering,
-    render(external) {
+    render(external, phase) {
       if (destroyed) {
         return
       }
@@ -298,14 +357,20 @@ export const createPlayerRenderer = async (
       }
       application.render()
       if (shared) {
+        // A synchronous canvas consumer runs before the browser's implicit frame submission.
+        submitRender()
         options.onAfterRender?.()
         application.renderer.resetState()
+      }
+      if (phase === 'immediate') {
+        submitRender()
       }
     },
   })
   application.ticker.remove(application.render, application)
   application.ticker.add(renderLoop.tick, undefined, UPDATE_PRIORITY.LOW)
   const {redraw} = renderLoop
+  options.canvas.addEventListener('webglcontextrestored', restoreContext)
   const emptyMix: MotionMix = {
     groupOpacitySamples: new Map(),
     modelOpacity: 1,
@@ -313,6 +378,12 @@ export const createPlayerRenderer = async (
     parameterValues: {},
     vertexSamples: new Map(),
   }
+  const pickPart = createPartPicker({
+    canvas: options.canvas,
+    layers: layerById,
+    order: () => paintOrder,
+    parts: partById,
+  })
   return {
     applyFrame(mix, parameterValues, poseOpacityByPartId, overrides) {
       commitPending()
@@ -358,6 +429,7 @@ export const createPlayerRenderer = async (
           ? 'webgpu'
           : 'webgl',
     }),
+    pickPart,
     redraw,
     resize(resolution) {
       resizeApplication(application, resolution)

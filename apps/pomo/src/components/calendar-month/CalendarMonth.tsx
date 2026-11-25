@@ -2,12 +2,14 @@ import {type JSX} from 'solid-js'
 import {useAuth} from 'src/features/auth/AuthProvider'
 import {useMemoryMemos} from 'src/features/memory-assist'
 import {monthEnvironment} from './environment'
-import {useMonth} from './use-month'
+import {type CalendarMonthView, useMonth} from './use-month'
 import {CalendarHeader} from './Header'
 import {CalendarGrid} from './Grid'
 import {CalendarAgenda} from './CalendarAgenda'
 
 interface CalendarMonthProps {
+  readonly initialView?: CalendarMonthView
+  readonly onViewChange?: (view: CalendarMonthView) => void
   readonly revision?: number
   readonly settings?: JSX.Element
 }
@@ -16,6 +18,10 @@ export const CalendarMonth = (props: CalendarMonthProps) => {
   const month = useMonth({
     authentication: useAuth(),
     environment: monthEnvironment,
+    get initialView() {
+      return props.initialView
+    },
+    onViewChange: (view) => props.onViewChange?.(view),
     get revision() {
       return props.revision
     },

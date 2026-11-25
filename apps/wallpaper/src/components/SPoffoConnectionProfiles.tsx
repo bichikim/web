@@ -1,3 +1,5 @@
+import {localizeMessage, text as uiText} from '../features/localization'
+
 import {Show} from 'solid-js'
 import type {PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
 import type {TrackingParameter} from '../features/tracking/types'
@@ -19,7 +21,7 @@ export const SPoffoConnectionProfiles = (props: SPoffoConnectionProfilesProps) =
     widget: () => props.widget,
   })
   return (
-    <section aria-label="Poffo 설정 파일" class="grid gap-2 text-[13px]">
+    <section aria-label={uiText('Poffo 설정 파일')} class="grid gap-2 text-[13px]">
       <div class="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -27,10 +29,10 @@ export const SPoffoConnectionProfiles = (props: SPoffoConnectionProfilesProps) =
           disabled={props.widget === undefined || profiles.busy()}
           onClick={profiles.exportFile}
         >
-          설정 JSON 저장
+          {uiText('설정 JSON 저장')}
         </button>
         <SFileInput
-          label="설정 JSON 불러오기"
+          label={uiText('설정 JSON 불러오기')}
           accept=".json,application/json"
           disabled={props.widget === undefined || props.loading || profiles.busy()}
           onFiles={profiles.importFile}
@@ -42,14 +44,14 @@ export const SPoffoConnectionProfiles = (props: SPoffoConnectionProfilesProps) =
             disabled={profiles.busy()}
             onClick={profiles.restore}
           >
-            기본 연결 적용
+            {uiText('기본 연결 적용')}
           </button>
         </Show>
       </div>
       <Show when={profiles.error()}>
         {(message) => (
           <p role="alert" class="m-0 text-xs text-red-700">
-            {message()}
+            {localizeMessage(message() ?? '')}
           </p>
         )}
       </Show>

@@ -1,0 +1,23 @@
+{
+  "method": "Local ComfyUI calibrated Lab color transfer; original forearm samples; protected fingers, cups and outlines",
+  "records": [
+    {
+      "name": "coffee",
+      "samples": 6128,
+      "sourceMean": [250.0264360313316, 224.82800261096605, 219.0509138381201],
+      "referenceMean": [252.8244488977956, 245.26092184368738, 241.8697394789579],
+      "dimensions": [1024, 1536],
+      "partId": "coat-free:coffee:hand",
+      "alpha": "preserved"
+    },
+    {
+      "name": "noodles",
+      "samples": 7323,
+      "sourceMean": [248.87668988119623, 227.4481769766489, 220.37511948654924],
+      "referenceMean": [252.8244488977956, 245.26092184368738, 241.8697394789579],
+      "dimensions": [640, 768],
+      "partId": "coat-free:noodles-left:wrist-contour:skin",
+      "alpha": "retained on hand side of wrist fold only"
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "sourceArtworkPreservedExceptTwoWristColorRegions": true,
+  "otherPartsGeometryPreserved": true,
+  "forearmBodyPreserved": true,
+  "physicsAndMouthRigPreserved": true,
+  "results": [
+    {
+      "action": "coffee",
+      "pose": "rest",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    },
+    {
+      "action": "coffee",
+      "pose": "wrist-left",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    },
+    {
+      "action": "coffee",
+      "pose": "wrist-right",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    },
+    {
+      "action": "coffee",
+      "pose": "turn-left",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    },
+    {
+      "action": "coffee",
+      "pose": "turn-right",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    },
+    {
+      "action": "coffee",
+      "pose": "fade",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    },
+    {
+      "action": "coffee",
+      "pose": "coat",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    },
+    {
+      "action": "noodles",
+      "pose": "rest",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    },
+    {
+      "action": "noodles",
+      "pose": "wrist-left",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    },
+    {
+      "action": "noodles",
+      "pose": "wrist-right",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    },
+    {
+      "action": "noodles",
+      "pose": "turn-left",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    },
+    {
+      "action": "noodles",
+      "pose": "turn-right",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    },
+    {
+      "action": "noodles",
+      "pose": "fade",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    },
+    {
+      "action": "noodles",
+      "pose": "coat",
+      "preservedMaximumError": 0,
+      "forearmBodyMaximumError": 0
+    }
+  ],
+  "sourceSha256": "797259b9b1322bcea9eb58d17321d3b21efc4d8d936e9fb33a7e20a69135b299",
+  "modelSha256": "d51d8a19a8b6027547eb7f7bb11deb0a436b500a42ba49df15e4a7bedee559ea"
+}

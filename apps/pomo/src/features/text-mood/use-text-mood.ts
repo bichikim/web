@@ -1,4 +1,5 @@
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
+import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 import type {TextMoodAnalysis} from './analysis'
@@ -78,9 +79,22 @@ export const useTextMood = (props: UseTextMoodProps = {}): TextMoodController =>
   const runtime = untrack(() => props.runtime ?? DEFAULT_RUNTIME)
   const [text, setText] = createSignal(initialText)
   const [state, setState] = createSignal<TextMoodState>({status: 'idle'})
+  const operations = createSerialTaskQueue()
   let analysisVersion = 0
+  let pendingAnalysis: number | null = null
+  let runningAnalysis: number | null = null
+  let preparing = false
+  let modelReady = false
+  let disposed = false
   const analyzer = runtime.createAnalyzer({
-    onProgress: (progress) => setState({progress, status: 'loading'}),
+    onProgress: (progress) => {
+      if (
+        !disposed &&
+        (preparing || (runningAnalysis !== null && runningAnalysis === pendingAnalysis))
+      ) {
+        setState({progress, status: 'loading'})
+      }
+    },
   })
   const isBusy = createMemo(() => {
     const {status} = state()
@@ -113,65 +127,91 @@ export const useTextMood = (props: UseTextMoodProps = {}): TextMoodController =>
   })
 
   const prepare = async () => {
-    if (isBusy() || state().status === 'ready') {
+    if (disposed || isBusy() || state().status === 'ready') {
       return
     }
 
     setState({progress: 0, status: 'loading'})
-    const result = await analyzer.prepare()
-    setState(
-      result.ok
-        ? {status: 'ready'}
-        : {message: getTextMoodErrorMessage(result.error), status: 'error'},
-    )
+    await operations.run(async () => {
+      if (disposed) {
+        return
+      }
+      preparing = true
+      try {
+        const result = await analyzer.prepare()
+        if (!disposed) {
+          modelReady = result.ok
+          setState(
+            result.ok
+              ? {status: 'ready'}
+              : {message: getTextMoodErrorMessage(result.error), status: 'error'},
+          )
+        }
+      } finally {
+        preparing = false
+      }
+    })
   }
 
   const analyze = async () => {
-    if (!canAnalyze()) {
+    if (disposed || !canAnalyze()) {
       return
     }
 
     const analyzedText = text().trim()
     analysisVersion += 1
     const requestVersion = analysisVersion
+    pendingAnalysis = requestVersion
     setState({status: 'analyzing'})
-    const result = await analyzer.analyze({text: analyzedText})
-
-    if (requestVersion !== analysisVersion) {
-      const modelIsReady = result.ok ? true : result.error.code === 'classification-failed'
-      setState(modelIsReady ? {status: 'ready'} : {status: 'idle'})
-      return
-    }
-
-    if (result.ok) {
-      if (result.value.status === 'insufficient') {
-        setState({status: 'insufficient'})
+    await operations.run(async () => {
+      if (disposed || pendingAnalysis !== requestVersion) {
         return
       }
+      runningAnalysis = requestVersion
+      try {
+        const result = await analyzer.analyze({text: analyzedText})
+        if (disposed) {
+          return
+        }
+        modelReady ||= result.ok || result.error.code === 'classification-failed'
+        if (pendingAnalysis !== requestVersion) {
+          if (modelReady && state().status === 'idle') {
+            setState({status: 'ready'})
+          }
+          return
+        }
+        pendingAnalysis = null
 
-      setState({
-        analysis: result.value.analysis,
-        elapsedMilliseconds: result.value.elapsedMilliseconds,
-        status: 'complete',
-      })
-      return
-    }
-
-    setState({message: getTextMoodErrorMessage(result.error), status: 'error'})
+        if (!result.ok) {
+          setState({message: getTextMoodErrorMessage(result.error), status: 'error'})
+        } else if (result.value.status === 'insufficient') {
+          setState({status: 'insufficient'})
+        } else {
+          setState({
+            analysis: result.value.analysis,
+            elapsedMilliseconds: result.value.elapsedMilliseconds,
+            status: 'complete',
+          })
+        }
+      } finally {
+        runningAnalysis = null
+      }
+    })
   }
 
   onCleanup(() => {
-    analysisVersion += 1
+    disposed = true
     analyzer.dispose()
   })
 
   const updateText = (nextText: string) => {
-    analysisVersion += 1
     setText(nextText)
-
     const {status} = state()
 
-    if (status === 'complete' || status === 'error' || status === 'insufficient') {
+    if (pendingAnalysis !== null) {
+      pendingAnalysis = null
+      setState(modelReady ? {status: 'ready'} : {status: 'idle'})
+    } else if (status === 'complete' || status === 'error' || status === 'insufficient') {
       setState({status: 'idle'})
     }
   }

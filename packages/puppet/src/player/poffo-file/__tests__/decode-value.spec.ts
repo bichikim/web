@@ -35,3 +35,25 @@ test('should reject non-finite encoded scalars', () => {
   new DataView(bytes.buffer).setFloat64(1, Infinity, true)
   expect(() => decodeValue({assets: [], bytes})).toThrow(SyntaxError)
 })
+
+test.each([0, 1, 4294967295])('should reject unresolved v2 numeric array reference %i', (index) => {
+  const bytes = new Uint8Array(5)
+  bytes[0] = 16
+  new DataView(bytes.buffer).setUint32(1, index, true)
+  expect(() => decodeValue({assets: [], bytes, version: 2})).toThrow(SyntaxError)
+})
+
+test('should reject reference tags in a v1 payload even after a valid numeric definition', () => {
+  const bytes = Uint8Array.of(9, 2, 0, 0, 0, 13, 1, 0, 0, 0, 7, 16, 0, 0, 0, 0)
+  expect(() => decodeValue({assets: [], bytes, version: 1})).toThrow(SyntaxError)
+  expect(decodeValue({assets: [], bytes, version: 2})).toEqual([[7], [7]])
+})
+
+test('should reject every truncated v2 reference instead of restoring partial coordinates', () => {
+  const bytes = Uint8Array.of(9, 2, 0, 0, 0, 13, 1, 0, 0, 0, 7, 16, 0, 0, 0, 0)
+  for (let length = 12; length < bytes.length; length += 1) {
+    expect(() => decodeValue({assets: [], bytes: bytes.subarray(0, length), version: 2})).toThrow(
+      SyntaxError,
+    )
+  }
+})

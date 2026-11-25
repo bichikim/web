@@ -1,8 +1,11 @@
-import {createEffect, createMemo, createSignal, For} from 'solid-js'
+import {text as uiText} from '../features/localization'
+import {createEffect, createMemo, createSignal, on} from 'solid-js'
 import type {WebsiteWallpaper} from '@winter-love/wallpaper/settings/model'
+import {SSelect} from './SSelect'
 
 interface SWebsiteCustomizationProps {
   readonly content: WebsiteWallpaper
+  readonly monitorId?: string
   readonly busy?: boolean
   readonly onApply: (content: WebsiteWallpaper) => Promise<void>
 }
@@ -12,19 +15,61 @@ export const SWebsiteCustomization = (props: SWebsiteCustomizationProps) => {
   const [script, setScript] = createSignal('')
   const [start, setStart] = createSignal('')
   const [dom, setDom] = createSignal('')
-  const loaded = {edit: setScript, id: 'load', label: '로드 완료 후 스크립트', read: script}
+  const loaded = {
+    edit: setScript,
+    id: 'load',
+    get label() {
+      return uiText('로드 완료 후 스크립트')
+    },
+    read: script,
+  }
   const stages = [
-    {edit: setStart, id: 'start', label: '페이지 시작 전 스크립트', read: start},
-    {edit: setDom, id: 'dom', label: 'DOM 준비 후 스크립트', read: dom},
+    {
+      edit: setStart,
+      id: 'start',
+      get label() {
+        return uiText('페이지 시작 전 스크립트')
+      },
+      read: start,
+    },
+    {
+      edit: setDom,
+      id: 'dom',
+      get label() {
+        return uiText('DOM 준비 후 스크립트')
+      },
+      read: dom,
+    },
     loaded,
   ]
   const [stage, setStage] = createSignal(loaded)
-  createEffect(() => {
-    setCss(props.content.css ?? '')
-    setScript(props.content.script ?? '')
-    setStart(props.content.scriptStart ?? '')
-    setDom(props.content.scriptDom ?? '')
-  })
+  createEffect(
+    on(
+      () => ({content: props.content, monitorId: props.monitorId}),
+      (next, previous) => {
+        const reset =
+          previous === undefined ||
+          next.monitorId !== previous.monitorId ||
+          next.content.url !== previous.content.url
+        setCss((draft) =>
+          reset || draft === (previous?.content.css ?? '') ? (next.content.css ?? '') : draft,
+        )
+        setScript((draft) =>
+          reset || draft === (previous?.content.script ?? '') ? (next.content.script ?? '') : draft,
+        )
+        setStart((draft) =>
+          reset || draft === (previous?.content.scriptStart ?? '')
+            ? (next.content.scriptStart ?? '')
+            : draft,
+        )
+        setDom((draft) =>
+          reset || draft === (previous?.content.scriptDom ?? '')
+            ? (next.content.scriptDom ?? '')
+            : draft,
+        )
+      },
+    ),
+  )
   const changed = createMemo(
     () =>
       css() !== (props.content.css ?? '') ||
@@ -32,8 +77,7 @@ export const SWebsiteCustomization = (props: SWebsiteCustomizationProps) => {
       start() !== (props.content.scriptStart ?? '') ||
       dom() !== (props.content.scriptDom ?? ''),
   )
-  const handleStage = (event: Event & {currentTarget: HTMLSelectElement}) => {
-    const value = event.currentTarget.value
+  const handleStage = (value: string) => {
     setStage(stages.find((entry) => entry.id === value) ?? loaded)
   }
   const handleApply = (event: SubmitEvent) => {
@@ -47,13 +91,13 @@ export const SWebsiteCustomization = (props: SWebsiteCustomizationProps) => {
     })
   }
   return (
-    <details>
-      <summary class="wallpaper-disclosure">사용자 코드</summary>
-      <form class="grid min-w-0 gap-3 pt-3" onSubmit={handleApply}>
+    <details class="wallpaper-disclosure-panel">
+      <summary class="wallpaper-disclosure">{uiText('사용자 코드')}</summary>
+      <form class="wallpaper-disclosure-content" onSubmit={handleApply}>
         <label class="wallpaper-label">
-          사용자 CSS
+          {uiText('사용자 CSS')}
           <textarea
-            aria-label="사용자 CSS"
+            aria-label={uiText('사용자 CSS')}
             class="wallpaper-field min-h-28 resize-y font-mono text-xs"
             rows={5}
             spellcheck={false}
@@ -61,17 +105,15 @@ export const SWebsiteCustomization = (props: SWebsiteCustomizationProps) => {
             onInput={(event) => setCss(event.currentTarget.value)}
           />
         </label>
-        <label class="wallpaper-label">
-          스크립트 실행 시점
-          <select
-            class="wallpaper-field"
-            aria-label="스크립트 실행 시점"
+        <div class="wallpaper-label">
+          <span>{uiText('스크립트 실행 시점')}</span>
+          <SSelect
+            label={uiText('스크립트 실행 시점')}
             value={stage().id}
+            options={stages.map((entry) => ({label: entry.label, value: entry.id}))}
             onChange={handleStage}
-          >
-            <For each={stages}>{(entry) => <option value={entry.id}>{entry.label}</option>}</For>
-          </select>
-        </label>
+          />
+        </div>
         <label class="wallpaper-label">
           {stage().label}
           <textarea
@@ -88,7 +130,7 @@ export const SWebsiteCustomization = (props: SWebsiteCustomizationProps) => {
           class="wallpaper-file-button justify-self-start"
           disabled={props.busy || !changed()}
         >
-          저장 후 새로고침
+          {uiText('저장 후 새로고침')}
         </button>
       </form>
     </details>

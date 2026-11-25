@@ -27,7 +27,7 @@ export const WorkspaceNavigation = (props: WorkspaceNavigationProps) => {
           return
       }
     }
-    navigateWorkspace(href(mode))
+    return navigateWorkspace(href(mode))
   }
   const navigation = useWorkspaceNavigation({current: () => props.current, onNavigate})
   const handleNavigation = (mode: WorkspaceMode, event: MouseEvent) => {

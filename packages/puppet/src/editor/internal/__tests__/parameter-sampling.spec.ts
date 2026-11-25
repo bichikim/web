@@ -1,3 +1,4 @@
+import {createIsolatedOrderDocument} from '../../../player/internal/__tests__/fixtures/isolated-order'
 import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {describe, expect, test} from 'vitest'
 
@@ -388,4 +389,16 @@ test('should retain preview dependencies for selections without influence edits'
   const editable = getParameterEditingDocument(influenced, binding.id)
   expect(editable.parameterBindings![0]!.influences).toBeUndefined()
   expect(influenced.parameterBindings[0]!.influences).toHaveLength(1)
+})
+
+test('should preserve isolated group order keys in an editor preview', () => {
+  const document = createIsolatedOrderDocument(true)
+  const values = {x: 0.4999, y: 0.17}
+  const preview = createParameterPreview({document, parameterValues: values})
+  const group = preview.scene!.roots[1]!
+  expect(group.kind).toBe('group')
+  if (group.kind === 'group') {
+    expect(group.properties?.drawOrder).toBeCloseTo(500.2499)
+    expect(group.properties?.isolateOrder).toBe(true)
+  }
 })

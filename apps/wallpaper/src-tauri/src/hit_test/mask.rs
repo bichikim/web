@@ -2,6 +2,15 @@ use serde::Deserialize;
 
 const MAXIMUM_EDGE: u16 = 512;
 
+/** Nontransparent extent in normalized window coordinates. */
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct HitBounds {
+    pub(crate) x: f64,
+    pub(crate) y: f64,
+    pub(crate) width: f64,
+    pub(crate) height: f64,
+}
+
 #[derive(Clone, Deserialize)]
 pub(crate) struct HitMask {
     pub(crate) width: u16,
@@ -10,6 +19,23 @@ pub(crate) struct HitMask {
 }
 
 impl HitMask {
+    pub(crate) fn bounds(&self) -> Option<HitBounds> {
+        let first = self.runs.first()?;
+        let last = self.runs.last()?;
+        let (left, right) = self
+            .runs
+            .iter()
+            .fold((self.width, 0), |(left, right), run| {
+                (left.min(run[1]), right.max(run[2]))
+            });
+        Some(HitBounds {
+            x: f64::from(left) / f64::from(self.width),
+            y: f64::from(first[0]) / f64::from(self.height),
+            width: f64::from(right - left) / f64::from(self.width),
+            height: f64::from(last[0] + 1 - first[0]) / f64::from(self.height),
+        })
+    }
+
     pub(crate) fn validate(&self) -> Result<(), String> {
         if self.width == 0
             || self.height == 0
@@ -60,7 +86,33 @@ impl HitMask {
 
 #[cfg(test)]
 mod tests {
-    use super::HitMask;
+    use super::{HitBounds, HitMask};
+
+    #[test]
+    fn measures_visible_extent_without_transparent_padding_or_alpha_holes() {
+        let mask = HitMask {
+            width: 100,
+            height: 200,
+            runs: vec![[40, 30, 60], [90, 20, 40], [90, 60, 80], [159, 30, 70]],
+        };
+        assert_eq!(
+            mask.bounds(),
+            Some(HitBounds {
+                x: 0.2,
+                y: 0.2,
+                width: 0.6,
+                height: 0.6,
+            })
+        );
+        assert_eq!(
+            HitMask {
+                runs: vec![],
+                ..mask
+            }
+            .bounds(),
+            None
+        );
+    }
 
     #[test]
     fn distinguishes_alpha_holes_from_character_spans_at_scaled_sizes() {

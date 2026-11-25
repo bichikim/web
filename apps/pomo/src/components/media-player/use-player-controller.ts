@@ -307,7 +307,9 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     const trackKey = track === null ? null : JSON.stringify([track.id, track.source])
     const currentTrackChanged = trackKey !== previousTrackKey
     previousTrackKey = trackKey
-    cancelPendingRestart()
+    if (currentTrackChanged) {
+      cancelPendingRestart()
+    }
     const shouldResumeControlledTrack = untrack(() => {
       const transition = getPlaybackTransition()
       return props.tracks !== undefined && currentTrackChanged && isPlaying() && transition === null
@@ -549,5 +551,6 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     toggleRepeatMode: order.toggleRepeatMode,
     toggleShuffle: order.toggleShuffle,
     tracks,
+    updateTrackArtists: queueController.updateTrackArtists,
   }
 }

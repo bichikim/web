@@ -1,4 +1,11 @@
-import {type BrowserType, chromium, type FrameLocator, type Page} from 'playwright'
+import {
+  type Browser,
+  type BrowserType,
+  chromium,
+  type FrameLocator,
+  type Page,
+  type Response,
+} from 'playwright'
 import {type CallToolResult, CallToolResultSchema} from '@modelcontextprotocol/sdk/types.js'
 import {createPreview, type CreatePreviewOptions, type Preview} from './create-preview'
 
@@ -15,19 +22,64 @@ export interface ViewerFixture extends Preview {
   releaseSessions(): Promise<void>
 }
 
+const trackSessions = (page: Page, initialUrl: string, call: ViewerFixture['call']) => {
+  const sessions = new Set<string>()
+  const pending = new Set<Promise<void>>()
+  const receiptFailures: unknown[] = []
+  const receive = (response: Response): void => {
+    if (response.url() !== initialUrl) {
+      return
+    }
+    const task = response
+      .json()
+      .then((input: unknown) => {
+        const result = CallToolResultSchema.parse(input)
+        const session = result.structuredContent?.session
+        if (typeof session === 'string') {
+          sessions.add(session)
+        }
+      })
+      .catch((error: unknown) => {
+        receiptFailures.push(error)
+      })
+      .finally(() => {
+        pending.delete(task)
+      })
+    pending.add(task)
+  }
+  page.on('response', receive)
+  const release = async (): Promise<void> => {
+    await Promise.all(pending)
+    const closed = await Promise.allSettled(
+      [...sessions].map(async (session) => {
+        await call('code.close', {session})
+        sessions.delete(session)
+      }),
+    )
+    const failures = [
+      ...receiptFailures.splice(0),
+      ...closed.flatMap((outcome) => (outcome.status === 'rejected' ? [outcome.reason] : [])),
+    ]
+    if (failures.length === 1) {
+      throw failures[0]
+    }
+    if (failures.length > 1) {
+      throw new AggregateError(failures, 'Viewer sessions failed to close.')
+    }
+  }
+  return {release, stop: () => page.off('response', receive)}
+}
+
 /** Runs real UI interactions against built assets and releases browser, sessions and backend on failure too. */
 export const withViewer = async <Value>(
   options: WithViewerOptions,
   exercise: (viewer: ViewerFixture) => Promise<Value>,
 ): Promise<Value> => {
   const preview = await createPreview(options)
-  const browser = await (options.engine ?? chromium)
-    .launch({headless: true})
-    .catch(async (error) => {
-      await preview.close()
-      throw error
-    })
-  try {
+  let browser: Browser | undefined
+  let closeSessions: (() => Promise<void>) | undefined
+  const run = async () => {
+    browser = await (options.engine ?? chromium).launch({headless: true})
     const page = await browser.newPage({
       hasTouch: true,
       locale: 'ko-KR',
@@ -38,21 +90,6 @@ export const withViewer = async <Value>(
     await page.addInitScript(() => localStorage.setItem('codex-code-viewer.language', 'ko'))
     const errors: string[] = []
     page.on('pageerror', (error) => errors.push(error.message))
-    const sessions = new Set<string>()
-    const received = new Set<Promise<void>>()
-    page.on('response', (response) => {
-      if (response.url() === `${preview.url}initial`) {
-        const task = response.json().then((input: unknown) => {
-          const result = CallToolResultSchema.parse(input)
-          const session = result.structuredContent?.session
-          if (typeof session === 'string') {
-            sessions.add(session)
-          }
-        })
-        received.add(task)
-        task.finally(() => received.delete(task)).catch(() => undefined)
-      }
-    })
     const call = async (
       name: string,
       input: Record<string, unknown> = {},
@@ -65,10 +102,10 @@ export const withViewer = async <Value>(
       }
       return CallToolResultSchema.parse(await response.json())
     }
-    const releaseSessions = async (): Promise<void> => {
-      await Promise.all(received)
-      await Promise.all([...sessions].map((session) => call('code.close', {session})))
-      sessions.clear()
+    const sessions = trackSessions(page, `${preview.url}initial`, call)
+    closeSessions = () => {
+      sessions.stop()
+      return sessions.release()
     }
     try {
       const result = await exercise({
@@ -77,7 +114,7 @@ export const withViewer = async <Value>(
         call,
         errors,
         page,
-        releaseSessions,
+        releaseSessions: sessions.release,
       })
       if (errors.length > 0) {
         throw new Error(`Unhandled viewer errors: ${errors.join('; ')}`)
@@ -91,17 +128,35 @@ export const withViewer = async <Value>(
         .catch(() => 'unavailable')
       const MAX_STATE_LENGTH = 6000
       throw new Error(
-        `${error instanceof Error ? error.message : String(error)}\nViewer state: ${state.slice(0, MAX_STATE_LENGTH)}`,
+        [
+          error instanceof Error ? error.message : String(error),
+          `Viewer state: ${state.slice(0, MAX_STATE_LENGTH)}`,
+          `Preview stderr: ${preview.stderr()}`,
+        ].join('\n'),
         {cause: error},
       )
-    } finally {
-      await releaseSessions()
-    }
-  } finally {
-    try {
-      await browser.close()
-    } finally {
-      await preview.close()
     }
   }
+  const [outcome] = await Promise.allSettled([run()])
+  const cleanupFailures: unknown[] = []
+  const collectCleanupFailure = async (close: () => Promise<void> | undefined) => {
+    try {
+      await close()
+    } catch (error) {
+      cleanupFailures.push(error)
+    }
+  }
+  await collectCleanupFailure(() => closeSessions?.())
+  await collectCleanupFailure(() => browser?.close())
+  await collectCleanupFailure(() => preview.close())
+  if (cleanupFailures.length > 0) {
+    throw new AggregateError(
+      outcome.status === 'rejected' ? [outcome.reason, ...cleanupFailures] : cleanupFailures,
+      `Viewer cleanup failed.\nPreview stderr: ${preview.stderr()}`,
+    )
+  }
+  if (outcome.status === 'rejected') {
+    throw outcome.reason
+  }
+  return outcome.value
 }

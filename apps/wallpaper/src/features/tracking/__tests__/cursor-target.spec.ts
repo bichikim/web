@@ -7,6 +7,21 @@ const point = {height: 800, width: 1200, x: 200, y: 170}
 const target = (x: number, y = 170) =>
   createCursorTarget({bounds, point: {...point, x, y}, viewport})
 
+test('should use a separate eye reach without changing the saved head reach', () => {
+  const settings = {cursorReach: 1}
+  const head = createCursorTarget({bounds, options: settings, point: {...point, x: 480}, viewport})
+  const eyes = createCursorTarget({
+    bounds,
+    options: settings,
+    point: {...point, x: 480},
+    reach: 0.7,
+    viewport,
+  })
+  expect(head.x).toBeLessThan(1)
+  expect(eyes).toEqual({x: 1, y: 0})
+  expect(settings).toEqual({cursorReach: 1})
+})
+
 test('should scale cursor distance by character height and reach full gaze at a finite offset', () => {
   expect(target(200)).toEqual({x: 0, y: 0})
   expect(target(320).x).toBeCloseTo(0.5188418881, 6)

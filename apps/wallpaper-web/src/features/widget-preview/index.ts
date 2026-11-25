@@ -35,6 +35,7 @@ export const useWidgetPreview = () => {
   const [background, setBackground] = createSignal<WidgetBackground>('profile')
   const [motionId, setMotionId] = createSignal('Idle:0')
   const [expressionId, setExpressionId] = createSignal<string | null>(null)
+  const [coatOff, setCoatOff] = createSignal(false)
   const [playing, setPlaying] = createSignal(true)
   const [tracking, setTracking] = createSignal(true)
   const [phase, setPhase] = createSignal<PreviewPhase>('poster')
@@ -103,6 +104,7 @@ export const useWidgetPreview = () => {
     actionLabel,
     activate,
     background,
+    coatOff,
     dragging: () => drag() !== null,
     expressionGroups,
     expressionId,
@@ -129,6 +131,7 @@ export const useWidgetPreview = () => {
     selectBackground: (value: WidgetBackground) => setBackground(value),
     selectExpression: (value: string | null) => setExpressionId(value),
     size,
+    toggleCoat: () => setCoatOff((value) => !value),
     toggleTracking: () => setTracking((value) => !value),
     toggleWalking,
     tracking,

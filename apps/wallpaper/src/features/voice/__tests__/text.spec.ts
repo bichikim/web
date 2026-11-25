@@ -55,7 +55,7 @@ it('should still read actual working progress messages', () => {
       text: '음성 재생 경로를 확인하고 있습니다.',
       tool: 'Bash',
     }),
-  ).toEqual({chat: 'chat', id: '1', text: '음성 재생 경로를 확인하고 있습니다.'})
+  ).toEqual({chat: 'chat', complete: false, id: '1', text: '음성 재생 경로를 확인하고 있습니다.'})
 })
 
 it('should omit code blocks while preserving inline text, prose and link labels', () => {

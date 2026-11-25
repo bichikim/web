@@ -1,0 +1,15 @@
+{
+  "white": "generated palm root and wrist",
+  "black": "preserve original fingers, nails, cup and upper hand",
+  "featherPixels": 0,
+  "polygon": [
+    [110, 615],
+    [218, 600],
+    [302, 710],
+    [378, 710],
+    [378, 1000],
+    [16, 1000],
+    [16, 735]
+  ],
+  "dimensions": [576, 1056]
+}

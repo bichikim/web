@@ -1,7 +1,12 @@
 // oxlint-disable no-await-in-loop -- Consume notification frames and reconnect in order.
 import {z} from 'zod'
 import * as m from '@paraglide/message'
-import {apiJsonRequest, type ApiJsonRequestOptions, parseJsonResponse} from '../api-json'
+import {
+  ApiJsonError,
+  apiJsonRequest,
+  type ApiJsonRequestOptions,
+  parseJsonResponse,
+} from '../api-json'
 import {type CloudTextConnectionResult, readCloudTextEvents} from './job-events'
 import {readStoredAppSession} from '../user-auth/app-session'
 import {
@@ -28,12 +33,17 @@ const createRequestOptions = async (): Promise<
   return token === null ? {} : {headers: {Authorization: `Bearer ${token}`}}
 }
 
-const checkResponse = async (response: Response): Promise<void> => {
+const checkResponse = async (response: Response, signal?: AbortSignal): Promise<void> => {
   if (response.ok) {
     return
   }
-  const error = await parseJsonResponse(response, errorSchema)
-  switch (error.error) {
+  const error = await parseJsonResponse(response, errorSchema, signal).catch((cause: unknown) => {
+    if (cause instanceof ApiJsonError) {
+      return undefined
+    }
+    throw cause
+  })
+  switch (error?.error) {
     case 'unauthorized':
       throw new Error(m.cloud_text_login_required())
     case 'daily_limit':
@@ -63,7 +73,7 @@ const readJobConnection = async (
     }
     throw cause
   }
-  await checkResponse(notifications)
+  await checkResponse(notifications, signal)
   if (notifications.body === null) {
     throw new Error(m.cloud_text_failed())
   }
@@ -84,7 +94,11 @@ const cancelRequest = async (requestId: string): Promise<void> => {
 }
 
 export const readCloudTextUsage = async (): Promise<CloudTextUsage> => {
-  const response = await apiJsonRequest('cloud-text', await createRequestOptions())
+  const requestOptions = await createRequestOptions()
+  const response = await apiJsonRequest('cloud-text', {
+    ...requestOptions,
+    recheckWebSessionOnUnauthorized: requestOptions.credentials === 'include',
+  })
   await checkResponse(response)
   return parseJsonResponse(response, cloudTextUsageSchema)
 }
@@ -93,6 +107,8 @@ export const requestCloudText = async (
   request: CloudTextRequest,
   signal: AbortSignal,
 ): Promise<CloudTextResponse> => {
+  let activeRequestId = request.requestId
+  let shouldCancel = false
   try {
     const response = await apiJsonRequest('cloud-text', {
       ...(await createRequestOptions()),
@@ -101,11 +117,12 @@ export const requestCloudText = async (
       retry: false,
       signal,
     })
-    await checkResponse(response)
+    await checkResponse(response, signal)
     if (response.status !== HTTP_ACCEPTED) {
       return parseJsonResponse(response, cloudTextResponseSchema, signal)
     }
     const accepted = await parseJsonResponse(response, cloudTextAcceptedSchema, signal)
+    activeRequestId = accepted.requestId
     for (let connection = 0; connection < MAXIMUM_EVENT_RECONNECTIONS; connection += 1) {
       signal.throwIfAborted()
       const result = await readJobConnection(accepted.requestId, signal)
@@ -123,10 +140,11 @@ export const requestCloudText = async (
         }
       }
     }
+    shouldCancel = true
     throw new Error(m.cloud_text_failed())
   } finally {
-    if (signal.aborted) {
-      cancelRequest(request.requestId).catch((error: unknown) => {
+    if (signal.aborted || shouldCancel) {
+      cancelRequest(activeRequestId).catch((error: unknown) => {
         console.error('Failed to request cloud text cancellation', error)
       })
     }

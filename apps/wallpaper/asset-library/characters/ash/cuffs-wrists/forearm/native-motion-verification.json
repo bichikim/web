@@ -1,0 +1,1026 @@
+{
+  "sha256": "616d0defc2b296f21df25970e952fab1fa479a9e4c701121ccd9401d971de8e1",
+  "source": "Actual Wallpaper app Worker frames with original live physics, including gaze reversals and return",
+  "pointerInputUsed": false,
+  "frames": 46,
+  "duration": 6356,
+  "minimumSeamMargin": 1.9314655905775977,
+  "maximumContactError": 0.00016528391407263587,
+  "maximumChainGap": 0,
+  "maximumBodyRigidityError": 0.000606518644190146,
+  "maximumBodyBasisError": 0,
+  "results": [
+    {
+      "phase": "neutral",
+      "elapsed": 28,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.155796912444641,
+          "contactError": 0.000130004386691453,
+          "rigidityError": 0,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.360219597587549,
+          "contactError": 0.00012201049289798776,
+          "rigidityError": 0,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 100,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.104619193180852,
+          "contactError": 0.00012893056412499498,
+          "rigidityError": 0.0004152418873246688,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5868998174656257,
+          "contactError": 0.00012477717393447358,
+          "rigidityError": 0.00032720356769999626,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 171,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.018883633178636,
+          "contactError": 0.00011958766988268465,
+          "rigidityError": 0.0003984416565785409,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.6039516339497273,
+          "contactError": 0.00012221206089780575,
+          "rigidityError": 0.0002731167728242667,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 245,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.118645187480989,
+          "contactError": 0.00010803384212949452,
+          "rigidityError": 0.0003500607390520827,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.7271616713028823,
+          "contactError": 0.00009615066434278409,
+          "rigidityError": 0.00031939476468778594,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 317,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1702133120500346,
+          "contactError": 0.00012868985880490615,
+          "rigidityError": 0.0003973762936482217,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.6186350682194424,
+          "contactError": 0.00011857664808495691,
+          "rigidityError": 0.0003607587406477819,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 390,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.148999102458361,
+          "contactError": 0.00011576817873009453,
+          "rigidityError": 0.0003300693200216642,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.513804735077099,
+          "contactError": 0.00012508765418993892,
+          "rigidityError": 0.00028988997944878747,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 464,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.285152826034518,
+          "contactError": 0.00012802873814593741,
+          "rigidityError": 0.0004376176096982931,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.4711972678080496,
+          "contactError": 0.00012267260078731735,
+          "rigidityError": 0.0003152903133809559,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 537,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1169641813114914,
+          "contactError": 0.00010593492782070005,
+          "rigidityError": 0.00046808558759892094,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.4103457956006427,
+          "contactError": 0.00011773922666697297,
+          "rigidityError": 0.00027624903948009205,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 610,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1030608784132947,
+          "contactError": 0.0001278881073671279,
+          "rigidityError": 0.0004923932864997482,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.4691747036876777,
+          "contactError": 0.00012624547855058987,
+          "rigidityError": 0.00031048512470732703,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 682,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0752364457391845,
+          "contactError": 0.00012075319809798116,
+          "rigidityError": 0.00046831266855917875,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.569771043231661,
+          "contactError": 0.0001341859556895933,
+          "rigidityError": 0.0003172805108420107,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 754,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.2117726340147885,
+          "contactError": 0.00012394367686860866,
+          "rigidityError": 0.00034518739092703754,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.637071412550872,
+          "contactError": 0.00012322678798630372,
+          "rigidityError": 0.00041201624341624665,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 829,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.178775089100881,
+          "contactError": 0.00012926150576488557,
+          "rigidityError": 0.00044019311701504193,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.6874444742637693,
+          "contactError": 0.00013317367706543006,
+          "rigidityError": 0.00032851569513780987,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 932,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.075271474226878,
+          "contactError": 0.00012288185061149845,
+          "rigidityError": 0.000339930060874849,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.819013775839544,
+          "contactError": 0.0001246512309339506,
+          "rigidityError": 0.00030839433668461425,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 994,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.00852438705841,
+          "contactError": 0.0001184299015258322,
+          "rigidityError": 0.0003052892944381824,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.641630460777953,
+          "contactError": 0.00013592902905115424,
+          "rigidityError": 0.0002720022871400829,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1077,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.258487348406036,
+          "contactError": 0.00012060377178593033,
+          "rigidityError": 0.00033571466338599976,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.1673040761012508,
+          "contactError": 0.00012667548154716014,
+          "rigidityError": 0.00031458850870791366,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1149,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 1.9669441014544722,
+          "contactError": 0.00012073203093031482,
+          "rigidityError": 0.0003417473237448121,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.3339687401864793,
+          "contactError": 0.00012177859180725548,
+          "rigidityError": 0.0003321393537021322,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1223,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1203606105840573,
+          "contactError": 0.0001241420717625532,
+          "rigidityError": 0.0003689477916353212,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.3498882966705654,
+          "contactError": 0.00012497034171217046,
+          "rigidityError": 0.00028900494903894014,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1312,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1253503267957887,
+          "contactError": 0.00013013828215220115,
+          "rigidityError": 0.0003855583025895726,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.556077613996335,
+          "contactError": 0.00012531869015466592,
+          "rigidityError": 0.00031657696621145703,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1386,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0997320904541783,
+          "contactError": 0.00012301225670554274,
+          "rigidityError": 0.0003088851828536576,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.603523162386997,
+          "contactError": 0.00011646523823172026,
+          "rigidityError": 0.00032556193097121877,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1458,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 1.9934867767855298,
+          "contactError": 0.0001194695813779034,
+          "rigidityError": 0.0004810572213926889,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5416685749845955,
+          "contactError": 0.00012980976019110016,
+          "rigidityError": 0.00032322733889600386,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1531,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.030389059602022,
+          "contactError": 0.00011184054026921481,
+          "rigidityError": 0.0005037688042293098,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.749410286564243,
+          "contactError": 0.0001212751646378329,
+          "rigidityError": 0.00027833746843697327,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 1605,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0397220719832965,
+          "contactError": 0.00012689355359021525,
+          "rigidityError": 0.0003776809036892814,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.4993095108818744,
+          "contactError": 0.00012027297724729551,
+          "rigidityError": 0.0003001057144729202,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 1731,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.220610001004853,
+          "contactError": 0.00012676639527463746,
+          "rigidityError": 0.0005682302368938963,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 1.9314655905775977,
+          "contactError": 0.00016447317999482845,
+          "rigidityError": 0.0003777927074768428,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 1809,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1608155304416297,
+          "contactError": 0.0001571522833975208,
+          "rigidityError": 0.00044374863693974476,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.2653274543717123,
+          "contactError": 0.00016528391407263587,
+          "rigidityError": 0.00032678613018788383,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 1882,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 1.9899511073807534,
+          "contactError": 0.00014795634104327923,
+          "rigidityError": 0.00047215706795356027,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.7045740580732107,
+          "contactError": 0.00014402893963877058,
+          "rigidityError": 0.0003546908193285958,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 1956,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.048624925462266,
+          "contactError": 0.0001504281171578319,
+          "rigidityError": 0.0005043629849552644,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.90278838987609,
+          "contactError": 0.00011967226757551627,
+          "rigidityError": 0.000382690947956732,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 2043,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1134403434475053,
+          "contactError": 0.0001569261931876073,
+          "rigidityError": 0.00046923809212984224,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.6805920489602078,
+          "contactError": 0.00015119440846680452,
+          "rigidityError": 0.00030398488796379297,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 2115,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.182481711694906,
+          "contactError": 0.0001425441930639952,
+          "rigidityError": 0.00031191143294506674,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.4810113460563903,
+          "contactError": 0.000135386969714009,
+          "rigidityError": 0.0003090428996159744,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 2193,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.2594337819171586,
+          "contactError": 0.00015019613376233425,
+          "rigidityError": 0.0004018722097853811,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.223460045044402,
+          "contactError": 0.000144670472154925,
+          "rigidityError": 0.0003334825613023895,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 2263,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.216883987756657,
+          "contactError": 0.0001508795022077787,
+          "rigidityError": 0.00037602599753228105,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.308560198194024,
+          "contactError": 0.00012629588416941963,
+          "rigidityError": 0.0002825850264898122,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 2334,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.2450926856177094,
+          "contactError": 0.0001640423400027865,
+          "rigidityError": 0.00044435545515852937,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.4437089549746496,
+          "contactError": 0.00015502701467851458,
+          "rigidityError": 0.00030702962684614477,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 2405,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.168677659709973,
+          "contactError": 0.0001580533742944331,
+          "rigidityError": 0.0004607484344774093,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.6227136989770257,
+          "contactError": 0.00016008948219141473,
+          "rigidityError": 0.0004983655775987472,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "left",
+      "elapsed": 3211,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.127139007966443,
+          "contactError": 0.00012407835576781304,
+          "rigidityError": 0.000606518644190146,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.564192006464342,
+          "contactError": 0.0001294121856532458,
+          "rigidityError": 0.000275928019853211,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "right",
+      "elapsed": 4093,
+      "head": [-30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.123853913575028,
+          "contactError": 0.00012000722181040718,
+          "rigidityError": 0.0005180767844166212,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.7263713467383326,
+          "contactError": 0.00011259517575470522,
+          "rigidityError": 0.00034074304973330527,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "return",
+      "elapsed": 4833,
+      "head": [30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.159289756918606,
+          "contactError": 0.00012205006345535681,
+          "rigidityError": 0.0004128689958662335,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5119282705518615,
+          "contactError": 0.00011808823119909555,
+          "rigidityError": 0.00026247945091029123,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "return",
+      "elapsed": 5635,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.148341966396343,
+          "contactError": 0.0001170504847267942,
+          "rigidityError": 0.0005082756589231963,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5400546467719334,
+          "contactError": 0.00011964559600810795,
+          "rigidityError": 0.0003420471972859218,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "return",
+      "elapsed": 5713,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.224477437946327,
+          "contactError": 0.0001136248984974175,
+          "rigidityError": 0.0004075840586637014,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5405341303294486,
+          "contactError": 0.00012392091128955195,
+          "rigidityError": 0.0003289797889820534,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "return",
+      "elapsed": 5784,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1971350614346226,
+          "contactError": 0.0001279726196615821,
+          "rigidityError": 0.00037084147712818094,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5950113798721817,
+          "contactError": 0.00012946203328176347,
+          "rigidityError": 0.00033365392135920047,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "return",
+      "elapsed": 5857,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1120599607592996,
+          "contactError": 0.00012680300720216363,
+          "rigidityError": 0.000548096071796067,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.403463856817438,
+          "contactError": 0.00012208183726735087,
+          "rigidityError": 0.0003267479817026242,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "return",
+      "elapsed": 5919,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1227063732807174,
+          "contactError": 0.00011985020793153047,
+          "rigidityError": 0.0004523159888449868,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.542761476866078,
+          "contactError": 0.00012200671971573411,
+          "rigidityError": 0.0003359746944582298,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "return",
+      "elapsed": 5991,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1421499904334595,
+          "contactError": 0.00011965572243693764,
+          "rigidityError": 0.00043738532751547154,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.4309179966886885,
+          "contactError": 0.0001233790067782566,
+          "rigidityError": 0.00035861381164892236,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "return",
+      "elapsed": 6064,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1979433482308592,
+          "contactError": 0.00011462299368688026,
+          "rigidityError": 0.0003547578979237187,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5888746298922993,
+          "contactError": 0.0001289083527857795,
+          "rigidityError": 0.0003240545942091444,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "return",
+      "elapsed": 6137,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.072502400830399,
+          "contactError": 0.0001264693488118666,
+          "rigidityError": 0.0003712281474506085,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.455482729591643,
+          "contactError": 0.00011847154700247307,
+          "rigidityError": 0.000283923853302781,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "return",
+      "elapsed": 6210,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.173689859555419,
+          "contactError": 0.00012587307698835962,
+          "rigidityError": 0.0003498005231037382,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.4808971119068506,
+          "contactError": 0.00012888263830066957,
+          "rigidityError": 0.0003310868731105643,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "return",
+      "elapsed": 6284,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1720333514539427,
+          "contactError": 0.00011915630236633823,
+          "rigidityError": 0.000518783440504933,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5176891590158443,
+          "contactError": 0.00012018183015078311,
+          "rigidityError": 0.0003244661274592886,
+          "bodyBasisError": 0
+        }
+      ]
+    },
+    {
+      "phase": "return",
+      "elapsed": 6356,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1511549841826585,
+          "contactError": 0.00012696733632148904,
+          "rigidityError": 0.0003688929272911423,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5413756063401416,
+          "contactError": 0.00012570657079543406,
+          "rigidityError": 0.0003549697244764616,
+          "bodyBasisError": 0
+        }
+      ]
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import {createCameraSession} from '../features/tracking/create-camera-session'
 import type {FacePosition} from '../features/tracking/types'
 
 interface SPoffoCameraProps {
+  readonly pose?: Accessor<boolean>
   readonly enabled: Accessor<boolean>
   readonly onError: (cause: unknown) => void
 }
@@ -26,6 +27,7 @@ export const SPoffoCamera = (props: SPoffoCameraProps) => {
       const {stop, update: sample} = createCameraSession({
         onError: (cause) => props.onError(cause),
         onPoint: publish,
+        pose: props.pose?.() ?? false,
         video: element,
       })
       update = sample

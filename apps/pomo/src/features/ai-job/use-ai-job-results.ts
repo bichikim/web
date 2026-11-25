@@ -12,6 +12,7 @@ export interface UseAiJobResultsProps {
   readonly session: AiJobSession
   readonly onComplete: (text: string) => Promise<void>
   readonly onError: (message: string) => void
+  readonly onLoadError: (message: string) => void
   readonly onResult: (result: AiJobResult | null) => void
 }
 
@@ -26,6 +27,7 @@ export const useAiJobResults = (props: UseAiJobResultsProps) => {
     client,
     onComplete: (text) => props.onComplete(text),
     onError: (message) => props.onError(message),
+    onLoadError: (message) => props.onLoadError(message),
     onResult: (result) => {
       props.onResult(result)
       setArtifactDeleted(false)

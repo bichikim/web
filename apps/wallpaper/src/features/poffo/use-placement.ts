@@ -7,6 +7,7 @@ interface UsePlacementProps {
   readonly onChange?: (placement: PoffoPlacement) => void | Promise<void>
 }
 interface PlacementPointer {
+  readonly defaultPrevented?: boolean
   readonly button: number
   readonly pointerId: number
   readonly clientX: number
@@ -34,7 +35,12 @@ export const usePlacement = (props: UsePlacementProps) => {
   const [drag, setDrag] = createSignal<PlacementDrag | null>(null)
   const placement = createMemo(() => draft() ?? props.value?.() ?? DEFAULT_POFFO_PLACEMENT)
   const start = (event: PlacementPointer) => {
-    if (props.enabled?.() === false || props.onChange === undefined || event.button !== 0) {
+    if (
+      event.defaultPrevented ||
+      props.enabled?.() === false ||
+      props.onChange === undefined ||
+      event.button !== 0
+    ) {
       return
     }
     const bounds = event.currentTarget.getBoundingClientRect()

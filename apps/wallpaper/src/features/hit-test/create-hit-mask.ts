@@ -2,7 +2,9 @@ import type {HitMask} from './types'
 
 interface CreateHitMaskOptions {
   readonly alphaThreshold?: number
-  readonly data: Uint8ClampedArray
+  readonly data: Uint8ClampedArray | Uint8Array
+  /** One byte per pixel when supplied, RGBA otherwise. */
+  readonly layout?: 'alpha'
   readonly width: number
   readonly height: number
 }
@@ -12,13 +14,15 @@ const ALPHA_CHANNEL = 3
 /** Encodes nontransparent pixels as disjoint horizontal spans, preserving alpha holes. */
 export const createHitMask = (options: CreateHitMaskOptions): HitMask => {
   const runs: [number, number, number][] = []
+  const channels = options.layout === 'alpha' ? 1 : CHANNELS
+  const alphaChannel = options.layout === 'alpha' ? 0 : ALPHA_CHANNEL
+  const threshold = options.alphaThreshold ?? 0
   for (let row = 0; row < options.height; row += 1) {
     let start: number | null = null
     for (let column = 0; column <= options.width; column += 1) {
       const visible =
         column < options.width &&
-        options.data[(row * options.width + column) * CHANNELS + ALPHA_CHANNEL]! >
-          (options.alphaThreshold ?? 0)
+        options.data[(row * options.width + column) * channels + alphaChannel]! > threshold
       if (visible && start === null) {
         start = column
       }

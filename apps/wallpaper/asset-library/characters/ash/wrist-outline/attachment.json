@@ -1,0 +1,28 @@
+{
+  "scope": "Remove the protruding obsolete bare wrist cap",
+  "change": {
+    "partId": "coat-free:thumb-left:ArtMesh901",
+    "opacity": 0
+  },
+  "unchanged": [
+    "all textures including hand line weight, skin and nail",
+    "all mesh coordinates",
+    "all parameter bindings and glue",
+    "all physics",
+    "jacket wrist cap"
+  ],
+  "numericReview": "pose-verification.json",
+  "trialWristMeshAndMaskReverted": true,
+  "nativeReview": {
+    "restarted": true,
+    "modelHashMatches": true,
+    "thumbsUpOn": true,
+    "protrudingCapRemoved": true,
+    "screenshot": "app-hand.png",
+    "comparison": "joint-comparison.png"
+  },
+  "regression": {
+    "testsPassed": 2,
+    "log": "/private/tmp/wrist-outline-final-tests.log"
+  }
+}

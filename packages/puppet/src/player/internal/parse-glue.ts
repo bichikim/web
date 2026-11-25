@@ -10,6 +10,17 @@ import {isFiniteNumber, isRecord} from './parse-primitives'
 
 const isRatio = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
+const isMode = (value: unknown): value is PuppetGlue['mode'] => {
+  switch (value) {
+    case undefined:
+    case 'vertex':
+    case 'translate':
+    case 'rigid':
+      return true
+    default:
+      return false
+  }
+}
 const isGlueKeyform = (value: unknown, unbounded: boolean): boolean =>
   isRecord(value) &&
   typeof value.id === 'string' &&
@@ -68,15 +79,38 @@ const validTarget = (
   parts: ReadonlyArray<PuppetPart>,
 ) => !('edge' in reference) || (isEdgeReference(reference, parts) && weight === 1)
 
+const hasValidRotation = (
+  value: Record<string, unknown>,
+  first: PuppetVertexReference,
+  second: PuppetVertexReference,
+  parts: ReadonlyArray<PuppetPart>,
+) => {
+  const {rotation} = value
+  if (rotation === undefined) {
+    return value.mode !== 'rigid'
+  }
+  const hasDirection = (vertexIndex: unknown, reference: PuppetVertexReference) => {
+    const candidate = {partId: reference.partId, vertexIndex}
+    return isReference(candidate) && hasMeshVertex(candidate, parts)
+  }
+  return (
+    isRecord(rotation) &&
+    hasDirection(rotation.first, first) &&
+    hasDirection(rotation.second, second)
+  )
+}
+
 const isGlueConnection = (value: unknown, parts: ReadonlyArray<PuppetPart>): value is PuppetGlue =>
   isRecord(value) &&
   typeof value.id === 'string' &&
   value.id.length > 0 &&
+  isMode(value.mode) &&
   (value.composition === undefined || value.composition === 'sequential') &&
   isReference(value.first) &&
   isReference(value.second) &&
   !('edge' in value.first) &&
   validTarget(value.second, value.weight, parts) &&
+  hasValidRotation(value, value.first, value.second, parts) &&
   value.first.partId !== value.second.partId &&
   isRatio(value.weight) &&
   isRatio(value.strength)

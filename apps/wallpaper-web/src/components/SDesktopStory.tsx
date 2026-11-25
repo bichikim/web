@@ -1,7 +1,6 @@
 import {createMemo, For, on, Show} from 'solid-js'
 import type {StoryFrame} from '../features/desktop-story/frame'
 import {SIcon} from './SIcon'
-import {SDesktopPreview} from './SDesktopPreview'
 import {SCodexStory} from './SCodexStory'
 import type {useCharacterSpeech} from '../features/character-speech'
 import CHAPTERS from '../data/story/chapters.json'
@@ -162,12 +161,6 @@ export const SDesktopStory = (props: SDesktopStoryProps) => {
             </div>
           </Show>
         </div>
-      </Show>
-      <Show when={props.frame.visible && desktopVisible()}>
-        <SDesktopPreview
-          live={props.frame.kind === 'wallpaper'}
-          playing={!props.frame.transitioning}
-        />
       </Show>
       <Show when={props.frame.kind === 'widgets' || props.frame.kind === 'details'}>
         <SAppPreview miniature={props.frame.kind === 'details'} />

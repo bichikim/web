@@ -35,12 +35,8 @@ const createDrawOrderSampler = (
     if (keyed === undefined) {
       return []
     }
-    // Triangulated channels retain their weighted arithmetic even when all keys equal rest.
-    const preservesConstant = binding.interpolation === 'grid' || binding.parameterIds.length === 1
-    if (
-      preservesConstant &&
-      keyed.every((value) => value === undefined || value === options.rest)
-    ) {
+    // A channel without an order offset must retain exact ties, even in multiaxis interpolation.
+    if (keyed.every((value) => value === undefined || value === options.rest)) {
       return []
     }
     return [

@@ -1,0 +1,96 @@
+[
+  {
+    "group": "knife-left",
+    "id": "ArtMesh1024",
+    "pixel": [69, 162],
+    "followers": [
+      "ArtMesh1019",
+      "ArtMesh1020",
+      "ArtMesh1021",
+      "ArtMesh1022",
+      "ArtMesh1023",
+      "ArtMesh1024",
+      "ArtMesh1026",
+      "ArtMesh1027",
+      "ArtMesh1028",
+      "ArtMesh1016"
+    ],
+    "surface": {
+      "partId": "ArtMesh1024",
+      "triangle": [36, 63, 62],
+      "weights": [0.04830930109029036, 0.8477173338563674, 0.1039733650533422]
+    }
+  },
+  {
+    "group": "fists-left",
+    "id": "ArtMesh1044",
+    "pixel": [36, 162],
+    "followers": [
+      "ArtMesh1039",
+      "ArtMesh1040",
+      "ArtMesh1041",
+      "ArtMesh1042",
+      "ArtMesh1043",
+      "ArtMesh1044",
+      "ArtMesh1046",
+      "ArtMesh1047",
+      "ArtMesh1048"
+    ],
+    "surface": {
+      "partId": "ArtMesh1044",
+      "triangle": [35, 51, 33],
+      "weights": [0.027904069584689585, 0.2500552796049585, 0.7220406508103518]
+    }
+  },
+  {
+    "group": "noodles-right",
+    "id": "ArtMesh57",
+    "pixel": [40, 102],
+    "followers": [
+      "ArtMesh54",
+      "ArtMesh55",
+      "ArtMesh56",
+      "ArtMesh57",
+      "ArtMesh58",
+      "ArtMesh891",
+      "ArtMesh59",
+      "ArtMesh60",
+      "ArtMesh890",
+      "ArtMesh61",
+      "ArtMesh63",
+      "ArtMesh64",
+      "ArtMesh62",
+      "ArtMesh52",
+      "ArtMesh53"
+    ],
+    "surface": {
+      "partId": "ArtMesh57",
+      "triangle": [22, 32, 21],
+      "weights": [0.7114084507363763, 0.08731460472948442, 0.2012769445341393]
+    }
+  },
+  {
+    "group": "heart-right",
+    "id": "ArtMesh990",
+    "surface": {
+      "partId": "ArtMesh990",
+      "triangle": [23, 27, 28],
+      "weights": [0.733140694516214, 0.19877892253905988, 0.06808038294472613]
+    },
+    "followers": [
+      "ArtMesh982",
+      "ArtMesh984",
+      "ArtMesh986",
+      "ArtMesh987",
+      "ArtMesh988",
+      "ArtMesh990",
+      "ArtMesh991",
+      "ArtMesh992",
+      "ArtMesh993",
+      "ArtMesh996",
+      "ArtMesh997",
+      "ArtMesh151"
+    ],
+    "sourcePoint": [2535.362311376455, 1725.432037088913]
+  }
+]

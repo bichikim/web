@@ -1,0 +1,30 @@
+{
+  "sx": 0.9951219512195122,
+  "sy": 0.9946319018404908,
+  "tx": -4.282926829268291,
+  "ty": -5.695552147239255,
+  "source": {
+    "x0": 147,
+    "y0": 243,
+    "x1": 762,
+    "y1": 1547,
+    "width": 975,
+    "height": 1650
+  },
+  "target": {
+    "x0": 142,
+    "y0": 236,
+    "x1": 754,
+    "y1": 1533,
+    "width": 964,
+    "height": 1632
+  },
+  "sourceBox": {
+    "x": 1720,
+    "y": 1200,
+    "width": 650,
+    "height": 1100,
+    "scale": 1.5
+  },
+  "referencePath": "apps/wallpaper/asset-library/characters/ash/fist-wrists/left-reference.png"
+}

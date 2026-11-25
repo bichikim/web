@@ -101,10 +101,19 @@ it('should not reconnect an invalid notification contract', async () => {
   expect(apiJsonRequest).toHaveBeenCalledTimes(2)
 })
 
-it('should stop reconnecting after five transport failures without posting another generation', async () => {
-  vi.mocked(apiJsonRequest).mockRejectedValue(new TypeError('Failed to fetch'))
+it('should cancel the accepted generation after five transport failures without another POST', async () => {
+  vi.mocked(apiJsonRequest).mockImplementation(async (_url, options) => {
+    if (options.method === 'DELETE') {
+      return new Response(null, {status: 202})
+    }
+    throw new TypeError('Failed to fetch')
+  })
   await expect(requestCloudText(request, new AbortController().signal)).rejects.toThrow()
-  expect(apiJsonRequest).toHaveBeenCalledTimes(6)
+  await vi.waitFor(() => expect(apiJsonRequest).toHaveBeenCalledTimes(7), {interval: 1})
+  expect(apiJsonRequest).toHaveBeenLastCalledWith(
+    expect.stringContaining('requestId='),
+    expect.objectContaining({method: 'DELETE', retry: false}),
+  )
   expect(
     vi.mocked(apiJsonRequest).mock.calls.filter(([, options]) => options.method === 'POST'),
   ).toHaveLength(1)
@@ -117,6 +126,23 @@ it('should not reconnect a notification rejected by authentication', async () =>
   await expect(requestCloudText(request, new AbortController().signal)).rejects.toThrow()
   expect(apiJsonRequest).toHaveBeenCalledTimes(2)
 })
+
+it.each([
+  {body: 'FUNCTION_INVOCATION_TIMEOUT', label: 'plain text'},
+  {body: '<html><body>Bad Gateway</body></html>', label: 'HTML'},
+  {body: '{"unexpected":"shape"}', label: 'off-schema JSON'},
+])(
+  'should show the translated failure for a $label error body on the notification fetch',
+  async ({body}) => {
+    vi.mocked(apiJsonRequest).mockResolvedValueOnce(
+      new Response(body, {headers: {'Content-Type': 'text/plain'}, status: 504}),
+    )
+    await expect(requestCloudText(request, new AbortController().signal)).rejects.toThrow(
+      m.cloud_text_failed(),
+    )
+    expect(apiJsonRequest).toHaveBeenCalledTimes(2)
+  },
+)
 
 it('should stop notification reconnection when the request is aborted', async () => {
   const controller = new AbortController()
@@ -133,4 +159,23 @@ it('should stop notification reconnection when the request is aborted', async ()
   expect(
     vi.mocked(apiJsonRequest).mock.calls.filter(([url]) => String(url).endsWith('events=true')),
   ).toHaveLength(1)
+})
+
+it('should preserve cancellation while reading a notification error body', async () => {
+  const controller = new AbortController()
+  const reason = new DOMException('Request cancelled', 'AbortError')
+  const body = new ReadableStream(
+    {
+      pull: (stream) => {
+        controller.abort(reason)
+        stream.error(reason)
+      },
+    },
+    {highWaterMark: 0},
+  )
+  vi.mocked(apiJsonRequest)
+    .mockResolvedValueOnce(new Response(body, {status: 502}))
+    .mockResolvedValueOnce(new Response(null, {status: 204}))
+
+  await expect(requestCloudText(request, controller.signal)).rejects.toBe(reason)
 })

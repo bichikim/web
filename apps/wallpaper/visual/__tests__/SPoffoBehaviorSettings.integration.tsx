@@ -36,6 +36,7 @@ it.each([1, 36, SEMANTIC_LIMIT])(
       />
     ))
     const mounted = Date.now() - start
+    fireEvent.click(screen.getByRole('radio', {name: '랜덤 행동'}))
     const toggle = screen.getByRole('switch', {name: '랜덤 행동 사용'})
     const mutations: number[] = []
     for (const _ of [0, 1, 2, 3]) {
@@ -47,7 +48,10 @@ it.each([1, 36, SEMANTIC_LIMIT])(
     expect(mounted).toBeLessThan(INTERACTION_BUDGET)
     expect(Math.max(...mutations)).toBeLessThan(INTERACTION_BUDGET)
     expect(value().semanticBindings).toBe(bindings)
-    expect(screen.getAllByRole('group', {name: /^연결 \d+$/})).toHaveLength(count)
+    expect(screen.queryByRole('region', {name: '행동 연결'})).toBeNull()
+    fireEvent.click(screen.getByRole('radio', {name: '행동 연결'}))
+    expect(screen.getAllByRole('button', {name: / 편집$/})).toHaveLength(count)
+    expect(screen.queryByRole('group', {name: /^연결 \d+$/})).toBeNull()
     cleanup()
     expect(screen.queryByRole('switch', {name: '랜덤 행동 사용'})).toBeNull()
     console.info(JSON.stringify({bindings: count, mounted, mutations}))

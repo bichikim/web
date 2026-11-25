@@ -6,7 +6,7 @@ import {encodeSection} from './encode-section'
 import {digest, digestHex} from './digest'
 import type {PoffoAssetEntry} from './types'
 
-/** Saves the web Poffo v1 container without modifying its document or embedded asset bytes. */
+/** Saves the Poffo container with exact document values and original embedded asset bytes. */
 export const encodeFile = async (document: PuppetDocument, signal?: AbortSignal): Promise<Blob> => {
   signal?.throwIfAborted()
   const value = encodeValue(getExportDocument(document))
@@ -42,6 +42,7 @@ export const encodeFile = async (document: PuppetDocument, signal?: AbortSignal)
     encodedLength: metadata.blob.size,
     indexHash,
     indexLength: index.size,
+    version: value.version,
   })
   return new Blob([header, index, metadata.blob, ...assets], {type: POFFO_MIME_TYPE})
 }

@@ -1,4 +1,4 @@
-import type {LipSyncWeights} from './types'
+import type {LipSyncPose, LipSyncWeights} from './types'
 import type {LipSyncShape} from '@winter-love/wallpaper/settings/lipsync'
 import {speechShapes} from './speech-shapes'
 import {type Accessor, createEffect, createMemo, onCleanup} from 'solid-js'
@@ -27,9 +27,11 @@ export const useSpeechLipSync = (props: UseSpeechLipSyncProps) => {
     const id = props.widgetId()
     return id === undefined ? null : createLipSyncPublisher(id)
   })
-  const mode = createMemo(() =>
-    props.speech().enabled ? (props.speech().lipsync?.source ?? 'off') : 'off',
-  )
+  const mode = createMemo(() => {
+    const speech = props.speech()
+    const source = speech.lipsync?.source
+    return speech.enabled && (source === 'voice' || source === 'speech') ? source : 'off'
+  })
   const message = createMemo(() => props.message(), null, {
     equals: (first, second) =>
       first?.chat === second?.chat && first?.id === second?.id && first?.text === second?.text,
@@ -90,14 +92,26 @@ export const useSpeechLipSync = (props: UseSpeechLipSyncProps) => {
     }
   })
   return {
-    audioShape: (shape: LipSyncShape | null, level: number, weights?: LipSyncWeights) => {
+    audioShape: (
+      shape: LipSyncShape | null,
+      level: number,
+      weights?: LipSyncWeights,
+      articulation?: LipSyncPose,
+    ) => {
       if (mode() === 'voice') {
         const selected = message()
+        const pose =
+          weights === undefined && articulation === undefined
+            ? undefined
+            : {
+                ...articulation,
+                ...(weights === undefined ? {} : {weights}),
+              }
         publisher()?.(
           'voice',
           selected === null ? 0 : level,
           selected === null ? null : shape,
-          selected === null ? undefined : weights,
+          selected === null ? undefined : pose,
         )
       }
     },

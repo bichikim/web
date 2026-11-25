@@ -1,5 +1,6 @@
 import {SEMANTIC_TEXT_LIMIT, type SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
+import {semanticExamples} from '@winter-love/wallpaper/settings/semantic-examples'
 
 interface ClassifySemanticsOptions {
   /** Latest conversational prose; the last eight nonempty paragraphs are compared separately. */
@@ -32,17 +33,20 @@ export const classifySemantics = async (
       item.enabled &&
       item.category !== 'menu' &&
       semanticTargets(item).length > 0 &&
-      item.text.trim() !== '',
+      semanticExamples(item).some((variant) => variant.text.trim() !== ''),
   )
   const inputs = examples(options.text.slice(-SEMANTIC_TEXT_LIMIT))
   if (bindings.length === 0 || inputs.length === 0) {
     return {}
   }
-  const descriptions = bindings.map((binding) => ({
-    binding,
-    exclusions: examples(binding.excludeText ?? ''),
-    texts: examples(binding.text),
-  }))
+  const descriptions = bindings.map((binding) => {
+    const variants = semanticExamples(binding)
+    return {
+      binding,
+      exclusions: variants.flatMap((variant) => examples(variant.excludeText ?? '')),
+      texts: variants.flatMap((variant) => examples(variant.text)),
+    }
+  })
   const texts = [
     ...new Set([...inputs, ...descriptions.flatMap((item) => [...item.texts, ...item.exclusions])]),
   ]

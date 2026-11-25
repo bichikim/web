@@ -23,3 +23,12 @@ describe('lip sync', () => {
     expect(applyLipSync(document, {mouth: 0.9}, 0.3).mouth).toBe(1)
   })
 })
+
+test('should add lip sync to the default value when a role is missing from a sparse map', () => {
+  const model = {
+    ...document,
+    parameters: document.parameters!.map((parameter) => ({...parameter, defaultValue: 0.25})),
+  }
+
+  expect(applyLipSync(model, {other: 0.1}, 0.5)).toEqual({mouth: 0.75, other: 0.1})
+})

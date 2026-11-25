@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {Show} from 'solid-js'
 import type {BackgroundMedia} from '@winter-love/wallpaper/model'
 import type {WallpaperController} from '../features/settings'
@@ -16,6 +17,10 @@ interface SAlbumItemProps {
 
 export const SAlbumItem = (props: SAlbumItemProps) => {
   const selection = useInputValue({value: () => props.selected})
+  const removalLabel = () =>
+    uiText(isBuiltinMedia(props.item.id) ? '{value0} 숨기기' : '{value0} 삭제', {
+      value0: props.item.name,
+    })
   const handlePreview = () => props.onPreview?.(props.item.id)
   const handleToggle = () => {
     selection.reset()
@@ -49,7 +54,7 @@ export const SAlbumItem = (props: SAlbumItemProps) => {
               aria-hidden="true"
               class="absolute bottom-1 left-1 rounded bg-stone-900 px-1 text-[10px] text-white"
             >
-              영상
+              {uiText('영상')}
             </span>
           </Show>
         </span>
@@ -57,8 +62,8 @@ export const SAlbumItem = (props: SAlbumItemProps) => {
       <Show when={props.onRemove}>
         <button
           type="button"
-          aria-label={`${props.item.name} ${isBuiltinMedia(props.item.id) ? '숨기기' : '삭제'}`}
-          title={isBuiltinMedia(props.item.id) ? '숨기기' : '삭제'}
+          aria-label={removalLabel()}
+          title={isBuiltinMedia(props.item.id) ? uiText('숨기기') : uiText('삭제')}
           onClick={() => props.onRemove?.()}
           disabled={props.controller.busy()}
           class="absolute bottom-1 right-1 grid h-6 w-6 place-items-center rounded-full border-0

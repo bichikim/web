@@ -1,8 +1,16 @@
 export interface TrackingPoint {
   readonly x: number
   readonly y: number
+  readonly z?: number
+}
+export interface FacePose {
+  readonly head: TrackingPoint
+  readonly eyes: TrackingPoint
 }
 export interface FacePosition extends TrackingPoint {
+  /** Independently detected shoulder yaw; missing or null returns only the body to neutral. */
+  readonly body?: TrackingPoint | null
+  readonly pose?: FacePose | null
   readonly detected?: boolean
 }
 export interface TrackingViewport {
@@ -13,6 +21,7 @@ export interface TrackingViewport {
   readonly scale: number
 }
 export const CAMERA_SENSITIVITY = 3
+export const POSE_ROTATION_DEGREES = 30
 export interface TrackingParameter {
   readonly id: string
   readonly name?: string

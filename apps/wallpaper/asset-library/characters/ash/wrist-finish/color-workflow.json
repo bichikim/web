@@ -1,0 +1,90 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "wrist-finish-coffee-source.png"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "wrist-finish-coffee-target.png"
+    }
+  },
+  "3": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "wrist-finish-coffee-mask.png",
+      "channel": "red"
+    }
+  },
+  "4": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["2", 0],
+      "mask": ["3", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false
+    }
+  },
+  "5": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["4", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "6": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["5", 0],
+      "filename_prefix": "Wallpaper/wrist-finish/coffee"
+    }
+  },
+  "11": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "wrist-finish-noodles-source.png"
+    }
+  },
+  "12": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "wrist-finish-noodles-target.png"
+    }
+  },
+  "13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "wrist-finish-noodles-mask.png",
+      "channel": "red"
+    }
+  },
+  "14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["11", 0],
+      "source": ["12", 0],
+      "mask": ["13", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false
+    }
+  },
+  "15": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["14", 0],
+      "alpha": ["11", 1]
+    }
+  },
+  "16": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["15", 0],
+      "filename_prefix": "Wallpaper/wrist-finish/noodles"
+    }
+  }
+}

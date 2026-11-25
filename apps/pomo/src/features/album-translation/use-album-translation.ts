@@ -1,6 +1,7 @@
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
+import {reportClientError} from '../client-error-reporter/reporter'
 import {supportsWebGpu} from '../text-generation/environment'
 import {createLazyClient} from '../text-generation/lazy-client'
 import {
@@ -115,7 +116,17 @@ export const useAlbumTranslation = (
     }
 
     setState({message: 'Gemma 4를 준비하는 중…', progress: 0, status: 'loading'})
-    clientOwner.get().translate(input)
+    let client: AlbumTranslationClient
+
+    try {
+      client = clientOwner.get()
+    } catch (cause: unknown) {
+      reportClientError(cause, {feature: 'album-translation', source: 'worker'})
+      setState({message: '번역을 시작하지 못했습니다. 다시 시도해 주세요.', status: 'error'})
+      return
+    }
+
+    client.translate(input)
   }
 
   onCleanup(clientOwner.dispose)

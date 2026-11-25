@@ -174,6 +174,7 @@ it.each([undefined, '9'])('should reject an unsupported precipitation value: %s'
 
 it.each([
   ['1', 'rain'],
+  ['4', 'rain'],
   ['5', 'rain'],
   ['2', 'mixed'],
   ['6', 'mixed'],

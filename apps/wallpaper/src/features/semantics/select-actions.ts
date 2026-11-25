@@ -18,7 +18,8 @@ export const selectSemanticActions = (
 ): readonly SemanticSelection[] => {
   const winners: SemanticSelection[] = []
   const groups = new Set<string>()
-  const {frame} = options
+  // State previews retain checked appearance while suspending automatic content actions.
+  const frame = options.frame?.agentPreview === undefined ? options.frame : null
   const ended = frame?.narration?.phase === 'ended' && frame.previewId === undefined
   const bindings = options.bindings.filter(
     (binding) => binding.enabled && semanticTargets(binding).length > 0,

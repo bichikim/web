@@ -19,7 +19,7 @@ export interface ResolveIdOptions {
   root?: string
   /** Path separator for normalization. Defaults to `path.sep`. */
   separator?: string
-  /** Paths or regexes that identify workspace roots (e.g. `['packages/']`). */
+  /** Nonblank paths or regexes that identify workspace roots (e.g. `['packages/']`). */
   workspacePaths?: (string | RegExp)[]
 }
 
@@ -73,7 +73,13 @@ export const getWorkspaceRegex = (workspacePath: string | RegExp): RegExp => {
  * @returns Array of RegExps for matching those workspace paths.
  */
 export const getWorkspaceRegexList = (workspacePaths: (string | RegExp)[]): RegExp[] => {
-  return workspacePaths.map(getWorkspaceRegex)
+  return workspacePaths.map((workspacePath, index) => {
+    if (typeof workspacePath === 'string' && workspacePath.trim().length === 0) {
+      throw new TypeError(`workspacePaths[${index}] must not be blank`)
+    }
+
+    return getWorkspaceRegex(workspacePath)
+  })
 }
 
 /**

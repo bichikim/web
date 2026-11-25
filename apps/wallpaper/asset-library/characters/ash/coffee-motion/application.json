@@ -1,0 +1,14 @@
+{
+  "sourceSha256": "8ed5591a27305813c7e72b46cdbb765cb6bd38ca976c7c5b47ca6e2fe4f27d76",
+  "sha256": "5534e361358f1ddff124e0cf71bb0ba5d16cb9fee1d9108219a9060dab56dfde",
+  "bytes": 20808914,
+  "partId": "coat-free:coffee:hand",
+  "anchorId": "coat-free:coffee-left:joint:hand",
+  "anchor": 1046,
+  "removedMixedMotionLinks": 2092,
+  "restError": 6.821210263296962e-13,
+  "allTexturesPreserved": true,
+  "handFingerAndCupPixelsPreserved": true,
+  "otherPartDataPreserved": true,
+  "method": "One coherent coffee hand and cup under the original hand transform, translated as a whole from the existing wrist anchor; no per-vertex mixing of independently moving cup surfaces."
+}

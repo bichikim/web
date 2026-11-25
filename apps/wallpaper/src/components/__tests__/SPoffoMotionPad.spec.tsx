@@ -18,6 +18,7 @@ const prepare = (label: string) => {
     top: 0,
     width: 200,
   } as DOMRect)
+  Object.defineProperty(area, 'hasPointerCapture', {value: vi.fn(() => true)})
   Object.defineProperty(area, 'setPointerCapture', {value: vi.fn()})
   Object.defineProperty(area, 'releasePointerCapture', {value: vi.fn()})
   return area
@@ -27,7 +28,7 @@ test('should seek and drag with upward positive Y and commit only on release', (
   const preview = vi.fn()
   render(() => (
     <SPoffoMotionPad
-      label="얼굴 기본 방향"
+      label="머리 정면 보정"
       fields={['headCenterX', 'headCenterY']}
       value={{eyeCenterY: 25}}
       step={1}
@@ -35,7 +36,7 @@ test('should seek and drag with upward positive Y and commit only on release', (
       onPreview={preview}
     />
   ))
-  const area = prepare('얼굴 기본 방향')
+  const area = prepare('머리 정면 보정')
   fireEvent(area, pointer('pointerdown', 150, 50))
   expect(preview).toHaveBeenLastCalledWith({eyeCenterY: 25, headCenterX: 50, headCenterY: 50})
   fireEvent(area, pointer('pointermove', 180, 20))
@@ -49,19 +50,19 @@ test('should cancel a drag with Escape and support precise keyboard steps', () =
   const preview = vi.fn()
   render(() => (
     <SPoffoMotionPad
-      label="눈동자 기본 방향"
+      label="눈동자 중심 보정"
       fields={['eyeCenterX', 'eyeCenterY']}
       step={0.05}
       onChange={save}
       onPreview={preview}
     />
   ))
-  const area = prepare('눈동자 기본 방향')
+  const area = prepare('눈동자 중심 보정')
   fireEvent(area, pointer('pointerdown', 170, 30))
   fireEvent.keyDown(area, {key: 'Escape'})
   fireEvent(area, pointer('pointerup', 170, 30))
   expect(save).not.toHaveBeenCalled()
   expect(preview).toHaveBeenLastCalledWith(null)
-  fireEvent.keyDown(screen.getByRole('button', {name: '눈동자 기본 방향 조정'}), {key: 'ArrowUp'})
+  fireEvent.keyDown(screen.getByRole('button', {name: '눈동자 중심 보정 조정'}), {key: 'ArrowUp'})
   expect(save).toHaveBeenCalledExactlyOnceWith({eyeCenterX: 0, eyeCenterY: 0.05})
 })

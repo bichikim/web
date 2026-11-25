@@ -118,6 +118,7 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
         return
       }
 
+      events.onStopDialoguePlayback()
       await player.play()
     } catch (error: unknown) {
       if (currentRequestId !== playbackRequestId) {
@@ -152,6 +153,8 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
   }
 
   const handleDelete = async (dialogue: PDialogue) => {
+    setMessage(null)
+
     try {
       stopPlayback()
       if (props.onDelete === undefined) {

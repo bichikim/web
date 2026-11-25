@@ -36,9 +36,12 @@ export const POST = async (event: APIEvent): Promise<Response> => {
         {cookies: authorization.cookies, status: HTTP_BAD_REQUEST},
       )
     }
-    return noStoreJson(await testProviderModel(provider, entry.model), {
-      cookies: authorization.cookies,
-    })
+    return noStoreJson(
+      await testProviderModel(provider, entry.model, {signal: event.request.signal}),
+      {
+        cookies: authorization.cookies,
+      },
+    )
   } catch (error: unknown) {
     console.error('Failed to prepare AI model test', error)
     return noStoreJson(

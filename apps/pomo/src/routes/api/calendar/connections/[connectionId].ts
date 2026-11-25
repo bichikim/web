@@ -1,12 +1,15 @@
 import type {APIEvent} from '@solidjs/start/server'
+import {z} from 'zod'
 
 import {deleteCalendarConnection} from 'src/server/calendar/runtime'
 import {noStoreEmpty, noStoreJson} from 'src/server/http/response'
 import {resolveUserRequestOrUnavailable} from 'src/server/auth/resolve-user-request-or-unavailable'
 
+const HTTP_BAD_REQUEST = 400
 const HTTP_NOT_FOUND = 404
 const HTTP_UNAUTHORIZED = 401
 const HTTP_SERVICE_UNAVAILABLE = 503
+const connectionIdSchema = z.uuid()
 
 export const DELETE = async (event: APIEvent): Promise<Response> => {
   const resolved = await resolveUserRequestOrUnavailable(event.request, {
@@ -31,8 +34,16 @@ export const DELETE = async (event: APIEvent): Promise<Response> => {
     )
   }
 
+  const connectionId = connectionIdSchema.safeParse(event.params.connectionId)
+  if (!connectionId.success) {
+    return noStoreJson(
+      {error: 'invalid_request'},
+      {cookies: identity.cookies, status: HTTP_BAD_REQUEST},
+    )
+  }
+
   try {
-    const deleted = await deleteCalendarConnection(identity.userId, event.params.connectionId)
+    const deleted = await deleteCalendarConnection(identity.userId, connectionId.data)
     return deleted
       ? noStoreEmpty({cookies: identity.cookies})
       : noStoreJson(

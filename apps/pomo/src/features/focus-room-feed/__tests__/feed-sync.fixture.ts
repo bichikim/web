@@ -31,6 +31,7 @@ export const createRepository = () => {
   const repository: FeedDialogueRepository = {
     complete: vi.fn(),
     deleteJobs: vi.fn(),
+    discardBacklogs: vi.fn(),
     dismissItem: vi.fn(async (options) => {
       const index = items.findIndex(
         (item) =>
@@ -56,10 +57,12 @@ export const createRepository = () => {
     ),
     listJobs: vi.fn(async () => jobs),
     listMetadata: vi.fn(async () => []),
+    loadBacklog: vi.fn(async () => undefined),
     markListened: vi.fn(),
     queue: vi.fn(async (job, item) => {
       jobs.push(job)
       items.push(item)
+      return true
     }),
     recoverMissingDialogue: vi.fn(),
     removeItem: vi.fn(async (feedConnectionId, feedItemId) => {
@@ -71,6 +74,7 @@ export const createRepository = () => {
       }
     }),
     removeMetadata: vi.fn(),
+    replaceBacklog: vi.fn(async () => true),
     retryJobs: vi.fn(),
     saveItems: vi.fn(async (nextItems) => {
       items.push(...nextItems)

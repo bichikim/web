@@ -1,0 +1,73 @@
+{
+  "source": "Actual Wallpaper Worker frames compared with complete scene and glue evaluation",
+  "pointerInputUsed": false,
+  "headInput": "temporary head parameter preview before physics",
+  "poses": [
+    {
+      "pose": "coffee-left",
+      "visibleConnectionParts": ["coat-free:coffee-left:ArtMesh900", "coat-free:coffee:hand"],
+      "maximumVertexError": 0.00045343732972469297,
+      "parts": {
+        "coat-free:noodles-left:ArtMesh900": 0.00045343732972469297,
+        "ArtMesh49": 0.00023220820321512292,
+        "ArtMesh48": 0.00023660213855691836,
+        "coat-free:noodles-left:hand": 0.00034089303744622157,
+        "coat-free:coffee-left:ArtMesh900": 0.00038454397554232855,
+        "coat-free:coffee:hand": 0.00044668020973404055
+      },
+      "head": -30,
+      "body": -10
+    },
+    {
+      "pose": "coffee-right",
+      "visibleConnectionParts": ["coat-free:coffee-left:ArtMesh900", "coat-free:coffee:hand"],
+      "maximumVertexError": 0.00044189987966092303,
+      "parts": {
+        "coat-free:noodles-left:ArtMesh900": 0.00043291491147101624,
+        "ArtMesh49": 0.0002849919096661324,
+        "ArtMesh48": 0.0002850924145150202,
+        "coat-free:noodles-left:hand": 0.0002850924145150202,
+        "coat-free:coffee-left:ArtMesh900": 0.00044189987966092303,
+        "coat-free:coffee:hand": 0.0003482707611510705
+      },
+      "head": 30,
+      "body": 10
+    },
+    {
+      "pose": "noodles-left",
+      "visibleConnectionParts": [
+        "coat-free:noodles-left:ArtMesh900",
+        "coat-free:noodles-left:hand"
+      ],
+      "maximumVertexError": 0.00047819159908613074,
+      "parts": {
+        "coat-free:noodles-left:ArtMesh900": 0.00033544152984177344,
+        "ArtMesh49": 0.00016600627759544295,
+        "ArtMesh48": 0.00016518921938768472,
+        "coat-free:noodles-left:hand": 0.00025238044418074423,
+        "coat-free:coffee-left:ArtMesh900": 0.00047819159908613074,
+        "coat-free:coffee:hand": 0.0004464146895770682
+      },
+      "head": -30,
+      "body": -10
+    },
+    {
+      "pose": "noodles-right",
+      "visibleConnectionParts": [
+        "coat-free:noodles-left:ArtMesh900",
+        "coat-free:noodles-left:hand"
+      ],
+      "maximumVertexError": 0.0004801152913387341,
+      "parts": {
+        "coat-free:noodles-left:ArtMesh900": 0.0004739293076454487,
+        "ArtMesh49": 0.00031513004114458454,
+        "ArtMesh48": 0.0003195286799382302,
+        "coat-free:noodles-left:hand": 0.0003195286799382302,
+        "coat-free:coffee-left:ArtMesh900": 0.0004210781444271561,
+        "coat-free:coffee:hand": 0.0004801152913387341
+      },
+      "head": 30,
+      "body": 10
+    }
+  ]
+}

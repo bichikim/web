@@ -1,3 +1,4 @@
+import {touchJointChains} from '@winter-love/wallpaper/settings/touch-joint-chains'
 import {cleanup, render, screen} from '@solidjs/testing-library'
 import Dexie from 'dexie'
 import {createSignal} from 'solid-js'
@@ -7,6 +8,8 @@ import {createBuiltinLibrary} from '../../src/features/builtin-assets/create-bui
 import {SPoffoConnectionProfiles} from '../../src/components/SPoffoConnectionProfiles'
 import type {PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
 import type {ConnectionProfile} from '@winter-love/wallpaper/settings/connections'
+import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
+import {builtinConnectionProfile} from '../../src/features/connection-profiles/builtin-profile'
 import ash from '../../src/features/connection-profiles/ash.json'
 import 'virtual:uno.css'
 
@@ -29,10 +32,18 @@ it('should round-trip connections, reject invalid JSON, and restore defaults', a
     trackingBindings: {headX: {inverted: true, parameterId: 'ParamAngleX'}},
     trackingOptions: {headMaximumX: 18, headMinimumX: -12},
   })
-  const [widget, setWidget] = createSignal<PoffoWidget>((await repository.read()).widgets[0]!)
+  const [widget, setWidget] = createSignal<PoffoWidget>(
+    (await repository.read()).widgets.find((item) => item.id === original.id)!,
+  )
   const parameters = [
     'ParamAngleX',
     'ParamMouthOpenY',
+    'Param71',
+    ...Object.keys(ash.connections.touch.parameters),
+    ...touchJointChains(ash.connections.touch).flatMap((chain) =>
+      chain.joints.flatMap((joint) => (joint.parameterId === undefined ? [] : [joint.parameterId])),
+    ),
+    'ParamBodyAngleX',
     ...ash.connections.semanticBindings.map((item) => item.parameterId),
   ].map((id) => ({defaultValue: 0, id, maximum: 30, minimum: -30}))
   let url = ''
@@ -41,8 +52,14 @@ it('should round-trip connections, reject invalid JSON, and restore defaults', a
       url = this.href
     },
   )
-  const view = render(() => <SPoffoConnectionProfiles widget={widget()} parameters={parameters} />)
-  await userEvent.click(screen.getByRole('button', {name: '연결 JSON 저장'}))
+  const actions = (builtinConnectionProfile('builtin:ash')?.connections.semanticBindings ?? [])
+    .flatMap(semanticTargets)
+    .map((action) => ({action, label: action.id}))
+  const view = render(() => (
+    <SPoffoConnectionProfiles actions={actions} widget={widget()} parameters={parameters} />
+  ))
+  await userEvent.click(screen.getByRole('button', {name: '설정 JSON 저장'}))
+  await expect.poll(() => url).toMatch(/^blob:/u)
   const json = await (await fetch(url)).text()
   const exported: ConnectionProfile = JSON.parse(json)
   expect(exported.connections).toMatchObject({
@@ -54,6 +71,7 @@ it('should round-trip connections, reject invalid JSON, and restore defaults', a
   const input = view.container.querySelector<HTMLInputElement>('input[type="file"]')!
   await userEvent.upload(input, new File(['{broken'], 'broken.json', {type: 'application/json'}))
   await expect.poll(() => screen.queryByRole('alert')?.textContent).toContain('형식이나 값')
+  await expect.poll(() => input.disabled).toBe(false)
   const changed = {
     ...exported,
     connections: {
@@ -61,23 +79,70 @@ it('should round-trip connections, reject invalid JSON, and restore defaults', a
       semanticBindings: [{...exported.connections.semanticBindings![0]!, threshold: 0.9}],
     },
   }
+  const invalidChain = {
+    ...changed,
+    connections: {
+      ...changed.connections,
+      touch: {
+        ...exported.connections.touch!,
+        chains: [
+          {
+            enabled: true,
+            id: 'missing-chain',
+            joints: [{id: 'missing-joint', parameterId: 'unknown-joint', response: 1}],
+            name: 'Missing',
+          },
+        ],
+      },
+    },
+  }
+  await userEvent.upload(
+    input,
+    new File([JSON.stringify(invalidChain)], 'unknown-joint.json', {type: 'application/json'}),
+  )
+  await expect.poll(() => screen.queryByRole('alert')?.textContent).toContain('없는 파라미터')
+  expect(
+    (await repository.read()).widgets.find((item) => item.id === original.id)?.speech
+      ?.semanticBindings,
+  ).toEqual(exported.connections.semanticBindings)
+  await expect.poll(() => input.disabled).toBe(false)
   await userEvent.upload(
     input,
     new File([JSON.stringify(changed)], 'connections.json', {type: 'application/json'}),
   )
   await expect
-    .poll(async () => (await repository.read()).widgets[0]?.speech?.semanticBindings)
+    .poll(
+      async () =>
+        (await repository.read()).widgets.find((item) => item.id === original.id)?.speech
+          ?.semanticBindings,
+    )
     .toEqual(changed.connections.semanticBindings)
   expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   repository.close()
   const reopened = createBuiltinLibrary('wallpaper-library')
   repositories.push(reopened)
-  const stored = (await reopened.read()).widgets[0]!
+  const stored = (await reopened.read()).widgets.find((item) => item.id === original.id)!
   expect(stored.speech?.semanticBindings).toEqual(changed.connections.semanticBindings)
   expect(stored.speech?.lipsync).toEqual(exported.connections.lipsync)
   setWidget(stored)
   await userEvent.click(screen.getByRole('button', {name: '기본 연결 적용'}))
   await expect
-    .poll(async () => (await reopened.read()).widgets[0]?.speech?.semanticBindings)
+    .poll(
+      async () =>
+        (await reopened.read()).widgets.find((item) => item.id === original.id)?.speech
+          ?.semanticBindings,
+    )
     .toEqual(ash.connections.semanticBindings)
+  expect(
+    (await reopened.read()).widgets.find((item) => item.id === original.id)?.speech?.agentBindings,
+  ).toEqual(ash.connections.agentBindings)
+  expect(
+    (await reopened.read()).widgets.find((item) => item.id === original.id)?.speech?.agentBindings
+      ?.tool?.actions,
+  ).toEqual([])
+  expect(
+    (await reopened.read()).widgets
+      .find((item) => item.id === original.id)
+      ?.speech?.semanticBindings?.find((binding) => binding.id === 'ash:glasses'),
+  ).toMatchObject({action: {id: '안경', kind: 'expression'}, category: 'menu', enabled: true})
 })

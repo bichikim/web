@@ -3,7 +3,10 @@ import {AGENT_STATES, type AgentSignals} from '@winter-love/wallpaper/settings/a
 import {readAgentSignals, subscribeAgentSignals} from './native'
 
 /** Observes content-free state flags only while a consumer needs them. */
-export const useAgentSignals = (enabled: Accessor<boolean> = () => true) => {
+export const useAgentSignals = (
+  enabled: Accessor<boolean> = () => true,
+  widgetId?: Accessor<string | undefined>,
+) => {
   const [signals, setSignals] = createSignal<AgentSignals>(
     {},
     {
@@ -11,8 +14,9 @@ export const useAgentSignals = (enabled: Accessor<boolean> = () => true) => {
     },
   )
   createEffect(() => {
+    const id = widgetId?.()
+    setSignals({})
     if (!enabled()) {
-      setSignals({})
       return
     }
     let disposed = false
@@ -24,14 +28,14 @@ export const useAgentSignals = (enabled: Accessor<boolean> = () => true) => {
         revision += 1
         setSignals(value)
       }
-    })
+    }, id)
       .then(async (unsubscribe) => {
         if (disposed) {
           unsubscribe()
           return
         }
         stop = unsubscribe
-        const initial = await readAgentSignals()
+        const initial = await readAgentSignals(id)
         if (!disposed && initialRevision === revision) {
           setSignals(initial)
         }

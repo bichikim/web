@@ -10,6 +10,10 @@ const [selected, setSelected] = createSignal('units')
 let returnFocusTarget: HTMLButtonElement | null = null
 
 export const toolsDialog = {
+  closeOnExit(): void {
+    returnFocusTarget = null
+    setIsOpen(false)
+  },
   isOpen,
   onOpenChange: setIsOpen,
   onSelectedChange: setSelected,

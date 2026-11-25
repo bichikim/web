@@ -1,6 +1,7 @@
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PreferenceProvider} from 'src/hooks/use-preference'
 import {renderHook} from '@solidjs/testing-library'
-import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, onTestFinished, vi} from 'vitest'
 
 import {
   type FeedDialogueListItem,
@@ -516,21 +517,30 @@ it('should ignore a missing scheduled queue entry', async () => {
   view.cleanup()
 })
 
-it('should expose sync failures and create feed item ids', async () => {
-  repositoryMocks.listConnections.mockReturnValue([createConnection()])
-  syncMocks.synchronizeFeeds.mockImplementation(async (options) => {
-    expect(options.createId()).toEqual(expect.any(String))
-    return {failures: [{message: 'failed'}], queuedJobIds: [], successfulConnections: 0}
-  })
-  const view = renderHook(() => usePFeeds({events: createEventContext()}), {
-    wrapper: PreferenceProvider,
-  })
+it.each([
+  ['ko', '1개 피드'],
+  ['en', 'Could not load all feeds (1 failed)'],
+] as const)(
+  'should expose sync failures in %s and create feed item ids',
+  async (locale, expected) => {
+    const previousLocale = getLocale
+    overwriteGetLocale(() => locale)
+    onTestFinished(() => overwriteGetLocale(previousLocale))
+    repositoryMocks.listConnections.mockReturnValue([createConnection()])
+    syncMocks.synchronizeFeeds.mockImplementation(async (options) => {
+      expect(options.createId()).toEqual(expect.any(String))
+      return {failures: [{message: 'failed'}], queuedJobIds: [], successfulConnections: 0}
+    })
+    const view = renderHook(() => usePFeeds({events: createEventContext()}), {
+      wrapper: PreferenceProvider,
+    })
 
-  await vi.waitFor(() => expect(view.result.state().status).toBe('error'))
+    await vi.waitFor(() => expect(view.result.state().status).toBe('error'))
 
-  expect(view.result.state().message).toContain('1개 피드')
-  view.cleanup()
-})
+    expect(view.result.state().message).toContain(expected)
+    view.cleanup()
+  },
+)
 
 it('should report unexpected synchronization and initialization failures', async () => {
   const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)

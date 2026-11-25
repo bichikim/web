@@ -95,7 +95,10 @@ export interface PPomodoroPresentation {
 const getStatusLabel = (state: PomodoroTimerState) => {
   switch (state.status) {
     case 'idle':
-      return state.phase === 'focus' ? m.pomodoro_focus_ready() : m.pomodoro_break_ready()
+      if (state.phase === 'focus') {
+        return m.pomodoro_focus_ready()
+      }
+      return state.phase === 'longBreak' ? m.pomodoro_long_break_ready() : m.pomodoro_break_ready()
     case 'paused':
       return m.pomodoro_paused()
     case 'running':
@@ -110,7 +113,10 @@ const getStatusLabel = (state: PomodoroTimerState) => {
 
 const getCompletedInCycle = (state: PomodoroTimerState, focusSessionsPerCycle: number) => {
   if (state.phase === 'longBreak') {
-    return focusSessionsPerCycle
+    return Math.min(
+      state.longBreakFocusSessions ?? state.completedFocusSessions,
+      focusSessionsPerCycle,
+    )
   }
 
   return state.completedFocusSessions % focusSessionsPerCycle
@@ -318,6 +324,7 @@ export const PPomodoro = (props: PPomodoroProps) => {
               CHARACTER_IMAGES[props.sceneStyle ?? 'original'][phasePresentation().characterEmotion]
             }
             isActive={timer.state().status === 'running'}
+            isOpen={isOpen()}
             onOpen={handleOpen}
             onPrimaryPress={handlePrimaryPress}
             phase={timer.state().phase}

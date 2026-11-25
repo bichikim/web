@@ -159,3 +159,35 @@ it.each(['draft', 'reference'] as const)(
     }
   },
 )
+
+it('should retain the prepared cover until the album is successfully saved with a URL', async () => {
+  storageMocks.readAlbumDraftData.mockReturnValue(
+    createDraft({coverDraftId: COVER_DRAFT_ID, hasCoverFile: true}),
+  )
+  storageMocks.readAlbumDraftCover.mockResolvedValue(PREPARED_COVER)
+  const {cleanup, result} = renderAlbumDraft()
+  try {
+    await waitForRestoration(result)
+    const preview = result.coverPreviewUrl()
+    expect(preview).toBe('blob:album-cover')
+    result.handleCoverImageUrlInput({
+      currentTarget: {value: 'https://example.com/final.webp'},
+    } as unknown as InputEvent & {currentTarget: HTMLInputElement})
+    expect(result.coverPreviewUrl()).toBe(preview)
+
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(null, {status: 500}))
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+    expect(result.coverPreviewUrl()).toBe(preview)
+    expect(storageMocks.deleteAlbumDraft).not.toHaveBeenCalled()
+
+    await result.handleAlbumSubmit(createSubmitEvent().event)
+    expect(result.coverPreviewUrl()).toBeNull()
+    expect(storageMocks.deleteAlbumDraft).toHaveBeenCalledWith(COVER_DRAFT_ID, expect.anything())
+    expect(JSON.parse(String(vi.mocked(fetch).mock.calls.at(-1)?.[1]?.body))).toMatchObject({
+      coverDraftId: null,
+      coverImageUrl: 'https://example.com/final.webp',
+    })
+  } finally {
+    cleanup()
+  }
+})

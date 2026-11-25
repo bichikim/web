@@ -15,7 +15,12 @@ const AccountRoute = () => {
       : undefined
   }
 
-  return <AccountPage connectedCalendarProvider={provider()} />
+  return (
+    <AccountPage
+      calendarConnectionFailed={searchParams.calendar === 'failed'}
+      connectedCalendarProvider={provider()}
+    />
+  )
 }
 
 export default AccountRoute

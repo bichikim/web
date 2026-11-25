@@ -1,0 +1,53 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "controller-right-arm-source.png"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "controller-right-arm-target.png"
+    }
+  },
+  "3": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "controller-right-arm-mask.png",
+      "channel": "red"
+    }
+  },
+  "4": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["2", 0],
+      "mask": ["3", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false
+    }
+  },
+  "5": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "controller-right-arm-inverse.png",
+      "channel": "red"
+    }
+  },
+  "6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["4", 0],
+      "alpha": ["5", 0]
+    }
+  },
+  "7": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["6", 0],
+      "filename_prefix": "Wallpaper/controller-wrists/right"
+    }
+  }
+}

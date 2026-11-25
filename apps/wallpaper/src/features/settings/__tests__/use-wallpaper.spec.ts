@@ -14,6 +14,7 @@ import {
 import {type BackgroundMedia, DEFAULT_BACKGROUND} from '@winter-love/wallpaper/model'
 import {listWallpaperMonitors, subscribeWallpaperMonitors} from '../monitors'
 import {useWallpaper} from '../use-wallpaper'
+import {interfaceLanguage, nativeLanguage} from '../../localization'
 
 vi.mock('@winter-love/wallpaper/settings/repository', () => ({createSettingsRepository: vi.fn()}))
 vi.mock('@winter-love/wallpaper/web-repository', () => ({createWebRepository: vi.fn()}))
@@ -34,12 +35,14 @@ beforeEach(() => {
     close: vi.fn(),
     listPuppets: vi.fn(async () => []),
     loadPuppet: vi.fn(),
+    loadPuppetSilhouette: vi.fn(),
     read: vi.fn(async () => Array.from(stored.values())),
     removeMediaReferences: vi.fn(),
     removePuppet: vi.fn(),
     save: vi.fn(async (settings) => {
       stored.set(settings.monitorId, settings)
     }),
+    savePuppetSilhouette: vi.fn(),
     subscribe: vi.fn(() => vi.fn()),
   }
   media = {
@@ -63,6 +66,29 @@ beforeEach(() => {
 afterEach(() => {
   vi.clearAllMocks()
   vi.restoreAllMocks()
+})
+
+it('should ignore an obsolete media read failure after a newer refresh succeeds', async () => {
+  const initial = Promise.withResolvers<Awaited<ReturnType<typeof media.read>>>()
+  vi.mocked(media.read).mockReturnValueOnce(initial.promise)
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.selectedId()).toBe('first'), {interval: 1})
+  await result.setInteraction({activation: 'always'})
+  expect(media.read).toHaveBeenCalledTimes(2)
+  initial.reject(new Error('obsolete read'))
+  await initial.promise.catch(() => undefined)
+  await new Promise<void>((resolve) => {
+    const channel = new MessageChannel()
+    channel.port1.onmessage = () => {
+      channel.port1.close()
+      channel.port2.close()
+      resolve()
+    }
+    channel.port2.postMessage(null)
+  })
+  expect(result.error()).toBeNull()
+  expect(console.error).not.toHaveBeenCalled()
+  cleanup()
 })
 
 it('should refresh connected screens without resetting the selected screen', async () => {
@@ -340,13 +366,50 @@ it('should expose bundled content without importing or replacing saved monitor s
   }
   stored.set('first', original)
   const {result, cleanup} = renderHook(useWallpaper)
-  await waitFor(() => expect(result.puppets()).toContainEqual({id: 'builtin:ash', name: '애시'}))
+  await waitFor(() => expect(result.puppets()).toContainEqual({id: 'builtin:ash', name: 'Ash'}))
   expect(result.items().filter((item) => item.id.startsWith('builtin:cover:'))).toHaveLength(10)
   expect(result.current()?.content).toEqual(original.content)
   expect(repository.save).not.toHaveBeenCalled()
   expect(repository.addPuppet).not.toHaveBeenCalled()
   expect(media.importMedia).not.toHaveBeenCalled()
   cleanup()
+})
+
+it('should localize builtin names on language changes without renaming imports or saving settings', async () => {
+  vi.spyOn(nativeLanguage, 'save').mockResolvedValue(undefined)
+  vi.mocked(repository.listPuppets).mockResolvedValue([
+    {id: 'imported-puppet', name: '프로필 배경'},
+  ])
+  vi.mocked(media.read).mockResolvedValue({
+    items: [{id: 'imported-photo', kind: 'photo', name: '창문', size: 1}],
+    preferences: DEFAULT_BACKGROUND,
+  })
+  const previous = interfaceLanguage.language()
+  const {result, cleanup} = renderHook(useWallpaper)
+  try {
+    await waitFor(() =>
+      expect(result.puppets().some((asset) => asset.id === 'imported-puppet')).toBe(true),
+    )
+    const imported = result.items().find((item) => item.id === 'imported-photo')
+    const reads = vi.mocked(repository.listPuppets).mock.calls.length
+    await interfaceLanguage.change('en')
+    expect(result.puppets()).toContainEqual({id: 'builtin:profile', name: 'Profile background'})
+    expect(result.puppets()).toContainEqual({id: 'builtin:street', name: 'Street background'})
+    expect(result.puppets()).toContainEqual({id: 'imported-puppet', name: '프로필 배경'})
+    expect(result.items().find((item) => item.id === 'builtin:cover:window')?.name).toBe('Window')
+    expect(result.items().find((item) => item.id === 'imported-photo')).toBe(imported)
+    expect(imported?.name).toBe('창문')
+    await interfaceLanguage.change('ko')
+    expect(result.puppets()).toContainEqual({id: 'builtin:profile', name: '프로필 배경'})
+    expect(result.items().find((item) => item.id === 'builtin:cover:window')?.name).toBe('창문')
+    expect(repository.listPuppets).toHaveBeenCalledTimes(reads)
+    expect(repository.save).not.toHaveBeenCalled()
+    expect(repository.addPuppet).not.toHaveBeenCalled()
+    expect(media.importMedia).not.toHaveBeenCalled()
+  } finally {
+    cleanup()
+    await interfaceLanguage.change(previous)
+  }
 })
 
 it('should persist album fit and keep it when a subsequent independent album field changes', async () => {

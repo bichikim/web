@@ -46,11 +46,16 @@ export const createDialogueTimeline = (
 ): DialogueTimeline => {
   let startMs = 0
   const silenceMs = options.silenceDuration * MILLISECONDS_PER_SECOND
-  const segments = options.audioChunks.map((audio, index) => {
+  const audioChunks = options.audioChunks.toSorted((left, right) => left.index - right.index)
+  const segments = audioChunks.map((audio, index) => {
     const text = options.textChunks[audio.index]
 
     if (text === undefined) {
       throw new Error(`Missing text for dialogue audio chunk ${audio.index}.`)
+    }
+
+    if (!Number.isFinite(audio.sampleRate) || audio.sampleRate <= 0) {
+      throw new RangeError(`Invalid sample rate for dialogue audio chunk ${audio.index}.`)
     }
 
     const durationMs = (audio.samples.length / audio.sampleRate) * MILLISECONDS_PER_SECOND

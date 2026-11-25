@@ -1,0 +1,176 @@
+{
+  "files": [
+    {
+      "path": "shared/duration_predictor.onnx",
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/onnx/duration_predictor.onnx",
+      "aliases": [
+        "https://storage.pomofi.io/models/supertonic-3-int8/cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4/duration_predictor.int8.onnx"
+      ],
+      "size": 3700147,
+      "sha256": "c3eb91414d5ff8a7a239b7fe9e34e7e2bf8a8140d8375ffb14718b1c639325db"
+    },
+    {
+      "path": "shared/text_encoder.onnx",
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/onnx/text_encoder.onnx",
+      "aliases": [
+        "https://storage.pomofi.io/models/supertonic-3-int8/cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4/text_encoder.int8.onnx"
+      ],
+      "size": 36416150,
+      "sha256": "c7befd5ea8c3119769e8a6c1486c4edc6a3bc8365c67621c881bbb774b9902ff"
+    },
+    {
+      "path": "full/vector_estimator.onnx",
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/onnx/vector_estimator.onnx",
+      "aliases": [],
+      "size": 256534781,
+      "sha256": "883ac868ea0275ef0e991524dc64f16b3c0376efd7c320af6b53f5b780d7c61c"
+    },
+    {
+      "path": "full/vocoder.onnx",
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/onnx/vocoder.onnx",
+      "aliases": [],
+      "size": 101424195,
+      "sha256": "085de76dd8e8d5836d6ca66826601f615939218f90e519f70ee8a36ed2a4c4ba"
+    },
+    {
+      "path": "int8/vector_estimator.int8.onnx",
+      "url": "https://storage.pomofi.io/models/supertonic-3-int8/cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4/vector_estimator.int8.onnx",
+      "aliases": [],
+      "size": 78400833,
+      "sha256": "20cd86fa5c6effedfda0e7cffe5b0569ca401c440a0c3a1d72bf39286c0db3fd"
+    },
+    {
+      "path": "int8/vocoder.int8.onnx",
+      "url": "https://storage.pomofi.io/models/supertonic-3-int8/cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4/vocoder.int8.onnx",
+      "aliases": [],
+      "size": 25991073,
+      "sha256": "e923d60f53f95eb1ce235f1dc33ec56d9c057823c96fa6f8acf98f32b0da6152"
+    },
+    {
+      "path": "onnx/tts.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/onnx/tts.json",
+      "size": 8253,
+      "sha256": "42078d3aef1cd43ab43021f3c54f47d2d75ceb4e75f627f118890128b06a0d09"
+    },
+    {
+      "path": "onnx/unicode_indexer.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/onnx/unicode_indexer.json",
+      "size": 277676,
+      "sha256": "9bf7346e43883a81f8645c81224f786d43c5b57f3641f6e7671a7d6c493cb24f"
+    },
+    {
+      "path": "voice-styles/yuna.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/yuna.json",
+      "size": 323716,
+      "sha256": "a48a615c9d6648ada6a69e4d617a52a77cabb6797dd3b49d79b91ced4c76032a"
+    },
+    {
+      "path": "voice-styles/hana.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/hana.json",
+      "size": 275691,
+      "sha256": "e44c1ca8f25fd5164a5f04ae63e2b1b92bac2971d36a04e5971076fd82e1e2cd"
+    },
+    {
+      "path": "voice-styles/sora.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/sora.json",
+      "size": 275967,
+      "sha256": "a656505d3528b21ec2363487c34515cf9202c6cd8d49f8fbd9af66a5f64b7fcb"
+    },
+    {
+      "path": "voice-styles/mina.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/mina.json",
+      "size": 276553,
+      "sha256": "9e1f730cf7f8ca5c42ccd0a759e379b0c57e02981f255bc21c24c48501783214"
+    },
+    {
+      "path": "voice-styles/sarah.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/sarah.json",
+      "size": 328356,
+      "sha256": "25e6eb47754d9af858194da4a56b99e5a32e06cdf53e38935314c0d9d4239022"
+    },
+    {
+      "path": "voice-styles/lily.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/lily.json",
+      "size": 328898,
+      "sha256": "c9066df27d8ef03ed68ffa11ba8ceb7f9dbe9d8fc8631e64bcf9553ac1d337d1"
+    },
+    {
+      "path": "voice-styles/jessica.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/jessica.json",
+      "size": 326246,
+      "sha256": "2523aa05971a28fcade021e3e17090ac1e279bf3bf2a02e0fe2b8bddab9e5b66"
+    },
+    {
+      "path": "voice-styles/olivia.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/olivia.json",
+      "size": 328007,
+      "sha256": "6dc56ffb1ffec36d6d21ba0f5026473097d8ec39067871315d12545fe0ace4c1"
+    },
+    {
+      "path": "voice-styles/emily.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/emily.json",
+      "size": 327591,
+      "sha256": "34757278bf0f839a9ec16705250a4323ce808413fa04cd9a488ee84f31604983"
+    },
+    {
+      "path": "voice-styles/alex.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/alex.json",
+      "size": 328026,
+      "sha256": "66b88fedd7c3a8155d468e2496e109458734421723bb8a54e148d6cffc7c44b7"
+    },
+    {
+      "path": "voice-styles/james.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/james.json",
+      "size": 328594,
+      "sha256": "0a3b7e70165d3691c99411baa20882ce7591c81b4c7c110bf96376c928fdcb87"
+    },
+    {
+      "path": "voice-styles/robert.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/robert.json",
+      "size": 325862,
+      "sha256": "16324c2b81ae2699c8f3f7d3c4dfd0e219cc9c774b0c5f8c98d6dc68351f23c9"
+    },
+    {
+      "path": "voice-styles/sam.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/sam.json",
+      "size": 327672,
+      "sha256": "8b0b57146d9adac77f263bf7f9b1524ed867fa78af487d4a16bba21c4b9b9b37"
+    },
+    {
+      "path": "voice-styles/daniel.json",
+      "aliases": [],
+      "url": "https://storage.pomofi.io/models/supertonic-3/3cadd1e/voice-styles/daniel.json",
+      "size": 327629,
+      "sha256": "ab392e3f9bbe7bf180fd9e33eab0499790fb87de7086112569293e45cea26d1c"
+    },
+    {
+      "path": "licenses/full.txt",
+      "url": "https://huggingface.co/Supertone/supertonic-3/resolve/3cadd1ee6394adea1bd021217a0e650ede09a323/LICENSE",
+      "aliases": [],
+      "size": 15007,
+      "sha256": "0d944a9110fed9a9602d60e0423a272903e7bd21ab060490774efc77c2275e9f"
+    },
+    {
+      "path": "licenses/int8.txt",
+      "url": "https://huggingface.co/csukuangfj2/sherpa-onnx-supertonic-3-tts-int8-2026-05-11/resolve/cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4/LICENSE",
+      "aliases": [],
+      "size": 1070,
+      "sha256": "0dfe0d0ba84416fe3879d9a34f4909d8d0137c78d1e95834177b0414ac096fa2"
+    }
+  ]
+}

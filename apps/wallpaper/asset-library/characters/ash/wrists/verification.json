@@ -1,0 +1,8 @@
+{
+  "poseCount": 9,
+  "statesPerPose": 6,
+  "coatOnMaximumVertexError": 0,
+  "forearmMaximumVertexError": 0,
+  "handShapeMaximumVertexError": 4.547473508864641e-13,
+  "pointerInputUsed": false
+}

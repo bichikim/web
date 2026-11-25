@@ -158,3 +158,20 @@ it('should show cached events and the month grid before the refresh resolves', a
   expect(await screen.findByRole('tabpanel', {name: '메모'})).toHaveTextContent('메모 내용')
   expect(screen.queryByRole('grid')).not.toBeInTheDocument()
 })
+
+it('should reopen the last calendar month and day after another tab is visited', async () => {
+  vi.useFakeTimers({toFake: ['Date']})
+  vi.setSystemTime(new Date('2026-09-04T10:30:00Z'))
+  await renderMemoryAssist()
+  fireEvent.click(screen.getByRole('button', {name: '생각 보조'}))
+  fireEvent.click(await screen.findByRole('tab', {name: '캘린더'}))
+  fireEvent.click(await screen.findByRole('button', {name: '다음 달'}))
+  const selectedDay = {name: '2026년 10월 8일, 일정 0개'}
+  fireEvent.click(screen.getByRole('button', selectedDay))
+  expect(screen.getByRole('button', selectedDay)).toHaveAttribute('aria-pressed', 'true')
+  fireEvent.click(screen.getByRole('tab', {name: '메모'}))
+  expect(await screen.findByRole('tabpanel', {name: '메모'})).toBeVisible()
+  fireEvent.click(screen.getByRole('tab', {name: '캘린더'}))
+  expect(await screen.findByRole('heading', {name: '2026년 10월'})).toBeVisible()
+  expect(screen.getByRole('button', selectedDay)).toHaveAttribute('aria-pressed', 'true')
+})

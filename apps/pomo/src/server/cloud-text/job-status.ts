@@ -14,6 +14,9 @@ export const readCloudTextJob = async (userId: string, requestId: string) => {
     return null
   }
   const usage = await readCloudTextUsage(userId)
+  if (request.status === 'cancelled') {
+    return {kind: 'cancelled' as const, requestId, usage}
+  }
   const job = await findApiAiJob(requestId)
   if (request.status === 'complete' && request.result !== null) {
     return {
@@ -27,7 +30,7 @@ export const readCloudTextJob = async (userId: string, requestId: string) => {
   if (job === null || job.ownerId !== userId) {
     return {kind: 'failed' as const, requestId, usage}
   }
-  if (request.status === 'failed' || request.status === 'cancelled') {
+  if (request.status === 'failed') {
     return {
       kind: job.status === 'cancelled' ? ('cancelled' as const) : ('failed' as const),
       requestId,

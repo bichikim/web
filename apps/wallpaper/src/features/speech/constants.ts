@@ -1,3 +1,5 @@
 export const COVERED_STEP = 36
 export const COVERED_HEIGHT = 54
 export const COVERED_OVERLAP = COVERED_HEIGHT - COVERED_STEP
+export const MAXIMUM_SPEECH_HEIGHT = 250
+export const MAXIMUM_SPEECH_PREVIEWS = 3

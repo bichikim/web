@@ -23,11 +23,19 @@ import {
   createKoreanRefinementMessages,
   createKoreanTextSegments,
   type KoreanTextSegment,
+  replaceKoreanSegmentText,
   replaceUnrefinedSentences,
 } from '../korean-text-postprocessor'
 import {createTextGenerationExecutor} from '../text-generation/execution'
 import {partitionChatHistory} from './context'
-import type {ChatContext, ChatMessage, ChatWorkerRequest, ChatWorkerResponse} from './messages'
+import type {
+  ChatContext,
+  ChatMessage,
+  ChatWorkerRequest,
+  ChatWorkerResponse,
+  GenerateChatRequest,
+} from './messages'
+import {planDeviceCalendar} from './plan-device-calendar'
 import {createChatMessages, createSummaryMessages} from './prompt'
 
 const FAILURE_MESSAGE = '채팅 모델을 실행하지 못했어요.'
@@ -116,7 +124,6 @@ const refineKoreanSegment = async (
 ) => {
   switch (segment.kind) {
     case 'refining': {
-      const leadingWhitespace = segment.text.match(/^\s*/u)?.[0] ?? ''
       const refinedText = await generateText({
         maximumTokens: MAXIMUM_ANSWER_TOKENS,
         messages: createKoreanRefinementMessages(segment.text.trim()),
@@ -125,7 +132,7 @@ const refineKoreanSegment = async (
       })
       return containsForeignCjk(refinedText)
         ? replaceUnrefinedSentences(segment.text)
-        : `${leadingWhitespace}${refinedText}`
+        : replaceKoreanSegmentText(segment.text, refinedText)
     }
     case 'text':
       return segment.text
@@ -195,31 +202,33 @@ const compactContext = async (
   }
 }
 
-interface GenerateAnswerOptions {
-  readonly outputSchema?: TextOutputSchema
-  readonly context: ChatContext
-  readonly modelId: TextModelId
-  readonly refineAnswer: boolean
-  readonly replyId: string
-  readonly supplementaryContext?: string
-}
-
-const generateAnswer = async (options: GenerateAnswerOptions) => {
+const generateAnswer = async (options: GenerateChatRequest) => {
   const preparation = await textExecutor.prepare(createDeviceTarget(options.modelId))
   unwrapGenerationResult(preparation, FAILURE_MESSAGE)
 
   const compacted = await compactContext(options.context, options.modelId)
+  const calendarContext =
+    options.calendarTool === undefined
+      ? undefined
+      : await planDeviceCalendar({
+          context: compacted.context,
+          generateText,
+          modelId: options.modelId,
+          tool: options.calendarTool,
+        })
+  const supplementaryContext =
+    [options.supplementaryContext, calendarContext].filter(Boolean).join('\n\n') || undefined
   const contextTokens = await countPromptTokens(
     compacted.context,
     options.modelId,
-    options.supplementaryContext,
+    supplementaryContext,
   )
   sendResponse({contextTokens, type: 'started', wasCompacted: compacted.wasCompacted})
   const rawGeneratedText = await generateText({
     maximumTokens: MAXIMUM_ANSWER_TOKENS,
     messages: createChatMessages({
       ...compacted.context,
-      supplementaryContext: options.supplementaryContext,
+      supplementaryContext,
     }),
     modelId: options.modelId,
     onToken: (token) => {
@@ -230,6 +239,9 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
     outputSchema: options.outputSchema,
   })
   const generatedText = rawGeneratedText
+  if (generatedText.trim().length === 0) {
+    throw new Error(FAILURE_MESSAGE)
+  }
   sendResponse({draft: {content: generatedText, id: options.replyId}, type: 'draft'})
   const refinedText =
     options.refineAnswer && options.outputSchema === undefined
@@ -245,7 +257,7 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
   const completedContextTokens = await countPromptTokens(
     completedContext,
     options.modelId,
-    options.supplementaryContext,
+    supplementaryContext,
   ).catch(() => contextTokens)
 
   sendResponse({
@@ -275,6 +287,14 @@ listenTextGenerationRequests<ChatWorkerRequest>({
   fallback: FAILURE_MESSAGE,
   handle: handleRequest,
   onError: sendResponse,
-  onSkipped: (request) => sendResponse({reason: 'busy', request, type: 'skipped'}),
+  onSkipped: (request) => {
+    if (request.type === 'prepare') {
+      sendResponse({reason: 'busy', request, type: 'skipped'})
+      return
+    }
+    const {calendarTool, ...skipped} = request
+    calendarTool?.port.close()
+    sendResponse({reason: 'busy', request: skipped, type: 'skipped'})
+  },
   scope: workerScope,
 })

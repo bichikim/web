@@ -1,0 +1,30 @@
+{
+  "sourceSha256": "41a577c5a33ab97bbd3d27cf6275ca7bbd625cba08fb03a07dd95e62e463e6fe",
+  "sha256": "b824a9ea198e8c7122bbdbc1905a6fb30ca88d7fb647fa56eba65d58658b956d",
+  "bytes": 21816460,
+  "scope": "Screen-left Handcuffed Hands only; match reflected right forearm and lower cuff tip off the hand",
+  "method": "Reflect the approved right arm using wrist edge endpoints and the elbow anchor; transfer its alpha contour through the existing left mesh UVs, leaving fingers and textures unchanged.",
+  "previousRuntime": "../left-contour/application.json",
+  "reflection": {
+    "leftLandmarks": [
+      [2223.556266448356, 1676.834844970701],
+      [2316.7627579674163, 1730.6476379394514],
+      [1695.7359995530019, 2176.1632184712435]
+    ],
+    "rightLandmarks": [
+      [2569.559404296872, 1619.8304467773444],
+      [2487.7101660156222, 1681.2173754882833],
+      [3106.1575921835415, 2189.072192521387]
+    ]
+  },
+  "elbowRoot": "Preserve the original root through a smooth transition from UV row 240 to 300",
+  "cuff": {
+    "distance": 24,
+    "widthScale": 1.08,
+    "offset": [-18.536340361798295, 15.244805213303565],
+    "parts": ["ArtMesh942", "ArtMesh943"],
+    "ring": "ArtMesh72"
+  },
+  "newSkinParts": 0,
+  "newControls": 0
+}

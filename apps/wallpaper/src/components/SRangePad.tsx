@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createMemo, createSignal, For} from 'solid-js'
 import type {TrackingRange} from '@winter-love/wallpaper/settings/tracking-range'
 import {SRangeHandle} from './SRangeHandle'
@@ -12,10 +13,34 @@ interface SRangePadProps {
   readonly onChange?: (range: TrackingRange) => void | Promise<void>
 }
 const CORNERS = [
-  {horizontal: 'minX', label: '왼쪽 위', vertical: 'minY'},
-  {horizontal: 'maxX', label: '오른쪽 위', vertical: 'minY'},
-  {horizontal: 'minX', label: '왼쪽 아래', vertical: 'maxY'},
-  {horizontal: 'maxX', label: '오른쪽 아래', vertical: 'maxY'},
+  {
+    horizontal: 'minX',
+    get label() {
+      return uiText('왼쪽 위')
+    },
+    vertical: 'minY',
+  },
+  {
+    horizontal: 'maxX',
+    get label() {
+      return uiText('오른쪽 위')
+    },
+    vertical: 'minY',
+  },
+  {
+    horizontal: 'minX',
+    get label() {
+      return uiText('왼쪽 아래')
+    },
+    vertical: 'maxY',
+  },
+  {
+    horizontal: 'maxX',
+    get label() {
+      return uiText('오른쪽 아래')
+    },
+    vertical: 'maxY',
+  },
 ] as const
 const flip = (range: TrackingRange): TrackingRange => ({
   maxX: range.maxX,
@@ -47,16 +72,16 @@ export const SRangePad = (props: SRangePadProps) => {
           aria-hidden="true"
           class="pointer-events-none absolute left-1/2 top-0 ml-2 text-[10px] text-stone-600"
         >
-          위
+          {uiText('위')}
         </span>
         <span
           aria-hidden="true"
           class="pointer-events-none absolute right-0 top-1/2 mt-2 text-[10px] text-stone-600"
         >
-          오른쪽
+          {uiText('오른쪽')}
         </span>
         <SRangeHandle
-          label={`${props.label} 이동`}
+          label={uiText('{value0} 이동', {value0: String(props.label)})}
           value={range()}
           limit={props.limit}
           step={props.step}

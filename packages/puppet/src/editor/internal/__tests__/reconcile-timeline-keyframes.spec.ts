@@ -40,3 +40,15 @@ test('should retain distinct markers for duplicate times accepted by imported do
   expect(next.map((view) => view.key)).toEqual(previous.map((view) => view.key))
   expect(new Set(next.map((view) => view.key)).size).toBe(3)
 })
+
+test('should assign a fresh marker when one keyframe is replaced without move metadata', () => {
+  const previous = reconcileTimelineKeyframes({
+    keyframes: [frame(0), frame(1), frame(2)],
+    previous: [],
+  })
+  const next = reconcileTimelineKeyframes({keyframes: [frame(0), frame(1.5), frame(2)], previous})
+
+  expect(next[0]?.key).toBe(previous[0]?.key)
+  expect(next[1]?.key).not.toBe(previous[1]?.key)
+  expect(next[2]?.key).toBe(previous[2]?.key)
+})

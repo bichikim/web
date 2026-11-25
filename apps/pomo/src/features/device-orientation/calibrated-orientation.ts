@@ -1,4 +1,4 @@
-import {getOrientationAxes, type OrientationAxes} from './axes'
+import {getOrientationAxes, getOrientationDelta, type OrientationAxes} from './axes'
 
 export interface OrientationReference {
   readonly angle: number
@@ -25,7 +25,7 @@ export const getCalibratedOrientation = (
   const baseline = reference?.angle === angle ? reference.axes : axes
   return {
     axes,
-    delta: {x: axes.x - baseline.x, y: axes.y - baseline.y},
+    delta: getOrientationDelta(axes, baseline),
     reference: {angle, axes: baseline},
   }
 }

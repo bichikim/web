@@ -1,21 +1,49 @@
 import {clientOnly} from '@solidjs/start'
-import {batch, createMemo, createSignal, Show} from 'solid-js'
+import {batch, createEffect, createMemo, createSignal, onCleanup, Show} from 'solid-js'
 import covers from '../../public/music/ash-afternoon/covers.json'
 
 const SDesktopAlbum = clientOnly(() => import('./SDesktopAlbum'), {lazy: true})
 const EFFECTS = ['directional-wipe', 'cross-warp', 'circle-open', 'rgb-kinetic', 'fade'] as const
 
-export const SDesktopSlideshow = () => {
+interface SDesktopSlideshowProps {
+  /** Suspend the display clock while hidden or masked; omitted advances covers normally. */
+  readonly playing?: boolean
+}
+
+export const SDesktopSlideshow = (props: SDesktopSlideshowProps) => {
   const [image, setImage] = createSignal(0)
   const [prepared, setPrepared] = createSignal(false)
+  const [preload, setPreload] = createSignal<HTMLImageElement>()
   const [presented, setPresented] = createSignal(false)
   const cover = createMemo(() => covers.tracks[image()]!)
   const nextCover = createMemo(() => covers.tracks[(image() + 1) % covers.tracks.length]!)
   const effect = createMemo(() => EFFECTS[(image() + EFFECTS.length - 1) % EFFECTS.length]!)
-  const handlePrepared = () => setPrepared(true)
+  const handlePrepared = (event: Event & {currentTarget: HTMLImageElement}) => {
+    if (event.currentTarget === preload()) {
+      setPrepared(true)
+    }
+  }
+  createEffect(() => {
+    const element = preload()
+    if (element === undefined || typeof element.decode !== 'function') {
+      return
+    }
+    let active = true
+    onCleanup(() => {
+      active = false
+    })
+    element.decode().then(
+      () => {
+        if (active) {
+          setPrepared(true)
+        }
+      },
+      () => undefined,
+    )
+  })
   const handlePresented = () => setPresented(true)
   const handleNext = () => {
-    if (prepared() && presented()) {
+    if (props.playing !== false && prepared() && presented()) {
       batch(() => {
         setPrepared(false)
         setPresented(false)
@@ -29,6 +57,7 @@ export const SDesktopSlideshow = () => {
         {(current) => (
           <>
             <img
+              ref={setPreload}
               src={nextCover().artwork}
               alt=""
               aria-hidden="true"
@@ -42,7 +71,10 @@ export const SDesktopSlideshow = () => {
               onAnimationEnd={handleNext}
               decoding="async"
               class="absolute inset-0 h-full w-full object-cover object-top [animation-timing-function:linear]"
-              classList={{'animate-desktop-wallpaper': prepared() && presented()}}
+              classList={{
+                '[animation-play-state:paused]!': props.playing === false,
+                'animate-desktop-wallpaper': prepared() && presented(),
+              }}
             />
           </>
         )}

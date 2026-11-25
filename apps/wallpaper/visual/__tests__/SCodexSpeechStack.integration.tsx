@@ -1,13 +1,27 @@
 // oxlint-disable no-await-in-loop -- Successive animation frames must be observed in order.
-import {cleanup, fireEvent, render, screen, within} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render as renderView, screen, within} from '@solidjs/testing-library'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createSignal} from 'solid-js'
 import {SCodexSpeechStack} from '../../src/components/SCodexSpeechStack'
 import {type CodexActivity, codexPort} from '../../src/features/codex'
-import {userEvent} from 'vitest/browser'
+import {page, userEvent} from 'vitest/browser'
 import 'virtual:uno.css'
 
-const activities: CodexActivity[] = ['A', 'B', 'C', 'D'].map((sessionId) => ({
+const render = async (...parameters: Parameters<typeof renderView>) => {
+  const view = renderView(...parameters)
+  const list = screen.getByRole('list')
+  fireEvent.pointerEnter(list)
+  list.getBoundingClientRect()
+  const animations = Array.from(list.children).flatMap((card) =>
+    card.firstElementChild!.getAnimations(),
+  )
+  animations.forEach((animation) => animation.finish())
+  await Promise.allSettled(animations.map((animation) => animation.finished))
+  await draw()
+  return view
+}
+
+const activities: CodexActivity[] = ['A', 'B', 'C'].map((sessionId) => ({
   notificationId: 1,
   phase: sessionId === 'B' ? 'approval' : 'working',
   receivedAt: 1,
@@ -23,6 +37,7 @@ const cards = () =>
 const order = () => cards().map((element) => element.dataset.speechId)
 const frame = (card: HTMLElement) =>
   card.querySelector<HTMLElement>('aside > [aria-hidden="true"]')!
+const clip = (card: HTMLElement) => getComputedStyle(card.firstElementChild!).clipPath
 const draw = () =>
   new Promise<void>((resolve) => {
     requestAnimationFrame(() => resolve())
@@ -39,7 +54,7 @@ const settle = async (pass = 0): Promise<void> => {
   await expect.poll(() => cards().some((element) => element.dataset.moving === 'true')).toBe(false)
 }
 const mount = async () => {
-  const view = render(() => (
+  const view = await render(() => (
     <div class="w-[272px] p-12 font-sans leading-relaxed">
       <SCodexSpeechStack activities={activities} />
     </div>
@@ -47,7 +62,7 @@ const mount = async () => {
   await expect.poll(() => getComputedStyle(cards()[0]).transform).not.toBe('none')
   await expect
     .poll(() => screen.getByRole('list').getBoundingClientRect().height)
-    .toBeCloseTo(cards()[0].getBoundingClientRect().height + 108, 1)
+    .toBeCloseTo(cards()[0].getBoundingClientRect().height + 72, 1)
   await expect.poll(() => screen.getByRole('list').getAnimations().length).toBe(0)
   return view
 }
@@ -58,12 +73,12 @@ afterEach(() => {
 
 test('should open a rear chat when a real double click also selects its moving header', async () => {
   const open = vi.fn()
-  render(() => (
+  await render(() => (
     <div class="w-68 p-12">
       <SCodexSpeechStack activities={activities} onOpen={open} />
     </div>
   ))
-  await expect.poll(() => cards().length).toBe(4)
+  await expect.poll(() => cards().length).toBe(3)
   await settle()
   const rear = screen.getByRole('button', {name: '채팅 C 선택'})
   await userEvent.dblClick(rear, {delay: 100})
@@ -74,7 +89,7 @@ test('should open a rear chat when a real double click also selects its moving h
 test.each(['bottom', 'top'] as const)(
   'should leave moving frames and raised shadows unclipped from the %s edge',
   async (anchor) => {
-    render(() => (
+    await render(() => (
       <main class="box-border flex h-[640px] w-[440px] flex-col justify-center p-20">
         <SCodexSpeechStack
           anchor={anchor}
@@ -93,8 +108,8 @@ test.each(['bottom', 'top'] as const)(
     lift.currentTime = 150
     await draw()
     // The painted frame already bounds the body. A second card clip must not cut its shadow.
-    expect(getComputedStyle(incoming).clipPath).toBe('none')
-    expect(getComputedStyle(outgoing).clipPath).toBe('none')
+    expect(clip(incoming)).toBe('none')
+    expect(clip(outgoing)).toBe('none')
     lift.finish()
     await expect.poll(order).toEqual(['B', 'A'])
     document.getAnimations().forEach((animation) => animation.pause())
@@ -105,22 +120,22 @@ test.each(['bottom', 'top'] as const)(
       departure.currentTime = Number(departure.effect!.getTiming().duration) * fraction
       await draw()
       for (const card of cards()) {
-        expect(getComputedStyle(card).clipPath).toBe('none')
+        expect(clip(card)).toBe('none')
         const bounds = frame(card).getBoundingClientRect()
         expect(bounds.height).toBeGreaterThanOrEqual(54)
         expect(getComputedStyle(frame(card)).boxShadow).not.toBe('none')
       }
     }
     await settle()
-    expect(getComputedStyle(outgoing).clipPath).not.toBe('none')
-    expect(getComputedStyle(incoming).clipPath).toBe('none')
+    expect(clip(outgoing)).not.toBe('none')
+    expect(clip(incoming)).toBe('none')
   },
 )
 
 test.each(['bottom', 'top'] as const)(
   'should coordinate size and travel from the %s character edge',
   async (anchor) => {
-    render(() => (
+    await render(() => (
       <main
         class="box-border flex h-[640px] w-[344px] p-9"
         classList={{'flex-col': anchor === 'top', 'flex-col-reverse': anchor === 'bottom'}}
@@ -193,7 +208,7 @@ test.each(['bottom', 'top'] as const)(
 test('should keep every approval action outside scrolling request content at the height limit', async () => {
   const decide = vi.spyOn(codexPort, 'decideApproval').mockResolvedValue(undefined)
   const [limit, setLimit] = createSignal(480)
-  render(() => (
+  await render(() => (
     <div class="w-[272px] p-12 font-sans leading-relaxed">
       <SCodexSpeechStack
         maxHeight={limit()}
@@ -212,7 +227,21 @@ test('should keep every approval action outside scrolling request content at the
   for (const height of [480, 380]) {
     setLimit(height)
     const bubble = screen.getByRole('status')
-    expect(bubble.getBoundingClientRect().height).toBeLessThanOrEqual(height - 72)
+    await expect
+      .poll(() =>
+        screen.getAllByRole('button', {name: '이번만 승인'}).every((button) => {
+          const bounds = button.getBoundingClientRect()
+          return (
+            bounds.bottom <= bubble.getBoundingClientRect().bottom &&
+            document.elementFromPoint(bounds.x + 10, bounds.y + 10) === button
+          )
+        }),
+      )
+      .toBe(true)
+    expect(bubble.getBoundingClientRect().height).toBeLessThanOrEqual(window.innerHeight - 96)
+    expect(
+      bubble.querySelector<HTMLElement>('[data-speech-body]')!.clientHeight,
+    ).toBeLessThanOrEqual(40)
     for (const id of ['first', 'second']) {
       const request = within(screen.getByLabelText(`${id} 승인`))
       const region = request.getByRole('region')
@@ -231,9 +260,9 @@ test('should keep every approval action outside scrolling request content at the
   await expect.poll(() => decide.mock.calls).toEqual([['second', 'deny']])
 })
 
-test('should keep question submission visible while all question fields scroll', async () => {
+test('should keep question submission visible while oversized answer choices scroll', async () => {
   const answer = vi.spyOn(codexPort, 'answerQuestion').mockResolvedValue(undefined)
-  render(() => (
+  await render(() => (
     <div class="w-[272px] p-12 font-sans leading-relaxed">
       <SCodexSpeechStack
         maxHeight={380}
@@ -258,8 +287,15 @@ test('should keep question submission visible while all question fields scroll',
       />
     </div>
   ))
-  const region = screen.getByRole('region', {name: '질문 내용'})
+  const region = screen.getByRole('region', {name: '답변 선택'})
+  expect(screen.getByRole('region', {name: '질문 내용'}).clientHeight).toBeLessThanOrEqual(40)
   const button = screen.getByRole('button', {name: '답변 보내기'})
+  await expect
+    .poll(() => {
+      const bounds = button.getBoundingClientRect()
+      return document.elementFromPoint(bounds.x + 10, bounds.y + 10) === button
+    })
+    .toBe(true)
   const before = button.getBoundingClientRect()
   expect(region.contains(button)).toBe(false)
   expect(region.scrollHeight).toBeGreaterThan(region.clientHeight)
@@ -272,13 +308,101 @@ test('should keep question submission visible while all question fields scroll',
   await expect.poll(() => answer.mock.calls).toEqual([['long-question', {q: '고정 버튼 확인'}]])
 })
 
+test.each(['top', 'bottom'] as const)(
+  'should pin question choices, direct input and submit together while the question scrolls from %s',
+  async (anchor) => {
+    const answer = vi.spyOn(codexPort, 'answerQuestion').mockResolvedValue(undefined)
+    await render(() => (
+      <div class="w-[272px] p-12 font-sans leading-relaxed">
+        <SCodexSpeechStack
+          anchor={anchor}
+          maxHeight={420}
+          activities={[{...activities[0], phase: 'question'}]}
+          questions={[
+            {
+              id: 'pinned-question',
+              questions: [
+                {
+                  id: 'layout',
+                  options: [{label: '선택 A'}, {label: '선택 B'}],
+                  question: '긴 질문 내용입니다. '.repeat(150),
+                },
+              ],
+              sessionId: 'A',
+              turnId: 'turn',
+            },
+          ]}
+        />
+      </div>
+    ))
+    await settle()
+    const content = screen.getByRole('region', {name: '질문 내용'})
+    const choice = screen.getByRole('button', {name: '선택 A'})
+    const input = screen.getByRole('textbox')
+    const submit = screen.getByRole('button', {name: '답변 보내기'})
+    const controls = [choice, input, submit]
+    await expect
+      .poll(() =>
+        controls.every((element) => {
+          const bounds = element.getBoundingClientRect()
+          return element.contains(document.elementFromPoint(bounds.x + 10, bounds.y + 10))
+        }),
+      )
+      .toBe(true)
+    const positions = controls.map((element) => element.getBoundingClientRect())
+    expect(content.clientHeight).toBeGreaterThanOrEqual(40)
+    expect(content.scrollHeight).toBeGreaterThan(content.clientHeight)
+    content.scrollTop = content.scrollHeight
+    expect(content.scrollTop).toBeGreaterThan(0)
+    controls.forEach((element, index) => {
+      const bounds = element.getBoundingClientRect()
+      expect(bounds.y).toBe(positions[index].y)
+      expect(element.contains(document.elementFromPoint(bounds.x + 10, bounds.y + 10))).toBe(true)
+    })
+    expect(submit.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      screen.getByRole('status').getBoundingClientRect().bottom,
+    )
+    choice.click()
+    submit.click()
+    await expect.poll(() => answer.mock.calls).toEqual([['pinned-question', {layout: '선택 A'}]])
+  },
+)
+
+test('should fit short question text and answer choices without reserving empty space', async () => {
+  await render(() => (
+    <div class="w-[272px] p-12 font-sans leading-relaxed">
+      <SCodexSpeechStack
+        activities={[{...activities[0], phase: 'question'}]}
+        questions={[
+          {
+            id: 'short-question',
+            questions: [{id: 'proceed', options: [{label: '좋아요'}], question: '진행할까요?'}],
+            sessionId: 'A',
+            turnId: 'turn',
+          },
+        ]}
+      />
+    </div>
+  ))
+  const card = cards()[0]
+  const question = screen.getByRole('region', {name: '질문 내용'})
+  const choices = screen.getByRole('region', {name: '답변 선택'})
+  await expect
+    .poll(() => frame(card).getBoundingClientRect().height)
+    .toBeCloseTo(card.getBoundingClientRect().height, 1)
+  expect(question.clientHeight).toBeLessThanOrEqual(40)
+  expect(choices.clientHeight).toBeLessThan(160)
+  expect(choices.scrollHeight).toBe(choices.clientHeight)
+  expect(card.getBoundingClientRect().height).toBeLessThan(260)
+})
+
 test('should keep the composer fixed while a capped response scrolls in both directions', async () => {
   const [limit, setLimit] = createSignal(500)
   const response = Array.from(
     {length: 100},
     (_, line) => `${line}: ${'very-long-line '.repeat(80)}`,
   ).join('\n')
-  render(() => (
+  await render(() => (
     <div class="w-[272px] p-12 font-sans leading-relaxed">
       <SCodexSpeechStack
         maxHeight={limit()}
@@ -292,6 +416,7 @@ test('should keep the composer fixed while a capped response scrolls in both dir
   const region = screen.getByRole('region', {name: 'A 응답'})
   const input = within(cards()[0]).getByRole('textbox', {name: 'Codex에 보낼 메시지'})
   const before = input.getBoundingClientRect()
+  const initialHeight = list.getBoundingClientRect().height
   expect(list.getBoundingClientRect().height).toBeLessThanOrEqual(428)
   expect(region.scrollHeight).toBeGreaterThan(region.clientHeight)
   expect(region.scrollWidth).toBeGreaterThan(region.clientWidth)
@@ -303,18 +428,68 @@ test('should keep the composer fixed while a capped response scrolls in both dir
   expect(document.elementFromPoint(before.x + 20, before.y + 20)).toBe(input)
   input.focus()
   expect(document.activeElement).toBe(input)
-  setLimit(380)
-  expect(list.getBoundingClientRect().height).toBeLessThanOrEqual(308)
+  setLimit(300)
+  expect(list.getBoundingClientRect().height).toBeLessThan(initialHeight)
   expect(within(cards()[0]).getByRole('textbox', {name: 'Codex에 보낼 메시지'})).toBe(input)
   expect(document.activeElement).toBe(input)
   const resized = input.getBoundingClientRect()
+  expect(region.clientHeight).toBeGreaterThanOrEqual(64)
   expect(region.getBoundingClientRect().bottom).toBeLessThanOrEqual(resized.top)
   region.scrollTop = 200
   expect(input.getBoundingClientRect().y).toBe(resized.y)
 })
 
+test('should fit short content and reserve readable space for long content with three bubbles', async () => {
+  const warning = vi.spyOn(console, 'warn')
+  const [notice, setNotice] = createSignal<string>()
+  const [response, setResponse] = createSignal('짧은 답변입니다.')
+  await render(() => (
+    <div class="w-[272px] p-12 font-sans leading-relaxed">
+      <SCodexSpeechStack
+        maxHeight={320}
+        voiceNotice={notice()}
+        activities={activities.map((activity) => ({
+          ...activity,
+          phase: 'response',
+          response: response(),
+        }))}
+      />
+    </div>
+  ))
+  const card = cards()[0]
+  const body = within(card).getByRole('region', {name: 'A 응답'})
+  await expect
+    .poll(() => frame(card).getBoundingClientRect().height)
+    .toBeCloseTo(card.getBoundingClientRect().height, 1)
+  const initialHeight = card.getBoundingClientRect().height
+  expect(body.clientHeight).toBeLessThanOrEqual(40)
+  setResponse('긴 답변입니다.\n'.repeat(80))
+  await expect.poll(() => body.clientHeight).toBeGreaterThanOrEqual(64)
+  expect(body.scrollHeight).toBeGreaterThan(body.clientHeight)
+  setResponse('짧은 답변입니다.')
+  await expect.poll(() => card.getBoundingClientRect().height).toBeCloseTo(initialHeight, 1)
+  expect(body.clientHeight).toBeLessThanOrEqual(40)
+  setNotice('읽기 오류를 확인해 주세요. '.repeat(5))
+  await expect.poll(() => card.getBoundingClientRect().height).toBeGreaterThan(initialHeight)
+  expect(body.clientHeight).toBeLessThanOrEqual(40)
+  setNotice(undefined)
+  await expect.poll(() => card.getBoundingClientRect().height).toBeCloseTo(initialHeight, 1)
+  expect(body.clientHeight).toBeLessThanOrEqual(40)
+  const input = page
+    .getByRole('listitem')
+    .filter({has: page.getByRole('button', {name: '채팅 A 선택'})})
+    .getByRole('textbox')
+  await input.fill('긴 다음 요청을 입력합니다.\n'.repeat(20))
+  await expect.poll(() => card.getBoundingClientRect().height).toBeGreaterThan(initialHeight)
+  expect(body.clientHeight).toBeLessThanOrEqual(40)
+  await input.fill('')
+  await expect.poll(() => card.getBoundingClientRect().height).toBeCloseTo(initialHeight, 1)
+  await page.getByRole('list').screenshot({path: '__screenshots__/speech-minimum-body.png'})
+  expect(warning).not.toHaveBeenCalled()
+})
+
 test('should compact to the selected cards height while keeping covered contents and animation intact', async () => {
-  render(() => (
+  await render(() => (
     <div class="w-[272px] p-12 font-sans leading-relaxed">
       <SCodexSpeechStack
         activities={[
@@ -329,8 +504,9 @@ test('should compact to the selected cards height while keeping covered contents
   const shortHeight = short.getBoundingClientRect().height
   const longHeight = long.getBoundingClientRect().height
   const response = within(long).getByRole('region', {name: 'B 응답'})
-  const composer = within(long).getByRole('textbox')
-  expect(longHeight).toBeGreaterThan(shortHeight + 200)
+  const composer = within(long).getByRole('textbox', {hidden: true})
+  expect(longHeight).toBe(250)
+  expect(shortHeight).toBeLessThan(longHeight)
   await expect.poll(() => list.getBoundingClientRect().height).toBeCloseTo(shortHeight + 36, 0)
   screen.getByRole('button', {name: '채팅 B 선택'}).click()
   // Lifting must not temporarily restore the tallest covered card's layout height.
@@ -344,7 +520,8 @@ test('should compact to the selected cards height while keeping covered contents
   await settle()
   await expect.poll(() => list.getBoundingClientRect().height).toBeCloseTo(shortHeight + 36, 0)
   expect(long.getBoundingClientRect().height).toBe(longHeight)
-  expect(within(long).getByRole('textbox')).toBe(composer)
+  expect(within(long).getByRole('textbox', {hidden: true})).toBe(composer)
+  expect(composer).not.toBeVisible()
   expect(composer).toHaveValue('유지할 초안')
   expect(response.scrollTop).toBe(90)
   expect(within(short).getByText('실제 진행 메시지를 표시합니다.')).toBeVisible()
@@ -354,7 +531,7 @@ test('should compact to the selected cards height while keeping covered contents
 })
 
 test('should move a taller card along one screen-space path without rebounding when the layout settles', async () => {
-  render(() => (
+  await render(() => (
     <main class="box-border flex h-[640px] w-[344px] flex-col justify-end p-9">
       <SCodexSpeechStack
         activities={[
@@ -411,9 +588,9 @@ test('should move a taller card along one screen-space path without rebounding w
 test('should retarget a changed response from its drawn position without adding another lift', async () => {
   const [items, setItems] = createSignal<CodexActivity[]>([
     {...activities[0], text: '짧은 진행'},
-    {...activities[1], phase: 'response', response: '응답\n'.repeat(8)},
+    {...activities[1], phase: 'response', response: '응답\n'.repeat(4)},
   ])
-  render(() => (
+  await render(() => (
     <main class="box-border flex h-[640px] w-[344px] flex-col-reverse p-9">
       <SCodexSpeechStack activities={items()} />
     </main>
@@ -455,7 +632,7 @@ test('should retarget a changed response from its drawn position without adding 
 })
 
 test('should retain drawn positions when switching between cards of different heights during travel', async () => {
-  render(() => (
+  await render(() => (
     <main class="box-border flex h-[640px] w-[344px] flex-col-reverse p-9">
       <SCodexSpeechStack
         activities={[
@@ -486,9 +663,61 @@ test('should retain drawn positions when switching between cards of different he
   expect(cards()[0].getBoundingClientRect().top).toBeCloseTo(final, 1)
 })
 
-test('should send a prompt to its selected chat while covered composers remain inert', async () => {
+test.each(['top', 'bottom'] as const)(
+  'should hide the rear character composer during descent from %s and retain its draft',
+  async (anchor) => {
+    const [draft, setDraft] = createSignal('')
+    const character = {
+      busy: () => false,
+      cancel: vi.fn(),
+      draft,
+      edit: setDraft,
+      error: () => null,
+      interrupt: vi.fn(),
+      message: () => null,
+      notice: () => '',
+      response: () => '',
+      send: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+    }
+    await render(() => (
+      <div class="w-[272px] p-12 font-sans leading-relaxed">
+        <SCodexSpeechStack anchor={anchor} activities={[activities[0]]} character={character} />
+      </div>
+    ))
+    const card = cards().find((element) => element.dataset.speechId === 'character-conversation')!
+    const input = within(card).getByRole('textbox', {hidden: true})
+    const height = card.clientHeight
+    expect(input).not.toBeVisible()
+    screen.getByRole('button', {name: '캐릭터 대화 선택'}).click()
+    await settle()
+    expect(input).toBeVisible()
+    fireEvent.input(input, {target: {value: '다시 이어 쓸 초안'}})
+    screen.getByRole('button', {name: '채팅 A 선택'}).click()
+    expect(input).not.toBeVisible()
+    const incoming = cards().find((element) => element.dataset.speechId === 'A')!
+    incoming.getAnimations()[0].finish()
+    await expect.poll(() => order()[0]).toBe('A')
+    const outgoing = card.getAnimations()[0]
+    outgoing.pause()
+    for (const fraction of [0.1, 0.5, 0.9]) {
+      outgoing.currentTime = Number(outgoing.effect!.getTiming().duration) * fraction
+      await draw()
+      expect(input).not.toBeVisible()
+      expect(card.clientHeight).toBe(height)
+    }
+    await settle()
+    expect(draft()).toBe('다시 이어 쓸 초안')
+    screen.getByRole('button', {name: '캐릭터 대화 선택'}).click()
+    await settle()
+    expect(within(card).getByRole('textbox')).toBe(input)
+    expect(input).toBeVisible()
+    expect(input).toHaveValue('다시 이어 쓸 초안')
+  },
+)
+
+test('should send a prompt to its selected chat while covered composers remain hidden', async () => {
   const send = vi.spyOn(codexPort, 'sendPrompt').mockResolvedValue(undefined)
-  render(() => (
+  await render(() => (
     <div class="w-[272px] p-12 font-sans leading-relaxed">
       <SCodexSpeechStack
         activities={activities
@@ -497,7 +726,9 @@ test('should send a prompt to its selected chat while covered composers remain i
       />
     </div>
   ))
-  const behind = within(cards()[1]).getByRole('textbox', {name: 'Codex에 보낼 메시지'})
+  const behind = within(cards()[1]).getByRole('textbox', {hidden: true})
+  expect(behind).toHaveAttribute('aria-label', 'Codex에 보낼 메시지')
+  expect(behind).not.toBeVisible()
   behind.focus()
   expect(document.activeElement).not.toBe(behind)
   const selected = within(cards()[0])
@@ -519,7 +750,7 @@ test('should send a prompt to its selected chat while covered composers remain i
 
 test('should answer only the selected chats question while covered question fields remain inert', async () => {
   const answer = vi.spyOn(codexPort, 'answerQuestion').mockResolvedValue(undefined)
-  render(() => (
+  await render(() => (
     <div class="w-[272px] p-12 font-sans leading-relaxed">
       <SCodexSpeechStack
         activities={activities.slice(0, 2).map((activity) => ({...activity, phase: 'question'}))}
@@ -583,33 +814,36 @@ test('should fill both rounded overlap corners without exposing covered bodies a
 
 test('should select through the entire exposed header and keep close independent', async () => {
   const dismissed = vi.fn()
-  render(() => (
+  await render(() => (
     <div class="w-[272px] p-12 font-sans leading-relaxed">
       <SCodexSpeechStack activities={activities} onDismiss={dismissed} />
     </div>
   ))
   await expect.poll(() => getComputedStyle(cards()[0]).transform).not.toBe('none')
   const chooseAt = async (x: number, y: number) => {
-    const card = cards().find((element) => element.dataset.speechId === 'D')!
+    const card = cards().find((element) => element.dataset.speechId === 'C')!
     const bounds = frame(card).getBoundingClientRect()
     const hit = document.elementFromPoint(bounds.x + x, bounds.y + y) as HTMLElement
-    expect(hit.closest('button')?.getAttribute('aria-label')).toBe('채팅 D 선택')
+    expect(hit.closest('button')?.getAttribute('aria-label')).toBe('채팅 C 선택')
     hit.click()
     await settle()
-    expect(order()[0]).toBe('D')
+    expect(order()[0]).toBe('C')
     screen.getByRole('button', {name: '채팅 A 선택'}).click()
     await settle()
   }
   await chooseAt(16, 4)
   await chooseAt(4, 22)
   await chooseAt(110, 22)
-  const card = cards().find((element) => element.dataset.speechId === 'D')!
-  const badge = within(card).getByText('작업 중').getBoundingClientRect()
-  const hit = document.elementFromPoint(badge.x + badge.width / 2, badge.y + 8) as HTMLElement
-  expect(hit.closest('button')?.getAttribute('aria-label')).toBe('채팅 D 선택')
+  const card = cards().find((element) => element.dataset.speechId === 'C')!
+  const title = within(card).getByText('C').getBoundingClientRect()
+  const hit = document.elementFromPoint(
+    title.x + title.width / 2,
+    title.y + title.height / 2,
+  ) as HTMLElement
+  expect(hit.closest('button')?.getAttribute('aria-label')).toBe('채팅 C 선택')
   hit.click()
   await settle()
-  expect(order()[0]).toBe('D')
+  expect(order()[0]).toBe('C')
   const behind = cards().find((element) => element.dataset.speechId === 'A')!
   const close = within(behind).getByRole('button', {name: 'A 알림 닫기'})
   const closeBounds = close.getBoundingClientRect()
@@ -617,19 +851,19 @@ test('should select through the entire exposed header and keep close independent
   expect(closeHit.closest('button')).toBe(close)
   closeHit.click()
   expect(dismissed).toHaveBeenCalledExactlyOnceWith(activities[0])
-  expect(order()[0]).toBe('D')
+  expect(order()[0]).toBe('C')
 })
 
 test('should overlap titles, lift, descend at distance based speed, and restore the shadow', async () => {
   await mount()
-  const [first, second, third, fourth] = cards()
-  const originals = [first, second, third, fourth]
+  const [first, second, third] = cards()
+  const originals = [first, second, third]
   const sizes = originals.map((element) => element.getBoundingClientRect().height)
   const start = frame(third).getBoundingClientRect()
   const aside = frame(third)
   const rest = getComputedStyle(aside).boxShadow
   const background = getComputedStyle(aside).backgroundColor
-  expect(getComputedStyle(third).clipPath).not.toBe('none')
+  expect(clip(third)).not.toBe('none')
   for (const card of originals) {
     const rect = frame(card).getBoundingClientRect()
     expect(rect.x).toBe(start.x)
@@ -641,7 +875,7 @@ test('should overlap titles, lift, descend at distance based speed, and restore 
     72,
   )
   third.querySelector('button')!.click()
-  expect(getComputedStyle(third).clipPath).toBe('none')
+  expect(clip(third)).toBe('none')
   const lift = third.getAnimations()[0]
   expect(lift.effect!.getTiming().duration).toBe(300)
   lift.pause()
@@ -656,8 +890,8 @@ test('should overlap titles, lift, descend at distance based speed, and restore 
   expect(raised.x).toBe(start.x)
   expect(getComputedStyle(aside).boxShadow).not.toBe(rest)
   lift.finish()
-  await expect.poll(order).toEqual(['C', 'A', 'B', 'D'])
-  expect(screen.getAllByRole('listitem')).toEqual([fourth, second, first, third])
+  await expect.poll(order).toEqual(['C', 'A', 'B'])
+  expect(screen.getAllByRole('listitem')).toEqual([second, first, third])
   const descent = third.getAnimations()[0]
   expect(descent.effect!.getTiming().easing).toBe('cubic-bezier(0.22, 0.8, 0.25, 1)')
   const path = descent.effect!.getKeyframes()
@@ -674,54 +908,62 @@ test('should overlap titles, lift, descend at distance based speed, and restore 
   await settle()
   expect(getComputedStyle(aside).boxShadow).toBe(rest)
   expect(getComputedStyle(aside).backgroundColor).toBe(background)
-  expect(frame(third).getBoundingClientRect().y - frame(fourth).getBoundingClientRect().y).toBe(108)
+  expect(frame(third).getBoundingClientRect().y - frame(second).getBoundingClientRect().y).toBe(72)
   expect(third.getBoundingClientRect().width).toBe(start.width)
   expect(frame(third).getBoundingClientRect().height).toBe(third.getBoundingClientRect().height)
-  expect(getComputedStyle(first).clipPath).not.toBe('none')
+  expect(clip(first)).not.toBe('none')
   expect(originals.every((element) => getComputedStyle(element).zIndex === 'auto')).toBe(true)
   expect(originals.map((element) => element.getBoundingClientRect().height)).toEqual(sizes)
 })
 
 test('should continue from rendered positions and shadows when reselected during lift and descent', async () => {
   await mount()
-  const [, second, third, fourth] = cards()
-  third.querySelector('button')!.click()
-  const lift = third.getAnimations()[0]
+  const [first, second, third] = cards()
+  second.querySelector('button')!.click()
+  const lift = second.getAnimations()[0]
   lift.pause()
   lift.currentTime = 110
   await draw()
-  const before = frame(third).getBoundingClientRect()
-  const shadow = getComputedStyle(frame(third)).boxShadow
-  fourth.querySelector('button')!.click()
-  expect(frame(third).getBoundingClientRect().y).toBeCloseTo(before.y, 2)
-  expect(getComputedStyle(frame(third)).boxShadow).toBe(shadow)
-  const next = fourth.getAnimations()[0]
+  const before = frame(second).getBoundingClientRect()
+  const shadow = getComputedStyle(frame(second)).boxShadow
+  third.querySelector('button')!.click()
+  expect(frame(second).getBoundingClientRect().y).toBeCloseTo(before.y, 2)
+  expect(getComputedStyle(frame(second)).boxShadow).toBe(shadow)
+  const next = third.getAnimations()[0]
   next.finish()
-  await expect.poll(order).toEqual(['D', 'A', 'B', 'C'])
-  const descent = fourth.getAnimations()[0]
-  expect(Number(descent.effect!.getTiming().duration)).toBeGreaterThanOrEqual(725)
+  await expect.poll(order).toEqual(['C', 'A', 'B'])
+  const descent = third.getAnimations()[0]
+  const [start, end] = descent.effect!.getKeyframes()
+  const startBottom = Number.parseFloat(String(start['--speech-y']))
+  const endBottom = Number.parseFloat(String(end['--speech-y']))
+  const startTop = startBottom - Number.parseFloat(String(start['--speech-height']))
+  const endTop = endBottom - Number.parseFloat(String(end['--speech-height']))
+  expect(Number(descent.effect!.getTiming().duration)).toBeCloseTo(
+    (Math.max(Math.abs(endBottom - startBottom), Math.abs(endTop - startTop)) / 160) * 1000,
+    1,
+  )
   descent.pause()
   descent.currentTime = 320
   await draw()
-  const position = frame(fourth).getBoundingClientRect()
-  const depth = getComputedStyle(fourth).getPropertyValue('--speech-depth')
-  const reveal = getComputedStyle(fourth).getPropertyValue('--speech-reveal')
-  second.querySelector('button')!.click()
-  expect(frame(fourth).getBoundingClientRect().y).toBeCloseTo(position.y, 2)
-  expect(getComputedStyle(fourth).getPropertyValue('--speech-depth')).toBe(depth)
-  expect(getComputedStyle(fourth).getPropertyValue('--speech-reveal')).toBe(reveal)
-  second.getAnimations()[0].finish()
-  await expect.poll(order).toEqual(['B', 'D', 'A', 'C'])
+  const position = frame(third).getBoundingClientRect()
+  const depth = getComputedStyle(third).getPropertyValue('--speech-depth')
+  const reveal = getComputedStyle(third).getPropertyValue('--speech-reveal')
+  first.querySelector('button')!.click()
+  expect(frame(third).getBoundingClientRect().y).toBeCloseTo(position.y, 2)
+  expect(getComputedStyle(third).getPropertyValue('--speech-depth')).toBe(depth)
+  expect(getComputedStyle(third).getPropertyValue('--speech-reveal')).toBe(reveal)
+  first.getAnimations()[0].finish()
+  await expect.poll(order).toEqual(['A', 'C', 'B'])
   await settle()
-  expect(order()).toEqual(['B', 'D', 'A', 'C'])
+  expect(order()).toEqual(['A', 'C', 'B'])
   expect(
     cards().map((element) => getComputedStyle(element).getPropertyValue('--speech-depth')),
-  ).toEqual(['0', '0', '0', '0'])
+  ).toEqual(['0', '0', '0'])
 })
 
 test('should show distinct stable chat colors and scroll a long response without selecting another card', async () => {
   let closed: CodexActivity | undefined
-  render(() => (
+  await render(() => (
     <div class="w-[272px] p-12 font-sans leading-relaxed">
       <SCodexSpeechStack
         activities={activities.map((item, index) => ({
@@ -737,7 +979,7 @@ test('should show distinct stable chat colors and scroll a long response without
   ))
   await expect.poll(() => getComputedStyle(cards()[0]).transform).not.toBe('none')
   const colors = cards().map((card) => getComputedStyle(frame(card)).backgroundColor)
-  expect(new Set(colors).size).toBe(4)
+  expect(new Set(colors).size).toBe(3)
   const region = screen.getByRole('region', {name: 'A 응답'})
   expect(region.scrollHeight).toBeGreaterThan(region.clientHeight)
   const bounds = region.getBoundingClientRect()
@@ -746,20 +988,19 @@ test('should show distinct stable chat colors and scroll a long response without
   expect(region.scrollTop).toBe(100)
   screen.getByRole('button', {name: 'A 알림 닫기'}).click()
   expect(closed?.sessionId).toBe('A')
-  expect(order()).toEqual(['A', 'B', 'C', 'D'])
+  expect(order()).toEqual(['A', 'B', 'C'])
   screen.getByRole('button', {name: '채팅 C 선택'}).click()
   await settle()
   expect(cards().map((card) => getComputedStyle(frame(card)).backgroundColor)).toEqual([
     colors[2],
     colors[0],
     colors[1],
-    colors[3],
   ])
 })
 
 test('should scope approval actions to their chat and prevent focus in covered bodies', async () => {
   const decide = vi.spyOn(codexPort, 'decideApproval').mockResolvedValue(undefined)
-  render(() => (
+  await render(() => (
     <div class="w-[272px] p-12 font-sans leading-relaxed">
       <SCodexSpeechStack
         activities={activities}
@@ -786,7 +1027,7 @@ test('should scope approval actions to their chat and prevent focus in covered b
 })
 
 test('should keep the short front card stationary through shadow settlement and subsequent layout frames', async () => {
-  render(() => (
+  await render(() => (
     <main class="box-border flex h-[640px] w-[344px] flex-col-reverse p-9">
       <SCodexSpeechStack
         activities={[
@@ -825,7 +1066,7 @@ test('should keep the short front card stationary through shadow settlement and 
 })
 
 test('should reverse an outgoing bubble from its rendered size when selected again', async () => {
-  render(() => (
+  await render(() => (
     <main class="box-border flex h-[640px] w-[344px] flex-col-reverse p-9">
       <SCodexSpeechStack
         activities={[
@@ -872,11 +1113,11 @@ test('should reverse an outgoing bubble from its rendered size when selected aga
   outgoing.dispatchEvent(new Event('finish'))
   await settle()
   expect(order()).toEqual(['A', 'B'])
-  expect(getComputedStyle(long).clipPath).toBe('none')
+  expect(clip(long)).toBe('none')
 })
 
 test('should resize the painted background and border while retaining the full content layout', async () => {
-  render(() => (
+  await render(() => (
     <main class="box-border flex h-[640px] w-[344px] flex-col-reverse p-9">
       <SCodexSpeechStack
         target={{x: 140, y: 900}}
@@ -893,6 +1134,7 @@ test('should resize the painted background and border while retaining the full c
   fireEvent.input(composer, {target: {value: '보존할 초안'}})
   region.scrollTop = 100
   const original = frame(long).getBoundingClientRect().height
+  const originalLayout = getComputedStyle(long).height
   const background = getComputedStyle(frame(long)).backgroundColor
   await expect.poll(() => screen.getByRole('list').getAnimations().length).toBe(0)
   screen.getByRole('button', {name: '채팅 B 선택'}).click()
@@ -916,11 +1158,12 @@ test('should resize the painted background and border while retaining the full c
   const middle = frame(long).getBoundingClientRect().height
   expect(middle).toBeLessThan(original)
   expect(middle).toBeGreaterThan(54)
-  const tail = frame(long).querySelector('span')!
+  expect(frame(long).querySelector('span')).toBeNull()
+  const tail = frame(short).querySelector('span')!
   expect(tail).toHaveAttribute('data-edge', 'bottom')
   const tailBounds = tail.getBoundingClientRect()
   expect(tailBounds.top + tailBounds.height / 2).toBeCloseTo(
-    frame(long).getBoundingClientRect().bottom - 1,
+    frame(short).getBoundingClientRect().bottom - 1,
     1,
   )
   expect(getComputedStyle(frame(long))).toMatchObject({
@@ -928,7 +1171,7 @@ test('should resize the painted background and border while retaining the full c
     borderBottomWidth: '1px',
   })
   expect(Number.parseFloat(getComputedStyle(frame(long)).borderBottomLeftRadius)).toBeGreaterThan(0)
-  expect(long.getBoundingClientRect().height).toBe(original)
+  expect(getComputedStyle(long).height).toBe(originalLayout)
   await settle()
   expect(frame(long).getBoundingClientRect().height).toBe(54)
   expect(frame(short).getBoundingClientRect().height).toBe(short.getBoundingClientRect().height)
@@ -939,7 +1182,7 @@ test('should resize the painted background and border while retaining the full c
 test.each(['bottom', 'top'] as const)(
   'should unfold a rear bubble during its initial lift from the %s anchor before changing order',
   async (anchor) => {
-    render(() => (
+    await render(() => (
       <main class="box-border flex h-[640px] w-[344px] flex-col justify-center p-9">
         <SCodexSpeechStack
           anchor={anchor}
@@ -991,7 +1234,7 @@ test.each(['bottom', 'top'] as const)(
 test.each(['bottom', 'top'] as const)(
   'should retain a taller rounded folded bubble throughout reordering from the %s anchor',
   async (anchor) => {
-    render(() => (
+    await render(() => (
       <main class="box-border flex h-[640px] w-[344px] flex-col justify-center p-9">
         <SCodexSpeechStack
           anchor={anchor}

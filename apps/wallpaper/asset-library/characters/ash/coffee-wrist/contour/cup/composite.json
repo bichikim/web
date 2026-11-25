@@ -1,0 +1,66 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-cup-before.png"
+    }
+  },
+  "2": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-cup-reference.png"
+    }
+  },
+  "4": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["3", 0],
+      "alpha": ["3", 1]
+    }
+  },
+  "5": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-cup-mask.png"
+    }
+  },
+  "6": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["5", 0],
+      "channel": "red"
+    }
+  },
+  "7": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["6", 0],
+      "value": 0.5
+    }
+  },
+  "8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["2", 0],
+      "source": ["4", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["7", 0]
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["8", 0],
+      "filename_prefix": "Wallpaper/coffee-cup/restored"
+    }
+  }
+}

@@ -5,7 +5,6 @@ import {getCalendarService} from 'src/server/calendar/runtime'
 import {noStoreText} from 'src/server/http/response'
 
 const HTTP_BAD_REQUEST = 400
-const HTTP_SERVICE_UNAVAILABLE = 503
 
 const redirectToAccount = (requestUrl: string, outcome: string, provider?: CalendarProviderId) => {
   const url = new URL('/account', requestUrl)
@@ -53,8 +52,6 @@ export const GET = async (event: APIEvent): Promise<Response> => {
     )
   } catch (error: unknown) {
     console.error('Failed to complete calendar authorization', error)
-    return noStoreText('Calendar connection is unavailable', {
-      status: HTTP_SERVICE_UNAVAILABLE,
-    })
+    return redirectToAccount(event.request.url, 'failed')
   }
 }

@@ -1,0 +1,58 @@
+{
+  "group": "knife-left",
+  "sourceModelSha256": "404a5a884fa552f548f09973ca7e37d008f81388e27fdb9c438f946880efa927",
+  "wristSha256": "39b9712a6c3985444c914738b2f4968fcc221474e1d06b2d6456f98226135bdc",
+  "placement": {
+    "action": "knife",
+    "expression": "칼 들기",
+    "group": "knife-left",
+    "wrist": [2086.7882562978557, 1611.4750271737603],
+    "elbow": [1890.6062112311147, 2140.6666974533173],
+    "axis": [0.34760279178489434, -0.937641882140163],
+    "normal": [0.937641882140163, 0.34760279178489434],
+    "box": {
+      "x": 1920,
+      "y": 1289,
+      "width": 336,
+      "height": 480,
+      "scale": 2
+    },
+    "referenceSize": [672, 960],
+    "arm": "coat-free:knife-left:ArtMesh900",
+    "armIds": ["coat-free:knife-left:ArtMesh900", "coat-free:knife-left:ArtMesh901"],
+    "followers": [
+      "ArtMesh1019",
+      "ArtMesh1020",
+      "ArtMesh1021",
+      "ArtMesh1022",
+      "ArtMesh1023",
+      "ArtMesh1024",
+      "ArtMesh1026",
+      "ArtMesh1027",
+      "ArtMesh1028",
+      "ArtMesh1016"
+    ],
+    "hand": {
+      "partId": "ArtMesh849",
+      "triangle": [50, 57, 49],
+      "weights": [0.4523633891724732, 0.4152000371859567, 0.13243657364157008]
+    },
+    "actualHand": "ArtMesh1024",
+    "selected": ["ArtMesh1023", "ArtMesh1024"],
+    "generationOffset": {
+      "x": 14,
+      "y": 165
+    },
+    "wristGeneration": {
+      "x": 1926.7882562978557,
+      "y": 1371.4750271737603,
+      "width": 320,
+      "height": 384,
+      "scale": 2
+    }
+  },
+  "generatedPixelsUsed": "Short wrist only. Original fingers and nails remain on the original parts. Forearm geometry and physics are unchanged.",
+  "method": "Local Qwen Image 2.1 Turbo 8-step wrist repair; original skin and ink palette; forearm outline registered in the new wrist mesh; barycentric surface contacts at both ends; original cuff drawing with coat on.",
+  "referenceModelSha256": "7c81a99a94605bd34078b0cccdeef99af18446ea0e769953a5ecd3ed0ac39813",
+  "execution": "Local ComfyUI; no hosted model"
+}

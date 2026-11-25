@@ -86,6 +86,7 @@ export const CalendarConnections = (props: CalendarConnectionsProps) => {
   const handlePopoverToggle = (event: ToggleEvent) => {
     if (event.newState === 'closed') {
       setConfirmingId(null)
+      setErrorMessage(null)
     }
   }
 
@@ -143,7 +144,9 @@ export const CalendarConnections = (props: CalendarConnectionsProps) => {
               when={authentication.state().kind !== 'unavailable' && !connections.error}
               fallback={
                 <p class="m-0 pt-3" role="alert">
-                  {m.calendar_connections_failed()}
+                  {authentication.state().kind === 'unavailable'
+                    ? m.user_error()
+                    : m.calendar_connections_failed()}
                 </p>
               }
             >

@@ -399,7 +399,9 @@ describe('PAlbumLibraryContent', () => {
     expect(screen.getByTestId('album-bundled')).toBeTruthy()
     expect(screen.queryByText('앨범을 불러오지 못했어요')).toBeNull()
 
-    screen.getByRole('button', {name: '다시 시도'}).click()
+    const retry = () => screen.getByRole('button', {name: '다시 시도'})
+    await waitFor(() => expect(retry()).toBeEnabled())
+    retry().click()
 
     expect(await screen.findByTestId('album-published')).toBeTruthy()
     expect(audioMocks.loadBundledPAlbums).toHaveBeenCalledOnce()

@@ -489,3 +489,129 @@ test('should preserve motion curves beyond model limits and clamp their samples 
   expect(document.motions[0]).toMatchObject({parameterBounds: 'sample'})
   expect(document.motions[0]?.tracks[0]?.keyframes.at(-1)?.value).toBe(2)
 })
+
+const userDataFixture = (entry: Record<string, unknown>) => ({
+  ...fixture(),
+  'model/data.json': strToU8(
+    JSON.stringify({
+      Meta: {
+        TotalUserDataSize: typeof entry.Value === 'string' ? strToU8(entry.Value).length : 0,
+        UserDataCount: 1,
+      },
+      UserData: [entry],
+      Version: 3,
+    }),
+  ),
+})
+
+test.each(['', 'body', '몸통', ' '])('should preserve ArtMesh user data Value %j', (value) => {
+  const partId = createDemoDocument().parts[0]!.id
+  const {document} = convertCubismArchive(
+    zipSync(userDataFixture({Id: partId, Target: 'ArtMesh', Value: value})),
+  )
+  expect(parseDocumentValue(document).ok).toBe(true)
+  expect(document.parts.find((part) => part.id === partId)?.userData).toBe(value)
+  expect(document.parts.filter((part) => part.userData !== undefined)).toHaveLength(1)
+})
+
+test('should import a model without a UserData reference', () => {
+  const entries = fixture()
+  const model = JSON.parse(new TextDecoder().decode(entries['model/avatar.model3.json']))
+  delete model.FileReferences.UserData
+  const {document} = convertCubismArchive(
+    zipSync({...entries, 'model/avatar.model3.json': strToU8(JSON.stringify(model))}),
+  )
+  expect(parseDocumentValue(document).ok).toBe(true)
+  expect(document.parts.every((part) => part.userData === undefined)).toBe(true)
+})
+
+test.each([undefined, null, 0, false, [], {}].map((value) => ({value})))(
+  'should reject a non-string ArtMesh user data Value $value',
+  ({value}) => {
+    const id = createDemoDocument().parts[0]!.id
+    expect(() =>
+      convertCubismArchive(zipSync(userDataFixture({Id: id, Target: 'ArtMesh', Value: value}))),
+    ).toThrow('Cubism JSON string is missing or invalid')
+  },
+)
+
+test.each(['', undefined, 1])('should reject an invalid ArtMesh user data Id %j', (id) => {
+  expect(() =>
+    convertCubismArchive(zipSync(userDataFixture({Id: id, Target: 'ArtMesh', Value: ''}))),
+  ).toThrow('Cubism JSON string is missing or invalid')
+})
+
+test.each(['', 'Part', undefined, 1])(
+  'should reject an unsupported user data Target %j',
+  (target) => {
+    const id = createDemoDocument().parts[0]!.id
+    expect(() =>
+      convertCubismArchive(zipSync(userDataFixture({Id: id, Target: target, Value: ''}))),
+    ).toThrow('Cubism user data target')
+  },
+)
+
+test('should import model3 when optional VTube settings contain malformed JSON', () => {
+  const result = convertCubismArchive(
+    zipSync({...fixture(), 'model/avatar.vtube.json': strToU8('{invalid')}),
+  )
+
+  expect(result.document.motions.map(({id}) => id)).toEqual(['Idle:0'])
+  expect(parseDocumentValue(result.document).ok).toBe(true)
+})
+
+test('should ignore unassigned VTube hotkeys while keeping assigned ones', () => {
+  const result = convertCubismArchive(
+    zipSync({
+      ...fixture(),
+      'model/avatar.vtube.json': strToU8(
+        JSON.stringify({
+          FileReferences: {Model: 'avatar.model3.json'},
+          Hotkeys: [
+            {Action: 'TriggerAnimation', Name: 'Unassigned motion'},
+            {Action: 'ToggleExpression', Name: 'Unassigned expression'},
+            {Action: 'ToggleExpression', File: 'smile.exp3.json', Name: 'Smile'},
+          ],
+        }),
+      ),
+      'model/smile.exp3.json': strToU8('{"Parameters":[]}'),
+    }),
+  )
+
+  expect(result.document.motions.map(({id}) => id)).toEqual(['Idle:0'])
+  expect(result.document.expressions?.map(({id}) => id)).toEqual(['Smile'])
+})
+
+test('should import Cubism pose entries and links identified by ArtMesh IDs', () => {
+  const result = convertCubismArchive(
+    zipSync({
+      ...fixture(),
+      'model/pose.json': strToU8(
+        JSON.stringify({
+          Groups: [[{Id: 'mesh-preview', Link: ['shape-diamond']}, {Id: 'shape-circle'}]],
+        }),
+      ),
+    }),
+  )
+
+  expect(result.document.poseGroups?.[0]?.entries.map(({partIds}) => partIds)).toEqual([
+    ['mesh-preview', 'shape-diamond'],
+    ['shape-circle'],
+  ])
+  expect(parseDocumentValue(result.document).ok).toBe(true)
+})
+
+test('should import a Cubism archive with its zero gravity and pendulum chains intact', () => {
+  const entries = fixture()
+  const physics = new TextDecoder().decode(entries['model/physics.json'])
+  const zeroGravity = physics.replace('"Gravity":{"X":0,"Y":-1}', '"Gravity":{"X":0,"Y":0}')
+  expect(zeroGravity).not.toBe(physics)
+
+  const {document} = convertCubismArchive(
+    zipSync({...entries, 'model/physics.json': strToU8(zeroGravity)}),
+  )
+
+  expect(document.physics?.gravity).toEqual([0, 0])
+  expect(document.physics?.chains).toHaveLength(1)
+  expect(parseDocumentValue(document).ok).toBe(true)
+})

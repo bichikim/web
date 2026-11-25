@@ -1,5 +1,6 @@
 import {createMemo, For, Show} from 'solid-js'
 import * as m from '@paraglide/message'
+import {RECEIVED_BYTES_LIMIT} from 'src/features/file-transfer/received-files'
 import {fileTransfer, receivedFiles} from 'src/features/file-transfer/session'
 import {PButton} from '../p-button/PButton'
 import {PSwitch} from '../p-switch/PSwitch'
@@ -31,7 +32,8 @@ export const ReceivedFiles = () => {
             </Show>
           </div>
           <p class="mb-0 mt-1 text-xs text-muted-foreground">
-            {formatFileSize(receivedFiles.retainedBytes())} / 300 MB · {m.transfer_page_storage()}
+            {formatFileSize(receivedFiles.retainedBytes())} / {formatFileSize(RECEIVED_BYTES_LIMIT)}{' '}
+            · {m.transfer_page_storage()}
           </p>
         </div>
         <Show when={files().length > 0}>

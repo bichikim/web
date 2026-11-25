@@ -15,6 +15,7 @@ const PRECIPITATION_NONE = 0
 const PRECIPITATION_RAIN = 1
 const PRECIPITATION_MIXED = 2
 const PRECIPITATION_SNOW = 3
+const PRECIPITATION_SHOWER = 4
 const PRECIPITATION_RAIN_DROPS = 5
 const PRECIPITATION_MIXED_DROPS = 6
 const PRECIPITATION_SNOW_DROPS = 7
@@ -94,6 +95,7 @@ const parsePrecipitation = (value: KmaValue): WeatherPrecipitation => {
     case PRECIPITATION_NONE:
       return 'none'
     case PRECIPITATION_RAIN:
+    case PRECIPITATION_SHOWER:
     case PRECIPITATION_RAIN_DROPS:
       return 'rain'
     case PRECIPITATION_MIXED:

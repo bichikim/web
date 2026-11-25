@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createMemo} from 'solid-js'
 import type {TrackingRange} from '@winter-love/wallpaper/settings/tracking-range'
 import {usePointDrag} from '../features/tracking/use-point-drag'
@@ -63,7 +64,7 @@ export const SRangeHandle = (props: SRangeHandleProps) => {
     <button
       type="button"
       aria-label={props.label}
-      title={moving() ? '끌어서 범위 이동' : '끌어서 모서리 조정'}
+      title={moving() ? uiText('끌어서 범위 이동') : uiText('끌어서 모서리 조정')}
       aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Escape"
       disabled={props.onChange === undefined}
       class="absolute box-border touch-none border-solid border-blue-600 p-0

@@ -115,6 +115,7 @@ export const preparePuppetDocument = (
           ? {
               document: markPreparedPuppetDocument(
                 expandDocumentTextureAssets(result.document) as PuppetDocument,
+                result.runtimeSection,
               ),
               ok: true,
             }

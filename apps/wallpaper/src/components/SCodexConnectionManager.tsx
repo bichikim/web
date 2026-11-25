@@ -1,3 +1,5 @@
+import {localizeMessage, text as uiText} from '../features/localization'
+
 import {createSignal, Show} from 'solid-js'
 import type {useCodexNotifications} from '../features/codex'
 import {SDialog} from './SDialog'
@@ -20,28 +22,28 @@ export const SCodexConnectionManager = (props: SCodexConnectionManagerProps) => 
   }
   const toggleQuestions = () => props.connection.configureQuestions(!snapshot().questionsEnabled)
   return (
-    <SDialog title="Codex 연결 관리" onClose={props.onClose}>
+    <SDialog title={uiText('Codex 연결 관리')} onClose={props.onClose}>
       <div class="min-h-0 overflow-y-auto overscroll-contain px-4 py-1">
         <div
           role="group"
-          aria-label="작업·응답 수신"
+          aria-label={uiText('작업·응답 수신')}
           class="flex items-center justify-between gap-3 border-0 border-b border-solid border-stone-200 py-3"
         >
-          <h3 class="m-0 text-[13px] font-medium">작업·응답 수신</h3>
+          <h3 class="m-0 text-[13px] font-medium">{uiText('작업·응답 수신')}</h3>
           <span class="text-xs text-stone-500">
             {snapshot().registered
               ? snapshot().received
-                ? '연결됨'
-                : '등록됨 · 수신 대기'
-              : '연결 안 됨'}
+                ? uiText('연결됨')
+                : uiText('등록됨 · 수신 대기')
+              : uiText('연결 안 됨')}
           </span>
         </div>
         <div
           role="group"
-          aria-label="승인 요청 처리"
+          aria-label={uiText('승인 요청 처리')}
           class="flex items-center justify-between gap-3 border-0 border-b border-solid border-stone-200 py-3"
         >
-          <h3 class="m-0 text-[13px] font-medium">승인 요청 처리</h3>
+          <h3 class="m-0 text-[13px] font-medium">{uiText('승인 요청 처리')}</h3>
           <Show
             when={snapshot().registered && snapshot().approvalEnabled}
             fallback={
@@ -51,22 +53,22 @@ export const SCodexConnectionManager = (props: SCodexConnectionManagerProps) => 
                 disabled={props.connection.busy() || !snapshot().registered}
                 onClick={props.connection.connect}
               >
-                승인 요청 연결
+                {uiText('승인 요청 연결')}
               </button>
             }
           >
-            <span class="text-xs text-stone-500">등록됨</span>
+            <span class="text-xs text-stone-500">{uiText('등록됨')}</span>
           </Show>
         </div>
         <div
           role="group"
-          aria-label="질문 답변"
+          aria-label={uiText('질문 답변')}
           class="flex items-center justify-between gap-3 border-0 border-b border-solid border-stone-200 py-3"
         >
           <div class="grid gap-0.5">
-            <h3 class="m-0 text-[13px] font-medium">질문 답변</h3>
+            <h3 class="m-0 text-[13px] font-medium">{uiText('질문 답변')}</h3>
             <span class="text-xs text-stone-500">
-              {snapshot().questionsEnabled ? '등록됨' : '연결 안 됨'}
+              {snapshot().questionsEnabled ? uiText('등록됨') : uiText('연결 안 됨')}
             </span>
           </div>
           <button
@@ -75,24 +77,24 @@ export const SCodexConnectionManager = (props: SCodexConnectionManagerProps) => 
             disabled={props.connection.busy() || !snapshot().registered}
             onClick={toggleQuestions}
           >
-            {snapshot().questionsEnabled ? '질문 연결 해제' : '질문 답변 연결'}
+            {snapshot().questionsEnabled ? uiText('질문 연결 해제') : uiText('질문 답변 연결')}
           </button>
         </div>
         <Show when={snapshot().registered && !snapshot().received}>
           <p class="my-3 text-xs text-stone-600">
-            Codex 설정 → Hooks에서 ‘Poffo 작업 알림’을 검토·승인해 주세요.
+            {uiText('Codex 설정 → Hooks에서 ‘Poffo 작업 알림’을 검토·승인해 주세요.')}
           </p>
         </Show>
         <Show when={snapshot().questionsEnabled}>
           <p class="my-3 text-xs text-stone-500">
-            질문 도구가 보이지 않으면 Codex를 다시 실행해 주세요.
+            {uiText('질문 도구가 보이지 않으면 Codex를 다시 실행해 주세요.')}
           </p>
         </Show>
         <SCodexVoiceConnection />
         <Show when={props.connection.error()}>
           {(message) => (
             <p role="alert" class="mb-3 mt-0 text-xs text-red-700">
-              {message()}
+              {localizeMessage(message() ?? '')}
             </p>
           )}
         </Show>
@@ -116,7 +118,7 @@ export const SCodexConnectionManager = (props: SCodexConnectionManagerProps) => 
           aria-expanded={diagnostics()}
           onClick={() => setDiagnostics((value) => !value)}
         >
-          연결 진단
+          {uiText('연결 진단')}
         </button>
         <button
           type="button"
@@ -124,7 +126,7 @@ export const SCodexConnectionManager = (props: SCodexConnectionManagerProps) => 
           disabled={props.connection.busy() || !snapshot().registered}
           onClick={disconnect}
         >
-          연결 해제
+          {uiText('연결 해제')}
         </button>
       </footer>
     </SDialog>

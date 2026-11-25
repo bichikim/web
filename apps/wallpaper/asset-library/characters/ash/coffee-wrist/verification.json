@@ -1,0 +1,130 @@
+{
+  "modelSha256": "707b9f092dc322eda70a1f13c6413c2660779b218f70b0a81c12988ba4f64b06",
+  "modelBytes": 20049485,
+  "fit": {
+    "fold": [260, 786],
+    "handHeight": 796,
+    "previousHeight": 864,
+    "widthBlend": [710, 782],
+    "surfaceBlend": [776, 786],
+    "colorBlend": [762, 795],
+    "underlapPixels": 10,
+    "boundarySource": "Existing forearm alpha contour in the neutral coffee pose; same world row and camera scale",
+    "preserve": [
+      "original fingers",
+      "original cup",
+      "existing forearm mesh and artwork",
+      "other actions"
+    ]
+  },
+  "neutralWidth": {
+    "units": "pixels at the same 1.5x neutral render",
+    "rows": [
+      {
+        "y": 902,
+        "before": {
+          "left": 644,
+          "right": 773,
+          "width": 130
+        },
+        "after": {
+          "left": 651,
+          "right": 766,
+          "width": 116
+        },
+        "arm": {
+          "left": 651,
+          "right": 766,
+          "width": 116
+        }
+      },
+      {
+        "y": 905,
+        "before": {
+          "left": 644,
+          "right": 771,
+          "width": 128
+        },
+        "after": {
+          "left": 650,
+          "right": 764,
+          "width": 115
+        },
+        "arm": {
+          "left": 649,
+          "right": 764,
+          "width": 116
+        }
+      },
+      {
+        "y": 908,
+        "before": {
+          "left": 643,
+          "right": 769,
+          "width": 127
+        },
+        "after": {
+          "left": 648,
+          "right": 762,
+          "width": 115
+        },
+        "arm": {
+          "left": 647,
+          "right": 763,
+          "width": 117
+        }
+      },
+      {
+        "y": 910,
+        "before": {
+          "left": 642,
+          "right": 767,
+          "width": 126
+        },
+        "after": {
+          "left": 646,
+          "right": 761,
+          "width": 116
+        },
+        "arm": {
+          "left": 646,
+          "right": 762,
+          "width": 117
+        }
+      }
+    ],
+    "maximumAfterWidthError": 2
+  },
+  "originalPixelsOutsideEditRegion": 408387,
+  "changedOutsideEditRegion": 0,
+  "browserTests": {
+    "candidateFiles": 1,
+    "candidatePassed": 2,
+    "scenarios": [
+      "three gaze and physics parameter directions",
+      "coat on/off transitions",
+      "buffering on/off",
+      "wrist surface contact"
+    ],
+    "files": 5,
+    "passed": 10,
+    "log": "/private/tmp/coffee-fit-regressions.log"
+  },
+  "native": {
+    "appRestarted": true,
+    "pending": false,
+    "coffeePoseMatched": true,
+    "coatRemoved": true,
+    "modelSha256": "707b9f092dc322eda70a1f13c6413c2660779b218f70b0a81c12988ba4f64b06",
+    "expandedHandMeshSha256": "e79dfcb01ddebf94b8d71ccc7398e0721c72cd8421bad095dd32bd4f56efa794",
+    "capture": "fit/applied.png",
+    "physicalPointerUsed": false
+  },
+  "handAndCupArtwork": "Original RGBA retained outside the palm and wrist edit region",
+  "forearm": "Existing artwork and mesh retained",
+  "unmodifiedActions": ["노트 들기", "필기 동작", "엄지 척", "컵라면"],
+  "comfyWorkflow": "fit/comfy-crop.json",
+  "generationWorkflow": "comfy-generation.json",
+  "boundary": "Deterministic crop at the wrist fold plus a 10 pixel assembly overlap; wrist mesh width follows the existing forearm contour",
+  "replacesModelSha256": "80317a951ec0e48a953ad18b8355adcf99805e6cb5a60d6065f21f8629caabaa"
+}

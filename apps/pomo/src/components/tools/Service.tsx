@@ -52,6 +52,8 @@ export const Service = (props: ServiceProps = {}) => {
       today: today(),
     }),
   )
+  const invalidServiceDays = () =>
+    settings().days !== '' && (serviceDays() === null || (start() !== '' && result() === null))
   return (
     <div class="grid gap-4">
       <PSelect
@@ -90,7 +92,7 @@ export const Service = (props: ServiceProps = {}) => {
             disabled={!ready()}
             value={settings().days}
             onInput={(event) => handleChange({days: event.currentTarget.value})}
-            aria-invalid={settings().days !== '' && serviceDays() === null}
+            aria-invalid={invalidServiceDays()}
           />
           <span class="text-xs leading-5">1일 이상의 정수를 입력하세요.</span>
         </label>

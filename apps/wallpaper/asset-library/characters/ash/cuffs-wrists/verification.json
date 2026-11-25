@@ -1,0 +1,388 @@
+{
+  "sourceSha256": "eb1b2ff4be261a9b934a436beef1dec2306480a4ebce7180114c84d906a52da2",
+  "sha256": "efd7e7d4b7a43d7cf99c2fb24356001613934b1711c72901927e696da4ff0028",
+  "records": [
+    {
+      "pose": "rest",
+      "branches": [
+        {
+          "side": "left",
+          "fingerError": 6.821210263296962e-13,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": ["coat-free:cuffs-left:hand", "coat-free:cuffs-left:ArtMesh900"]
+        },
+        {
+          "side": "right",
+          "fingerError": 1.3642420526593924e-12,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": [
+            "coat-free:cuffs-right:hand",
+            "coat-free:cuffs-right:ArtMesh994"
+          ]
+        }
+      ]
+    },
+    {
+      "pose": "body-physics--1",
+      "branches": [
+        {
+          "side": "left",
+          "fingerError": 9.094947017729282e-13,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": ["coat-free:cuffs-left:hand", "coat-free:cuffs-left:ArtMesh900"]
+        },
+        {
+          "side": "right",
+          "fingerError": 1.5916157281026244e-12,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": [
+            "coat-free:cuffs-right:hand",
+            "coat-free:cuffs-right:ArtMesh994"
+          ]
+        }
+      ]
+    },
+    {
+      "pose": "body-physics--0.5",
+      "branches": [
+        {
+          "side": "left",
+          "fingerError": 9.094947017729282e-13,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": ["coat-free:cuffs-left:hand", "coat-free:cuffs-left:ArtMesh900"]
+        },
+        {
+          "side": "right",
+          "fingerError": 1.3642420526593924e-12,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": [
+            "coat-free:cuffs-right:hand",
+            "coat-free:cuffs-right:ArtMesh994"
+          ]
+        }
+      ]
+    },
+    {
+      "pose": "body-physics-0.5",
+      "branches": [
+        {
+          "side": "left",
+          "fingerError": 9.094947017729282e-13,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": ["coat-free:cuffs-left:hand", "coat-free:cuffs-left:ArtMesh900"]
+        },
+        {
+          "side": "right",
+          "fingerError": 1.3642420526593924e-12,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": [
+            "coat-free:cuffs-right:hand",
+            "coat-free:cuffs-right:ArtMesh994"
+          ]
+        }
+      ]
+    },
+    {
+      "pose": "body-physics-1",
+      "branches": [
+        {
+          "side": "left",
+          "fingerError": 9.094947017729282e-13,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": ["coat-free:cuffs-left:hand", "coat-free:cuffs-left:ArtMesh900"]
+        },
+        {
+          "side": "right",
+          "fingerError": 1.5916157281026244e-12,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": [
+            "coat-free:cuffs-right:hand",
+            "coat-free:cuffs-right:ArtMesh994"
+          ]
+        }
+      ]
+    },
+    {
+      "pose": "turn--1",
+      "branches": [
+        {
+          "side": "left",
+          "fingerError": 9.094947017729282e-13,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 6.431098710768743e-13,
+          "visibleConnectionParts": ["coat-free:cuffs-left:hand", "coat-free:cuffs-left:ArtMesh900"]
+        },
+        {
+          "side": "right",
+          "fingerError": 1.3642420526593924e-12,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 6.431098710768743e-13,
+          "visibleConnectionParts": [
+            "coat-free:cuffs-right:hand",
+            "coat-free:cuffs-right:ArtMesh994"
+          ]
+        }
+      ]
+    },
+    {
+      "pose": "turn-1",
+      "branches": [
+        {
+          "side": "left",
+          "fingerError": 9.094947017729282e-13,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": ["coat-free:cuffs-left:hand", "coat-free:cuffs-left:ArtMesh900"]
+        },
+        {
+          "side": "right",
+          "fingerError": 1.5916157281026244e-12,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": [
+            "coat-free:cuffs-right:hand",
+            "coat-free:cuffs-right:ArtMesh994"
+          ]
+        }
+      ]
+    },
+    {
+      "pose": "physics-opposed",
+      "branches": [
+        {
+          "side": "left",
+          "fingerError": 6.821210263296962e-13,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": ["coat-free:cuffs-left:hand", "coat-free:cuffs-left:ArtMesh900"]
+        },
+        {
+          "side": "right",
+          "fingerError": 1.3642420526593924e-12,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": [
+            "coat-free:cuffs-right:hand",
+            "coat-free:cuffs-right:ArtMesh994"
+          ]
+        }
+      ]
+    },
+    {
+      "pose": "fade-0.25",
+      "branches": [
+        {
+          "side": "left",
+          "fingerError": 6.821210263296962e-13,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": ["coat-free:cuffs-left:hand", "coat-free:cuffs-left:ArtMesh900"]
+        },
+        {
+          "side": "right",
+          "fingerError": 1.3642420526593924e-12,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": [
+            "coat-free:cuffs-right:hand",
+            "coat-free:cuffs-right:ArtMesh994"
+          ]
+        }
+      ]
+    },
+    {
+      "pose": "fade-0.5",
+      "branches": [
+        {
+          "side": "left",
+          "fingerError": 6.821210263296962e-13,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": ["coat-free:cuffs-left:hand", "coat-free:cuffs-left:ArtMesh900"]
+        },
+        {
+          "side": "right",
+          "fingerError": 1.3642420526593924e-12,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": [
+            "coat-free:cuffs-right:hand",
+            "coat-free:cuffs-right:ArtMesh994"
+          ]
+        }
+      ]
+    },
+    {
+      "pose": "fade-0.75",
+      "branches": [
+        {
+          "side": "left",
+          "fingerError": 6.821210263296962e-13,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": ["coat-free:cuffs-left:hand", "coat-free:cuffs-left:ArtMesh900"]
+        },
+        {
+          "side": "right",
+          "fingerError": 1.3642420526593924e-12,
+          "bodyError": 0,
+          "contactError": 0,
+          "bodyJoinError": 5.084229945850415e-13,
+          "visibleConnectionParts": [
+            "coat-free:cuffs-right:hand",
+            "coat-free:cuffs-right:ArtMesh994"
+          ]
+        }
+      ]
+    }
+  ],
+  "otherActions": [
+    {
+      "expression": "울먹이는 눈",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "필기 동작",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "작아지기",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "얼굴 그림자",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "커피 들기",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "눈의 하이라이트 끄기",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "화남",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "노트 들기",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "게임패드 들기",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "안경",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "반짝이는 눈",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "손하트",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "땀방울",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "컵라면 들기",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "눈물",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "엄지 척",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "하트 눈",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "목줄 동작",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "고양이 손",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "홍조",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "마이크 들기",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "긴장",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "왼손 버튼 누르기",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "오른손 버튼 누르기",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "칼 들기",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "주먹 쥐기",
+      "maximumVertexError": 0
+    },
+    {
+      "expression": "외투 벗기",
+      "maximumVertexError": 0
+    }
+  ],
+  "coatOnOriginalPreserved": true,
+  "coffeeAndRamenPartsUnchanged": true,
+  "originalFingerControllerAndOtherTexturesPreserved": true,
+  "intermediateWristSkinPartsAdded": false,
+  "attachmentMethod": "All wrist boundary columns bound to actual hand boundary edges, with a continuous falloff into the rigid forearm",
+  "handTexturesChanged": 0,
+  "allTexturesUnchanged": true,
+  "generatedImages": 0
+}

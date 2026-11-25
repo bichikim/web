@@ -1,6 +1,6 @@
 ---
 name: wallaby-testing
-description: Check or debug tests with Wallaby.js, preferring Wallaby MCP then CLI before Vitest; use for failures, assertions, runtime values, coverage, snapshots, or test status.
+description: Run or diagnose Vitest unit tests and inspect their results, coverage, runtime values, or snapshots. Prefer Wallaby MCP, then CLI.
 metadata:
   author: wallaby.js
   version: '1.0'
@@ -8,7 +8,7 @@ metadata:
 
 # Wallaby Testing Skill
 
-Open and apply the reference files for the relevant section before working.
+Use this workflow for Vitest unit-test results. For browser E2E failures, apply [e2e-testing](../e2e-testing/SKILL.md).
 
 ## Core Rules
 

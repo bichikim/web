@@ -40,7 +40,7 @@ const setup = async () => {
     canvas: document.createElement('canvas'),
     document: parsed.document,
     randomSeed: 42,
-    renderer: 'webgl',
+    renderer: 'pixi-webgl',
     resolution: 1,
   })
   players.push(player)
@@ -59,7 +59,7 @@ test('should retain synchronous paused controls when animation callbacks become 
   const player = await createPlayer({
     canvas: document.createElement('canvas'),
     document: parsed.document,
-    renderer: 'webgl',
+    renderer: 'pixi-webgl',
   })
   players.push(player)
   player.pause()
@@ -85,7 +85,7 @@ test('should not repeatedly announce unsupported buffering while native playback
     canvas: document.createElement('canvas'),
     document: parsed.document,
     onBufferingChange: changed,
-    renderer: 'webgl',
+    renderer: 'pixi-webgl',
   })
   players.push(player)
   vi.stubGlobal('Worker', undefined)
@@ -115,7 +115,7 @@ test('should present an empty initial Worker frame without waiting for a control
     canvas: document.createElement('canvas'),
     document: parsed.document,
     onFrame: present,
-    renderer: 'webgl',
+    renderer: 'pixi-webgl',
   })
   players.push(player)
   await presented
@@ -145,7 +145,7 @@ test('should retain independent expression layers across Worker checkpoints and 
     player.configureRenderer({
       antialiasing: 'ssaa',
       canvas: document.createElement('canvas'),
-      renderer: 'webgl',
+      renderer: 'pixi-webgl',
     }),
   ).resolves.toBe('applied')
   player.setExpressionLayer('hand')

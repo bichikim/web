@@ -72,16 +72,20 @@ export const saveAdminApiAiCatalog = (
 ): Promise<SaveApiAiRoutingResult> => persistConfiguration('admin/api-ai/models', 'POST', update)
 
 /** Tests a registered model without transport retries. */
-export const testAdminApiAiModel = async (entry: ApiAiRoute): Promise<ApiAiModelTestResult> => {
+export const testAdminApiAiModel = async (
+  entry: ApiAiRoute,
+  signal?: AbortSignal,
+): Promise<ApiAiModelTestResult> => {
   try {
     const response = await apiJsonRequest('admin/api-ai/test', {
       body: entry,
       credentials: 'include',
       method: 'POST',
       retry: false,
+      signal,
     })
     if (response.ok) {
-      return await parseJsonResponse(response, apiAiModelTestResultSchema)
+      return await parseJsonResponse(response, apiAiModelTestResultSchema, signal)
     }
     return {
       details: null,

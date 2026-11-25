@@ -4,9 +4,12 @@ import {findHitArea} from '../internal/hit-area'
 import type {PlayerRuntimeState} from '../player-runtime-types'
 import type {RendererController} from '../rendering/create-renderer-controller'
 
-/** Owns displayed coordinates so async input and GPU resource updates cannot change hit-test results. */
+/** Reads displayed hit areas, capturing geometry for renderers without their own displayed snapshot. */
 export const createFrameQuery = (
-  renderer: Pick<RendererController, 'getPaintOrder' | 'getPartVertices' | 'toDocumentPoint'>,
+  renderer: Pick<
+    RendererController,
+    'getPaintOrder' | 'getPartVertices' | 'hitTestDisplayed' | 'toDocumentPoint'
+  >,
 ) => {
   let document: PuppetDocument | undefined
   let expression: string | undefined
@@ -14,9 +17,11 @@ export const createFrameQuery = (
   let paintOrder: ReadonlyArray<string> = []
   let storage = new Float32Array(0)
   let vertices = new Map<string, Float32Array>()
+  let hitTestDisplayed: RendererController['hitTestDisplayed']
   return {
     clearGeometry() {
       document = undefined
+      hitTestDisplayed = undefined
       storage = new Float32Array(0)
       vertices.clear()
       paintOrder = []
@@ -25,6 +30,9 @@ export const createFrameQuery = (
     getParameterValue: (id: string) => (Object.hasOwn(values, id) ? values[id] : undefined),
     getParameterValues: () => ({...values}),
     hitTest(point: {readonly x: number; readonly y: number}) {
+      if (hitTestDisplayed !== undefined) {
+        return hitTestDisplayed(point)
+      }
       return document === undefined
         ? undefined
         : findHitArea({
@@ -35,6 +43,13 @@ export const createFrameQuery = (
           })
     },
     update(source: PuppetDocument, state: PlayerRuntimeState, nextExpression: string | undefined) {
+      values = {...state.frameValues}
+      expression = nextExpression
+      const {hitTestDisplayed: readHitArea} = renderer
+      hitTestDisplayed = readHitArea
+      if (hitTestDisplayed !== undefined) {
+        return
+      }
       if (document !== source) {
         const size = source.parts.reduce((total, part) => total + part.mesh.vertices.length, 0)
         if (storage.length !== size) {
@@ -54,8 +69,6 @@ export const createFrameQuery = (
         const displayed = renderer.getPartVertices(part.id) ?? part.mesh.vertices
         vertices.get(part.id)!.set(displayed)
       }
-      values = {...state.frameValues}
-      expression = nextExpression
       paintOrder = [...renderer.getPaintOrder()]
     },
   }

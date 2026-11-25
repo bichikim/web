@@ -6,6 +6,19 @@
 node_modules
 
 # Caches
+# Keep downloaded model binaries in the shared OS cache.
+*.onnx
+*.onnx_data
+*.gguf
+*.safetensors
+*.tflite
+*.pt
+*.pth
+*.ckpt
+*.bpe.model
+ggml-*.bin
+/packages/vite-plugin-key-similarity/assets/multilingual-e5-small/*
+!/packages/vite-plugin-key-similarity/assets/multilingual-e5-small/MODEL.md
 __pycache__/
 *.py[cod]
 .eslintcache

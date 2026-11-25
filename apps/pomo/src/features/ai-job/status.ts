@@ -38,10 +38,6 @@ export const getSubmissionErrorMessage = (error: unknown): string => {
 }
 
 export const getJobFailureMessage = (job: AiJob): string => {
-  if (job.error?.message !== null && job.error?.message !== undefined) {
-    return job.error.message
-  }
-
   switch (job.status) {
     case 'cancelled':
       return '서버 요청을 취소했어요.'

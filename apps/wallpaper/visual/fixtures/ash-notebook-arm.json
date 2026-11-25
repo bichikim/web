@@ -1,0 +1,56 @@
+{
+  "centers": {
+    "upper": {
+      "partId": "ArtMesh1002",
+      "triangle": [14, 15, 41],
+      "weights": [0.3424803245721833, 0.21795646268610716, 0.4395632127417096],
+      "world": [2929.701996490148, 2130.59500857015],
+      "uv": [0.6982602085874752, 0.5216005288272884],
+      "surfaceAlpha": 200,
+      "capEnds": [
+        [2848, 2145.5],
+        [3003.5, 2092.5]
+      ],
+      "originalVertexCount": 61
+    },
+    "lower": {
+      "partId": "coat-free:notes-right:ArtMesh994",
+      "triangle": [51, 74, 75],
+      "weights": [0.14401587128819812, 0.04343755932396352, 0.8125465693878383],
+      "world": [2897.3584299318277, 2123.711616048283],
+      "uv": [0.5863759157854194, 0.5068621813404424],
+      "surfaceAlpha": 255,
+      "sectionEnds": [
+        [2832.766064144585, 2166.9885011257356],
+        [2961.9507957190704, 2080.4347309708305]
+      ],
+      "elbowTip": [2932.5, 2208.5],
+      "distanceFromTip": 91.78235124467051,
+      "originalVertexCount": 76
+    }
+  },
+  "followers": [
+    "ArtMesh119",
+    "ArtMesh120",
+    "ArtMesh121",
+    "ArtMesh122",
+    "ArtMesh123",
+    "ArtMesh124",
+    "ArtMesh125",
+    "ArtMesh126",
+    "ArtMesh128",
+    "ArtMesh129",
+    "ArtMesh127",
+    "coat-free:notes-right:ArtMesh995"
+  ],
+  "origin": {
+    "partId": "coat-free:notes-right:ArtMesh994",
+    "vertexIndex": 6
+  },
+  "referenceId": "coat-free:notes-right:elbow-center:translation-reference",
+  "seam": {
+    "triangle": [13, 14, 40],
+    "weights": [0.5728387887009813, 0.03186947526863826, 0.3952917360303805]
+  },
+  "maximumSeamShift": 24
+}

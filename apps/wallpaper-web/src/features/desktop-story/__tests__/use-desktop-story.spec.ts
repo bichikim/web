@@ -2,6 +2,7 @@
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {Observer} from 'gsap/Observer'
+import {createSignal} from 'solid-js'
 import {useDesktopStory} from '../use-desktop-story'
 
 vi.mock('gsap', () => ({gsap: {registerPlugin: vi.fn()}}))
@@ -31,6 +32,7 @@ beforeEach(() => {
     return self
   })
   vi.stubGlobal('matchMedia', () => preference)
+  vi.stubGlobal('CSS', {supports: vi.fn(() => true)})
   vi.stubGlobal(
     'requestAnimationFrame',
     vi.fn((callback: FrameRequestCallback) => {
@@ -53,13 +55,13 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-const setup = async () => {
+const setup = async (dragging?: () => boolean) => {
   const stage = document.createElement('div')
   Object.defineProperties(stage, {
     clientHeight: {get: () => height},
     clientWidth: {get: () => width},
   })
-  const hook = renderHook(() => useDesktopStory({stage: () => stage}))
+  const hook = renderHook(() => useDesktopStory({dragging, stage: () => stage}))
   await waitFor(() => expect(Observer.create).toHaveBeenCalledOnce())
   return hook
 }
@@ -169,8 +171,30 @@ test('should ignore held keyboard repeats and preserve typing and open popovers'
   hook.cleanup()
 })
 
+test('should accept a swipe on transparent character pixels and ignore a captured character drag', async () => {
+  const [dragging, setDragging] = createSignal(false)
+  const hook = await setup(dragging)
+  const widget = document.createElement('button')
+  widget.setAttribute('data-character-drag', '')
+  const canvas = document.createElement('canvas')
+  widget.append(canvas)
+  const touch = new Event('touchstart')
+  canvas.dispatchEvent(touch)
+  expect(settings.ignoreCheck?.(touch, true)).toBe(false)
+  setDragging(true)
+  expect(settings.ignoreCheck?.(touch, true)).toBe(true)
+  setDragging(false)
+  const control = document.createElement('button')
+  const press = new Event('touchstart')
+  control.dispatchEvent(press)
+  expect(settings.ignoreCheck?.(press, true)).toBe(true)
+  hook.cleanup()
+})
+
 test('should retain reduced-motion navigation and resize without selecting a different chapter', async () => {
   const hook = await setup()
+  expect(hook.result.aspectRatio()).toBeCloseTo(width / height)
+  expect(hook.result.viewportWidth()).toBe(width)
   forward()
   preference.matches = true
   mediaListener!()
@@ -183,6 +207,21 @@ test('should retain reduced-motion navigation and resize without selecting a dif
   update!(0)
   expect(hook.result.frame().chapter).toBe(0)
   expect(hook.result.frame().character.x).toBeCloseTo(84)
+  expect(hook.result.aspectRatio()).toBeCloseTo(width / height)
+  expect(hook.result.viewportWidth()).toBe(width)
+  forward()
+  expect(hook.result.frame().chapter).toBe(1)
+  expect(hook.result.transition()).toBeNull()
+  hook.cleanup()
+})
+
+test('should change chapters without locking input when the browser cannot animate the scene masks', async () => {
+  vi.mocked(CSS.supports).mockReturnValue(false)
+  const hook = await setup()
+  forward()
+  expect(hook.result.frame().chapter).toBe(0)
+  expect(hook.result.frame().character.playing).toBe(true)
+  expect(hook.result.transition()).toBeNull()
   forward()
   expect(hook.result.frame().chapter).toBe(1)
   expect(hook.result.transition()).toBeNull()

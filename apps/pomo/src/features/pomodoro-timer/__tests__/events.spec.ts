@@ -239,3 +239,16 @@ it('should emit only the active phase end when resetting completed sessions', ()
     'focus-end',
   ])
 })
+
+it('should deliver focus completion when moving past an idle focus counts the session', () => {
+  const previous = createState('focus', 'idle')
+  const config = {
+    focusSeconds: 10,
+    focusSessionsPerCycle: 4,
+    longBreakSeconds: 6,
+    shortBreakSeconds: 4,
+  }
+  const next = advancePomodoroTimer(previous, config)
+  expect(getPomodoroTimerEvents(previous, next, config)).toEqual(['focus-end'])
+  expect(getPomodoroTimerEvents(previous, {...next, completedFocusSessions: 0}, config)).toEqual([])
+})

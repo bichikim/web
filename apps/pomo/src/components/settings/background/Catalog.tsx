@@ -20,6 +20,7 @@ export const Catalog = (props: CatalogProps) => {
   const [catalog, {refetch}] = createResource(() => loadBackgroundSets(controller.signal))
   const [pending, setPending] = createSignal<string | null>(null)
   const [failed, setFailed] = createSignal(false)
+  const catalogFailed = () => !catalog.loading && catalog.error
   const add = async (set: BackgroundSet) => {
     if (pending() !== null) {
       return
@@ -52,17 +53,17 @@ export const Catalog = (props: CatalogProps) => {
       <Show when={catalog.loading}>
         <p role="status">{m.background_sets_loading()}</p>
       </Show>
-      <Show when={catalog.error || failed()}>
+      <Show when={catalogFailed() || failed()}>
         <p class="m-0 text-sm text-danger" role="alert">
           {m.background_sets_error()}
         </p>
-        <Show when={catalog.error}>
+        <Show when={catalogFailed()}>
           <PSettingsActionButton onPress={() => refetch()}>
             {m.background_retry()}
           </PSettingsActionButton>
         </Show>
       </Show>
-      <Show when={!catalog.error}>
+      <Show when={!catalog.loading && !catalog.error}>
         <ul class="m-0 grid list-none gap-4 p-0">
           <For each={catalog()}>
             {(set) => (

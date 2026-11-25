@@ -35,10 +35,12 @@ it('should add imported media to the selected monitor album without losing its e
     close: vi.fn(),
     listPuppets: vi.fn(),
     loadPuppet: vi.fn(),
+    loadPuppetSilhouette: vi.fn(),
     read: vi.fn(async () => [current]),
     removeMediaReferences: vi.fn(),
     removePuppet: vi.fn(),
     save: vi.fn(),
+    savePuppetSilhouette: vi.fn(),
     subscribe: vi.fn(),
   }
   await addAlbumFiles({

@@ -1,4 +1,12 @@
-import {ComponentProps, createEffect, createMemo, createSignal, Show, splitProps} from 'solid-js'
+import {
+  ComponentProps,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  Show,
+  splitProps,
+} from 'solid-js'
 import {cva} from 'class-variance-authority'
 import {getWindow, HUNDRED} from '@winter-love/utils'
 import {useEvent, useStyles} from '@winter-love/solid-use'
@@ -51,6 +59,14 @@ export const SFlowDisplay = (props: SFlowDisplayProps) => {
 
     if (_move) {
       measureDimensions()
+      const text = textElement()
+
+      if (text) {
+        // Observe the rendered subtree so nested reactive children are measured after DOM updates.
+        const observer = new MutationObserver(measureDimensions)
+        observer.observe(text, {characterData: true, childList: true, subtree: true})
+        onCleanup(() => observer.disconnect())
+      }
     }
   })
 

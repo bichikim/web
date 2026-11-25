@@ -1,0 +1,14 @@
+{
+  "scope": "Generated palm only; native fingers and pen retained",
+  "leftContour": {
+    "shiftAtY680": 26,
+    "endsAtY820": 0
+  },
+  "line": {
+    "rgb": [133, 60, 60],
+    "innerWidth": 2.8,
+    "falloff": 2.2
+  },
+  "fingerDuplication": "Remove generated finger ink and trim the surplus pinky silhouette beneath the preserved native fingers",
+  "dimensions": [1254, 1254]
+}

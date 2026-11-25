@@ -1,14 +1,118 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render} from '@solidjs/testing-library'
-import {describe, expect, it, vi} from 'vitest'
+import {createEvent, fireEvent, render} from '@solidjs/testing-library'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 import {SSliderBar} from '../SSliderBar'
 import {SSliderHandle} from '../SSliderHandle'
 import {SSliderRangeKnob} from '../SSliderRangeKnob'
 import {SSliderRoot} from '../SSliderRoot'
 
+afterEach(() => vi.unstubAllGlobals())
+
 describe('slider components', () => {
-  it('should update horizontal slider semantics from bar clicks', async () => {
+  it.each(['horizontal', 'vertical'] as const)(
+    'should measure a click on a decoration from the %s track origin',
+    (type) => {
+      const view = render(() => (
+        <SSliderRoot type={type}>
+          <SSliderBar component="div" data-testid="bar">
+            <span>Track marker</span>
+            <SSliderHandle component="button">Handle</SSliderHandle>
+          </SSliderBar>
+        </SSliderRoot>
+      ))
+      const bar = view.getByTestId('bar')
+      vi.spyOn(bar, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 200, 200, 400))
+      const marker = view.getByText('Track marker')
+      const click = createEvent.click(marker, {clientX: 250, clientY: 500})
+      Object.defineProperties(click, {offsetX: {value: 30}, offsetY: {value: 30}})
+
+      fireEvent(marker, click)
+
+      const slider = view.getByRole('slider')
+      expect(slider).toHaveAttribute('aria-valuenow', '75')
+
+      fireEvent.click(marker, {clientX: 90, clientY: 190})
+      expect(slider).toHaveAttribute('aria-valuenow', '0')
+      fireEvent.click(marker, {clientX: 310, clientY: 610})
+      expect(slider).toHaveAttribute('aria-valuenow', '100')
+    },
+  )
+
+  it('should reposition the handle on resize without changing its percentage and disconnect on unmount', () => {
+    const callbacks: Array<() => void> = []
+    const disconnect = vi.fn()
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          callbacks.push(callback)
+        }
+        observe = vi.fn()
+        disconnect = disconnect
+      },
+    )
+    const view = render(() => (
+      <SSliderRoot>
+        <SSliderBar component="div" data-testid="bar">
+          <SSliderHandle component="button">Handle</SSliderHandle>
+        </SSliderBar>
+      </SSliderRoot>
+    ))
+    const bar = view.getByTestId('bar')
+    const handle = view.getByRole('slider')
+    const bounds = vi.spyOn(bar, 'getBoundingClientRect')
+    bounds.mockReturnValue(new DOMRect(0, 0, 200, 20))
+    vi.spyOn(handle, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 20, 20))
+    fireEvent.click(bar, {clientX: 100})
+    expect(handle).toHaveAttribute('aria-valuenow', '50')
+    expect(handle.style.getPropertyValue('--var-position')).toBe('90px')
+
+    bounds.mockReturnValue(new DOMRect(0, 0, 400, 20))
+    callbacks.forEach((callback) => callback())
+    expect(handle).toHaveAttribute('aria-valuenow', '50')
+    expect(handle.style.getPropertyValue('--var-position')).toBe('190px')
+    fireEvent.click(bar, {clientX: 200})
+    expect(handle.style.getPropertyValue('--var-position')).toBe('190px')
+    view.unmount()
+    expect(disconnect).toHaveBeenCalledOnce()
+  })
+
+  it.each(['horizontal', 'vertical'] as const)(
+    'should use the current %s bar size after layout changes',
+    (type) => {
+      const view = render(() => (
+        <SSliderRoot type={type} min={10} max={30}>
+          <SSliderBar component="div" data-testid="bar">
+            <SSliderHandle component="button">Handle</SSliderHandle>
+          </SSliderBar>
+        </SSliderRoot>
+      ))
+      const bar = view.getByTestId('bar')
+      const slider = view.getByRole('slider')
+      const bounds = vi.spyOn(bar, 'getBoundingClientRect')
+      const click = {clientX: 100, clientY: 100}
+
+      // The initial DOM measurement is zero, as when the bar is detached or hidden.
+      bounds.mockReturnValue(new DOMRect(0, 0, 200, 400))
+      fireEvent.click(bar, click)
+      expect(slider).toHaveAttribute('aria-valuenow', type === 'horizontal' ? '20' : '15')
+
+      bounds.mockReturnValue(new DOMRect(0, 0, 400, 800))
+      fireEvent.click(bar, click)
+      expect(slider).toHaveAttribute('aria-valuenow', type === 'horizontal' ? '15' : '12.5')
+
+      bounds.mockReturnValue(new DOMRect())
+      fireEvent.click(bar, {clientX: 0, clientY: 0})
+      expect(slider).toHaveAttribute('aria-valuenow', type === 'horizontal' ? '15' : '12.5')
+
+      bounds.mockReturnValue(new DOMRect(0, 0, 200, 400))
+      fireEvent.click(bar, click)
+      expect(slider).toHaveAttribute('aria-valuenow', type === 'horizontal' ? '20' : '15')
+    },
+  )
+
+  it('should update horizontal slider semantics from bar clicks', () => {
     expect(SSliderRangeKnob()).toBeUndefined()
 
     const onPointerDown = vi.fn()
@@ -38,10 +142,12 @@ describe('slider components', () => {
     expect(onPointerDown).toHaveBeenCalledWith('caller', expect.any(Event))
     fireEvent.mouseUp(globalThis.window)
 
-    await fireEvent.click(bar, {offsetX: 100})
+    fireEvent.click(bar, {clientX: 100})
 
-    expect(view.getByRole('slider').getAttribute('aria-orientation')).toBe('horizontal')
-    expect(view.getByRole('slider').getAttribute('aria-valuemin')).toBe('10')
-    expect(view.getByRole('slider').getAttribute('aria-valuemax')).toBe('30')
+    const slider = view.getByRole('slider')
+    expect(slider).toHaveAttribute('aria-orientation', 'horizontal')
+    expect(slider).toHaveAttribute('aria-valuemin', '10')
+    expect(slider).toHaveAttribute('aria-valuemax', '30')
+    expect(slider).toHaveAttribute('aria-valuenow', '20')
   })
 })

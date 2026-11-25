@@ -1,0 +1,788 @@
+{
+  "measuredAt": "2026-11-04T19:26:27.355162+09:00",
+  "status": "complete for the exercised rendering paths and environment",
+  "scope": {
+    "behavior": "Playback, input flushing, masks, effects, blends, context restoration, renderer replacement and teardown.",
+    "refactoring": "Resource ownership, cache keys, pool reuse, event cleanup and independent live renderers.",
+    "namingAndStructure": "Dependency patch and focused lifecycle regression tests; no new application abstraction or package script.",
+    "environment": "Chrome 156, Apple M5 Pro, ANGLE Metal, SSAA and MSAA; local models only."
+  },
+  "artifacts": {
+    "baselinePlayerSHA256": "cfb95183f8b137227999131b14c8c61edf3491482552cee8ff830368bda06d23",
+    "finalPlayerSHA256": "b67fe14288deb818f1cc36f934f6bbe8ccec32eee94b4dbdc38e9790299078d3",
+    "workerSHA256": "81b34c51925447bd1efb196b30115c73b1e71d498ebd0ba343801050cea1a014",
+    "pixiPatchSHA256": "98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a",
+    "baselineDirectory": "/private/tmp/puppet-render-audit-xkymfh9q/before",
+    "finalDirectory": "/private/tmp/puppet-render-audit-xkymfh9q/after",
+    "rawEvidenceDirectory": "/private/tmp/puppet-render-audit-xkymfh9q"
+  },
+  "findings": [
+    {
+      "number": 1,
+      "severity": "P2",
+      "status": "fixed",
+      "title": "Identical shader lifetimes retain unique source strings",
+      "risk": "Repeated player initialization grows global shader metadata despite destroyed GPU objects.",
+      "cause": "Pixi setProgramName appended a new lifetime suffix to identical source; createIdFromString retained every resulting full source in its global idHash.",
+      "fix": "Reuse preprocessed text by normalized name, stage and actual source; retain separate program objects and distinct variants.",
+      "source": "patches/pixi.js@8.22.0.patch:105",
+      "regression": "visual/__tests__/gl-program.memory.integration.tsx",
+      "before": "300 identical program create/destroy operations after warmup retained 2,901,640 JS bytes.",
+      "after": "Same regression passes the 262,144-byte bound; independent live programs and source variants remain valid.",
+      "evidence": "/private/tmp/puppet-render-audit-xkymfh9q/shader-before.log",
+      "tradeoff": "Keep one text entry per actual shader variant, rather than per lifetime; GPU ownership is unchanged."
+    },
+    {
+      "number": 2,
+      "severity": "P2",
+      "status": "fixed",
+      "title": "Retired pooled batches retain destroyed texture inputs and historical IDs",
+      "risk": "An old model can remain reachable through decoded images; texture ID tombstones grow with repeated sources.",
+      "cause": "returnBatchToPool cleared only elements, leaving textures, batcher and bind-group references; BatchTextureArray.clear set old UID entries to null instead of removing them.",
+      "fix": "Release borrowed inputs on return while retaining reusable batch capacity; delete expired ID keys.",
+      "source": "patches/pixi.js@8.22.0.patch:86",
+      "regression": [
+        "visual/__tests__/create-player.memory.integration.tsx",
+        "src/player/rendering/__tests__/batch-texture-array.spec.ts"
+      ],
+      "before": "With all other fixes present, reverting only batch return leaves 2 decoded images alive after destroy and full GC. The ID test leaves 100 historical keys.",
+      "after": "Images become unreachable, ID count is zero, and another live player preserves identical pixels.",
+      "evidence": [
+        "/private/tmp/puppet-render-audit-xkymfh9q/image-before-final.log",
+        "/private/tmp/puppet-render-audit-xkymfh9q/batch-before.log",
+        "/private/tmp/puppet-render-audit-xkymfh9q/memory-final-complete.log"
+      ],
+      "tradeoff": "Pool capacity stays reusable; no global pool reset that could disturb other renderers."
+    },
+    {
+      "number": 3,
+      "severity": "P2",
+      "status": "fixed",
+      "title": "Texture bind-group cache outlives destroyed inputs",
+      "risk": "Global cached groups and listeners on shared placeholder resources keep per-source metadata alive. Used by graphics in WebGL as well as WebGPU.",
+      "cause": "getTextureBatchBindGroup stored groups in a global table without eviction when their source was destroyed.",
+      "fix": "On the first input destruction, evict that group, remove other source listeners and destroy its bindings.",
+      "source": "patches/pixi.js@8.22.0.patch:27",
+      "regression": "visual/__tests__/bind-group.memory.integration.tsx",
+      "before": "A WeakRef to the retired group remains alive after source destruction and full GC.",
+      "after": "It is collected; another group sharing a surviving source retains its cache identity and resource.",
+      "evidence": [
+        "/private/tmp/puppet-render-audit-xkymfh9q/bind-group-before.log",
+        "/private/tmp/puppet-render-audit-xkymfh9q/memory-final-complete.log"
+      ],
+      "tradeoff": "Only groups with destroyed inputs are evicted; live inputs retain cache reuse."
+    }
+  ],
+  "retainedHeap": {
+    "method": "Every checkpoint follows completed frames or destroyed owners, closed Workers and explicit Chromium full GC. Residual bytes alone are not treated as a leak.",
+    "control": "100 matching CDP/GC cycles without renderer construction retained 0 JS bytes.",
+    "whitecat": {
+      "parts": 852,
+      "vertices": 34452,
+      "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+      "cycles": 20,
+      "beforeBytes": 2146352,
+      "afterBytes": 1724552,
+      "cycles10To20Bytes": -2240,
+      "samples": [
+        {
+          "cycle": 0,
+          "jsDeltaBytes": 0,
+          "backingDeltaBytes": 0,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 5,
+          "jsDeltaBytes": 1312164,
+          "backingDeltaBytes": 480,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 10,
+          "jsDeltaBytes": 1726792,
+          "backingDeltaBytes": 960,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 15,
+          "jsDeltaBytes": 1735688,
+          "backingDeltaBytes": 1440,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 20,
+          "jsDeltaBytes": 1724552,
+          "backingDeltaBytes": 1904,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        }
+      ],
+      "report": "/private/tmp/puppet-render-audit-xkymfh9q/whitecat-snapshots.json"
+    },
+    "development": {
+      "parts": 122,
+      "cycles": 100,
+      "beforeBytes": 2642020,
+      "afterBytes": 1033904,
+      "cycles50To100Bytes": 102388,
+      "samples": [
+        {
+          "cycle": 0,
+          "jsDeltaBytes": 0,
+          "backingDeltaBytes": 0,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 5,
+          "jsDeltaBytes": 394120,
+          "backingDeltaBytes": 4776,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 10,
+          "jsDeltaBytes": 821004,
+          "backingDeltaBytes": 5256,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 15,
+          "jsDeltaBytes": 846092,
+          "backingDeltaBytes": 5736,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 20,
+          "jsDeltaBytes": 857308,
+          "backingDeltaBytes": 6216,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 25,
+          "jsDeltaBytes": 863888,
+          "backingDeltaBytes": 6696,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 30,
+          "jsDeltaBytes": 898500,
+          "backingDeltaBytes": 7176,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 35,
+          "jsDeltaBytes": 900988,
+          "backingDeltaBytes": 7656,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 40,
+          "jsDeltaBytes": 916748,
+          "backingDeltaBytes": 8136,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 45,
+          "jsDeltaBytes": 931152,
+          "backingDeltaBytes": 8616,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 50,
+          "jsDeltaBytes": 931516,
+          "backingDeltaBytes": 9096,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 55,
+          "jsDeltaBytes": 942312,
+          "backingDeltaBytes": 9576,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 60,
+          "jsDeltaBytes": 960976,
+          "backingDeltaBytes": 10056,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 65,
+          "jsDeltaBytes": 966808,
+          "backingDeltaBytes": 10536,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 70,
+          "jsDeltaBytes": 976832,
+          "backingDeltaBytes": 11016,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 75,
+          "jsDeltaBytes": 976712,
+          "backingDeltaBytes": 11496,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 80,
+          "jsDeltaBytes": 994616,
+          "backingDeltaBytes": 11976,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 85,
+          "jsDeltaBytes": 1013996,
+          "backingDeltaBytes": 12456,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 90,
+          "jsDeltaBytes": 1023856,
+          "backingDeltaBytes": 12936,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 95,
+          "jsDeltaBytes": 1037520,
+          "backingDeltaBytes": 13416,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        },
+        {
+          "cycle": 100,
+          "jsDeltaBytes": 1033904,
+          "backingDeltaBytes": 13896,
+          "nodesDelta": 0,
+          "listenersDelta": 0,
+          "webglContexts": 0
+        }
+      ],
+      "report": "/private/tmp/puppet-render-audit-xkymfh9q/development-final.json"
+    },
+    "remainingAttribution": {
+      "conclusion": "Most remaining WhiteCat startup growth belongs to the same retained input arrays and V8 compilation data, rather than new player owners. The measured WhiteCat heap stabilizes after the first ten lifetimes.",
+      "snapshotDeltaBytes": {
+        "boxedNumbers": 1884036,
+        "arrayStorage": -1061592,
+        "compiledCodeAndFeedback": 749276,
+        "closures": 0
+      },
+      "sameArrayStorageEvidence": {
+        "0": [
+          {
+            "id": 681113,
+            "elements": [
+              {
+                "id": 688369,
+                "name": "(object elements)",
+                "bytes": 13784,
+                "edges": 1
+              }
+            ],
+            "numericEdges": 0
+          },
+          {
+            "id": 887849,
+            "elements": [
+              {
+                "id": 887851,
+                "name": "(object elements)",
+                "bytes": 4952,
+                "edges": 1
+              }
+            ],
+            "numericEdges": 0
+          },
+          {
+            "id": 1264503,
+            "elements": [
+              {
+                "id": 1264505,
+                "name": "(object elements)",
+                "bytes": 6472,
+                "edges": 1
+              }
+            ],
+            "numericEdges": 0
+          },
+          {
+            "id": 1264925,
+            "elements": [
+              {
+                "id": 1264927,
+                "name": "(object elements)",
+                "bytes": 6472,
+                "edges": 1
+              }
+            ],
+            "numericEdges": 0
+          }
+        ],
+        "20": [
+          {
+            "id": 681113,
+            "elements": [
+              {
+                "id": 5360835,
+                "name": "(object elements)",
+                "bytes": 6896,
+                "edges": 1722
+              }
+            ],
+            "numericEdges": 1722
+          },
+          {
+            "id": 1264503,
+            "elements": [
+              {
+                "id": 7217795,
+                "name": "(object elements)",
+                "bytes": 3240,
+                "edges": 808
+              }
+            ],
+            "numericEdges": 808
+          },
+          {
+            "id": 887849,
+            "elements": [
+              {
+                "id": 6969551,
+                "name": "(object elements)",
+                "bytes": 2480,
+                "edges": 618
+              }
+            ],
+            "numericEdges": 618
+          },
+          {
+            "id": 1264925,
+            "elements": [
+              {
+                "id": 5342909,
+                "name": "(object elements)",
+                "bytes": 3240,
+                "edges": 808
+              }
+            ],
+            "numericEdges": 808
+          }
+        ]
+      },
+      "retainer": "Window.memoryFixture.lifecycle -> original document -> parts.mesh.vertices / parameterBindings.keyforms.deformers.controlPoints. The JS array IDs already exist in the baseline. Backing storage changes from eight-byte doubles to four-byte references plus boxed numbers.",
+      "engineNote": "The storage transition is observed directly in heap nodes; the optional release-Chrome elements trace produced no usable transition messages and is not used as proof.",
+      "evidence": [
+        "/private/tmp/puppet-render-audit-xkymfh9q/heap-diff.json",
+        "/private/tmp/puppet-render-audit-xkymfh9q/heap-paths.json",
+        "/private/tmp/puppet-render-audit-xkymfh9q/array-storage.json"
+      ],
+      "documentation": "https://v8.dev/blog/elements-kinds"
+    },
+    "nativeBrowserBookkeeping": {
+      "conclusion": "Additional native objects were traced to V8 dependent-code lists, Performance long-task/frame buffers and the DevTools network agent. These are distinct from destroyed renderer owners.",
+      "retainers": "/private/tmp/puppet-render-audit-xkymfh9q/native-paths.json",
+      "timelineAndCountersReport": "/private/tmp/puppet-render-audit-xkymfh9q/native-timings.json",
+      "liveCountersUnchanged": true,
+      "finalLiveCounters": {
+        "counters": [
+          {
+            "name": "live_audio_nodes",
+            "count": 0
+          },
+          {
+            "name": "live_documents",
+            "count": 1
+          },
+          {
+            "name": "live_nodes",
+            "count": 8
+          },
+          {
+            "name": "live_layout_objects",
+            "count": 3
+          },
+          {
+            "name": "live_resources",
+            "count": 0
+          },
+          {
+            "name": "live_context_lifecycle_state_observers",
+            "count": 3
+          },
+          {
+            "name": "live_frames",
+            "count": 1
+          },
+          {
+            "name": "live_v8_per_context_data",
+            "count": 2
+          },
+          {
+            "name": "worker_global_scopes",
+            "count": 0
+          },
+          {
+            "name": "live_ua_css_resources",
+            "count": 0
+          },
+          {
+            "name": "live_resource_fetchers",
+            "count": 1
+          }
+        ]
+      },
+      "longAnimationFrameEntries": [
+        [0, 11],
+        [5, 27],
+        [10, 44],
+        [15, 63],
+        [20, 80]
+      ],
+      "documentation": "https://developer.chrome.com/docs/web-platform/long-animation-frames",
+      "limit": "Chromium documents a 200-entry cap for long-task and long-animation-frame buffers; driver VRAM and OS RSS were not measured.",
+      "setup": "Memory.prepareForLeakDetection initially failed without expose-gc. With the flag required by Chromium tests, leak preparation and detailed counters succeeded.",
+      "setupDocumentation": "https://chromium.googlesource.com/chromium/src/+/HEAD/content/browser/site_per_process_browsertest.cc"
+    }
+  },
+  "sustainedPlayback": {
+    "worker": {
+      "completedFrames": 13200,
+      "jsDeltaBytes": -13820,
+      "wasmBytes": [16777216],
+      "pendingRequests": 0,
+      "queuedNotices": 0,
+      "report": "/private/tmp/puppet-render-audit-xkymfh9q/whitecat-final.json",
+      "artifactNote": "This long numeric run used the identical Worker bytes as the final build; the final renderer was independently retested below."
+    },
+    "display": {
+      "firstCheckpointFrames": 302,
+      "lastCheckpointFrames": 3310,
+      "jsDeltaBytes": 147060,
+      "backingDeltaBytes": 30552,
+      "report": "/private/tmp/puppet-render-audit-xkymfh9q/display-final.json",
+      "matchesFinalPlayer": true
+    },
+    "webgpu": {
+      "model": "development-model.json",
+      "cycles": 20,
+      "passed": true,
+      "workersAfterDestroy": 0,
+      "report": "/private/tmp/puppet-render-audit-xkymfh9q/webgpu.json",
+      "coverage": "Actual creation, displayed frame notifications, inputs, toggling and teardown; not an exact WebGPU pixel comparison."
+    }
+  },
+  "quality": {
+    "totalCheckpoints": 32,
+    "differentChannels": 0,
+    "cases": [
+      {
+        "case": "pixels-development",
+        "checkpoints": 8,
+        "differentChannels": 0,
+        "maximumDelta": 0,
+        "controlsEqual": true,
+        "workersAfterDestroy": 0,
+        "report": "/private/tmp/puppet-render-audit-xkymfh9q/pixels-development.json"
+      },
+      {
+        "case": "pixels-main-worker",
+        "checkpoints": 8,
+        "differentChannels": 0,
+        "maximumDelta": 0,
+        "controlsEqual": true,
+        "workersAfterDestroy": 0,
+        "report": "/private/tmp/puppet-render-audit-xkymfh9q/pixels-main-worker.json"
+      },
+      {
+        "case": "pixels-whitecat-msaa",
+        "checkpoints": 8,
+        "differentChannels": 0,
+        "maximumDelta": 0,
+        "controlsEqual": true,
+        "workersAfterDestroy": 0,
+        "report": "/private/tmp/puppet-render-audit-xkymfh9q/pixels-whitecat-msaa.json"
+      },
+      {
+        "case": "pixels-whitecat-ssaa",
+        "checkpoints": 8,
+        "differentChannels": 0,
+        "maximumDelta": 0,
+        "controlsEqual": true,
+        "workersAfterDestroy": 0,
+        "report": "/private/tmp/puppet-render-audit-xkymfh9q/pixels-whitecat-ssaa.json"
+      }
+    ],
+    "functionalBrowserTests": {
+      "passed": 64,
+      "skipped": 11,
+      "reason": "Opt-in Rust renderer fixture generators are outside this runtime audit.",
+      "report": "/private/tmp/puppet-render-audit-xkymfh9q/visual-final.log"
+    },
+    "nativeGPURegression": "Real buffers, textures and programs exist before destroy and become invalid after the observed WebGL context-lost event. This proves logical teardown, not driver VRAM accounting."
+  },
+  "performance": {
+    "protocol": "Serial ABBA, two samples per artifact, Worker active, WhiteCat Idle:0, seed 42, SSAA, resolution 1, 900x700, CPU rate 1, 3-second warmup, 12-second measurement, no profiler or concurrent task tests.",
+    "metric": "Published model updates per second; rAF cadence and observed updates are separate from physical monitor presentation.",
+    "runs": [
+      {
+        "artifact": "before",
+        "modelUpdateFPS": 70.70227596372449,
+        "rafFPS": 120.00233175939574,
+        "observedUpdateFPS": 70.61899884244801,
+        "mainScriptSeconds": 3.873636,
+        "log": "/private/tmp/puppet-render-audit-xkymfh9q/fps-1-before.json"
+      },
+      {
+        "artifact": "after",
+        "modelUpdateFPS": 73.69902484115154,
+        "rafFPS": 120.00033310293715,
+        "observedUpdateFPS": 73.61574910686775,
+        "mainScriptSeconds": 3.820668,
+        "log": "/private/tmp/puppet-render-audit-xkymfh9q/fps-2-after.json"
+      },
+      {
+        "artifact": "after",
+        "modelUpdateFPS": 72.95015073033427,
+        "rafFPS": 120.0013324228444,
+        "observedUpdateFPS": 72.86687430255992,
+        "mainScriptSeconds": 3.7826410000000004,
+        "log": "/private/tmp/puppet-render-audit-xkymfh9q/fps-3-after.json"
+      },
+      {
+        "artifact": "before",
+        "modelUpdateFPS": 72.28393930813944,
+        "rafFPS": 119.91805599507003,
+        "observedUpdateFPS": 72.20066288036507,
+        "mainScriptSeconds": 3.8952579999999997,
+        "log": "/private/tmp/puppet-render-audit-xkymfh9q/fps-4-before.json"
+      }
+    ],
+    "meanModelFPS": {
+      "before": 71.49310763593196,
+      "after": 73.3245877857429
+    },
+    "observedPercentChange": 2.561757644020024,
+    "interpretation": "No regression observed in these samples. The small sample does not establish a general speedup or low-end-device performance.",
+    "finalCPUProfiles": [
+      {
+        "file": "/private/tmp/puppet-render-audit-xkymfh9q/profiles-final/worker-cpu-1-run-1-main.cpuprofile",
+        "samples": 4085,
+        "idleSamplePercent": 64.16156670746633,
+        "topSelfSamples": [
+          {
+            "function": "(idle)",
+            "lineZeroBased": -1,
+            "url": "",
+            "samplePercent": 64.16156670746633
+          },
+          {
+            "function": "Iv",
+            "lineZeroBased": 13127,
+            "url": "http://127.0.0.1:58805/dist/player.js",
+            "samplePercent": 2.4969400244798043
+          },
+          {
+            "function": "(program)",
+            "lineZeroBased": -1,
+            "url": "",
+            "samplePercent": 2.3745410036719705
+          },
+          {
+            "function": "Nv",
+            "lineZeroBased": 13070,
+            "url": "http://127.0.0.1:58805/dist/player.js",
+            "samplePercent": 2.0563035495716036
+          },
+          {
+            "function": "Dr.t.onmessage",
+            "lineZeroBased": 659,
+            "url": "http://127.0.0.1:58805/dist/player.js",
+            "samplePercent": 1.3708690330477356
+          },
+          {
+            "function": "packAttributes",
+            "lineZeroBased": 1076,
+            "url": "http://127.0.0.1:58805/dist/RenderTargetSystem-a3_mjarg.js",
+            "samplePercent": 1.0281517747858018
+          },
+          {
+            "function": "Ad",
+            "lineZeroBased": 10057,
+            "url": "http://127.0.0.1:58805/dist/player.js",
+            "samplePercent": 1.003671970624235
+          },
+          {
+            "function": "update",
+            "lineZeroBased": 875,
+            "url": "http://127.0.0.1:58805/dist/player.js",
+            "samplePercent": 0.758873929008568
+          },
+          {
+            "function": "bufferSubData",
+            "lineZeroBased": -1,
+            "url": "",
+            "samplePercent": 0.5140758873929009
+          },
+          {
+            "function": "setDataWithSize",
+            "lineZeroBased": 3878,
+            "url": "http://127.0.0.1:58805/dist/CanvasPool-ClIjw0cg.js",
+            "samplePercent": 0.5140758873929009
+          }
+        ]
+      },
+      {
+        "file": "/private/tmp/puppet-render-audit-xkymfh9q/profiles-final/worker-cpu-1-run-1-worker.cpuprofile",
+        "samples": 3886,
+        "idleSamplePercent": 13.381369016984046,
+        "topSelfSamples": [
+          {
+            "function": "(idle)",
+            "lineZeroBased": -1,
+            "url": "",
+            "samplePercent": 13.381369016984046
+          },
+          {
+            "function": "wasm-function[1]",
+            "lineZeroBased": 0,
+            "url": "wasm://wasm/00013ebe",
+            "samplePercent": 6.150283067421513
+          },
+          {
+            "function": "wasm-function[1]",
+            "lineZeroBased": 0,
+            "url": "wasm://wasm/00013ebe",
+            "samplePercent": 5.609881626351004
+          },
+          {
+            "function": "Ws",
+            "lineZeroBased": 0,
+            "url": "http://127.0.0.1:58805/dist/assets/worker-UF2AAuz8.js",
+            "samplePercent": 5.301080802882141
+          },
+          {
+            "function": "wasm-function[1]",
+            "lineZeroBased": 0,
+            "url": "wasm://wasm/00013ebe",
+            "samplePercent": 4.734945959855893
+          },
+          {
+            "function": "Is",
+            "lineZeroBased": 0,
+            "url": "http://127.0.0.1:58805/dist/assets/worker-UF2AAuz8.js",
+            "samplePercent": 4.323211528564076
+          },
+          {
+            "function": "wasm-function[1]",
+            "lineZeroBased": 0,
+            "url": "wasm://wasm/00013ebe",
+            "samplePercent": 2.521873391662378
+          },
+          {
+            "function": "",
+            "lineZeroBased": 0,
+            "url": "http://127.0.0.1:58805/dist/assets/worker-UF2AAuz8.js",
+            "samplePercent": 1.59547092125579
+          },
+          {
+            "function": "(garbage collector)",
+            "lineZeroBased": -1,
+            "url": "",
+            "samplePercent": 1.5182707153885744
+          },
+          {
+            "function": "kr",
+            "lineZeroBased": 0,
+            "url": "http://127.0.0.1:58805/dist/assets/worker-UF2AAuz8.js",
+            "samplePercent": 1.492537313432836
+          }
+        ]
+      }
+    ],
+    "profileFPSExcluded": true,
+    "remainingHotspots": "Worker compute remains the busy thread. Main-thread frame application, UV gradient packing and buffer updates remain measurable work; cleanup does not remove that throughput limit.",
+    "unchangedVertexProbe": {
+      "averageChangedParts": 817.2018209408194,
+      "totalParts": 852,
+      "interpretation": "About 96% of world-space part buffers changed. This does not directly measure visible GPU-upload cost and does not justify promising a large gain from skipping unchanged parts.",
+      "report": "/private/tmp/puppet-render-audit-xkymfh9q/probe.json"
+    }
+  },
+  "validation": {
+    "unit": "451 files, 2,831 tests passed after the final dependency patch.",
+    "memoryBrowser": "3 files, 8 tests passed; cold dependency optimization, real Chromium and explicit GC.",
+    "build": "Player, editor, editor-element, converter and declarations built.",
+    "typecheck": "Puppet and Poffo passed.",
+    "lint": "oxlint errors fixed; root lint passed with existing warnings.",
+    "format": "pnpm format completed.",
+    "setupFix": "Browser tests exclude es-toolkit dependency optimization, matching the existing Puppet dev-server setting. A fresh-cache clamp export error reproduced before this setting.",
+    "ci": "Local verification only; no new GitHub CI run is claimed."
+  },
+  "verificationGaps": [
+    {
+      "number": 1,
+      "scope": "GPU driver VRAM, OS RSS and all browser-internal allocation budgets",
+      "status": "Not measured by a physical-driver counter. Logical GPU handle invalidation and Chromium live-owner counts are verified."
+    },
+    {
+      "number": 2,
+      "scope": "Hardware/browser matrix",
+      "status": "No true low-end device, Safari or Firefox run in this audit; WebGPU exact pixels were not compared."
+    }
+  ],
+  "p3p4Proposals": [],
+  "workflow": "Existing worktree changes preserved. This audit adds a version-pinned Pixi patch, regression coverage, a browser-test optimization exclusion and this evidence report.",
+  "reviewConclusion": {
+    "overallRisk": "Three confirmed P2 lifetime defects were fixed and regression-tested. No additional confirmed P0-P2 finding remains in the exercised paths; the environment and physical-memory limits remain explicit.",
+    "behavior": "Owned inputs are released without invalidating other live owners; rendering and queued control results preserve exact tested outputs.",
+    "refactoring": "Keep reusable capacity and immutable shader text; concentrate cleanup on batch return and input destruction rather than a global reset.",
+    "namingAndStructure": "Focused dependency patch and resource-lifetime test files; no unrelated runtime layer or package script."
+  }
+}

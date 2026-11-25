@@ -1,0 +1,146 @@
+{
+  "sourceSha256": "5534e361358f1ddff124e0cf71bb0ba5d16cb9fee1d9108219a9060dab56dfde",
+  "sha256": "4141d54d32b7a9f3c6937c469f2c732793a67592f71ae1872d990ca5665eab36",
+  "bytes": 20788199,
+  "parameterId": "TouchBagStrap",
+  "previousLimits": [-14, 14],
+  "limits": [-2, 2],
+  "changedBindings": [
+    "touch:touch:Rotation@Part53:0",
+    "touch:touch:Rotation@Part54:0",
+    "touch:touch:Rotation@Part55:0",
+    "touch:touch:Rotation@Part52:0",
+    "touch:touch:Rotation@Part56:0",
+    "touch:touch:Rotation@Part50:0",
+    "touch:surface:ArtMesh493",
+    "touch:surface:ArtMesh730"
+  ],
+  "allArtworkPreserved": true,
+  "otherParameterBindingsPreserved": true,
+  "physicsPreserved": true,
+  "method": "Bound shoulder-bag touch rotation to two degrees in either direction; sample the original rotation arcs and strap surfaces at the new endpoints.",
+  "mainPartId": "ArtMesh727",
+  "visibleBagParts": [
+    "ArtMesh283",
+    "ArtMesh284",
+    "ArtMesh285",
+    "ArtMesh286",
+    "ArtMesh308",
+    "ArtMesh728",
+    "ArtMesh727",
+    "ArtMesh726",
+    "ArtMesh725",
+    "ArtMesh724",
+    "ArtMesh723",
+    "ArtMesh722",
+    "ArtMesh721",
+    "ArtMesh720",
+    "ArtMesh719",
+    "ArtMesh718",
+    "ArtMesh717",
+    "ArtMesh716",
+    "ArtMesh715",
+    "ArtMesh714",
+    "ArtMesh713",
+    "ArtMesh712",
+    "ArtMesh711",
+    "ArtMesh710",
+    "ArtMesh709",
+    "ArtMesh708",
+    "ArtMesh707",
+    "ArtMesh706",
+    "ArtMesh705",
+    "ArtMesh704",
+    "ArtMesh788"
+  ],
+  "originalMotionPreservedWithinNewLimits": [
+    {
+      "body": -10,
+      "angle": -2,
+      "error": 0
+    },
+    {
+      "body": -10,
+      "angle": -1,
+      "error": 1.5502337191719562e-9
+    },
+    {
+      "body": -10,
+      "angle": 0,
+      "error": 0
+    },
+    {
+      "body": -10,
+      "angle": 1,
+      "error": 1.5611476555932313e-9
+    },
+    {
+      "body": -10,
+      "angle": 2,
+      "error": 0
+    },
+    {
+      "body": 0,
+      "angle": -2,
+      "error": 0
+    },
+    {
+      "body": 0,
+      "angle": -1,
+      "error": 1.0968506103381515e-9
+    },
+    {
+      "body": 0,
+      "angle": 0,
+      "error": 0
+    },
+    {
+      "body": 0,
+      "angle": 1,
+      "error": 1.1127667676191777e-9
+    },
+    {
+      "body": 0,
+      "angle": 2,
+      "error": 0
+    },
+    {
+      "body": 10,
+      "angle": -2,
+      "error": 0
+    },
+    {
+      "body": 10,
+      "angle": -1,
+      "error": 9.636096365284175e-10
+    },
+    {
+      "body": 10,
+      "angle": 0,
+      "error": 0
+    },
+    {
+      "body": 10,
+      "angle": 1,
+      "error": 9.881659934762865e-10
+    },
+    {
+      "body": 10,
+      "angle": 2,
+      "error": 0
+    }
+  ],
+  "maximumTravel": [
+    {
+      "angle": -2,
+      "maximum": 48.33067628883587,
+      "fractionOfBagWidth": 0.11398744752700116
+    },
+    {
+      "angle": 2,
+      "maximum": 48.33067628883462,
+      "fractionOfBagWidth": 0.11398744752699821
+    }
+  ],
+  "otherParameterDefinitionsPreserved": true
+}

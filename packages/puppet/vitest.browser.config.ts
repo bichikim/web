@@ -4,8 +4,15 @@ import solidPlugin from 'vite-plugin-solid'
 import {defineConfig} from 'vitest/config'
 
 export default defineConfig({
+  optimizeDeps: {exclude: ['es-toolkit']},
   plugins: [solidPlugin({hot: false})],
   root: fileURLToPath(new URL('.', import.meta.url)),
+  server: {
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+    },
+  },
   test: {
     browser: {
       enabled: true,
@@ -20,9 +27,23 @@ export default defineConfig({
       },
       headless: true,
       instances: [{browser: 'chromium', viewport: {height: 700, width: 900}}],
-      provider: playwright({contextOptions: {deviceScaleFactor: 1}}),
+      provider: playwright({
+        contextOptions: {deviceScaleFactor: 1},
+        launchOptions: {
+          args:
+            process.env.PUPPET_TEST_WEBGPU === '1'
+              ? [
+                  '--enable-unsafe-webgpu',
+                  ...(process.platform === 'darwin' ? ['--use-angle=metal'] : []),
+                ]
+              : [],
+        },
+      }),
     },
+    exclude: ['visual/__tests__/**/*.memory.integration.tsx'],
     include: ['visual/__tests__/**/*.integration.tsx'],
+    // Render targets from every test page share one GPU.
+    maxWorkers: 2,
     name: 'puppet-visual',
   },
 })

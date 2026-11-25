@@ -1,3 +1,4 @@
+import {getAppLocale} from 'src/features/locale'
 import {Tabs} from '@kobalte/core/tabs'
 import {createSignal, ErrorBoundary, lazy, Suspense} from 'solid-js'
 import * as m from '@paraglide/message'
@@ -24,7 +25,7 @@ export const DesktopMemoryAssistDialog = () => {
   const tarot = useTarotReading({locale: getLocale})
   const saju = useSajuReading()
   const tarotSpeech = useTarotSpeech({
-    locale: getLocale,
+    locale: getAppLocale,
     text: () => (tarot.status() === 'complete' ? tarot.output() : ''),
   })
   const [activeTab, setActiveTab] = createSignal('sentences')

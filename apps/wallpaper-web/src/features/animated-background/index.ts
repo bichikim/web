@@ -66,10 +66,11 @@ export const useAnimatedBackground = (props: UseAnimatedBackgroundProps) => {
         return
       }
       const created = await createPlayer({
+        buffering: true,
         canvas,
         document: prepared.document,
         motionId: 'ambient',
-        onAfterRender: () => {
+        onFrame: () => {
           if (configured && !cancellation.signal.aborted) {
             setReady(true)
           }

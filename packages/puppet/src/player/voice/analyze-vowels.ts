@@ -23,27 +23,44 @@ export interface AnalyzeVowelsOptions {
 type Formants = readonly [number, number]
 
 /**
- * Approximate F1 and F2 (Hz) of the five Japanese vowels for an adult male and an adult female
- * voice, plus the rounded back u of Korean or English (the same pursed mouth). A vowel scores by
- * its closest reference.
+ * F1/F2 references cover front and back realizations of the five mouth poses, including
+ * rounded Korean u and close-mid e. A vowel scores by its closest reference.
  */
 const VOWEL_FORMANTS: Readonly<Record<PuppetVowel, ReadonlyArray<ReadonlyArray<number>>>> =
   vowelFormants
 
 const ANALYSIS_RATE = 8000
-const LPC_ORDER = 10
-const PRE_EMPHASIS = 0.97
+const REFINEMENT_RATE = 12000
+const REFINEMENT_PITCH = 180
+const RESAMPLE_CUTOFF = 0.45
+const RESAMPLE_LOBES = 16
+const REFINEMENT_ORDER = 10
+const REFINEMENT_EMPHASIS = 0.97
+const GAUSSIAN_WIDTH = 6
+const GAUSSIAN_EXPONENT = -0.5
+const FORMANT_CONFIDENCE = 0.8
+const FUNDAMENTAL_RANGE = 1.5
+const PITCH_CONFIDENCE = 0.5
+const PITCH_PEAK_RATIO = 0.9
+// Four resonance pairs at 8 kHz avoid fitting an extra pole pair to voice harmonics.
+const LPC_ORDER = 8
+// Retain enough low-frequency energy to resolve close vowels' first resonance.
+const PRE_EMPHASIS = 0.85
 const ENVELOPE_STEP = 10
 const ENVELOPE_MINIMUM = 150
 const ENVELOPE_MAXIMUM = 3500
 const F1_MAXIMUM = 1100
 const F2_SEPARATION = 200
+const MAXIMUM_BANDWIDTH = 400
+const ROOT_PHASE = 0.25
+const ROOT_ITERATIONS = 100
+const ROOT_TOLERANCE = 1e-8
 /** Width, in log frequency, of a vowel's region. */
 const VOWEL_SPREAD = 0.25
 const DEFAULT_SILENCE_DECIBELS = -50
 const DEFAULT_FULL_DECIBELS = -25
-const HAMMING_BASE = 0.54
-const HAMMING_SWING = 0.46
+const WINDOW_BASE = 0.5
+const WINDOW_SWING = 0.5
 const POWER_DECIBELS = 10
 const LOWEST_PITCH = 60
 const HIGHEST_PITCH = 400
@@ -72,7 +89,7 @@ const windowed = (samples: Float64Array) =>
   samples.map((value, index) => {
     const emphasized = index === 0 ? value : value - PRE_EMPHASIS * samples[index - 1]!
     const phase = (2 * Math.PI * index) / Math.max(1, samples.length - 1)
-    return emphasized * (HAMMING_BASE - HAMMING_SWING * Math.cos(phase))
+    return emphasized * (WINDOW_BASE - WINDOW_SWING * Math.cos(phase))
   })
 
 const autocorrelation = (samples: Float64Array, order: number) =>
@@ -149,6 +166,100 @@ const findFormants = (coefficients: ReadonlyArray<number>, rate: number): Forman
   return first === undefined || second === undefined ? undefined : [first, second]
 }
 
+type Complex = readonly [real: number, imaginary: number]
+
+/** Simultaneous correction of one polynomial root relative to the other current estimates. */
+const correctRoot = (
+  coefficients: ReadonlyArray<number>,
+  roots: ReadonlyArray<Complex>,
+  index: number,
+): Complex => {
+  const [real, imaginary] = roots[index]!
+  let valueReal = 0
+  let valueImaginary = 0
+  for (const coefficient of coefficients) {
+    ;[valueReal, valueImaginary] = [
+      valueReal * real - valueImaginary * imaginary + coefficient,
+      valueReal * imaginary + valueImaginary * real,
+    ]
+  }
+  let divisorReal = 1
+  let divisorImaginary = 0
+  for (const [other, root] of roots.entries()) {
+    if (other !== index) {
+      const differenceReal = real - root[0]
+      const differenceImaginary = imaginary - root[1]
+      ;[divisorReal, divisorImaginary] = [
+        divisorReal * differenceReal - divisorImaginary * differenceImaginary,
+        divisorReal * differenceImaginary + divisorImaginary * differenceReal,
+      ]
+    }
+  }
+  const divisor = divisorReal ** 2 + divisorImaginary ** 2
+  return [
+    (valueReal * divisorReal + valueImaginary * divisorImaginary) / divisor,
+    (valueImaginary * divisorReal - valueReal * divisorImaginary) / divisor,
+  ]
+}
+
+/** Polynomial roots, or no result when the bounded iteration does not converge. */
+const polynomialRoots = (
+  coefficients: ReadonlyArray<number>,
+): ReadonlyArray<Complex> | undefined => {
+  const order = coefficients.length - 1
+  let roots: ReadonlyArray<Complex> = Array.from({length: order}, (_, index): Complex => {
+    const angle = ((index + ROOT_PHASE) * 2 * Math.PI) / order
+    return [Math.cos(angle), Math.sin(angle)]
+  })
+  for (let iteration = 0; iteration < ROOT_ITERATIONS; iteration += 1) {
+    const current = roots
+    const shifts = current.map((_, index) => correctRoot(coefficients, current, index))
+    const largest = Math.max(...shifts.map(([real, imaginary]) => Math.hypot(real, imaginary)))
+    if (!Number.isFinite(largest)) {
+      return undefined
+    }
+    roots = current.map(
+      ([real, imaginary], index): Complex => [
+        real - shifts[index]![0],
+        imaginary - shifts[index]![1],
+      ],
+    )
+    if (largest < ROOT_TOLERANCE) {
+      return roots
+    }
+  }
+  return undefined
+}
+
+/** Resonance frequencies whose bandwidth excludes broad spectral tilt and weak extra poles. */
+const resonantFormants = (
+  coefficients: ReadonlyArray<number>,
+  rate: number,
+): Formants | undefined => {
+  const roots = polynomialRoots(coefficients)
+  const resonances = roots
+    ?.filter(([, imaginary]) => imaginary > 0)
+    .map(([real, imaginary]) => ({
+      bandwidth: (-Math.log(Math.hypot(real, imaginary)) * rate) / Math.PI,
+      frequency: (Math.atan2(imaginary, real) * rate) / (2 * Math.PI),
+    }))
+    .filter(
+      ({bandwidth, frequency}) =>
+        bandwidth > 0 &&
+        bandwidth < MAXIMUM_BANDWIDTH &&
+        frequency >= ENVELOPE_MINIMUM &&
+        frequency <= ENVELOPE_MAXIMUM,
+    )
+    .sort((left, right) => left.frequency - right.frequency)
+  const first = resonances?.[0]?.frequency
+  const second = resonances?.find(
+    ({frequency}) => first !== undefined && frequency >= first + F2_SEPARATION,
+  )?.frequency
+  return first === undefined || first > F1_MAXIMUM || second === undefined
+    ? undefined
+    : [first, second]
+}
+
 /**
  * Whether the frame is periodic, as voiced speech is: its normalized autocorrelation peaks
  * above 0.3 at some lag within the 60–400 Hz pitch range. Noise and unvoiced consonants are not.
@@ -161,20 +272,108 @@ const isVoiced = (samples: Float64Array, rate: number) => {
   return correlation.some((value, lag) => lag >= shortest && value > VOICING * energy)
 }
 
-/**
- * F1 and F2 (Hz) of a frame, or `undefined` when it is unvoiced or its envelope has no two
- * resonances.
- */
-export const estimateFormants = (samples: ArrayLike<number>, sampleRate: number) => {
+/** Band-limited resampling keeps high-frequency aliases out of the LPC spectrum. */
+const resample = (samples: ArrayLike<number>, sourceRate: number, rate: number) => {
+  const ratio = sourceRate / rate
+  const cutoff = RESAMPLE_CUTOFF / ratio
+  const radius = RESAMPLE_LOBES * ratio
+  return Float64Array.from({length: Math.floor(samples.length / ratio)}, (_, index) => {
+    const center = index * ratio
+    let sum = 0
+    let total = 0
+    const start = Math.max(0, Math.ceil(center - radius))
+    const end = Math.min(samples.length - 1, Math.floor(center + radius))
+    for (let offset = start; offset <= end; offset += 1) {
+      const distance = center - offset
+      const argument = 2 * Math.PI * cutoff * distance
+      const sinc = argument === 0 ? 1 : Math.sin(argument) / argument
+      const weight = sinc * WINDOW_BASE * (1 + Math.cos((Math.PI * distance) / radius))
+      sum += samples[offset]! * weight
+      total += weight
+    }
+    return sum / total
+  })
+}
+
+/** Pitch from a prominent local maximum of the normalized autocorrelation. */
+const estimatePitch = (samples: Float64Array, rate: number) => {
+  const shortest = Math.floor(rate / HIGHEST_PITCH)
+  const longest = Math.min(samples.length - 1, Math.ceil(rate / LOWEST_PITCH))
+  const correlations = Array.from({length: Math.max(0, longest - shortest + 1)}, (_, offset) => {
+    const lag = shortest + offset
+    let cross = 0
+    let left = 0
+    let right = 0
+    for (let index = lag; index < samples.length; index += 1) {
+      cross += samples[index]! * samples[index - lag]!
+      left += samples[index]! ** 2
+      right += samples[index - lag]! ** 2
+    }
+    return left > 0 && right > 0 ? cross / Math.sqrt(left * right) : 0
+  })
+  const threshold = Math.max(PITCH_CONFIDENCE, Math.max(...correlations) * PITCH_PEAK_RATIO)
+  const peak = correlations.findIndex(
+    (value, index) =>
+      index > 0 &&
+      index < correlations.length - 1 &&
+      value >= correlations[index - 1]! &&
+      value >= correlations[index + 1]! &&
+      value > threshold,
+  )
+  return peak < 0 ? undefined : rate / (shortest + peak)
+}
+
+const fitFormants = (frame: Float64Array, rate: number, order: number) => {
+  const coefficients = linearPrediction(autocorrelation(frame, order), order)
+  return coefficients === undefined
+    ? undefined
+    : (resonantFormants(coefficients, rate) ?? findFormants(coefficients, rate))
+}
+
+const refineFormants = (samples: ArrayLike<number>, sampleRate: number) => {
+  const rate = Math.min(sampleRate, REFINEMENT_RATE)
+  const resampled = resample(samples, sampleRate, rate)
+  if (!isVoiced(resampled, rate)) {
+    return undefined
+  }
+  const frame = resampled.map((value, index) => {
+    const emphasized = index === 0 ? value : value - REFINEMENT_EMPHASIS * resampled[index - 1]!
+    const position = (index - (resampled.length - 1) / 2) / (resampled.length / GAUSSIAN_WIDTH)
+    return emphasized * Math.exp(GAUSSIAN_EXPONENT * position ** 2)
+  })
+  return fitFormants(frame, rate, REFINEMENT_ORDER)
+}
+
+/** F1/F2 of voiced audio; uncertain or pitch-locked estimates use a wider analysis ceiling. */
+export const estimateFormants = (
+  samples: ArrayLike<number>,
+  sampleRate: number,
+): Formants | undefined => {
   const factor = Math.max(1, Math.floor(sampleRate / ANALYSIS_RATE))
   const rate = sampleRate / factor
   const decimated = decimate(samples, factor)
   if (!isVoiced(decimated, rate)) {
     return undefined
   }
-  const frame = windowed(decimated)
-  const coefficients = linearPrediction(autocorrelation(frame, LPC_ORDER), LPC_ORDER)
-  return coefficients === undefined ? undefined : findFormants(coefficients, rate)
+  const formants = fitFormants(windowed(decimated), rate, LPC_ORDER)
+  if (sampleRate <= rate) {
+    return formants
+  }
+  const pitch = estimatePitch(decimated, rate)
+  const nearPitch =
+    formants !== undefined && pitch !== undefined && formants[0] < pitch * FUNDAMENTAL_RANGE
+  const uncertain =
+    formants === undefined ||
+    (pitch !== undefined &&
+      pitch >= REFINEMENT_PITCH &&
+      formants[0] < HIGHEST_PITCH * FUNDAMENTAL_RANGE &&
+      Math.max(...weighVowels(formants)) < FORMANT_CONFIDENCE)
+  if (!nearPitch && !uncertain) {
+    return formants
+  }
+  // A first resonance following pitch can be the source harmonic rather than the vowel.
+  // Do not reuse it if the wider spectrum cannot resolve a replacement.
+  return refineFormants(samples, sampleRate) ?? (nearPitch ? undefined : formants)
 }
 
 /** Soft vowel weights from the formants' log distance to each vowel's, summing to 1. */

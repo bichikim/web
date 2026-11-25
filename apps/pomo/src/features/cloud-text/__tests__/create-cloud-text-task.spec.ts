@@ -22,6 +22,20 @@ beforeEach(() => {
   vi.resetAllMocks()
 })
 
+it.each([{temperature: undefined}, {temperature: 0.2}])(
+  'should forward only an explicitly requested sampling temperature: $temperature',
+  async ({temperature}) => {
+    vi.mocked(requestCloudText).mockResolvedValue(response)
+    await createCloudTextTask().generate({...options(), temperature})
+    const request = vi.mocked(requestCloudText).mock.calls[0]![0]
+    if (temperature === undefined) {
+      expect(request).not.toHaveProperty('temperature')
+    } else {
+      expect(request).toHaveProperty('temperature', temperature)
+    }
+  },
+)
+
 it('should issue one request while an action is active and complete with its server result', async () => {
   const deferred = createDeferred<CloudTextResponse>()
   vi.mocked(requestCloudText).mockReturnValue(deferred.promise)
@@ -32,7 +46,7 @@ it('should issue one request while an action is active and complete with its ser
   expect(requestCloudText).toHaveBeenCalledOnce()
   deferred.resolve(response)
   await pending
-  expect(observer.onComplete).toHaveBeenCalledWith(response)
+  expect(observer.onComplete).toHaveBeenCalledWith(response, expect.any(AbortSignal))
 })
 
 it('should abort on disposal and suppress late responses', async () => {
@@ -113,7 +127,7 @@ it('should propagate a thrown message getter and release the active request', as
   expect(observer.onError).not.toHaveBeenCalled()
   await task.generate(observer)
   expect(requestCloudText).toHaveBeenCalledTimes(2)
-  expect(observer.onComplete).toHaveBeenCalledExactlyOnceWith(response)
+  expect(observer.onComplete).toHaveBeenCalledExactlyOnceWith(response, expect.any(AbortSignal))
 })
 
 it('should suppress a late rejection after disposal without reading its message', async () => {
@@ -147,7 +161,7 @@ it('should ignore reentry from the error callback and accept a later request', a
   expect(requestCloudText).toHaveBeenCalledOnce()
   await task.generate(observer)
   expect(requestCloudText).toHaveBeenCalledTimes(2)
-  expect(observer.onComplete).toHaveBeenCalledExactlyOnceWith(response)
+  expect(observer.onComplete).toHaveBeenCalledExactlyOnceWith(response, expect.any(AbortSignal))
 })
 
 it('should translate a completion callback failure through the existing error callback', async () => {
@@ -159,7 +173,7 @@ it('should translate a completion callback failure through the existing error ca
 
   await createCloudTextTask().generate(observer)
 
-  expect(observer.onComplete).toHaveBeenCalledExactlyOnceWith(response)
+  expect(observer.onComplete).toHaveBeenCalledExactlyOnceWith(response, expect.any(AbortSignal))
   expect(observer.onError).toHaveBeenCalledExactlyOnceWith('completion failed')
 })
 
@@ -176,5 +190,5 @@ it('should propagate an error callback failure and allow another request', async
   expect(rejected).toBe(failure)
   await task.generate(observer)
   expect(requestCloudText).toHaveBeenCalledTimes(2)
-  expect(observer.onComplete).toHaveBeenCalledExactlyOnceWith(response)
+  expect(observer.onComplete).toHaveBeenCalledExactlyOnceWith(response, expect.any(AbortSignal))
 })

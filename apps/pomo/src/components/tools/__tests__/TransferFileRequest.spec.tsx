@@ -5,7 +5,7 @@ import * as m from '@paraglide/message'
 import {TransferFileRequest} from '../TransferFileRequest'
 
 afterEach(cleanup)
-const file = {name: '사진.png', size: 2_200_000}
+const file = {name: '사진.png', size: 100 * 1024 * 1024}
 
 describe('TransferFileRequest', () => {
   it('should describe the requested file and let the user accept or decline it', () => {
@@ -15,7 +15,7 @@ describe('TransferFileRequest', () => {
       <TransferFileRequest file={file} mode="incoming" onAccept={onAccept} onReject={onReject} />
     ))
     expect(screen.getByText(file.name)).toBeVisible()
-    expect(screen.getByText(/2\.2\s*MB/u)).toBeVisible()
+    expect(screen.getByText(/100\s*MiB/u)).toBeVisible()
     expect(screen.getByText(m.transfer_incoming_description())).toBeVisible()
     fireEvent.click(screen.getByRole('button', {name: m.transfer_accept()}))
     fireEvent.click(screen.getByRole('button', {name: m.transfer_reject()}))

@@ -16,6 +16,7 @@ const resource = (): PlayerRenderer => ({
   getPaintOrder: vi.fn(() => []),
   getPartVertices: vi.fn(),
   getRenderingInfo: vi.fn(() => ({antialiasing: 'ssaa' as const, renderer: 'webgl' as const})),
+  pickPart: vi.fn(),
   redraw: vi.fn(),
   resize: vi.fn(),
   setFit: vi.fn(),
@@ -99,7 +100,7 @@ test('should retain the complete simulation across GPU renderer replacement', as
     player.configureRenderer({
       antialiasing: 'ssaa',
       canvas: document.createElement('canvas'),
-      renderer: 'webgpu',
+      renderer: 'pixi-webgpu',
     }),
   ).resolves.toBe('applied')
   expect(frames).toHaveLength(count)

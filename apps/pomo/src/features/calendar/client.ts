@@ -107,12 +107,16 @@ export const deleteCalendarConnection = async (connectionId: string): Promise<vo
 
 export const listCalendarEvents = async (
   options: ListCalendarEventsOptions,
+  signal?: AbortSignal,
 ): Promise<CalendarEvents> => {
   const timeZone = options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
   const search = new URLSearchParams({...options, timeZone})
+  const requestOptions = await createRequestOptions()
   return apiJson(`calendar/events?${search}`, {
-    ...(await createRequestOptions()),
+    ...requestOptions,
+    recheckWebSessionOnUnauthorized: requestOptions.credentials === 'include',
     responseSchema: calendarEventsSchema,
+    ...(signal === undefined ? {} : {signal}),
   })
 }
 

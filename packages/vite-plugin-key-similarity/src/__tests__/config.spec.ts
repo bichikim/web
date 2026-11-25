@@ -1,10 +1,8 @@
-import {access} from 'node:fs/promises'
-import path from 'node:path'
 import {describe, expect, it} from 'vitest'
 import {resolveOptions} from '../config'
 
 describe('resolveOptions', () => {
-  it('should use the packaged q8 model by default', async () => {
+  it('should share the default q8 model cache across unrelated project roots', () => {
     const options = resolveOptions(
       {
         keyDetector: () => undefined,
@@ -14,11 +12,13 @@ describe('resolveOptions', () => {
 
     expect(options.modelIdentifier).toBe('Xenova/multilingual-e5-small')
     expect(options.modelRevision).toBe('761b726')
-    expect(options.modelPath).toMatch(/vite-plugin-key-similarity\/assets\/multilingual-e5-small$/)
+    expect(options.modelPath).toContain('io.winterlove.models')
+    expect(options.modelPath).toContain('multilingual-e5-small')
+    expect(options.modelPath).not.toContain('/project')
+    expect(resolveOptions({keyDetector: () => undefined}, '/another-project').modelPath).toBe(
+      options.modelPath,
+    )
     expect(options.skipIdenticalKeys).toBe(false)
-    await expect(
-      access(path.join(options.modelPath, 'onnx/model_quantized.onnx')),
-    ).resolves.toBeUndefined()
   })
 
   it('should preserve the identical-key skip option', () => {

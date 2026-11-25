@@ -130,6 +130,30 @@ it('should stop downloading remaining models when a confirmed download is cancel
   expect(feeds.retryRecovery).not.toHaveBeenCalled()
 })
 
+it('should close download consent when recovery is dismissed', async () => {
+  renderModal()
+  const [recoveryJobs, setRecoveryJobs] = createSignal<ReadonlyArray<FeedDialogueJob>>([
+    RECOVERY_JOB,
+  ])
+  const feeds = createFeeds([], false, [], {
+    dismissRecovery: () => setRecoveryJobs([]),
+    recoveryJobs,
+  })
+  const modelDownload = createModelDownload()
+  vi.mocked(usePFeedContext).mockReturnValue(feeds)
+  vi.mocked(useModelDownload).mockReturnValue(modelDownload)
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
+  render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
+
+  fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
+  await screen.findByRole('dialog', {name: /모델을 받을까요/})
+  fireEvent.click(screen.getByRole('button', {name: '나중에'}))
+
+  expect(screen.queryByRole('dialog', {name: /모델을 받을까요/})).toBeNull()
+  expect(modelDownload.startVoiceModel).not.toHaveBeenCalled()
+  expect(feeds.retryRecovery).not.toHaveBeenCalled()
+})
+
 it('should retry immediately when every feed model is already cached', async () => {
   renderModal()
   const feeds = createFeeds([], false, [RECOVERY_JOB])

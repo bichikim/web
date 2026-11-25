@@ -2,8 +2,9 @@
 
 import {render, screen} from '@solidjs/testing-library'
 import {expect, it} from 'vitest'
+import {createSignal} from 'solid-js'
 
-import {LEGACY_WEATHER_LOCATIONS, type WeatherFeed} from 'src/features/weather'
+import {LEGACY_WEATHER_LOCATIONS, type WeatherFeed, type WeatherState} from 'src/features/weather'
 import {PWeatherStatus} from '../PWeatherStatus'
 
 const createFeed = (overrides: Partial<WeatherFeed['current']> = {}): WeatherFeed => ({
@@ -89,4 +90,24 @@ it('should omit temperature when the feed has no measured temperature', () => {
   ))
   expect(screen.getByRole('status').textContent).toContain('서울 · 맑음')
   expect(screen.getByRole('status').textContent).not.toContain('°')
+})
+
+it('should show the refresh status while retaining the observed weather', () => {
+  render(() => <PWeatherStatus state={{feed: createFeed(), refreshing: true, status: 'ready'}} />)
+
+  expect(screen.getByRole('status')).toHaveTextContent('서울 · 맑음 · 0° · 업데이트 중')
+})
+
+it('should update the condition and temperature when the refresh result arrives', () => {
+  const [state, setState] = createSignal<WeatherState>({
+    feed: createFeed({temperatureCelsius: 24}),
+    refreshing: true,
+    status: 'ready',
+  })
+  render(() => <PWeatherStatus state={state()} />)
+
+  expect(screen.getByRole('status')).toHaveTextContent('서울 · 맑음 · 24° · 업데이트 중')
+  setState({feed: createFeed({condition: 'rain', temperatureCelsius: 18}), status: 'ready'})
+
+  expect(screen.getByRole('status')).toHaveTextContent('서울 · 비 · 18°')
 })

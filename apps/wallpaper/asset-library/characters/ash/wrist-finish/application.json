@@ -1,0 +1,93 @@
+{
+  "sha256": "143beffc3c329396f312fdb8b45cf00e1b31fd3cb01d547dbbbe20255e85b42c",
+  "previousSha256": "80de692f8b046fe874f6105b7f5b466006e095e4c40c7be453723a10f8df5eae",
+  "referenceSha256": "797259b9b1322bcea9eb58d17321d3b21efc4d8d936e9fb33a7e20a69135b299",
+  "bytes": 20770518,
+  "method": "Regular wrist-end mesh uses continuous cubic side curves and matching UV coordinates; hand-surface glue retains wrist rotation while the forearm body retains original motion",
+  "addedVisibleParts": 0,
+  "changedTextures": 2,
+  "color": {
+    "promptId": "b07241e8-5db6-4da6-8239-dbb35a261d8b",
+    "method": "Local ComfyUI masked cross-wrist gradient matching from original arm pixels",
+    "sourceArtwork": "Existing hand and cup; no generated fingers or arm",
+    "alphaPreserved": true,
+    "outsideMaskChanged": 0
+  },
+  "rigRecords": [
+    {
+      "action": "coffee",
+      "guideId": "coat-free:coffee:arm-end-guide",
+      "handEdge": [
+        [2162.1627217815817, 1697.8665732432432],
+        [2265.882505453328, 1703.4951543506654]
+      ],
+      "edgeCurves": [
+        {
+          "start": [2162.562134093726, 1697.8882482266902],
+          "end": [2040.7983663979285, 1863.9647108770296],
+          "outgoing": [2160.4693359043604, 1749.757087345636],
+          "incoming": [2079.10705701582, 1823.0151855752986]
+        },
+        {
+          "start": [2265.483093141184, 1703.4734793672185],
+          "end": [2174.6212806963435, 1883.2268511686916],
+          "outgoing": [2228.3320229350843, 1761.1973061403066],
+          "incoming": [2205.554560724, 1812.3784984576753]
+        }
+      ],
+      "extent": 120,
+      "maximumReferenceError": 9.374856803373542e-13,
+      "handFollowVertices": 1083
+    },
+    {
+      "action": "noodles",
+      "guideId": "coat-free:noodles:arm-end-guide",
+      "handEdge": [
+        [2154.6100187156167, 1719.3790568064155],
+        [2226.034901212347, 1803.3977257532706]
+      ],
+      "edgeCurves": [
+        {
+          "start": [2155.581562525185, 1720.5219052767256],
+          "end": [2064.0464917248464, 1840.4668804972434],
+          "outgoing": [2154.854511839415, 1730.5938664116713],
+          "incoming": [2172.413543149745, 1751.5360352875803]
+        },
+        {
+          "start": [2225.063357402779, 1802.2548772829605],
+          "end": [2169.300199335081, 1883.1814769122489],
+          "outgoing": [2212.338567966301, 1824.7285333747002],
+          "incoming": [2226.147871446505, 1817.2841968338994]
+        }
+      ],
+      "extent": 80,
+      "maximumReferenceError": 9.374856803373542e-13,
+      "handFollowVertices": 525
+    }
+  ],
+  "preservation": {
+    "sha256": "143beffc3c329396f312fdb8b45cf00e1b31fd3cb01d547dbbbe20255e85b42c",
+    "addedParts": 0,
+    "changedTextures": 2,
+    "records": [
+      {
+        "name": "coffee",
+        "changedPixels": 14114,
+        "alphaChanged": 0,
+        "outsideWristChanged": 0
+      },
+      {
+        "name": "noodles",
+        "changedPixels": 13285,
+        "alphaChanged": 0,
+        "outsideWristChanged": 0
+      }
+    ],
+    "physicsAndMouthPreserved": true
+  },
+  "validation": {
+    "renderedPoses": 12,
+    "numericPoses": 14,
+    "otherArmConnections": 13
+  }
+}

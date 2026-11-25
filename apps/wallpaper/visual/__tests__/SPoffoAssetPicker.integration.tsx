@@ -14,6 +14,7 @@ it.each([true, false])(
     render(() => (
       <div class="h-24 w-100 overflow-hidden">
         <SPoffoAssetPicker
+          compact={widget}
           options={[
             {label: '눈꽃', value: 'first'},
             {label: '햇살', value: 'second'},
@@ -31,7 +32,9 @@ it.each([true, false])(
       </div>
     ))
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
-    const trigger = screen.getByRole('button', {name: 'Poffo 불러오기'})
+    const trigger = screen.getByRole('button', {
+      name: widget ? 'Poffo 파일 불러오기' : 'Poffo 불러오기',
+    })
     trigger.focus()
     fireEvent.click(trigger)
     const dialog = screen.getByRole('dialog', {name: 'Poffo 불러오기'})
@@ -59,7 +62,9 @@ it.each([true, false])(
     fireEvent.click(screen.getByRole('button', {name: '닫기'}))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(document.activeElement).toBe(trigger)
-    expect(screen.getByRole('region', {name: 'Poffo 불러오기'})).toHaveTextContent('햇살')
+    if (!widget) {
+      expect(screen.getByRole('region', {name: 'Poffo 불러오기'})).toHaveTextContent('햇살')
+    }
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
   },
 )

@@ -14,7 +14,11 @@ vi.mock('../../src/features/codex/native', () => ({
     subscribe: vi.fn(),
   },
 }))
-vi.mock('@tauri-apps/api/core', () => ({invoke: vi.fn(async () => undefined), isTauri: () => true}))
+vi.mock('@tauri-apps/api/core', async (original) => ({
+  ...(await original<typeof import('@tauri-apps/api/core')>()),
+  invoke: vi.fn(async () => undefined),
+  isTauri: () => true,
+}))
 vi.mock('../../src/features/voice/client', () => ({
   createVoiceClient: () => ({dispose: vi.fn(), play: vi.fn(), prepare: vi.fn()}),
 }))

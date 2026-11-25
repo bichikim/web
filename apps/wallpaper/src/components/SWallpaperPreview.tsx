@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createMemo, Match, Show, Switch} from 'solid-js'
 import type {BackgroundMedia} from '@winter-love/wallpaper/model'
 import type {
@@ -8,6 +9,8 @@ import type {PoffoPlacement} from '@winter-love/wallpaper/settings/model'
 import type {WallpaperController} from '../features/settings'
 import {SPoffoCalibrationPreview} from './SPoffoCalibrationPreview'
 import {SMediaPreview} from './SMediaPreview'
+import {trackingProfile} from '@winter-love/wallpaper/settings/tracking-profile'
+import {withTrackingProfile} from '@winter-love/wallpaper/settings/with-tracking-profile'
 
 const DEFAULT_MONITOR_SIZE = {height: 9, width: 16}
 
@@ -50,22 +53,28 @@ export const SWallpaperPreview = (props: SWallpaperPreviewProps) => {
   }
   const trackingBindings = () => {
     const current = content()
-    return current.mode === 'puppet' ? current.trackingBindings : undefined
+    return current.mode === 'puppet' ? trackingProfile(current).bindings : undefined
   }
   const trackingOptions = () => {
     const current = content()
-    return current.mode === 'puppet' ? current.trackingOptions : undefined
+    return current.mode === 'puppet' ? trackingProfile(current).options : undefined
   }
   const handleOptions = (trackingOptions: PoffoTrackingOptions) => {
     const current = content()
     if (current.mode === 'puppet') {
-      return props.controller.setContent({...current, trackingOptions})
+      return props.controller.setContent({
+        ...current,
+        trackingProfiles: withTrackingProfile(current, {options: trackingOptions}),
+      })
     }
   }
   const handleBindings = (trackingBindings: PoffoTrackingBindings) => {
     const current = content()
     if (current.mode === 'puppet') {
-      return props.controller.setContent({...current, trackingBindings})
+      return props.controller.setContent({
+        ...current,
+        trackingProfiles: withTrackingProfile(current, {bindings: trackingBindings}),
+      })
     }
   }
   const screenAspect = () => {
@@ -90,7 +99,7 @@ export const SWallpaperPreview = (props: SWallpaperPreviewProps) => {
       keyed
       fallback={
         <figure
-          aria-label="배경 미리보기"
+          aria-label={uiText('배경 미리보기')}
           class="relative m-0 grid h-52 w-full place-items-center overflow-hidden rounded-xl bg-stone-200"
         >
           <Switch>
@@ -103,7 +112,7 @@ export const SWallpaperPreview = (props: SWallpaperPreviewProps) => {
                   ◎
                 </span>
                 <p class="m-0 max-w-full truncate text-sm font-medium">
-                  {host() || '웹사이트 주소를 입력해 주세요.'}
+                  {host() || uiText('웹사이트 주소를 입력해 주세요.')}
                 </p>
                 <Show when={website()}>
                   <p class="m-0 max-w-full truncate text-xs text-stone-600">{website()}</p>
@@ -111,7 +120,7 @@ export const SWallpaperPreview = (props: SWallpaperPreviewProps) => {
               </div>
             </Match>
             <Match when={content().mode === 'puppet'}>
-              <p class="m-0 text-sm text-stone-600">Poffo를 선택해 주세요.</p>
+              <p class="m-0 text-sm text-stone-600">{uiText('Poffo를 선택해 주세요.')}</p>
             </Match>
           </Switch>
         </figure>
@@ -119,7 +128,7 @@ export const SWallpaperPreview = (props: SWallpaperPreviewProps) => {
     >
       {(id) => (
         <SPoffoCalibrationPreview
-          label="배경 미리보기"
+          label={uiText('배경 미리보기')}
           targetId={props.controller.selectedId() ?? undefined}
           mode={tracking() ?? 'off'}
           screenAspect={screenAspect()}

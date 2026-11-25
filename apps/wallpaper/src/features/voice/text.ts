@@ -54,6 +54,8 @@ export interface VoiceMessage {
   readonly id: string
   readonly chat: string
   readonly text: string
+  /** False marks streaming prose; omitted means a completed response. */
+  readonly complete?: boolean
 }
 
 /** Selects conversational text, excluding generic working statuses, command payloads and tool labels. */
@@ -77,6 +79,7 @@ export const voiceMessage = (
   return text === '' || placeholder
     ? null
     : {
+        ...(activity.phase === 'working' && prompts.length === 0 ? {complete: false} : {}),
         chat: activity.sessionId,
         id:
           prompts.length > 0

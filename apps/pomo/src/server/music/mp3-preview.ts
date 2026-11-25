@@ -157,12 +157,42 @@ const findFirstFrame = (bytes: Uint8Array, audioStart: number): number => {
   throw new TypeError('invalid_mp3_frames')
 }
 
+const readTagBoundary = (bytes: Uint8Array, declaredStart: number): number => {
+  const tagHeaderBytes = 10
+  let candidate = bytes.indexOf(0xff, tagHeaderBytes)
+  while (candidate !== -1 && candidate < declaredStart) {
+    const first = parseFrame(bytes, candidate)
+    let next = candidate
+    let frame = first
+    while (next < declaredStart && frame !== null && frame.durationMs === first?.durationMs) {
+      next += frame.byteLength
+      frame = parseFrame(bytes, next)
+    }
+    if (next >= declaredStart && frame !== null && frame.durationMs === first?.durationMs) {
+      const following = parseFrame(bytes, next + frame.byteLength)
+      if (following?.durationMs === frame.durationMs) {
+        return candidate
+      }
+    }
+    candidate = bytes.indexOf(0xff, Math.max(candidate + 1, next))
+  }
+  return declaredStart
+}
+
+/** Corrects an ID3 boundary only when a continuous MPEG frame sequence crosses it. */
+export const getMp3PreviewAudioOffset = (bytes: Uint8Array): number => {
+  const declaredStart = getMp3AudioOffset(bytes)
+  return declaredStart > 0 && declaredStart < bytes.byteLength
+    ? readTagBoundary(bytes, declaredStart)
+    : declaredStart
+}
+
 export const extractMp3Preview = (bytes: Uint8Array, maximumDurationMs: number): Uint8Array => {
   if (!Number.isSafeInteger(maximumDurationMs) || maximumDurationMs <= 0) {
     throw new TypeError('invalid_preview_duration')
   }
 
-  const audioStart = getMp3AudioOffset(bytes)
+  const audioStart = getMp3PreviewAudioOffset(bytes)
   if (audioStart > bytes.byteLength) {
     throw new TypeError('invalid_mp3_id3')
   }

@@ -27,6 +27,22 @@ describe('serveKnowledgeStdio process', () => {
       })
       expect(result.isError).toBe(true)
       expect(JSON.stringify(result)).toContain('repository-unavailable')
+      await Promise.all(
+        ['knowledge_get', 'knowledge_related'].map(async (name) => {
+          const structured = await client.callTool({
+            arguments: {docId: 'docs/C#.md', unitId: 'overview'},
+            name,
+          })
+          expect(structured.isError).toBe(true)
+          expect(JSON.stringify(structured)).toContain('repository-unavailable')
+          const mixed = await client.callTool({
+            arguments: {docId: 'docs/C#.md', logicalId: 'legacy'},
+            name,
+          })
+          expect(mixed.isError).toBe(true)
+          expect(JSON.stringify(mixed)).not.toContain('repository-unavailable')
+        }),
+      )
       expect(errors).toEqual([])
       const pid = transport.pid
       if (pid === null) {

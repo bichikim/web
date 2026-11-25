@@ -1,3 +1,4 @@
+import {sumBy} from 'es-toolkit/math'
 import {
   type Accessor,
   createMemo,
@@ -103,9 +104,7 @@ export const useCustomAlbumEditor = (
   const [isLoading, setIsLoading] = createSignal(initialAlbumId !== null)
   const [isProcessingFiles, setIsProcessingFiles] = createSignal(false)
   const [isSaving, setIsSaving] = createSignal(false)
-  const totalTrackBytes = createMemo(() =>
-    tracks().reduce((total, track) => total + track.audio.size, 0),
-  )
+  const totalTrackBytes = createMemo(() => sumBy(tracks(), (track) => track.audio.size))
   const cover = useCustomAlbumCoverEditor({
     getTrackBytes: totalTrackBytes,
     onErrorMessage: setErrorMessage,
@@ -191,7 +190,9 @@ export const useCustomAlbumEditor = (
         tracks: tracks(),
       })
       await props.onSaved(removedTrackIds)
-      props.onOpenChange(false)
+      if (!isDisposed) {
+        props.onOpenChange(false)
+      }
     } catch (error: unknown) {
       setErrorMessage(getCustomAlbumErrorMessage(error))
     } finally {

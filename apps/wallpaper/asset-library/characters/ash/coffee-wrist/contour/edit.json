@@ -1,0 +1,22 @@
+{
+  "white": "Generated palm root and wrist, with existing forearm in view",
+  "black": "Original fingers, cup and forearm body",
+  "polygon": [
+    [140, 110],
+    [245, 110],
+    [273, 180],
+    [300, 198],
+    [342, 198],
+    [350, 260],
+    [300, 380],
+    [220, 430],
+    [35, 430],
+    [80, 370],
+    [112, 320],
+    [155, 250],
+    [148, 200]
+  ],
+  "crop": [360, 500, 480, 640],
+  "ownershipFoldImageY": 785,
+  "neutralGeometryWarp": false
+}

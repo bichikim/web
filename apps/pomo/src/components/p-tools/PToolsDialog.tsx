@@ -1,4 +1,4 @@
-import {createEffect, ErrorBoundary, lazy, Suspense, untrack} from 'solid-js'
+import {createEffect, ErrorBoundary, lazy, onCleanup, Suspense, untrack} from 'solid-js'
 import {useLocation, useNavigate} from '@solidjs/router'
 import * as m from '@paraglide/message'
 import {fileTransfer} from 'src/features/file-transfer/session'
@@ -12,6 +12,7 @@ const Content = lazy(() => import('../tools/Content').then((module) => ({default
 export const PToolsDialog = () => {
   const location = useLocation()
   const navigate = useNavigate()
+  onCleanup(toolsDialog.closeOnExit)
 
   createEffect(() => {
     const link = consumeTransferLink({

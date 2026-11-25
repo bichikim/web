@@ -7,7 +7,11 @@ import type {HitRegion} from '../../src/features/hit-test'
 import {SCodexSpeech} from '../../src/components/SCodexSpeech'
 import 'virtual:uno.css'
 
-vi.mock('@tauri-apps/api/core', () => ({invoke: vi.fn(), isTauri: vi.fn()}))
+vi.mock('@tauri-apps/api/core', async (original) => ({
+  ...(await original<typeof import('@tauri-apps/api/core')>()),
+  invoke: vi.fn(),
+  isTauri: vi.fn(),
+}))
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()

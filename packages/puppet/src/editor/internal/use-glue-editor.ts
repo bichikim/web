@@ -3,7 +3,7 @@ import type {PuppetParameterValues} from '../../deformation'
 import {getParameterBinding} from './parameter-keyforms'
 import {isParameterGlueTarget} from '../../deformation/is-parameter-glue-target'
 import {createSignal} from 'solid-js'
-import type {PuppetDocument, PuppetGlue, PuppetVertexReference} from '../../player'
+import type {PuppetDocument, PuppetGlue, PuppetGlueMode, PuppetVertexReference} from '../../player'
 import {addGlue, canGlueVertex, setGlueKeyform, updateGlue} from './glue'
 import {getSceneNode, isSceneNodeLocked} from './scene-graph'
 
@@ -93,6 +93,20 @@ export const useGlueEditor = (props: UseGlueEditorProps) => {
       ? glue
       : sampleParameterGlue({binding: current, glue, values})
   }
+  const canEditMode = (glue: PuppetGlue) => props.editMode === undefined && canEdit(glue)
+  const changeMode = (glue: PuppetGlue, mode: PuppetGlueMode) => {
+    if (!canEditMode(glue)) {
+      return
+    }
+    const document = updateGlue(props.document, glue.id, {
+      mode: mode === 'vertex' ? undefined : mode,
+      strength: glue.strength,
+      weight: glue.weight,
+    })
+    if (document !== undefined) {
+      props.onDocumentChange?.(document)
+    }
+  }
   const change = (glue: PuppetGlue, values: Pick<PuppetGlue, 'weight' | 'strength'> | null) => {
     if (values !== null && !canEdit(glue)) {
       return
@@ -135,7 +149,9 @@ export const useGlueEditor = (props: UseGlueEditorProps) => {
     )
   return {
     canEdit,
+    canEditMode,
     change,
+    changeMode,
     connect,
     connections,
     first,

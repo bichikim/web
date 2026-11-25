@@ -35,6 +35,15 @@ afterEach(() => {
   vi.resetAllMocks()
   vi.unstubAllGlobals()
 })
+it('should route provider execution files to the supplied bundled runtime directory', async () => {
+  vi.mocked(loadSessions).mockResolvedValue(successResult(sessions()))
+  const loader = createModelSessions('/voice-runtime/')
+  await expect(loader.load(options('int8'))).resolves.toMatchObject({
+    ok: true,
+    value: {backend: 'wasm'},
+  })
+  expect(loadSupertonicRuntime).toHaveBeenCalledExactlyOnceWith('wasm', '/voice-runtime/')
+})
 it('should reuse GPU capability and the imported runtime across model initialization', async () => {
   const gpu = vi.fn(() => ({}))
   vi.stubGlobal('navigator', {

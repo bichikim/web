@@ -1,5 +1,5 @@
 import path from 'node:path'
-import type {ConfigEnv} from 'vite'
+import {type ConfigEnv, mergeConfig} from 'vite'
 import {describe, expect, it} from 'vitest'
 
 import {createConfig, targets} from '@winter-love/vite-lib-config'
@@ -12,23 +12,48 @@ const configEnvironment: ConfigEnv = {
 }
 
 describe('createConfig', () => {
-  it('should resolve entries and aliases from the provided root', () => {
-    const root = '/workspace/library'
-    const configFactory = createConfig({
-      alias: {src: 'src'},
-      entry: {feature: 'src/feature.ts'},
-      packageJson: {name: '@scope/example-library'},
-      root,
-    })
-    const config = configFactory(configEnvironment)
+  it.each(['/workspace/library', 'packages/library'])(
+    'should resolve entries and aliases from root %s',
+    (root) => {
+      const resolvedRoot = path.resolve(root)
+      const configFactory = createConfig({
+        alias: {src: 'src'},
+        entry: {feature: 'src/feature.ts'},
+        packageJson: {name: '@scope/example-library'},
+        root,
+      })
+      const config = configFactory(configEnvironment)
 
+      expect(config.root).toBe(resolvedRoot)
+      expect(config.build?.lib).toMatchObject({
+        entry: {
+          feature: path.join(resolvedRoot, 'src/feature.ts'),
+          index: path.join(resolvedRoot, 'src/index.ts'),
+        },
+        name: 'scopeExampleLibrary',
+      })
+      expect(config.resolve?.alias).toEqual({src: path.join(resolvedRoot, 'src')})
+    },
+  )
+
+  it('should preserve the omitted-root paths and Vite cwd default', () => {
+    const config = createConfig({packageJson: {name: 'library'}})(configEnvironment)
+
+    expect(config.root).toBeUndefined()
     expect(config.build?.lib).toMatchObject({
-      entry: {
-        feature: path.join(root, 'src/feature.ts'),
-        index: path.join(root, 'src/index.ts'),
-      },
-      name: 'scopeExampleLibrary',
+      entry: {index: path.join(process.cwd(), 'src/index.ts')},
     })
+  })
+
+  it('should allow callers to override Vite root without changing entries or aliases', () => {
+    const root = '/workspace/library'
+    const config = mergeConfig(
+      createConfig({alias: {src: 'src'}, packageJson: {name: 'library'}, root})(configEnvironment),
+      {root: '/workspace/caller'},
+    )
+
+    expect(config.root).toBe('/workspace/caller')
+    expect(config.build?.lib).toMatchObject({entry: {index: path.join(root, 'src/index.ts')}})
     expect(config.resolve?.alias).toEqual({src: path.join(root, 'src')})
   })
 

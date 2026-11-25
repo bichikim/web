@@ -5,20 +5,36 @@ import type {HitRegion} from './types'
 interface UseNativeHitTestProps {
   readonly onError: (cause: unknown) => void
 }
+interface PublishRegion {
+  readonly kind: 'publish'
+  readonly region: HitRegion
+}
+interface ClearRegion {
+  readonly kind: 'clear'
+}
+type RegionUpdate = PublishRegion | ClearRegion
+const clear = (region?: HitRegion) =>
+  region === undefined
+    ? invoke('clear_widget_hit_region')
+    : invoke('clear_widget_hit_region', {passthrough: region.ready === false})
 /** Publishes the latest input region, coalescing pending frames and releasing it on disposal. */
 export const useNativeHitTest = (props: UseNativeHitTestProps) => {
   const native = isTauri()
   let disposed = false
   let signature: string | null = null
-  let pending: HitRegion | null = null
+  let pending: RegionUpdate | null = null
+  let latest: HitRegion | null = null
   let running = false
   let failed = false
   const disable = async (cause: unknown) => {
+    if (!native || disposed || failed) {
+      return
+    }
     failed = true
-    pending = null
-    signature = null
+    signature = latest === null ? null : String(latest.ready !== false)
+    pending = latest === null ? {kind: 'clear'} : {kind: 'publish', region: latest}
     props.onError(cause)
-    await invoke('clear_widget_hit_region').catch(props.onError)
+    await flush()
   }
   const flush = async (): Promise<void> => {
     if (pending === null || disposed || running) {
@@ -28,27 +44,38 @@ export const useNativeHitTest = (props: UseNativeHitTestProps) => {
     pending = null
     running = true
     try {
-      await invoke('set_widget_hit_region', {region: current})
+      if (current.kind === 'clear') {
+        await clear()
+      } else if (failed) {
+        await clear(current.region)
+      } else {
+        await invoke('set_widget_hit_region', {region: current.region})
+      }
     } catch (cause) {
-      await disable(cause)
+      if (failed) {
+        props.onError(cause)
+      } else {
+        await disable(cause)
+      }
     } finally {
       running = false
       if (disposed) {
-        await invoke('clear_widget_hit_region').catch(props.onError)
+        await clear().catch(props.onError)
       }
     }
-    if (!disposed && !failed) {
+    if (!disposed) {
       await flush()
     }
   }
   const publish = (region: HitRegion) => {
-    if (!native || disposed || failed) {
+    if (!native || disposed) {
       return
     }
-    const encoded = JSON.stringify(region)
+    const encoded = failed ? String(region.ready !== false) : JSON.stringify(region)
     if (encoded !== signature) {
       signature = encoded
-      pending = region
+      latest = region
+      pending = {kind: 'publish', region}
       flush()
     }
   }
@@ -56,7 +83,7 @@ export const useNativeHitTest = (props: UseNativeHitTestProps) => {
     disposed = true
     pending = null
     if (native && !running) {
-      invoke('clear_widget_hit_region').catch(props.onError)
+      clear().catch(props.onError)
     }
   })
   return {disable, publish}
