@@ -53,11 +53,11 @@ export default defineConfig(({command, mode}) => {
       lib: {
         entry:
           typeof entry === 'string'
-            ? new URL(entry, import.meta.url).pathname
+            ? fileURLToPath(new URL(entry, import.meta.url))
             : Object.fromEntries(
                 Object.entries(entry).map(([name, path]) => [
                   name,
-                  new URL(path, import.meta.url).pathname,
+                  fileURLToPath(new URL(path, import.meta.url)),
                 ]),
               ),
         fileName: (_, name) => `${typeof entry === 'string' ? mode : name}.js`,
