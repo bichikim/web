@@ -49,11 +49,13 @@ Cloudflare R2 `pomofi-audio` 버킷은 `storage.pomofi.io` 사용자 지정 도�
 3. 앱인토스 번들을 업로드하고 실제 토스 WebView에서 서버 연결을 확인한다.
 4. 문제가 발생하면 SSR 서버와 앱인토스 빌드를 호환되는 리비전으로 되돌린다.
 
-브라우저 SSR의 Vercel Git 자동 배포는 끈다. Pomo 또는 공유 패키지가 변경된 PR은
-`.github/workflows/pomo-audio-gateway-deploy.yml`에서 Preview Deployment를 하나만 생성한다. `dev`
-배포는 같은 워크플로를 `dev` 브랜치에서 수동으로 실행하며 별도 Gateway와 R2 버킷을
-사용한다. PR은 `pr-{번호}` Gateway 별칭과 `previews/pr-{번호}` R2 경로를 사용하고, 닫히면 해당
-R2 경로를 삭제한다.
+브라우저 SSR은 [Deploy Pomo](../../../../../.github/workflows/pomo-audio-gateway-deploy.yml)에서
+배포한다. Pomo 또는 공유 패키지가 변경된 PR은 Preview를 자동으로 하나씩 배포한다. PR은
+`pr-{번호}` Gateway 별칭과 `previews/pr-{번호}` R2 경로를 사용하고, 닫히면 해당 R2 경로를 삭제한다.
+
+수동 실행에서는 `environment`에서 환경을 고른다. Dev는 `dev` 브랜치에서 실행하고 별도 Gateway와
+R2 버킷을 사용한다. Staging은 `staging_branch`에 배포할 브랜치를 지정한다. 비워두면 `dev`를
+배포한다.
 
 Vercel–Neon 연동은 Preview Deployment마다 Neon 기본 브랜치에서 분기한 DB와 연결 문자열을
 제공한다. Preview 빌드는 해당 연결 문자열로 Drizzle migration을 먼저 적용하고, 성공한 경우에만
@@ -64,11 +66,10 @@ branch-specific Neon 환경을 선택한다. 각 Preview는 해당 리비전의 
 GitHub Actions에는 가능하면 프로젝트 범위로 제한한 `NEON_API_KEY` secret과
 `NEON_PROJECT_ID` repository variable을 설정한다.
 
-`main`의 운영 배포는 GitHub Actions에서 `.github/workflows/pomo-production-deploy.yml`을 수동으로
-실행한다. `main` push만으로는 배포하지 않는다. 먼저 운영 환경 설정으로 빌드한다. Vercel
-Production 환경의 Neon 직접 연결 URL인
-`DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고, 같은 빌드 산출물을 운영 후보로
-배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로
+운영 배포는 Deploy Pomo에서 워크플로 브랜치를 `main`으로 지정하고,
+`environment`의 `production`을 선택해 수동으로 실행한다. 운영 Gateway를 배포한 뒤 Vercel
+Production 환경의 Neon 직접 연결 URL인 `DATABASE_URL_UNPOOLED`로 Drizzle migration을 적용하고,
+새 웹 빌드를 운영 후보로 배포한다. 후보의 `/`와 DB를 읽는 RSS 경로가 스모크 테스트를 통과할 때만 운영 도메인으로
 승격한다. 빌드, migration 또는 스모크 테스트가 실패하면 운영 도메인을 변경하지 않는다. 중복
 배포를 막기 위해 모든 브랜치의 Vercel Git 자동 배포를 끄고 GitHub Actions만 배포한다. GitHub에는
 `VERCEL_TOKEN` secret을 설정한다. Gateway가 먼저 배포된 뒤 Pomo 배포가 실패하거나 취소되면

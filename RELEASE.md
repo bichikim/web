@@ -6,28 +6,29 @@
 - `main`은 Package, Pomo, Coong의 유일한 운영 릴리스 소스다.
 - `main` push는 아무것도 자동 배포하지 않는다.
 - Package, Pomo, Coong은 서로 독립적으로 수동 배포한다. 서로 다른 `main` commit을 배포해도 된다.
-- 각 Action은 실행할 때 선택한 `main`의 commit SHA를 고정하며, 실행 이름에 SHA를 기록한다.
+- 각 운영 배포는 실행할 때 선택한 `main`의 commit SHA를 고정한다.
 
 기능 변경은 먼저 `dev`에서 검증한 뒤 PR로 `main`에 반영한다. 운영 배포가 필요한 대상만 GitHub 저장소의 `Actions` 화면에서 실행한다.
 
 ```text
 Actions
-→ Release packages, Release Pomo 또는 Release Coong 선택
+→ Release packages, Deploy Pomo 또는 Release Coong 선택
 → Run workflow
 → Branch: main 선택
+→ Pomo는 environment에서 production 선택
 → Run workflow 실행
 ```
 
-다른 브랜치를 선택하면 source 검증 단계에서 오류가 발생하고 production 배포는 시작되지 않는다. 실패한 workflow를 재실행하면 처음 실행할 때 고정된 commit SHA를 다시 사용한다.
+운영 배포를 시작하려면 `main`을 선택해야 한다. 실패한 workflow를 재실행하면 처음 실행할 때 고정된 commit SHA를 다시 사용한다.
 
 ## Pomo 릴리스
 
-`Release Pomo` Action은 `.github/workflows/pomo-production-deploy.yml`을 실행한다.
+[Deploy Pomo](./.github/workflows/pomo-audio-gateway-deploy.yml)에서 운영 배포를 실행한다.
 
 1. `dev`에서 Pomo와 공유 패키지 변경을 검증한다.
 2. 검증된 변경을 `main`에 반영한다.
-3. GitHub `Actions`에서 `Release Pomo`를 선택한다.
-4. Branch를 `main`으로 선택하고 workflow를 실행한다.
+3. GitHub `Actions`에서 `Deploy Pomo`를 선택하고 `Run workflow`를 연다.
+4. Branch를 `main`으로 지정하고 `environment`에서 `production`을 선택한 뒤 실행한다.
 5. `Deploy audio gateway first`와 `Migrate and deploy`가 성공했는지 확인한다.
 
 Action은 같은 commit에서 다음 작업을 순서대로 수행한다.
