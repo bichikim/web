@@ -2,6 +2,8 @@ import {pathToFileURL} from 'node:url'
 
 import {AwsClient} from 'aws4fetch'
 
+import {createPreviewCleanupGuard} from '../../../../../scripts/ci/create-preview-cleanup-guard.mjs'
+
 import {escapeXmlValue} from '../../escape-xml-value.mjs'
 import {requireValue} from '../require-value.mjs'
 
@@ -47,7 +49,7 @@ const listPreviewKeys = async ({bucketUrl, fetchImplementation, prefix, signer})
   return readXmlValues(xml, 'Key').map((key) => decodeURIComponent(key))
 }
 
-const deletePreviewKeys = async ({bucketUrl, fetchImplementation, keys, signer}) => {
+const deletePreviewKeys = async ({bucketUrl, canDelete, fetchImplementation, keys, signer}) => {
   const body = `<Delete>${keys
     .map((key) => `<Object><Key>${escapeXmlValue(key)}</Key></Object>`)
     .join('')}<Quiet>true</Quiet></Delete>`
@@ -58,7 +60,13 @@ const deletePreviewKeys = async ({bucketUrl, fetchImplementation, keys, signer})
     headers: {'Content-Type': 'application/xml'},
     method: 'POST',
   })
-  const response = await requestR2(request, signer, fetchImplementation)
+  const signedRequest = await signer.sign(request)
+
+  if (canDelete && !(await canDelete())) {
+    return false
+  }
+
+  const response = await fetchImplementation(signedRequest)
 
   if (!response.ok) {
     throw new Error(`R2 Preview object deletion failed with status ${response.status}.`)
@@ -69,10 +77,13 @@ const deletePreviewKeys = async ({bucketUrl, fetchImplementation, keys, signer})
   if (responseBody.includes('<Error>')) {
     throw new Error('R2 Preview object deletion returned an object error.')
   }
+
+  return true
 }
 
 const deletePreviewBatches = async ({
   bucketUrl,
+  canDelete,
   deletedCount = 0,
   fetchImplementation,
   prefix,
@@ -86,9 +97,15 @@ const deletePreviewBatches = async ({
     return deletedCount
   }
 
-  await deletePreviewKeys({bucketUrl, fetchImplementation, keys, signer})
+  const deleted = await deletePreviewKeys({bucketUrl, canDelete, fetchImplementation, keys, signer})
+
+  if (!deleted) {
+    return deletedCount
+  }
+
   return deletePreviewBatches({
     bucketUrl,
+    canDelete,
     deletedCount: deletedCount + keys.length,
     fetchImplementation,
     prefix,
@@ -97,10 +114,21 @@ const deletePreviewBatches = async ({
   })
 }
 
-/** Deletes every object owned by one exact pull request Preview namespace. */
+/**
+ * Deletes objects owned by one exact pull request Preview namespace.
+ *
+ * @param {{accessKeyId: string, accountId: string, bucket: string, prefix: string, secretAccessKey: string}} input
+ * @param {object} [dependencies] Optional request, signing, and reporting dependencies.
+ * @param {() => boolean | Promise<boolean>} [dependencies.canDelete]
+ *   Called after listing each batch and before deleting it. When omitted, the caller
+ *   is responsible for checking whether deletion is allowed.
+ * @param {typeof fetch} [dependencies.fetchImplementation] Defaults to global fetch.
+ * @param {typeof createSigner} [dependencies.signerFactory] Defaults to the R2 request signer.
+ * @param {(message: string) => void} [dependencies.write] Defaults to console.log.
+ */
 export const deletePreviewAudio = async (
   {accessKeyId, accountId, bucket, prefix, secretAccessKey},
-  {fetchImplementation = fetch, signerFactory = createSigner, write = console.log} = {},
+  {canDelete, fetchImplementation = fetch, signerFactory = createSigner, write = console.log} = {},
 ) => {
   const normalizedAccountId = requireValue(accountId, 'CLOUDFLARE_R2_ACCOUNT_ID')
   const normalizedBucket = requireValue(bucket, 'POMO_PAID_AUDIO_R2_BUCKET')
@@ -120,6 +148,7 @@ export const deletePreviewAudio = async (
   )
   return deletePreviewBatches({
     bucketUrl,
+    canDelete,
     fetchImplementation,
     prefix: normalizedPrefix,
     signer,
@@ -128,13 +157,16 @@ export const deletePreviewAudio = async (
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  deletePreviewAudio({
-    accessKeyId: process.env.POMO_PAID_AUDIO_R2_ACCESS_KEY_ID,
-    accountId: process.env.CLOUDFLARE_R2_ACCOUNT_ID,
-    bucket: process.env.POMO_PAID_AUDIO_R2_BUCKET,
-    prefix: process.env.POMO_PAID_AUDIO_R2_PREFIX,
-    secretAccessKey: process.env.POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY,
-  }).catch((error) => {
+  deletePreviewAudio(
+    {
+      accessKeyId: process.env.POMO_PAID_AUDIO_R2_ACCESS_KEY_ID ?? '',
+      accountId: process.env.CLOUDFLARE_R2_ACCOUNT_ID ?? '',
+      bucket: process.env.POMO_PAID_AUDIO_R2_BUCKET ?? '',
+      prefix: process.env.POMO_PAID_AUDIO_R2_PREFIX ?? '',
+      secretAccessKey: process.env.POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY ?? '',
+    },
+    {canDelete: createPreviewCleanupGuard()},
+  ).catch((error) => {
     console.error(error instanceof Error ? error.message : 'Unknown R2 Preview cleanup failure.')
     process.exitCode = 1
   })

@@ -45,6 +45,22 @@ describe('deletePreviewBranch', () => {
     expect(write).toHaveBeenCalledWith(`Deleted Neon Preview branch ${input.branchName}.`)
   })
 
+  it('should skip deletion when cleanup is no longer allowed after finding the branch', async () => {
+    const fetchImplementation = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({branches: [{id: 'br-preview', name: input.branchName}]}),
+      )
+
+    const result = await deletePreviewBranch(input, {
+      canDelete: async () => false,
+      fetchImplementation,
+    })
+
+    expect(result).toBe('skipped')
+    expect(fetchImplementation).toHaveBeenCalledOnce()
+  })
+
   it('should succeed when the Preview branch is already absent', async () => {
     const fetchImplementation = vi.fn().mockResolvedValue(Response.json({branches: []}))
     const write = vi.fn()
