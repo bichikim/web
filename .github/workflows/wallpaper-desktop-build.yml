@@ -74,6 +74,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build Puppet distribution
+        run: pnpm --filter @winter-love/puppet build
+
       - name: Build desktop installer
         env:
           BUILD_TARGET: ${{ matrix.target }}
