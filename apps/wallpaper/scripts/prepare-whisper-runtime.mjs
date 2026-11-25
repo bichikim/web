@@ -91,7 +91,12 @@ export const prepareWhisperRuntime = async () => {
   if (platform.archive.endsWith('.zip') && process.platform !== 'win32') {
     await execute('unzip', ['-q', '-o', archive, '-d', unpacked])
   } else {
-    await execute('tar', ['-xf', archive, '-C', unpacked])
+    // Windows includes a ZIP-capable tar. Git Bash may put GNU tar first on PATH.
+    const tar =
+      process.platform === 'win32'
+        ? join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'tar.exe')
+        : 'tar'
+    await execute(tar, ['-xf', archive, '-C', unpacked])
   }
   const entries = await readdir(unpacked, {recursive: true})
   const binary = entries.find((entry) => basename(entry) === `crispasr${extension}`)
