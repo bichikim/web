@@ -12,10 +12,10 @@
 
 ```text
 Actions
-→ Release packages, Deploy Pomo 또는 Release Coong 선택
+→ Release packages, Deploy Pomo 또는 Deploy Coong 선택
 → Run workflow
 → Branch: main 선택
-→ Pomo는 environment에서 production 선택
+→ Pomo와 Coong은 environment에서 production 선택
 → Run workflow 실행
 ```
 
@@ -47,12 +47,12 @@ Pomo 배포가 실패하면 운영 도메인을 이전 Vercel deployment로 유�
 
 ## Coong 릴리스
 
-`Release Coong` Action은 `.github/workflows/coong-vercel-deploy.yml`을 실행한다.
+[Deploy Coong](./.github/workflows/coong-vercel-deploy.yml)에서 운영 배포를 실행한다.
 
 1. `dev`에서 Coong과 공유 패키지 변경을 검증한다.
 2. 검증된 변경을 `main`에 반영한다.
-3. GitHub `Actions`에서 `Release Coong`을 선택한다.
-4. Branch를 `main`으로 선택하고 workflow를 실행한다.
+3. GitHub `Actions`에서 `Deploy Coong`을 선택하고 `Run workflow`를 연다.
+4. Branch를 `main`으로 지정하고 `environment`에서 `production`을 선택한 뒤 실행한다.
 5. `Build Client`와 `Deploy Client`가 성공했는지 확인한다.
 
 Action은 unit test와 Coong production build를 통과한 같은 commit을 Vercel production으로 배포한다. GitHub 저장소에 `VERCEL_TOKEN` secret이 필요하다.

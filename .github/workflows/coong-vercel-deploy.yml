@@ -1,12 +1,21 @@
-name: Release Coong Production
+name: Deploy Coong
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment environment
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - production
 
-run-name: Release Coong from ${{ github.ref_name }} at ${{ github.sha }}
+run-name: Deploy Coong (${{ inputs.environment }}) from ${{ github.ref_name }} at ${{ github.sha }}
 
 concurrency:
-  group: coong-production
+  group: coong-${{ inputs.environment }}
   cancel-in-progress: false
 
 permissions:
@@ -15,17 +24,22 @@ permissions:
 env:
   NODE_VERSION: '24.x'
   VERCEL_CLI_VERSION: 59.5.0
+  VERCEL_DEPLOY_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'preview' || 'production' }}
+  VERCEL_DEPLOY_TARGET_ARG: ${{ inputs.environment == 'dev' && '--target=preview' || '--prod' }}
   VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV
   VERCEL_PROJECT_ID: prj_WM157z2KV8cYjK0Tt2nYCqZzIFzQ
 jobs:
   build-client:
+    if: (inputs.environment == 'dev' && github.ref == 'refs/heads/dev') || (inputs.environment == 'production' && github.ref == 'refs/heads/main')
     name: Build Client
     runs-on: ubuntu-latest
     steps:
-      - name: Validate release source
+      - name: Validate deployment source
+        env:
+          DEPLOYMENT_BRANCH: ${{ inputs.environment == 'dev' && 'dev' || 'main' }}
         run: |
-          test "${GITHUB_REF}" = "refs/heads/main" || {
-            echo "::error::Select the main branch when running this workflow."
+          test "${GITHUB_REF}" = "refs/heads/${DEPLOYMENT_BRANCH}" || {
+            echo "::error::Select the ${DEPLOYMENT_BRANCH} branch for this deployment."
             exit 1
           }
 
@@ -81,7 +95,6 @@ jobs:
     name: Deploy Client
     runs-on: ubuntu-latest
     needs: build-client
-    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -102,14 +115,19 @@ jobs:
       - name: Pull Vercel project settings
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: pnpm dlx vercel@${{ env.VERCEL_CLI_VERSION }} pull --yes --environment=production --token="$VERCEL_TOKEN"
+        run: |
+          pull_args=("--environment=${VERCEL_DEPLOY_ENVIRONMENT}")
+          if [[ "$VERCEL_DEPLOY_ENVIRONMENT" == preview ]]; then
+            pull_args+=("--git-branch=${GITHUB_REF_NAME}")
+          fi
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} pull --yes "${pull_args[@]}" --token="$VERCEL_TOKEN"
 
       - name: Build Vercel output
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: pnpm dlx vercel@${{ env.VERCEL_CLI_VERSION }} build --prod --token="$VERCEL_TOKEN"
+        run: pnpm dlx vercel@${{ env.VERCEL_CLI_VERSION }} build "$VERCEL_DEPLOY_TARGET_ARG" --token="$VERCEL_TOKEN"
 
       - name: Deploy Vercel output
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: pnpm dlx vercel@${{ env.VERCEL_CLI_VERSION }} deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        run: pnpm dlx vercel@${{ env.VERCEL_CLI_VERSION }} deploy --prebuilt "$VERCEL_DEPLOY_TARGET_ARG" --token="$VERCEL_TOKEN"
