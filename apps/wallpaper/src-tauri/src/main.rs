@@ -22,6 +22,7 @@ mod themes;
 mod tracking;
 mod transcription;
 mod tray;
+mod voice_model;
 mod website;
 
 fn main() {
@@ -61,6 +62,7 @@ fn main() {
             locale::set_interface_language,
             conversation_model::prepare_conversation_model,
             semantic_model::prepare_semantic_model,
+            voice_model::prepare_voice_model,
             transcription::transcribe_local_audio,
             transcription::cancel_local_transcription,
             background::list_wallpaper_monitors,

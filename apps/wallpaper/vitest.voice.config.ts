@@ -2,7 +2,12 @@ import {defineConfig} from 'vitest/config'
 import browser from './vitest.browser.config'
 import {normalizePath} from 'vite'
 import {viteStaticCopy} from 'vite-plugin-static-copy'
-import {prepareVoiceAssets, voiceAssets, voiceRuntime} from './scripts/prepare-voice-assets.mjs'
+import {
+  prepareVoiceAssets,
+  voiceAssets,
+  voiceModelAssets,
+  voiceRuntime,
+} from './scripts/prepare-voice-assets.mjs'
 import {playwright} from '@vitest/browser-playwright'
 
 export default defineConfig(async () => {
@@ -21,6 +26,7 @@ export default defineConfig(async () => {
     },
     plugins: [
       ...browser.plugins,
+      voiceModelAssets(),
       viteStaticCopy({
         targets: [
           ...voiceAssets.map((asset) => ({...asset, src: normalizePath(asset.src)})),

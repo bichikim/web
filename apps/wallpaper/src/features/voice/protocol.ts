@@ -5,6 +5,7 @@ export interface SynthesisRequest {
   readonly id: number
   readonly text: string
   readonly voice: PoffoVoice
+  readonly modelPath?: string
 }
 export type SynthesisReply =
   | {readonly id: number; readonly type: 'status'; readonly status: 'download' | 'generating'}

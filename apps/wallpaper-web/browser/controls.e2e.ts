@@ -71,3 +71,46 @@ test('supports keyboard menu selection, Escape and restored trigger focus', asyn
   await expect(page.locator(':popover-open')).toHaveCount(0)
   await expect(trigger).toBeFocused()
 })
+
+test('downloads the chosen desktop installer from the latest release', async ({page}) => {
+  const origin = 'https://wallpaper-files.pomofi.io'
+  const base = `${origin}/releases/0.1.0/100-1`
+  await page.route(`${origin}/releases/latest.json`, (route) =>
+    route.fulfill({
+      headers: {'access-control-allow-origin': '*'},
+      json: {
+        build: '100-1',
+        sizes: {
+          'macos-arm64': 95_000_000,
+          'macos-x64': 96_000_000,
+          'windows-x64': 97_000_000,
+        },
+        version: '0.1.0',
+      },
+    }),
+  )
+  await page.route(`${base}/*`, (route) => {
+    const name = new URL(route.request().url()).pathname.split('/').at(-1)
+    return route.fulfill({
+      body: 'installer fixture',
+      contentType: 'application/octet-stream',
+      headers: {'content-disposition': `attachment; filename="${name}"`},
+    })
+  })
+
+  await page.goto('/')
+  await page.getByRole('button', {exact: true, name: '다운로드'}).click()
+  const dialog = page.getByRole('dialog', {name: 'Poffo Wallpaper 다운로드'})
+  await expect(dialog.getByText('버전 0.1.0')).toBeVisible()
+  const arm = dialog.getByRole('link', {name: /Apple Silicon/u})
+  const intel = dialog.getByRole('link', {name: /Intel/u})
+  const windows = dialog.getByRole('link', {name: /Windows/u})
+  await Promise.all([
+    expect(arm).toHaveAttribute('href', `${base}/macos-arm64.dmg`),
+    expect(intel).toHaveAttribute('href', `${base}/macos-x64.dmg`),
+    expect(windows).toHaveAttribute('href', `${base}/windows-x64.exe`),
+  ])
+  const downloading = page.waitForEvent('download')
+  await arm.click()
+  expect((await downloading).suggestedFilename()).toBe('macos-arm64.dmg')
+})

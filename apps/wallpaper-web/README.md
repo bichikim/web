@@ -59,3 +59,14 @@ pnpm exec playwright test --config apps/wallpaper-web/playwright.config.ts
 기본 출력은 저장소 루트의 `.vercel/output`이다. 기존 배포 결과를 섞지 않도록 출력 경로가
 이미 있으면 실패한다. 별도 경로에서 검사하려면 소스와 출력 디렉터리를 순서대로 전달한다.
 캐릭터 모델이나 필수 에셋이 빠진 경우에도 배포 포장 전에 실패한다.
+
+## 데스크톱 설치 파일 공개
+
+[Build Poffo Wallpaper Desktop](../../.github/workflows/wallpaper-desktop-build.yml)은 Apple Silicon, Intel Mac, Windows x64 설치 파일을 빌드한다.
+정식 공개 시 `main`에서 `publish`를 켠다. 세 파일의 서명 검증과 R2 다운로드 검증을 모두 통과하면
+`releases/latest.json`이 갱신되어 사이트를 다시 배포하지 않아도 새 설치 파일이 표시된다.
+
+GitHub의 `Production – wallpaper` 환경에 [Apple Developer ID와 공증](https://v2.tauri.app/distribute/sign/macos/),
+[Windows Azure Artifact Signing](https://v2.tauri.app/distribute/sign/windows/#azure-artifact-signing),
+[전용 버킷에 권한을 제한한 R2 S3 키](https://developers.cloudflare.com/r2/api/tokens/)를 설정한다.
+필요한 변수와 시크릿 이름은 워크플로에 있다.

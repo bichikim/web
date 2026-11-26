@@ -1,4 +1,6 @@
 {
+  "revision": "17757757a921179c",
+  "downloadOrigin": "https://wallpaper-files.pomofi.io",
   "files": [
     {
       "path": "shared/duration_predictor.onnx",
