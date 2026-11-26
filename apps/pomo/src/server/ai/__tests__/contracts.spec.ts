@@ -40,6 +40,99 @@ describe('textJobInputSchema message roles', () => {
   )
 })
 
+describe('textJobInputSchema input rules', () => {
+  const messages = [{content: '  질문  ', role: 'user'}]
+  const parsedMessages = [{content: '질문', role: 'user'}]
+
+  it.each([undefined, {}, {maximumTokens: undefined}, {temperature: 1}])(
+    'should apply the server token default with parameters %j',
+    (parameters) => {
+      expect(textJobInputSchema.parse({messages, parameters})).toStrictEqual({
+        messages: parsedMessages,
+        parameters: {...parameters, maximumTokens: 4096},
+      })
+    },
+  )
+
+  it.each([
+    {maximumTokens: 1, temperature: 0, topP: 0},
+    {maximumTokens: 4096, temperature: 2, topP: 1},
+  ])('should accept inclusive numeric limits: %j', (parameters) => {
+    expect(parseAiJobInput('text', {messages, parameters})).toStrictEqual({
+      messages: parsedMessages,
+      parameters,
+    })
+  })
+
+  it.each([
+    ['maximumTokens', 0],
+    ['maximumTokens', 4097],
+    ['maximumTokens', 1.5],
+    ['temperature', -0.1],
+    ['temperature', 2.1],
+    ['topP', -0.1],
+    ['topP', 1.1],
+    ['maximumTokens', null],
+    ['maximumTokens', '1'],
+    ['maximumTokens', Number.NaN],
+    ['temperature', Number.POSITIVE_INFINITY],
+    ['topP', Number.NEGATIVE_INFINITY],
+  ])('should reject invalid %s value %s without replacing it with a default', (field, value) => {
+    const result = textJobInputSchema.safeParse({messages, parameters: {[field]: value}})
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.path).toEqual(['parameters', field])
+    }
+  })
+
+  it.each([1, 64])('should accept %s trimmed messages at the content limit', (count) => {
+    const content = 'x'.repeat(12_000)
+    const input = {
+      messages: Array.from({length: count}, () => ({content: ` ${content} `, role: 'user'})),
+    }
+    const result = textJobInputSchema.parse(input)
+    expect(result.messages).toHaveLength(count)
+    expect(result.messages.every((message) => message.content === content)).toBe(true)
+    expect(input.messages[0]?.content).toBe(` ${content} `)
+  })
+
+  it.each([
+    [],
+    Array.from({length: 65}, () => messages[0]),
+    [{content: ' \n\t ', role: 'user'}],
+    [{content: 'x'.repeat(12_001), role: 'user'}],
+  ])('should reject messages outside the count or trimmed content limits', (invalidMessages) => {
+    expect(textJobInputSchema.safeParse({messages: invalidMessages}).success).toBe(false)
+  })
+
+  it('should strip unknown fields at each input level while applying the server default', () => {
+    expect(
+      textJobInputSchema.parse({
+        extra: true,
+        messages: [{...messages[0], extra: true}],
+        parameters: {extra: true},
+      }),
+    ).toStrictEqual({messages: parsedMessages, parameters: {maximumTokens: 4096}})
+  })
+
+  it('should report message issues before ordered parameter issues', () => {
+    const result = textJobInputSchema.safeParse({
+      messages: [{content: '', role: 'tool'}],
+      parameters: {maximumTokens: 0, temperature: 3, topP: -1},
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.map(({code, path}) => ({code, path}))).toEqual([
+        {code: 'too_small', path: ['messages', 0, 'content']},
+        {code: 'invalid_value', path: ['messages', 0, 'role']},
+        {code: 'too_small', path: ['parameters', 'maximumTokens']},
+        {code: 'too_big', path: ['parameters', 'temperature']},
+        {code: 'too_small', path: ['parameters', 'topP']},
+      ])
+    }
+  })
+})
+
 describe('AI job contracts', () => {
   it('validates text input and maps capability names for the runner', () => {
     const input = parseAiJobInput('text', {
