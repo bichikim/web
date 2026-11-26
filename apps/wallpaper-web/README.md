@@ -63,7 +63,7 @@ pnpm exec playwright test --config apps/wallpaper-web/playwright.config.ts
 ## 데스크톱 설치 파일 공개
 
 [Build Poffo Wallpaper Desktop](../../.github/workflows/wallpaper-desktop-build.yml)은 Apple Silicon, Intel Mac, Windows x64 설치 파일을 빌드한다.
-정식 공개 시 `main`에서 `publish`를 켠다. 세 파일의 서명 검증과 R2 다운로드 검증을 모두 통과하면
+정식 공개 시 `main`에서 `publish`를 켠다. Mac 디스크 이미지에 공증 티켓을 붙이고, 세 파일의 서명과 R2 다운로드를 모두 검증하면
 `releases/latest.json`이 갱신되어 사이트를 다시 배포하지 않아도 새 설치 파일이 표시된다.
 
 GitHub의 `Production – wallpaper` 환경에 [Apple Developer ID와 공증](https://v2.tauri.app/distribute/sign/macos/),

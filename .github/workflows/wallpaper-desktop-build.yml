@@ -98,9 +98,6 @@ jobs:
           APPLE_CERTIFICATE: ${{ inputs.publish && runner.os == 'macOS' && secrets.WALLPAPER_APPLE_CERTIFICATE || '' }}
           APPLE_CERTIFICATE_PASSWORD: ${{ inputs.publish && runner.os == 'macOS' && secrets.WALLPAPER_APPLE_CERTIFICATE_PASSWORD || '' }}
           APPLE_SIGNING_IDENTITY: ${{ inputs.publish && runner.os == 'macOS' && vars.WALLPAPER_APPLE_SIGNING_IDENTITY || '' }}
-          APPLE_ID: ${{ inputs.publish && runner.os == 'macOS' && secrets.WALLPAPER_APPLE_ID || '' }}
-          APPLE_PASSWORD: ${{ inputs.publish && runner.os == 'macOS' && secrets.WALLPAPER_APPLE_PASSWORD || '' }}
-          APPLE_TEAM_ID: ${{ inputs.publish && runner.os == 'macOS' && vars.WALLPAPER_APPLE_TEAM_ID || '' }}
           AZURE_CLIENT_ID: ${{ inputs.publish && runner.os == 'Windows' && secrets.WALLPAPER_WINDOWS_AZURE_CLIENT_ID || '' }}
           AZURE_CLIENT_SECRET: ${{ inputs.publish && runner.os == 'Windows' && secrets.WALLPAPER_WINDOWS_AZURE_CLIENT_SECRET || '' }}
           AZURE_TENANT_ID: ${{ inputs.publish && runner.os == 'Windows' && secrets.WALLPAPER_WINDOWS_AZURE_TENANT_ID || '' }}
@@ -129,15 +126,13 @@ jobs:
               bundle_config='{"bundle":{"active":true,"windows":{"signCommand":"artifact-signing-cli %1"}}}'
             fi
           elif [[ "$PUBLISH" == true ]]; then
-            require_settings APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY \
-              APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID
+            require_settings APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY
             if [[ "$APPLE_SIGNING_IDENTITY" != "Developer ID Application:"* ]]; then
               echo "::error::Wallpaper distribution requires a Developer ID Application identity."
               exit 1
             fi
           else
-            unset APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY \
-              APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID
+            unset APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY
             bundle_config='{"bundle":{"active":true,"macOS":{"signingIdentity":"-"}}}'
           fi
 
@@ -145,23 +140,37 @@ jobs:
             --target "$BUILD_TARGET" --bundles "$BUILD_BUNDLES" \
             --config "$bundle_config" -- --locked
 
-      - name: Verify macOS notarization
+      - name: Notarize the macOS disk image
         if: inputs.publish && runner.os == 'macOS'
         env:
           BUILD_TARGET: ${{ matrix.target }}
+          APPLE_ID: ${{ secrets.WALLPAPER_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.WALLPAPER_APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ vars.WALLPAPER_APPLE_TEAM_ID }}
         run: |
           installers=(apps/wallpaper/src-tauri/target/"$BUILD_TARGET"/release/bundle/dmg/*.dmg)
           if [[ "${#installers[@]}" != 1 || ! -s "${installers[0]}" ]]; then
             echo "::error::Expected one Wallpaper disk image."
             exit 1
           fi
+          : "${APPLE_ID:?Set WALLPAPER_APPLE_ID}"
+          : "${APPLE_PASSWORD:?Set WALLPAPER_APPLE_PASSWORD}"
+          : "${APPLE_TEAM_ID:?Set WALLPAPER_APPLE_TEAM_ID}"
+          dmg="${installers[0]}"
+          codesign --verify --strict "$dmg"
+          report="$(xcrun notarytool submit "$dmg" --wait --timeout 20m --output-format json \
+            --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID")"
+          jq -er '"Notarization \(.id): \(.status)"' <<< "$report"
+          jq -e '.status == "Accepted"' <<< "$report" > /dev/null
+          xcrun stapler staple "$dmg"
+          xcrun stapler validate "$dmg"
+          spctl --assess --type open --context context:primary-signature "$dmg"
+
           mount_path="$(mktemp -d)"
-          hdiutil attach "${installers[0]}" -readonly -nobrowse -mountpoint "$mount_path"
+          hdiutil attach "$dmg" -readonly -nobrowse -mountpoint "$mount_path"
           trap 'hdiutil detach "$mount_path"; rmdir "$mount_path"' EXIT
           app="$mount_path/Wallpaper.app"
           codesign --verify --deep --strict "$app"
-          xcrun stapler validate "$app"
-          spctl --assess --type execute "$app"
 
       - name: Verify Windows installer signature
         if: inputs.publish && runner.os == 'Windows'
