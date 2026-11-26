@@ -1,6 +1,6 @@
 import {expect, test} from 'vitest'
 import {getCharacterLook} from '../get-character-look'
-import geometry from '../../../data/character-look.json'
+import geometry from '../../../data/character-geometry.json'
 
 const bounds = {height: 600, width: 480, x: 100, y: 50}
 const face = {x: bounds.x + geometry.face.x / 10, y: bounds.y + geometry.face.y / 10}

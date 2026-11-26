@@ -5,7 +5,7 @@ import {connectCharacterBlink} from './blink'
 import {getCharacterLook} from './get-character-look'
 import {connectCharacterLook} from './look'
 import {createPartHitTest} from './create-part-hit-test'
-import geometry from '../../data/character-look.json'
+import geometry from '../../data/character-geometry.json'
 import type {CharacterHitTest, CharacterPoint} from './types'
 
 export * from './blink'

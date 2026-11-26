@@ -1,5 +1,5 @@
 import {cursorResponse} from '@winter-love/wallpaper/tracking/cursor-response'
-import geometry from '../../data/character-look.json'
+import geometry from '../../data/character-geometry.json'
 
 interface LookPoint {
   readonly x: number

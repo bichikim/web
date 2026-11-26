@@ -7,7 +7,7 @@ import {cursorResponse} from '@winter-love/wallpaper/tracking/cursor-response'
 import SPuppetCharacter from '../../../components/SPuppetCharacter'
 import {createMouthTrack, sampleMouthTrack} from '../../character-speech/mouth-track'
 import type {MouthPose} from '../../character-speech/types'
-import geometry from '../../../data/character-look.json'
+import geometry from '../../../data/character-geometry.json'
 import {frames} from './fixtures/frames'
 import 'virtual:uno.css'
 

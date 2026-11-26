@@ -1,4 +1,5 @@
 import {expect, test} from 'vitest'
+import {silhouette} from '../../../data/character-geometry.json'
 import {resolveStoryFrame, STORY_LENGTH} from '../frame'
 
 const frame = (distance: number) => resolveStoryFrame({distance, height: 900, width: 1440})
@@ -62,7 +63,10 @@ test('should enlarge the character in a nearly square desktop window and allow a
   const {fit, y} = resolveStoryFrame({distance: 0.3, height, width: 930}).character
   expect(fit?.weight).toBe(1)
   expect(fit?.width).toBeGreaterThan(650)
-  const feet = height / 2 + y + 0.6 * fit!.width
+  const center = height / 2 + y
+  const top = center - silhouette.topToCenter * fit!.width
+  const feet = top + silhouette.height * fit!.width
+  expect(top).toBeCloseTo(94)
   expect(feet).toBeGreaterThan(height)
   expect(feet).toBeLessThanOrEqual(height + 50)
 })

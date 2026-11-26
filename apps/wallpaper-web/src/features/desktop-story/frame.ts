@@ -1,3 +1,4 @@
+import {silhouette} from '../../data/character-geometry.json'
 import type {WidgetBackground} from '../widget-preview/backgrounds'
 
 const TIMING = {
@@ -22,12 +23,6 @@ const CHARACTER_FIT = {
   topInset: 94,
   viewportHeightRange: 144,
   viewportWidthRange: 144,
-}
-// Visible silhouette relative to the width of the character canvas.
-const CHARACTER_SILHOUETTE = {
-  centerToRight: 0.28,
-  height: 1.18,
-  topToCenter: 0.58,
 }
 const KINDS = ['overview', 'wallpaper', 'widgets', 'details', 'codex', 'download'] as const
 export const STORY_CUTS = [
@@ -91,8 +86,8 @@ const fitWideCharacter = ({height, width}: StoryViewport, anchorX: number) => {
   return {
     weight,
     width: Math.min(
-      (height + CHARACTER_FIT.footCrop - CHARACTER_FIT.topInset) / CHARACTER_SILHOUETTE.height,
-      (width * (1 - anchorX) - CHARACTER_FIT.rightInset) / CHARACTER_SILHOUETTE.centerToRight,
+      (height + CHARACTER_FIT.footCrop - CHARACTER_FIT.topInset) / silhouette.height,
+      (width * (1 - anchorX) - CHARACTER_FIT.rightInset) / silhouette.centerToRight,
     ),
   }
 }
@@ -130,7 +125,7 @@ export const resolveStoryFrame = (viewport: StoryViewport) => {
     fit === undefined
       ? defaultY
       : CHARACTER_FIT.topInset +
-        fit.width * CHARACTER_SILHOUETTE.topToCenter -
+        fit.width * silhouette.topToCenter -
         viewport.height * GEOMETRY.center
   const character: StoryCharacter = {
     expressionId: kind === 'widgets' ? '커피 들기' : kind === 'details' ? '작아지기' : null,
