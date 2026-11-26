@@ -3,6 +3,6 @@
   "semi": false,
   "singleQuote": true,
   "bracketSpacing": false,
-  "ignorePatterns": ["packages/bonsai/runtime.mjs"],
+  "ignorePatterns": ["apps/wallpaper-web/dist/**", "packages/bonsai/runtime.mjs"],
   "sortPackageJson": true
 }

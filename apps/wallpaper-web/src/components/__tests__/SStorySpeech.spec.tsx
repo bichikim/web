@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, renderHook, screen} from '@solidjs/testing-library'
+import {flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {SStorySpeech} from '../SStorySpeech'
 import {useCharacterSpeech} from '../../features/character-speech'
@@ -23,9 +24,12 @@ test('should let the user stop automatic narration and replay the displayed over
   const hook = renderHook(useCharacterSpeech)
   render(() => <SStorySpeech speech={hook.result} text={overview.description} />)
   hook.result.speak(overview.description)
+  flush()
   const signal = speak.mock.calls[0]![1] as AbortSignal
   fireEvent.click(screen.getByRole('button', {name: '소개 음성 멈추기'}))
+  flush()
   expect(signal.aborted).toBe(true)
   fireEvent.click(screen.getByRole('button', {name: '소개 음성 듣기'}))
+  flush()
   expect(speak.mock.calls[1]![0]).toBe(overview.description)
 })

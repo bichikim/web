@@ -2,7 +2,8 @@ import {defineConfig} from 'vite'
 import {crossOriginIsolation} from './cross-origin-isolation'
 
 export default defineConfig({
-  build: {outDir: '.output/public'},
+  appType: 'mpa',
+  build: {outDir: 'dist/client'},
   plugins: [crossOriginIsolation()],
   preview: {host: '127.0.0.1', port: 3410, strictPort: true},
 })

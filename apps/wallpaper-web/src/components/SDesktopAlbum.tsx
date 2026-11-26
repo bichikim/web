@@ -30,8 +30,7 @@ export default function SDesktopAlbum(props: SDesktopAlbumProps) {
     <canvas
       ref={setCanvas}
       aria-label="실제 Wallpaper 앱 배경 전환"
-      class="absolute inset-0 h-full w-full opacity-0"
-      classList={{'opacity-100': album.ready()}}
+      class={['absolute inset-0 h-full w-full opacity-0', {'opacity-100': album.ready()}]}
     />
   )
 }

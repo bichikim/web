@@ -24,9 +24,8 @@ export const SStoryDesktop = (props: SStoryDesktopProps) => {
   )
   const visible = createMemo(() => incoming() || outgoing())
   const frame = createMemo(() => (outgoing() ? props.previousFrame! : props.frame))
-  const retained = createMemo<StoryFrame | null>(
-    (previous) => (visible() ? frame() : (previous ?? null)),
-    null,
+  const retained = createMemo<StoryFrame | null>((previous) =>
+    visible() ? frame() : (previous ?? null),
   )
   return (
     <SStoryMask

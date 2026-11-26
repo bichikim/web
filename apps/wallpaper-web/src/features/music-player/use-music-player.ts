@@ -1,4 +1,4 @@
-import {type Accessor, batch, createEffect, createMemo, createSignal, on} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal} from 'solid-js'
 import {shuffleTrackOrder} from './playback-order'
 import {useAudioPlayback} from './use-audio-playback'
 import {useMusicLibrary} from './use-music-library'
@@ -22,17 +22,16 @@ export const useMusicPlayer = (props: UseMusicPlayerProps) => {
   const current = createMemo(
     () => entries().find((entry) => entry.id === order()[position()]) ?? null,
   )
+  const trackIds = createMemo(() => entries().map((entry) => entry.id))
   const album = () => current()?.album ?? library.library()?.albums[0] ?? null
   const track = () => current()?.track ?? null
   const playback = useAudioPlayback({element: props.element, source: () => track()?.src ?? null})
-  const resetOrder = (previous?: string) => {
-    const next = shuffleTrackOrder({ids: entries().map((entry) => entry.id), previous})
-    batch(() => {
-      setOrder(next)
-      setPosition(0)
-    })
+  const resetOrder = (ids: readonly string[], previous?: string) => {
+    const next = shuffleTrackOrder({ids, previous})
+    setOrder(next)
+    setPosition(0)
   }
-  createEffect(on(entries, () => resetOrder()))
+  createEffect(trackIds, (ids) => resetOrder(ids))
   const advance = (options: {readonly resume: boolean}) => {
     const queue = order()
     if (queue.length === 0) {
@@ -42,7 +41,7 @@ export const useMusicPlayer = (props: UseMusicPlayerProps) => {
     if (index + 1 < queue.length) {
       setPosition(index + 1)
     } else {
-      resetOrder(queue[index])
+      resetOrder(trackIds(), queue[index])
     }
     playback.seek(0)
     if (options.resume) {

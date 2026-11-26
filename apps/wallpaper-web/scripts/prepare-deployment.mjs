@@ -2,7 +2,7 @@ import {cp, mkdir, open, stat, writeFile} from 'node:fs/promises'
 import path from 'node:path'
 import isolationHeaders from '../isolation-headers.json' with {type: 'json'}
 
-const [, , source = 'apps/wallpaper-web/.output/public', target = '.vercel/output'] = process.argv
+const [, , source = 'apps/wallpaper-web/dist/client', target = '.vercel/output'] = process.argv
 const required = [
   'index.html',
   'favicon.png',

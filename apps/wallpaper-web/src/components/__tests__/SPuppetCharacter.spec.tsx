@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {useCharacterPreview} from '../../features/character-preview'
 import SPuppetCharacter from '../SPuppetCharacter'
@@ -54,11 +54,13 @@ test('should center and ignore movement while tracking is disabled, then follow 
   render(() => <SPuppetCharacter tracking={tracking()} />)
   move(0, 0)
   setTracking(false)
+  flush()
   expect(lookAt).toHaveBeenLastCalledWith()
   lookAt.mockClear()
   move(window.innerWidth, window.innerHeight)
   expect(lookAt).not.toHaveBeenCalled()
   setTracking(true)
+  flush()
   move(window.innerWidth, window.innerHeight)
   expect(lookAt).toHaveBeenLastCalledWith({x: window.innerWidth, y: window.innerHeight})
 })
@@ -99,8 +101,10 @@ test('should forward a reactive preset selection including none', () => {
   const options = vi.mocked(useCharacterPreview).mock.calls[0]![0]
   expect(options.expressionId?.()).toBeNull()
   setExpression('손하트')
+  flush()
   expect(options.expressionId?.()).toBe('손하트')
   setExpression(null)
+  flush()
   expect(options.expressionId?.()).toBeNull()
 })
 
@@ -109,7 +113,9 @@ test('should forward speech mouth poses and release them when playback stops', (
   render(() => <SPuppetCharacter mouth={mouth()} />)
   const options = vi.mocked(useCharacterPreview).mock.calls[0]![0]
   setMouth({form: -1, open: 0.7})
+  flush()
   expect(options.mouth?.()).toEqual({form: -1, open: 0.7})
   setMouth(null)
+  flush()
   expect(options.mouth?.()).toBeNull()
 })

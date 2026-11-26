@@ -1,4 +1,4 @@
-import {type Accessor, createEffect, createSignal, on, onCleanup} from 'solid-js'
+import {type Accessor, createEffect, createSignal} from 'solid-js'
 import type {useWidgetPreview} from '.'
 import type {CharacterHitTest} from '../character-preview/types'
 
@@ -77,7 +77,8 @@ export const useWidgetInteraction = (props: UseWidgetInteractionProps) => {
     }
   }
   createEffect(
-    on(props.hitTest, (hitTest) => {
+    () => props.hitTest(),
+    (hitTest) => {
       if (restingPointer === null) {
         return
       }
@@ -92,21 +93,24 @@ export const useWidgetInteraction = (props: UseWidgetInteractionProps) => {
           handleHover(restingPointer)
         }
       })
-      onCleanup(() => cancelAnimationFrame(frame))
-    }),
+      return () => cancelAnimationFrame(frame)
+    },
   )
-  createEffect(() => {
-    if (!props.locked()) {
-      return
-    }
-    const element = props.button()
-    if (capturedPointer !== null && element?.hasPointerCapture(capturedPointer)) {
-      element.releasePointerCapture(capturedPointer)
-    }
-    capturedPointer = null
-    props.preview().release()
-    handleLeave()
-  })
+  createEffect(
+    () => (props.locked() ? {element: props.button(), release: props.preview().release} : null),
+    (interaction) => {
+      if (interaction === null) {
+        return
+      }
+      const {element, release} = interaction
+      if (capturedPointer !== null && element?.hasPointerCapture(capturedPointer)) {
+        element.releasePointerCapture(capturedPointer)
+      }
+      capturedPointer = null
+      release()
+      handleLeave()
+    },
+  )
   const handleFocus = (event: FocusEvent & {currentTarget: HTMLButtonElement}) => {
     if (event.currentTarget.matches(':focus-visible')) {
       restingPointer = null

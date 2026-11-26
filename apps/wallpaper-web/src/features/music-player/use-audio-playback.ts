@@ -1,4 +1,4 @@
-import {type Accessor, batch, createEffect, createSignal, on, onCleanup} from 'solid-js'
+import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
 
 interface UseAudioPlaybackProps {
   readonly element: Accessor<HTMLAudioElement | null>
@@ -15,17 +15,27 @@ export const useAudioPlayback = (props: UseAudioPlaybackProps) => {
   let revision = 0
   let disposed = false
   let intended = false
-  const pause = () => {
+  const stopPlayback = (element: HTMLAudioElement | null) => {
     revision += 1
     intended = false
-    props.element()?.pause()
+    element?.pause()
     setStatus('paused')
   }
+  const pause = () => stopPlayback(props.element())
   const fail = () => {
     intended = false
-    batch(() => {
-      setStatus('error')
-      setError('playback')
+    setStatus('error')
+    setError('playback')
+  }
+  const startPlayback = (element: HTMLAudioElement) => {
+    const request = (revision += 1)
+    intended = true
+    setError(null)
+    setStatus('loading')
+    element.play().catch(() => {
+      if (!disposed && request === revision) {
+        fail()
+      }
     })
   }
   const play = () => {
@@ -33,28 +43,16 @@ export const useAudioPlayback = (props: UseAudioPlaybackProps) => {
     if (element === null || props.source() === null || disposed) {
       return
     }
-    const request = (revision += 1)
-    intended = true
     if (error() !== null) {
       element.load()
     }
-    batch(() => {
-      setError(null)
-      setStatus('loading')
-    })
-    element.play().catch(() => {
-      if (!disposed && request === revision) {
-        fail()
-      }
-    })
+    startPlayback(element)
   }
   const syncTime = () => {
     const element = props.element()
     if (element !== null) {
-      batch(() => {
-        setTime(Number.isFinite(element.currentTime) ? element.currentTime : 0)
-        setDuration(Number.isFinite(element.duration) ? element.duration : 0)
-      })
+      setTime(Number.isFinite(element.currentTime) ? element.currentTime : 0)
+      setDuration(Number.isFinite(element.duration) ? element.duration : 0)
     }
   }
   const seek = (seconds: number) => {
@@ -95,23 +93,22 @@ export const useAudioPlayback = (props: UseAudioPlaybackProps) => {
     }
   }
   createEffect(
-    on(props.source, () => {
+    () => ({element: props.element(), source: props.source()}),
+    ({element, source}) => {
       const resume = intended
-      pause()
-      batch(() => {
-        setTime(0)
-        setDuration(0)
-        setError(null)
-      })
-      if (resume) {
-        play()
+      stopPlayback(element)
+      setTime(0)
+      setDuration(0)
+      setError(null)
+      if (resume && element !== null && source !== null) {
+        startPlayback(element)
       }
-    }),
+    },
   )
   onCleanup(() => {
     disposed = true
-    pause()
     const element = props.element()
+    stopPlayback(element)
     element?.removeAttribute('src')
     element?.load()
   })

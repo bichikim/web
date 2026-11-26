@@ -34,7 +34,15 @@ test('animates the speech composer in both directions without intrinsic-size int
         const first = details.getBoundingClientRect().height
         await new Promise(requestAnimationFrame)
         details.querySelector('button')!.click()
-        const animations = details.getAnimations({subtree: true})
+        // Sample the next render frame after Solid applies the disclosure state.
+        await new Promise(requestAnimationFrame)
+        const animations = details
+          .getAnimations({subtree: true})
+          .filter(
+            (animation) =>
+              animation instanceof CSSTransition &&
+              animation.transitionProperty === 'grid-template-rows',
+          )
         const heights: number[] = []
         let running = true
         const finished = Promise.all(animations.map((animation) => animation.finished)).then(() => {

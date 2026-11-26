@@ -12,6 +12,23 @@ const GEOMETRY = {
   center: 0.5,
   mobileWidth: 640,
 }
+const CHARACTER_FIT = {
+  aspectRatioRange: 0.15,
+  footCrop: 42,
+  minAspectRatio: 0.9,
+  minHeight: 560,
+  minWidth: 768,
+  rightInset: 20,
+  topInset: 94,
+  viewportHeightRange: 144,
+  viewportWidthRange: 144,
+}
+// Visible silhouette relative to the width of the character canvas.
+const CHARACTER_SILHOUETTE = {
+  centerToRight: 0.28,
+  height: 1.18,
+  topToCenter: 0.58,
+}
 const KINDS = ['overview', 'wallpaper', 'widgets', 'details', 'codex', 'download'] as const
 export const STORY_CUTS = [
   TIMING.intro,
@@ -23,6 +40,11 @@ export const STORY_CUTS = [
 ]
 export const STORY_LENGTH = 7.45
 
+interface StoryCharacterFit {
+  readonly weight: number
+  readonly width: number
+}
+
 export interface StoryCharacter {
   /** Offset from the viewport center in CSS pixels. */
   readonly x: number
@@ -30,6 +52,8 @@ export interface StoryCharacter {
   readonly y: number
   /** Rendered size, independent of the user's saved widget size. */
   readonly scale: number
+  /** Width to blend into the default size when the stage has room. */
+  readonly fit?: StoryCharacterFit
   /** Model animation used by the product demonstration. */
   readonly motionId: string
   /** Null explicitly clears the user's expression during the demonstration. */
@@ -50,6 +74,28 @@ interface StoryViewport {
 }
 
 const clamp = (value: number) => Math.max(0, Math.min(1, value))
+
+const fitWideCharacter = ({height, width}: StoryViewport, anchorX: number) => {
+  if (height <= CHARACTER_FIT.minHeight || width <= CHARACTER_FIT.minWidth) {
+    return undefined
+  }
+  const widthWeight = clamp((width - CHARACTER_FIT.minWidth) / CHARACTER_FIT.viewportWidthRange)
+  const heightWeight = clamp((height - CHARACTER_FIT.minHeight) / CHARACTER_FIT.viewportHeightRange)
+  const aspectWeight = clamp(
+    (width / height - CHARACTER_FIT.minAspectRatio) / CHARACTER_FIT.aspectRatioRange,
+  )
+  const weight = widthWeight * heightWeight * aspectWeight
+  if (weight === 0) {
+    return undefined
+  }
+  return {
+    weight,
+    width: Math.min(
+      (height + CHARACTER_FIT.footCrop - CHARACTER_FIT.topInset) / CHARACTER_SILHOUETTE.height,
+      (width * (1 - anchorX) - CHARACTER_FIT.rightInset) / CHARACTER_SILHOUETTE.centerToRight,
+    ),
+  }
+}
 
 /** Resolve a settled product chapter; scroll selects chapters rather than scrubbing their animation. */
 export const resolveStoryFrame = (viewport: StoryViewport) => {
@@ -78,13 +124,22 @@ export const resolveStoryFrame = (viewport: StoryViewport) => {
         {scale: 0.96, x: 0.78, y: 0.6},
       ]
   const placement = placements[chapter]!
+  const fit = fitWideCharacter(viewport, placement.x)
+  const defaultY = (placement.y - GEOMETRY.center) * viewport.height
+  const fittedY =
+    fit === undefined
+      ? defaultY
+      : CHARACTER_FIT.topInset +
+        fit.width * CHARACTER_SILHOUETTE.topToCenter -
+        viewport.height * GEOMETRY.center
   const character: StoryCharacter = {
     expressionId: kind === 'widgets' ? '커피 들기' : kind === 'details' ? '작아지기' : null,
+    fit,
     motionId: kind === 'wallpaper' ? 'Walk:0' : 'Idle:0',
     playing: !viewport.reducedMotion,
     scale: placement.scale,
     x: (placement.x - GEOMETRY.center) * viewport.width,
-    y: (placement.y - GEOMETRY.center) * viewport.height,
+    y: defaultY + (fittedY - defaultY) * (fit?.weight ?? 0),
   }
   const active = distance >= STORY_CUTS[0]!
   return {

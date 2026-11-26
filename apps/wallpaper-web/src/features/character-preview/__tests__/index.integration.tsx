@@ -1,5 +1,5 @@
 import {cleanup, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {page} from 'vitest/browser'
 import * as playerModule from '@winter-love/puppet/player'
@@ -137,6 +137,7 @@ test('should add default mouse tracking to the compact Poffo idle animation with
   expect(player.getParameterValue('ParamAngleY')).toBe(expected('ParamAngleY', later, -30))
   expect(player.getParameterValue('ParamEyeBallY')).toBe(expected('ParamEyeBallY', later, -1))
   setTracking(false)
+  flush()
   player.seek(2)
   expect(player.getParameterValue('ParamEyeBallX')).toBeCloseTo(0.133333, 5)
   expect(player.getParameterValue('ParamEyeBallY')).toBeCloseTo(0.04, 5)

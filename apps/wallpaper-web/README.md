@@ -1,11 +1,11 @@
 # Poffo Wallpaper 웹사이트
 
-데스크톱 앱의 배경화면·캐릭터 위젯을 체험하는 SolidStart 정적 사이트다.
+데스크톱 앱의 배경화면·캐릭터 위젯을 체험하는 SolidJS 2 정적 사이트다.
 스크롤로 기능 소개를 전환하며, 음악과 미리 생성한 소개 음성을 재생한다.
 
 저장소 루트에서 `pnpm --filter @apps/wallpaper-web dev`로 실행한다.
 빌드·미리보기·타입 검사 명령은 [package.json](./package.json)에 있다.
-빌드는 `/`를 프리렌더링해 `.output/public`을 생성한다.
+Vite 빌드는 `/`를 프리렌더링하고 배포할 파일을 `dist/client`에 생성한다.
 
 ## 캐릭터 파일
 
@@ -37,7 +37,7 @@ PNG 텍스처는 무손실 WebP로 저장하고, 아틀라스 재배치 시 해�
 | Preview | **Deploy Poffo Wallpaper**에서 `dev` 브랜치와 `environment=dev`를 선택한다.                                       |
 | 운영    | `main`에 코드와 워크플로를 반영한 뒤 **Deploy Poffo Wallpaper**에서 `main`과 `environment=production`을 선택한다. |
 
-검증한 `.output/public`을 Vercel Build Output API v3의 정적 에셋으로 포장해 배포한다.
+검증한 `dist/client`를 Vercel Build Output API v3의 정적 에셋으로 포장해 배포한다.
 운영 배포는 도메인을 연결하지 않은 후보를 먼저 생성하며, 페이지와 모델 경로 확인이
 통과하면 `promote`한다. [Vercel Git 자동 배포](./vercel.json)는 끄고 Actions로 실행한다.
 

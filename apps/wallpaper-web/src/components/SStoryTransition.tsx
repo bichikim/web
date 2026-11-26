@@ -1,4 +1,5 @@
-import {type JSX, Match, Show, Switch} from 'solid-js'
+import type {JSX} from '@solidjs/web'
+import {Match, Show, Switch} from 'solid-js'
 import type {StoryTransition} from '../features/desktop-story/types'
 
 import {getStoryTransitionStyle} from '../features/desktop-story/transition-style'

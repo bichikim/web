@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import {createEffect, createSignal} from 'solid-js'
+import {createEffect, createSignal, flush} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {useWidgetPreview} from '../../features/widget-preview'
 import {SCharacterWidget} from '../SCharacterWidget'
@@ -12,11 +12,12 @@ const renderer = vi.hoisted(() => ({
   motionChanges: vi.fn(),
   props: null as Parameters<typeof SPuppetCharacter>[0] | null,
 }))
-vi.mock('@solidjs/start', () => ({
+vi.mock(import('@solidjs/web'), async (importOriginal) => ({
+  ...(await importOriginal()),
   clientOnly: () => (props: Parameters<typeof SPuppetCharacter>[0]) => {
     renderer.props = props
-    createEffect(() => renderer.expressionChanges(props.expressionId))
-    createEffect(() => renderer.motionChanges(props.motionId))
+    createEffect(() => props.expressionId, renderer.expressionChanges)
+    createEffect(() => props.motionId, renderer.motionChanges)
     return null
   },
 }))
@@ -39,6 +40,7 @@ test('should release an active drag, override playback and restore all user choi
   const preview = useWidgetPreview()
   preview.activate()
   preview.finish()
+  flush()
   preview.activate()
   preview.selectExpression('손하트')
   preview.toggleWalking()
@@ -46,6 +48,7 @@ test('should release an active drag, override playback and restore all user choi
   const [presentation, setPresentation] = createSignal<StoryCharacter>()
   render(() => <SCharacterWidget preview={preview} presentation={presentation()} />)
   renderer.props?.onReady?.(() => true)
+  flush()
   const button = screen.getByRole('button', {name: '흰 고양이 위젯. 드래그해서 이동'})
   button.setPointerCapture = vi.fn()
   button.hasPointerCapture = vi.fn(() => true)
@@ -60,10 +63,12 @@ test('should release an active drag, override playback and restore all user choi
   Object.defineProperty(press, 'pointerId', {value: 4})
   const focus = vi.spyOn(button, 'focus')
   fireEvent(button, press)
+  flush()
   expect(press.defaultPrevented).toBe(true)
   expect(focus).toHaveBeenCalledExactlyOnceWith({preventScroll: true})
   expect(preview.dragging()).toBe(true)
   setPresentation({expressionId: null, motionId: 'Idle:0', scale: 1, x: 100, y: 120})
+  flush()
   expect(button.hasAttribute('disabled')).toBe(true)
   expect(preview.dragging()).toBe(false)
   expect(button.releasePointerCapture).toHaveBeenCalledExactlyOnceWith(4)
@@ -76,11 +81,14 @@ test('should release an active drag, override playback and restore all user choi
   renderer.expressionChanges.mockClear()
   renderer.motionChanges.mockClear()
   setPresentation({...presentation()!, x: 160})
+  flush()
   expect(renderer.expressionChanges).not.toHaveBeenCalled()
   expect(renderer.motionChanges).not.toHaveBeenCalled()
   setPresentation({...presentation()!, expressionId: '작아지기'})
+  flush()
   expect(renderer.props?.expressionId).toBe('작아지기')
   setPresentation(undefined)
+  flush()
   expect(button.hasAttribute('disabled')).toBe(false)
   expect(renderer.props).toMatchObject({
     expressionId: '손하트',
@@ -100,9 +108,11 @@ test('should track the pointer during introductions without overwriting a disabl
   render(() => <SCharacterWidget preview={preview} presentation={presentation()} />)
   expect(renderer.props?.tracking).toBe(false)
   setPresentation({expressionId: null, motionId: 'Idle:0', scale: 1, x: 100, y: 120})
+  flush()
   expect(renderer.props?.tracking).toBe(true)
   expect(preview.tracking()).toBe(false)
   setPresentation(undefined)
+  flush()
   expect(renderer.props?.tracking).toBe(false)
 })
 
@@ -122,5 +132,6 @@ test('should retain speech mouth poses while story presentation owns character p
   ))
   expect(renderer.props?.mouth).toEqual({form: 0.2, open: 0.7})
   setMouth(null)
+  flush()
   expect(renderer.props?.mouth).toBeNull()
 })

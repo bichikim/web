@@ -1,4 +1,5 @@
-import {For, type JSX, Show} from 'solid-js'
+import type {JSX} from '@solidjs/web'
+import {For, Show} from 'solid-js'
 import type {StoryPanelProps} from './story-panel-props'
 import {SStoryPrint} from './SStoryPrint'
 import chapters from '../data/story/chapters.json'
@@ -18,52 +19,60 @@ export const SStoryWipe = (props: StoryPanelProps) => (
         <div
           onAnimationEnd={handleEnd}
           style={{'--wipe-index': index()}}
-          class={`story-plane-shape ${color}`}
-          classList={{
-            'animate-story-plane-cover-back': props.transition.phase === 'cover' && index() === 0,
-            'animate-story-plane-cover-front':
-              props.transition.phase === 'cover' && index() === FRONT_LAYER,
-            'animate-story-plane-cover-mid': props.transition.phase === 'cover' && index() === 1,
-            'animate-story-plane-reveal-back': props.transition.phase === 'reveal' && index() === 0,
-            'animate-story-plane-reveal-front':
-              props.transition.phase === 'reveal' && index() === FRONT_LAYER,
-            'animate-story-plane-reveal-mid': props.transition.phase === 'reveal' && index() === 1,
-          }}
+          class={[
+            `story-plane-shape ${color}`,
+            {
+              'animate-story-plane-cover-back': props.transition.phase === 'cover' && index() === 0,
+              'animate-story-plane-cover-front':
+                props.transition.phase === 'cover' && index() === FRONT_LAYER,
+              'animate-story-plane-cover-mid': props.transition.phase === 'cover' && index() === 1,
+              'animate-story-plane-reveal-back':
+                props.transition.phase === 'reveal' && index() === 0,
+              'animate-story-plane-reveal-front':
+                props.transition.phase === 'reveal' && index() === FRONT_LAYER,
+              'animate-story-plane-reveal-mid':
+                props.transition.phase === 'reveal' && index() === 1,
+            },
+          ]}
         >
           <div
-            class="story-plane-content"
-            classList={{
-              'animate-story-plane-content-cover-back':
-                props.transition.phase === 'cover' && index() === 0,
-              'animate-story-plane-content-cover-front':
-                props.transition.phase === 'cover' && index() === FRONT_LAYER,
-              'animate-story-plane-content-cover-mid':
-                props.transition.phase === 'cover' && index() === 1,
-              'animate-story-plane-content-reveal-back':
-                props.transition.phase === 'reveal' && index() === 0,
-              'animate-story-plane-content-reveal-front':
-                props.transition.phase === 'reveal' && index() === FRONT_LAYER,
-              'animate-story-plane-content-reveal-mid':
-                props.transition.phase === 'reveal' && index() === 1,
-            }}
+            class={[
+              'story-plane-content',
+              {
+                'animate-story-plane-content-cover-back':
+                  props.transition.phase === 'cover' && index() === 0,
+                'animate-story-plane-content-cover-front':
+                  props.transition.phase === 'cover' && index() === FRONT_LAYER,
+                'animate-story-plane-content-cover-mid':
+                  props.transition.phase === 'cover' && index() === 1,
+                'animate-story-plane-content-reveal-back':
+                  props.transition.phase === 'reveal' && index() === 0,
+                'animate-story-plane-content-reveal-front':
+                  props.transition.phase === 'reveal' && index() === FRONT_LAYER,
+                'animate-story-plane-content-reveal-mid':
+                  props.transition.phase === 'reveal' && index() === 1,
+              },
+            ]}
           >
             <div
-              class="absolute left-[calc(100%/6)] -top-[40%] flex h-[180%] w-[calc(100%*2/3)]
-            items-center justify-center"
-              classList={{
-                'animate-story-original-cover-back':
-                  props.transition.phase === 'cover' && index() === 0,
-                'animate-story-original-cover-front':
-                  props.transition.phase === 'cover' && index() === FRONT_LAYER,
-                'animate-story-original-cover-mid':
-                  props.transition.phase === 'cover' && index() === 1,
-                'animate-story-original-reveal-back':
-                  props.transition.phase === 'reveal' && index() === 0,
-                'animate-story-original-reveal-front':
-                  props.transition.phase === 'reveal' && index() === FRONT_LAYER,
-                'animate-story-original-reveal-mid':
-                  props.transition.phase === 'reveal' && index() === 1,
-              }}
+              class={[
+                `absolute left-[calc(100%/6)] -top-[40%] flex h-[180%] w-[calc(100%*2/3)]
+            items-center justify-center`,
+                {
+                  'animate-story-original-cover-back':
+                    props.transition.phase === 'cover' && index() === 0,
+                  'animate-story-original-cover-front':
+                    props.transition.phase === 'cover' && index() === FRONT_LAYER,
+                  'animate-story-original-cover-mid':
+                    props.transition.phase === 'cover' && index() === 1,
+                  'animate-story-original-reveal-back':
+                    props.transition.phase === 'reveal' && index() === 0,
+                  'animate-story-original-reveal-front':
+                    props.transition.phase === 'reveal' && index() === FRONT_LAYER,
+                  'animate-story-original-reveal-mid':
+                    props.transition.phase === 'reveal' && index() === 1,
+                },
+              ]}
             >
               <SStoryPrint light={index() === 0} />
               <Show when={index() === FRONT_LAYER}>
@@ -74,7 +83,7 @@ export const SStoryWipe = (props: StoryPanelProps) => (
                   <For each={[0, 1, 2]}>
                     {(row) => (
                       <p
-                        classList={{
+                        class={{
                           'animate-story-original-type-cover': props.transition.phase === 'cover',
                           'animate-story-original-type-reveal': props.transition.phase === 'reveal',
                         }}

@@ -2,7 +2,7 @@
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {Observer} from 'gsap/Observer'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {useDesktopStory} from '../use-desktop-story'
 
 vi.mock('gsap', () => ({gsap: {registerPlugin: vi.fn()}}))
@@ -69,14 +69,23 @@ const setup = async (dragging?: () => boolean) => {
 const finish = (story: ReturnType<typeof useDesktopStory>) => {
   const revision = story.transition()!.revision
   story.covered(revision)
+  flush()
   story.finished(revision)
+  flush()
 }
-const forward = () => settings.onUp?.(self)
-const backward = () => settings.onDown?.(self)
+const forward = () => {
+  settings.onUp?.(self)
+  flush()
+}
+const backward = () => {
+  settings.onDown?.(self)
+  flush()
+}
 
 const press = (key: string, repeat = false) => {
   const event = new KeyboardEvent('keydown', {cancelable: true, key, repeat})
   globalThis.dispatchEvent(event)
+  flush()
   return event
 }
 
@@ -100,11 +109,13 @@ test('should discard input during both phases and accept the next input after co
   press('End')
   expect(hook.result.transition()).toMatchObject({phase: 'cover', revision: 1, to: 0})
   hook.result.covered(1)
+  flush()
   forward()
   backward()
   press('Home')
   expect(hook.result.transition()).toMatchObject({phase: 'reveal', revision: 1, to: 0})
   hook.result.finished(1)
+  flush()
   expect(hook.result.transition()).toBeNull()
   expect(hook.result.frame().chapter).toBe(0)
   forward()
@@ -115,21 +126,26 @@ test('should discard input during both phases and accept the next input after co
 test('should retain both masked scenes and restore control only after the reverse exit', async () => {
   const hook = await setup()
   hook.result.startIntroduction()
+  flush()
   expect(hook.result.scenes().outgoing?.visible).toBe(false)
   expect(hook.result.scenes().incoming).toMatchObject({chapter: 0, visible: true})
   expect(hook.result.frame().visible).toBe(false)
   hook.result.covered(1)
+  flush()
   expect(hook.result.frame().visible).toBe(true)
   expect(hook.result.scenes().outgoing?.visible).toBe(false)
   hook.result.finished(1)
+  flush()
   expect(hook.result.scenes().outgoing).toBeNull()
   backward()
   expect(hook.result.scenes().outgoing).toMatchObject({chapter: 0, visible: true})
   hook.result.covered(2)
+  flush()
   expect(hook.result.frame().visible).toBe(false)
   expect(hook.result.frame().active).toBe(true)
   expect(hook.result.scenes().outgoing?.visible).toBe(true)
   hook.result.finished(2)
+  flush()
   expect(hook.result.frame().active).toBe(false)
   hook.cleanup()
 })
@@ -182,8 +198,10 @@ test('should accept a swipe on transparent character pixels and ignore a capture
   canvas.dispatchEvent(touch)
   expect(settings.ignoreCheck?.(touch, true)).toBe(false)
   setDragging(true)
+  flush()
   expect(settings.ignoreCheck?.(touch, true)).toBe(true)
   setDragging(false)
+  flush()
   const control = document.createElement('button')
   const press = new Event('touchstart')
   control.dispatchEvent(press)
@@ -199,12 +217,14 @@ test('should retain reduced-motion navigation and resize without selecting a dif
   preference.matches = true
   mediaListener!()
   update!(0)
+  flush()
   expect(hook.result.transition()).toBeNull()
   expect(hook.result.frame().character.playing).toBe(false)
   width = 300
   height = 650
   resizeListener([], {} as ResizeObserver)
   update!(0)
+  flush()
   expect(hook.result.frame().chapter).toBe(0)
   expect(hook.result.frame().character.x).toBeCloseTo(84)
   expect(hook.result.aspectRatio()).toBeCloseTo(width / height)
@@ -238,6 +258,7 @@ test('should clamp the first and last scene and clean up all input ownership', a
   forward()
   expect(hook.result.transition()).toBeNull()
   hook.result.returnToPlayground()
+  flush()
   finish(hook.result)
   expect(hook.result.frame().active).toBe(false)
   hook.cleanup()

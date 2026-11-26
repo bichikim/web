@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, renderHook} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import type {CharacterHitTest} from '../../character-preview/types'
 import {useWidgetInteraction} from '../use-widget-interaction'
@@ -50,13 +50,17 @@ const setup = () => {
 test('should refresh an opaque pixel under the resting pointer when hit testing becomes ready', () => {
   const hook = setup()
   hook.result.handleHover(hover())
+  flush()
   expect(hook.result.hovered()).toBe(false)
   hook.setHitTest(() => () => true)
+  flush()
   expect(hook.result.hovered()).toBe(false)
   hook.renderFrame()
+  flush()
   expect(hook.result.hovered()).toBe(true)
   expect(hook.result.tooltip()).toEqual({x: 52, y: 70})
   hook.setHitTest(null)
+  flush()
   expect(hook.result.hovered()).toBe(false)
   expect(hook.result.tooltip()).toBeNull()
 })
@@ -64,8 +68,11 @@ test('should refresh an opaque pixel under the resting pointer when hit testing 
 test('should keep transparent pixels unhovered after readiness changes', () => {
   const hook = setup()
   hook.result.handleHover(hover())
+  flush()
   hook.setHitTest(() => () => false)
+  flush()
   hook.renderFrame()
+  flush()
   expect(hook.result.hovered()).toBe(false)
   expect(hook.result.tooltip()).toBeNull()
 })
@@ -74,7 +81,9 @@ test('should recheck a pixel that becomes transparent between hover and press', 
   const hook = setup()
   const hitTest = vi.fn().mockReturnValueOnce(true).mockReturnValue(false)
   hook.setHitTest(() => hitTest)
+  flush()
   hook.result.handleHover(hover())
+  flush()
   expect(hook.result.hovered()).toBe(true)
   const preventDefault = vi.fn()
   hook.result.handlePress({
@@ -92,20 +101,26 @@ test('should wait for first-render initialization before replaying the stationar
   const hook = setup()
   let initialized = false
   hook.result.handleHover(hover())
+  flush()
   hook.setHitTest(() => () => initialized)
+  flush()
   expect(hook.result.hovered()).toBe(false)
   initialized = true
   hook.renderFrame()
+  flush()
   expect(hook.result.hovered()).toBe(true)
 })
 
 test('should discard a hover that leaves while the ready frame is pending', () => {
   const hook = setup()
   hook.result.handleHover(hover())
+  flush()
   const hitTest = vi.fn(() => true)
   hook.setHitTest(() => hitTest)
+  flush()
   hook.result.handleLeave()
   hook.renderFrame()
+  flush()
   expect(hitTest).not.toHaveBeenCalled()
   expect(hook.result.hovered()).toBe(false)
 })
@@ -113,10 +128,13 @@ test('should discard a hover that leaves while the ready frame is pending', () =
 test('should forget a pointer that leaves before loading finishes', () => {
   const hook = setup()
   hook.result.handleHover(hover())
+  flush()
   hook.result.handleLeave()
   const hitTest = vi.fn(() => true)
   hook.setHitTest(() => hitTest)
+  flush()
   hook.renderFrame()
+  flush()
   expect(hitTest).not.toHaveBeenCalled()
   expect(hook.result.hovered()).toBe(false)
   expect(hook.result.tooltip()).toBeNull()
@@ -126,9 +144,13 @@ test('should avoid GPU pixel readbacks for touch hover and movement', () => {
   const hook = setup()
   const hitTest = vi.fn(() => true)
   hook.result.handleHover(hover('touch'))
+  flush()
   hook.setHitTest(() => hitTest)
+  flush()
   hook.renderFrame()
+  flush()
   hook.result.handleHover(hover('touch'))
+  flush()
   expect(hitTest).not.toHaveBeenCalled()
   expect(hook.result.hovered()).toBe(false)
   expect(hook.result.tooltip()).toBeNull()
@@ -137,12 +159,18 @@ test('should avoid GPU pixel readbacks for touch hover and movement', () => {
 test('should not revive a pointer after the story locks the widget', () => {
   const hook = setup()
   hook.setHitTest(() => () => true)
+  flush()
   hook.result.handleHover(hover())
+  flush()
   expect(hook.result.hovered()).toBe(true)
   hook.setLocked(true)
+  flush()
   hook.setHitTest(() => () => true)
+  flush()
   hook.renderFrame()
+  flush()
   hook.setLocked(false)
+  flush()
   expect(hook.result.hovered()).toBe(false)
   expect(hook.result.tooltip()).toBeNull()
 })
@@ -151,7 +179,9 @@ test('should recheck the final pointer after releasing a drag outside the charac
   const hook = setup()
   const hitTest = vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(true).mockReturnValue(false)
   hook.setHitTest(() => hitTest)
+  flush()
   hook.result.handleHover(hover())
+  flush()
   const event = Object.assign(new MouseEvent('pointerup', {button: 0, clientX: 40, clientY: 50}), {
     pointerId: 1,
     pointerType: 'mouse',
@@ -160,6 +190,7 @@ test('should recheck the final pointer after releasing a drag outside the charac
   hook.result.handlePress(event)
 
   hook.result.handleRelease(event)
+  flush()
 
   expect(hook.preview.release).toHaveBeenCalledOnce()
   expect(hook.result.hovered()).toBe(false)
@@ -169,24 +200,31 @@ test('should recheck the final pointer after releasing a drag outside the charac
 test('should retain the keyboard focus anchor across hit test readiness', () => {
   const hook = setup()
   hook.result.handleHover(hover())
+  flush()
   vi.spyOn(hook.button, 'matches').mockReturnValue(true)
   hook.result.handleFocus({currentTarget: hook.button} as FocusEvent & {
     currentTarget: HTMLButtonElement
   })
+  flush()
   expect(hook.result.tooltip()).toEqual({x: 0, y: 20})
   hook.setHitTest(() => () => true)
+  flush()
   hook.renderFrame()
+  flush()
   expect(hook.result.tooltip()).toEqual({x: 0, y: 20})
 })
 
 test('should keep an Escape-dismissed hint hidden when loading finishes', () => {
   const hook = setup()
   hook.result.handleHover(hover())
+  flush()
   hook.result.handleKeyDown({currentTarget: hook.button, key: 'Escape'} as KeyboardEvent & {
     currentTarget: HTMLButtonElement
   })
   hook.setHitTest(() => () => true)
+  flush()
   hook.renderFrame()
+  flush()
   expect(hook.result.tooltip()).toBeNull()
   expect(hook.preview.keyboard).toHaveBeenCalledOnce()
 })
@@ -194,10 +232,14 @@ test('should keep an Escape-dismissed hint hidden when loading finishes', () => 
 test('should not replay a hover during an active drag', () => {
   const hook = setup()
   hook.result.handleHover(hover())
+  flush()
   hook.setDragging(true)
+  flush()
   const hitTest = vi.fn(() => true)
   hook.setHitTest(() => hitTest)
+  flush()
   hook.renderFrame()
+  flush()
   expect(hitTest).not.toHaveBeenCalled()
   expect(hook.result.tooltip()).toBeNull()
 })
@@ -205,9 +247,12 @@ test('should not replay a hover during an active drag', () => {
 test('should stop readiness work when the widget is unmounted', () => {
   const hook = setup()
   hook.result.handleHover(hover())
+  flush()
   const hitTest = vi.fn(() => true)
   hook.setHitTest(() => hitTest)
+  flush()
   hook.cleanup()
   hook.renderFrame()
+  flush()
   expect(hitTest).not.toHaveBeenCalled()
 })

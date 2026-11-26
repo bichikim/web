@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {renderHook} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {useBackgroundSource} from '../use-background-source'
 
@@ -35,28 +35,36 @@ test('should wait for layout and switch sources only when the host changes orien
   width = 300
   height = 700
   measure()
+  flush()
   expect(hook.result()).toBe('profile-tall')
   setTall('street-tall')
+  flush()
   expect(hook.result()).toBe('street-tall')
   width = 375
   height = 667
   measure()
+  flush()
   expect(hook.result()).toBe('profile-portrait')
   setPortrait('street-portrait')
+  flush()
   expect(hook.result()).toBe('street-portrait')
   width = 700
   height = 300
   measure()
+  flush()
   expect(hook.result()).toBe('profile-wide')
   setLandscape('street-wide')
+  flush()
   expect(hook.result()).toBe('street-wide')
   width = 300
   height = 300
   measure()
+  flush()
   expect(hook.result()).toBe('street-wide')
   width = 800
   height = 1200
   measure()
+  flush()
   expect(hook.result()).toBe('street-portrait')
   expect(observe).toHaveBeenCalledWith(host)
   hook.cleanup()

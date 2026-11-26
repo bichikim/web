@@ -1,6 +1,5 @@
-import {clientOnly} from '@solidjs/start'
-import {createMemo, createSignal, createUniqueId, onCleanup, onMount, Show} from 'solid-js'
-import {Portal} from 'solid-js/web'
+import {clientOnly, Portal} from '@solidjs/web'
+import {createEffect, createMemo, createSignal, createUniqueId, Show} from 'solid-js'
 import {useWidgetInteraction, type useWidgetPreview} from '../features/widget-preview'
 import type {MouthPose} from '../features/character-speech/types'
 import type {StoryCharacter} from '../features/desktop-story/frame'
@@ -13,6 +12,14 @@ interface SCharacterWidgetProps {
   readonly speaking?: boolean
   /** Scroll choreography temporarily owns presentation without changing widget preferences. */
   readonly presentation?: StoryCharacter
+}
+
+const getFitStyle = (fit: StoryCharacter['fit']) => {
+  const weight = fit?.weight ?? 0
+  return {
+    '--widget-base-weight': 1 - weight,
+    '--widget-fit-width': `${(fit?.width ?? 0) * weight}px`,
+  }
 }
 
 export const SCharacterWidget = (props: SCharacterWidgetProps) => {
@@ -39,8 +46,7 @@ export const SCharacterWidget = (props: SCharacterWidgetProps) => {
     setHitTest(null)
     props.preview.fail()
   }
-  onMount(() => {
-    const element = button()
+  createEffect(button, (element) => {
     if (element === null || element.parentElement === null) {
       return
     }
@@ -51,7 +57,7 @@ export const SCharacterWidget = (props: SCharacterWidgetProps) => {
     })
     observer.observe(element)
     observer.observe(element.parentElement)
-    onCleanup(() => observer.disconnect())
+    return () => observer.disconnect()
   })
   return (
     <button
@@ -60,7 +66,7 @@ export const SCharacterWidget = (props: SCharacterWidgetProps) => {
       data-character-drag
       aria-label="흰 고양이 위젯. 드래그해서 이동"
       disabled={locked()}
-      aria-hidden={locked()}
+      aria-hidden={locked() ? 'true' : 'false'}
       aria-describedby={interaction.tooltip() === null ? undefined : tooltipId}
       onPointerEnter={interaction.handleHover}
       onPointerLeave={interaction.handleLeave}
@@ -72,18 +78,23 @@ export const SCharacterWidget = (props: SCharacterWidgetProps) => {
       onKeyDown={interaction.handleKeyDown}
       onFocus={interaction.handleFocus}
       onBlur={interaction.handleLeave}
-      class="absolute left-1/2 top-1/2 aspect-[4/5]
-        w-[calc(min(72vw,32rem,57.6dvh)*var(--widget-scale))] select-none
+      class={[
+        `absolute left-1/2 top-1/2 aspect-[4/5]
+        select-none
       border-0 bg-transparent p-0 outline-offset-[-10px]
-      [transform:translate(calc(-50%_+_var(--widget-x)),calc(-50%_+_var(--widget-y)))]"
-      classList={{
-        'cursor-default!': !interaction.hovered() && !props.preview.dragging(),
-        'cursor-grab!': !locked() && interaction.hovered() && !props.preview.dragging(),
-        'cursor-grabbing!': !locked() && props.preview.dragging(),
-        'pointer-events-none touch-pan-y': locked(),
-        'touch-none': !locked(),
-      }}
+      [transform:translate(calc(-50%_+_var(--widget-x)),calc(-50%_+_var(--widget-y)))]`,
+        '[--widget-base-width:min(72vw,32rem,57.6dvh)]',
+        'w-[calc(var(--widget-fit-width)_+_var(--widget-base-width)*var(--widget-scale)*var(--widget-base-weight))]',
+        {
+          'cursor-default!': !interaction.hovered() && !props.preview.dragging(),
+          'cursor-grab!': !locked() && interaction.hovered() && !props.preview.dragging(),
+          'cursor-grabbing!': !locked() && props.preview.dragging(),
+          'pointer-events-none touch-pan-y': locked(),
+          'touch-none': !locked(),
+        },
+      ]}
       style={{
+        ...getFitStyle(props.presentation?.fit),
         '--widget-scale': props.presentation?.scale ?? props.preview.scale(),
         '--widget-x': `${props.presentation?.x ?? props.preview.position().x}px`,
         '--widget-y': `${props.presentation?.y ?? props.preview.position().y}px`,
@@ -95,13 +106,17 @@ export const SCharacterWidget = (props: SCharacterWidgetProps) => {
         width="640"
         height="800"
         fetchpriority="high"
-        class="pointer-events-none absolute inset-0 h-full w-full object-contain transition-opacity duration-200"
-        classList={{'opacity-0': props.preview.phase() === 'ready'}}
+        class={[
+          'pointer-events-none absolute inset-0 h-full w-full object-contain transition-opacity duration-200',
+          {'opacity-0': props.preview.phase() === 'ready'},
+        ]}
       />
       <Show when={props.preview.mounted()}>
         <div
-          class="h-full w-full transition-opacity duration-200"
-          classList={{'opacity-0': props.preview.phase() !== 'ready'}}
+          class={[
+            'h-full w-full transition-opacity duration-200',
+            {'opacity-0': props.preview.phase() !== 'ready'},
+          ]}
         >
           <SPuppetCharacter
             coatOff={props.preview.coatOff()}

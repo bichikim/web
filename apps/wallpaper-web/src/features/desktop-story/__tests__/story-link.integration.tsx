@@ -12,7 +12,7 @@ it('should let a focused link keep Space while the story still accepts it from t
     const [stage, setStage] = createSignal<HTMLElement | null>(null)
     useDesktopStory({onRequest, stage})
     return (
-      <main aria-label="Story stage" ref={setStage} tabIndex={0}>
+      <main aria-label="Story stage" ref={setStage} tabindex={0}>
         <a href="#download">Download</a>
       </main>
     )

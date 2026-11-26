@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {SDesktopWallpaperVideo} from '../SDesktopWallpaperVideo'
 
@@ -39,8 +39,10 @@ test('should pause during scene transitions and resume the same video afterward'
   const video = screen.getByLabelText('창가 라이브 배경')
   expect(play).not.toHaveBeenCalled()
   setPlaying(true)
+  flush()
   expect(play).toHaveBeenCalledOnce()
   setPlaying(false)
+  flush()
   expect(screen.getByLabelText('창가 라이브 배경')).toBe(video)
   expect(pause).toHaveBeenCalled()
 })

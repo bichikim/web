@@ -36,6 +36,37 @@ test('should keep narrow-phone character placement inside the stage and suppress
   expect(frame(Number.NaN).active).toBe(false)
 })
 
+test('should enlarge the story character as wide screens gain vertical room', () => {
+  const shortDesktop = resolveStoryFrame({distance: 1.8, height: 768, width: 1366}).character
+  const tallDesktop = resolveStoryFrame({distance: 1.8, height: 1200, width: 1920}).character
+  expect(shortDesktop.fit?.weight).toBe(1)
+  expect(shortDesktop.fit?.width).toBeGreaterThan(500)
+  expect(tallDesktop.fit?.width).toBeGreaterThan(850)
+  expect(tallDesktop.y).toBeLessThan(0.06 * 1200)
+})
+
+test('should preserve phone framing and increase the fit gradually on wider screens', () => {
+  const phone = resolveStoryFrame({distance: 0.3, height: 844, width: 390}).character
+  const tablet = resolveStoryFrame({distance: 0.3, height: 1180, width: 820}).character
+  const laptop = resolveStoryFrame({distance: 0.3, height: 820, width: 840}).character
+  expect(phone.scale).toBe(2.1)
+  expect(phone.y).toBeCloseTo(0.36 * 844)
+  expect(phone.fit).toBeUndefined()
+  expect(tablet.fit).toBeUndefined()
+  expect(laptop.fit?.weight).toBeGreaterThan(0)
+  expect(laptop.fit?.weight).toBeLessThan(1)
+})
+
+test('should enlarge the character in a nearly square desktop window and allow a small crop at the feet', () => {
+  const height = 850
+  const {fit, y} = resolveStoryFrame({distance: 0.3, height, width: 930}).character
+  expect(fit?.weight).toBe(1)
+  expect(fit?.width).toBeGreaterThan(650)
+  const feet = height / 2 + y + 0.6 * fit!.width
+  expect(feet).toBeGreaterThan(height)
+  expect(feet).toBeLessThanOrEqual(height + 50)
+})
+
 test('should place the Codex speech chapter after details and before download', () => {
   expect(frame(4.7)).toMatchObject({chapter: 3, kind: 'details'})
   expect(frame(5.5)).toMatchObject({

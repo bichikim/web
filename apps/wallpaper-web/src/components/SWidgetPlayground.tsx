@@ -1,4 +1,4 @@
-import {createEffect, createMemo, createSignal, on, onMount, Show} from 'solid-js'
+import {createEffect, createMemo, createSignal, onSettled, Show} from 'solid-js'
 import {useWidgetPreview} from '../features/widget-preview'
 import {useCharacterSpeech} from '../features/character-speech'
 import {SCharacterWidget} from './SCharacterWidget'
@@ -14,6 +14,13 @@ import {SDesktopStory} from './SDesktopStory'
 import {SStoryTransition} from './SStoryTransition'
 import {SStoryMask} from './SStoryMask'
 import {SStoryDesktop} from './SStoryDesktop'
+import {SStoryProgress} from './SStoryProgress'
+
+const hideOpenPopovers = (element: HTMLElement) => {
+  for (const popover of element.querySelectorAll<HTMLElement>(':popover-open')) {
+    popover.hidePopover()
+  }
+}
 
 export const SWidgetPlayground = () => {
   const preview = useWidgetPreview()
@@ -21,7 +28,7 @@ export const SWidgetPlayground = () => {
   const [runway, setRunway] = createSignal<HTMLElement | null>(null)
   const [stage, setStage] = createSignal<HTMLDivElement | null>(null)
   const story = useDesktopStory({dragging: preview.dragging, onRequest: speech.unlock, stage})
-  const introductionActive = createMemo(() => story.frame().active)
+  const introductionRunway = createMemo(() => (story.frame().active ? runway() : null))
   useStoryNarration({frame: story.frame, ready: () => preview.phase() === 'ready', speech})
   const presentation = createMemo(() =>
     resolveCharacterPresentation({
@@ -35,17 +42,15 @@ export const SWidgetPlayground = () => {
       },
     }),
   )
-  createEffect(
-    on(introductionActive, (active) => {
-      if (active) {
-        speech.stop()
-        runway()
-          ?.querySelectorAll<HTMLElement>(':popover-open')
-          .forEach((popover) => popover.hidePopover())
-      }
-    }),
-  )
-  onMount(preview.activate)
+  createEffect(introductionRunway, (element) => {
+    if (element !== null) {
+      speech.stop()
+      hideOpenPopovers(element)
+    }
+  })
+  onSettled(() => {
+    preview.activate()
+  })
   return (
     <main
       ref={setRunway}
@@ -101,11 +106,14 @@ export const SWidgetPlayground = () => {
           speaking={speech.status().phase === 'playing'}
           presentation={presentation()}
         />
+        <SStoryProgress {...story.scenes()} />
         <SPlaygroundHeader inert={story.frame().transitioning} />
         <p
-          class="pointer-events-none absolute bottom-7 left-8 hidden rounded-full bg-white/80 px-3 py-1.5
-        text-[10px] text-muted backdrop-blur-md md:block"
-          classList={{'hidden!': story.frame().active}}
+          class={[
+            `pointer-events-none absolute bottom-7 left-8 hidden rounded-full bg-white/80 px-3 py-1.5
+        text-[10px] text-muted backdrop-blur-md md:block`,
+            {'hidden!': story.frame().active},
+          ]}
         >
           예시 캐릭터
         </p>
@@ -113,11 +121,13 @@ export const SWidgetPlayground = () => {
         <button
           type="button"
           onClick={story.startIntroduction}
-          tabIndex={story.frame().active ? -1 : 0}
-          aria-hidden={story.frame().active}
-          class="absolute bottom-24 right-4 flex items-center gap-2 rounded-full border-0 bg-white/80
-          px-3 py-2 text-[10px] text-muted backdrop-blur-md sm:bottom-7 sm:right-8"
-          classList={{'invisible pointer-events-none': story.frame().active}}
+          tabindex={story.frame().active ? -1 : 0}
+          aria-hidden={story.frame().active ? 'true' : 'false'}
+          class={[
+            `absolute bottom-24 right-4 flex items-center gap-2 rounded-full border-0 bg-white/80
+          px-3 py-2 text-[10px] text-muted backdrop-blur-md sm:bottom-7 sm:right-8`,
+            {'invisible pointer-events-none': story.frame().active},
+          ]}
         >
           스크롤로 앱 살펴보기 <span aria-hidden="true">↓</span>
         </button>

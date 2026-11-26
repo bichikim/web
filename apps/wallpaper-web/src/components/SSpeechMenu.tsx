@@ -1,4 +1,5 @@
-import {createMemo, createUniqueId, For, type JSX, Show} from 'solid-js'
+import type {JSX} from '@solidjs/web'
+import {createMemo, createUniqueId, flush, For, Show} from 'solid-js'
 import {
   speechPresets,
   type SpeechStatus,
@@ -45,6 +46,7 @@ export const SSpeechMenu = (props: SSpeechMenuProps) => {
   const handleStop: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
     const menu = event.currentTarget.closest('[popover]')
     props.speech.stop()
+    flush()
     menu?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
   }
   return (
@@ -55,9 +57,11 @@ export const SSpeechMenu = (props: SSpeechMenuProps) => {
         aria-label="대사 선택"
         aria-haspopup="dialog"
         title="대사"
-        class="flex h-[var(--control-size)] w-[var(--control-size)] shrink-0 items-center justify-center
-          rounded-full border-0 bg-transparent hover:bg-lilac"
-        classList={{'bg-lilac! text-violet': props.speech.busy()}}
+        class={[
+          `flex h-[var(--control-size)] w-[var(--control-size)] shrink-0 items-center justify-center
+          rounded-full border-0 bg-transparent hover:bg-lilac`,
+          {'bg-lilac! text-violet': props.speech.busy()},
+        ]}
       >
         <SIcon name="speech" />
       </button>

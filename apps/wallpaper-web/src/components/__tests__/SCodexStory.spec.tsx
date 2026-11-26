@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, renderHook, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {SCodexStory} from '../SCodexStory'
 import {useCharacterSpeech} from '../../features/character-speech'
@@ -30,17 +30,22 @@ test('should play and stop the Codex example on demand and disable controls duri
   expect(button.disabled).toBe(true)
   expect(createBrowserSpeechSession).not.toHaveBeenCalled()
   setPlaying(true)
+  flush()
   expect(button.disabled).toBe(true)
   setReady(true)
+  flush()
   expect(button.disabled).toBe(false)
   fireEvent.click(button)
+  flush()
   expect(speak.mock.calls[0]![0]).toBe(demo.text)
   expect(screen.getByRole('button', {name: '멈추기'})).toBe(button)
   const signal = speak.mock.calls[0]![1] as AbortSignal
   expect(signal.aborted).toBe(false)
   fireEvent.click(screen.getByRole('button', {name: '멈추기'}))
+  flush()
   expect(signal.aborted).toBe(true)
   setPlaying(false)
+  flush()
   expect(button.textContent).toContain('목소리 듣기')
   expect(button.disabled).toBe(true)
 })

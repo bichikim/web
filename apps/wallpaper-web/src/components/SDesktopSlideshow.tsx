@@ -1,5 +1,5 @@
-import {clientOnly} from '@solidjs/start'
-import {batch, createEffect, createMemo, createSignal, onCleanup, Show} from 'solid-js'
+import {clientOnly} from '@solidjs/web'
+import {createEffect, createMemo, createSignal, Show} from 'solid-js'
 import covers from '../../public/music/ash-afternoon/covers.json'
 
 const SDesktopAlbum = clientOnly(() => import('./SDesktopAlbum'), {lazy: true})
@@ -23,15 +23,11 @@ export const SDesktopSlideshow = (props: SDesktopSlideshowProps) => {
       setPrepared(true)
     }
   }
-  createEffect(() => {
-    const element = preload()
+  createEffect(preload, (element) => {
     if (element === undefined || typeof element.decode !== 'function') {
       return
     }
     let active = true
-    onCleanup(() => {
-      active = false
-    })
     element.decode().then(
       () => {
         if (active) {
@@ -40,15 +36,16 @@ export const SDesktopSlideshow = (props: SDesktopSlideshowProps) => {
       },
       () => undefined,
     )
+    return () => {
+      active = false
+    }
   })
   const handlePresented = () => setPresented(true)
   const handleNext = () => {
     if (props.playing !== false && prepared() && presented()) {
-      batch(() => {
-        setPrepared(false)
-        setPresented(false)
-        setImage((current) => (current + 1) % covers.tracks.length)
-      })
+      setPrepared(false)
+      setPresented(false)
+      setImage((current) => (current + 1) % covers.tracks.length)
     }
   }
   return (
@@ -70,11 +67,13 @@ export const SDesktopSlideshow = (props: SDesktopSlideshowProps) => {
               alt="노트북 앨범 배경"
               onAnimationEnd={handleNext}
               decoding="async"
-              class="absolute inset-0 h-full w-full object-cover object-top [animation-timing-function:linear]"
-              classList={{
-                '[animation-play-state:paused]!': props.playing === false,
-                'animate-desktop-wallpaper': prepared() && presented(),
-              }}
+              class={[
+                'absolute inset-0 h-full w-full object-cover object-top [animation-timing-function:linear]',
+                {
+                  '[animation-play-state:paused]!': props.playing === false,
+                  'animate-desktop-wallpaper': prepared() && presented(),
+                },
+              ]}
             />
           </>
         )}

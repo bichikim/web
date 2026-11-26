@@ -1,4 +1,5 @@
-import {createUniqueId, For, type JSX} from 'solid-js'
+import type {JSX} from '@solidjs/web'
+import {createUniqueId, For} from 'solid-js'
 import type {useWidgetPreview} from '../features/widget-preview'
 import {SIcon} from './SIcon'
 
@@ -58,11 +59,14 @@ export const SExpressionMenu = (props: SExpressionMenuProps) => {
         aria-label="표정 선택"
         aria-haspopup="menu"
         title={props.preview.expressionId() ?? '표정'}
-        class="flex h-[var(--control-size)] w-[var(--control-size)] shrink-0 items-center justify-center
-          rounded-full border-0 bg-transparent hover:bg-lilac"
-        classList={{
-          'bg-lilac! text-violet': props.preview.expressionId() !== null || props.preview.coatOff(),
-        }}
+        class={[
+          `flex h-[var(--control-size)] w-[var(--control-size)] shrink-0 items-center justify-center
+          rounded-full border-0 bg-transparent hover:bg-lilac`,
+          {
+            'bg-lilac! text-violet':
+              props.preview.expressionId() !== null || props.preview.coatOff(),
+          },
+        ]}
       >
         <SIcon name="face" />
       </button>
@@ -82,16 +86,15 @@ export const SExpressionMenu = (props: SExpressionMenuProps) => {
         <button
           type="button"
           role="menuitemradio"
-          aria-checked={props.preview.expressionId() === null}
-          tabIndex={props.preview.expressionId() === null ? 0 : -1}
+          aria-checked={props.preview.expressionId() === null ? 'true' : 'false'}
+          tabindex={props.preview.expressionId() === null ? 0 : -1}
           popovertarget={menuId}
           popovertargetaction="hide"
           onClick={() => props.preview.selectExpression(null)}
-          class={OPTION_CLASSES}
-          classList={{'bg-lilac! text-violet': props.preview.expressionId() === null}}
+          class={[OPTION_CLASSES, {'bg-lilac! text-violet': props.preview.expressionId() === null}]}
         >
           없음
-          <span aria-hidden="true" classList={{'opacity-0': props.preview.expressionId() !== null}}>
+          <span aria-hidden="true" class={{'opacity-0': props.preview.expressionId() !== null}}>
             <SIcon name="check" class="h-4 w-4" />
           </span>
         </button>
@@ -107,20 +110,22 @@ export const SExpressionMenu = (props: SExpressionMenuProps) => {
                     <button
                       type="button"
                       role="menuitemradio"
-                      aria-checked={props.preview.expressionId() === expression}
-                      tabIndex={props.preview.expressionId() === expression ? 0 : -1}
+                      aria-checked={props.preview.expressionId() === expression ? 'true' : 'false'}
+                      tabindex={props.preview.expressionId() === expression ? 0 : -1}
                       popovertarget={menuId}
                       popovertargetaction="hide"
                       onClick={() => props.preview.selectExpression(expression)}
-                      class={OPTION_CLASSES}
-                      classList={{
-                        'bg-lilac! text-violet': props.preview.expressionId() === expression,
-                      }}
+                      class={[
+                        OPTION_CLASSES,
+                        {
+                          'bg-lilac! text-violet': props.preview.expressionId() === expression,
+                        },
+                      ]}
                     >
                       {expression}
                       <span
                         aria-hidden="true"
-                        classList={{'opacity-0': props.preview.expressionId() !== expression}}
+                        class={{'opacity-0': props.preview.expressionId() !== expression}}
                       >
                         <SIcon name="check" class="h-4 w-4" />
                       </span>
@@ -139,14 +144,13 @@ export const SExpressionMenu = (props: SExpressionMenuProps) => {
             <button
               type="button"
               role="menuitemcheckbox"
-              aria-checked={props.preview.coatOff()}
-              tabIndex={-1}
+              aria-checked={props.preview.coatOff() ? 'true' : 'false'}
+              tabindex={-1}
               onClick={() => props.preview.toggleCoat()}
-              class={OPTION_CLASSES}
-              classList={{'bg-lilac! text-violet': props.preview.coatOff()}}
+              class={[OPTION_CLASSES, {'bg-lilac! text-violet': props.preview.coatOff()}]}
             >
               외투 벗기
-              <span aria-hidden="true" classList={{'opacity-0': !props.preview.coatOff()}}>
+              <span aria-hidden="true" class={{'opacity-0': !props.preview.coatOff()}}>
                 <SIcon name="check" class="h-4 w-4" />
               </span>
             </button>

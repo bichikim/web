@@ -11,20 +11,20 @@
   },
   "dependencies": {
     "@breezystack/lamejs": "1.2.7",
-    "@solidjs/meta": "catalog:",
-    "@solidjs/router": "catalog:",
-    "@solidjs/start": "catalog:",
+    "@solidjs/web": "2.0.3",
     "@winter-love/puppet": "workspace:*",
     "@winter-love/supertonic": "workspace:*",
     "@winter-love/wallpaper": "workspace:*",
     "gsap": "^3.15.0",
     "pixi.js": "8.22.0",
-    "solid-js": "catalog:"
+    "solid-js": "2.0.3"
   },
   "devDependencies": {
+    "@solidjs/testing-library": "1.0.0-rc.2",
+    "@solidjs/vite-plugin": "3.0.1",
     "@types/node": "catalog:",
     "@unocss/vite": "catalog:",
-    "nitro": "catalog:pomo",
+    "prerender-crawler": "0.3.0",
     "typescript": "catalog:",
     "unocss": "catalog:",
     "vite": "catalog:"
