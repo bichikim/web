@@ -52,6 +52,15 @@ pub(crate) async fn ensure(
     asset: &Asset,
     previous: &[PathBuf],
 ) -> Result<PathBuf, Error> {
+    ensure_with_download(cache, asset, previous, || {}).await
+}
+
+pub(crate) async fn ensure_with_download(
+    cache: &Path,
+    asset: &Asset,
+    previous: &[PathBuf],
+    on_download: impl FnOnce(),
+) -> Result<PathBuf, Error> {
     if asset.file.is_empty()
         || !Path::new(&asset.file)
             .components()
@@ -89,6 +98,7 @@ pub(crate) async fn ensure(
             return Ok(destination);
         }
     }
+    on_download();
     let temporary = tempfile::NamedTempFile::new_in(destination.parent().unwrap())?;
     let mut file = tokio::fs::File::from_std(temporary.reopen()?);
     let mut response = reqwest::Client::new()

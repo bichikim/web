@@ -9,7 +9,7 @@ import {loadModelAsset} from '../load-model-asset'
 
 afterEach(() => vi.unstubAllGlobals())
 
-it('should load every selectable model and voice exclusively from bundled files', async () => {
+it('should resolve every selectable model and voice through the local development origin', async () => {
   const bytes = Uint8Array.of(1, 2, 3).buffer
   const fetchAsset = vi.fn().mockImplementation(async () => new Response(bytes))
   vi.stubGlobal('fetch', fetchAsset)
@@ -30,6 +30,23 @@ it('should load every selectable model and voice exclusively from bundled files'
     expect(new URL(url).pathname).toMatch(/^\/voice-assets\//u)
     expect(init).toEqual({cache: 'no-store'})
   }
+})
+it('should read downloaded weights from the desktop cache and presets from the bundle', async () => {
+  const fetchAsset = vi.fn().mockImplementation(async () => new Response('asset'))
+  vi.stubGlobal('fetch', fetchAsset)
+  const model = SUPERTONIC_MODELS[0]
+  const url = getSupertonicModelFileUrl(model, model.files[0])
+  const cache = 'asset://localhost/%2Fcache%2Fvoice-assets/'
+  await loadModelAsset(url, cache)
+  await loadModelAsset(getSupertonicAssetUrl('onnx/tts.json'), cache)
+  expect(fetchAsset).toHaveBeenNthCalledWith(1, `${cache}shared/duration_predictor.onnx`, {
+    cache: 'no-store',
+  })
+  expect(fetchAsset).toHaveBeenNthCalledWith(
+    2,
+    new URL('/voice-assets/onnx/tts.json', globalThis.location.href).href,
+    {cache: 'no-store'},
+  )
 })
 it('should reject unknown assets without fetching remote URLs', async () => {
   const fetchAsset = vi.fn()

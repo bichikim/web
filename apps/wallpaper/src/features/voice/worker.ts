@@ -34,7 +34,7 @@ const post = (message: SynthesisReply, transfer: Transferable[] = []) =>
 const json = async (url: string): Promise<unknown> =>
   JSON.parse(new TextDecoder().decode(await loadModelAsset(url)))
 
-const initialize = async (id: SupertonicModelId, gpu: boolean) => {
+const initialize = async (id: SupertonicModelId, gpu: boolean, modelPath?: string) => {
   if (loaded?.model === id && loaded.gpu === gpu) {
     return loaded
   }
@@ -52,7 +52,7 @@ const initialize = async (id: SupertonicModelId, gpu: boolean) => {
     gpu,
     loadBuffer: async (options) => {
       try {
-        return successResult(await loadModelAsset(options.url))
+        return successResult(await loadModelAsset(options.url, modelPath))
       } catch (cause) {
         console.error('Poffo voice model download failed', cause)
         return failureResult({
@@ -98,7 +98,11 @@ const synthesize = async (request: SynthesisRequest, signal: AbortSignal): Promi
   if (loaded?.model !== request.voice.model || loaded.gpu !== request.voice.gpu) {
     post({id: request.id, status: 'download', type: 'status'})
   }
-  const {backend, engine, runtime} = await initialize(request.voice.model, request.voice.gpu)
+  const {backend, engine, runtime} = await initialize(
+    request.voice.model,
+    request.voice.gpu,
+    request.modelPath,
+  )
   signal.throwIfAborted()
   let voice = voices.get(request.voice.voice)
   if (voice === undefined) {

@@ -36,7 +36,11 @@
       },
       "assetProtocol": {
         "enable": true,
-        "scope": ["$APPCACHE/semantic-models/**/*", "$APPCACHE/conversation-models/**/*"]
+        "scope": [
+          "$APPCACHE/semantic-models/**/*",
+          "$APPCACHE/conversation-models/**/*",
+          "$APPCACHE/voice-assets/**/*.onnx"
+        ]
       },
       "headers": {
         "Cross-Origin-Embedder-Policy": "require-corp",
