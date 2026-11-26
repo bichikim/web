@@ -63,10 +63,11 @@ pnpm exec playwright test --config apps/wallpaper-web/playwright.config.ts
 ## 데스크톱 설치 파일 공개
 
 [Build Poffo Wallpaper Desktop](../../.github/workflows/wallpaper-desktop-build.yml)은 Apple Silicon, Intel Mac, Windows x64 설치 파일을 빌드한다.
-정식 공개 시 `main`에서 `publish`를 켠다. Mac 디스크 이미지에 공증 티켓을 붙이고, 세 파일의 서명과 R2 다운로드를 모두 검증하면
-`releases/latest.json`이 갱신되어 사이트를 다시 배포하지 않아도 새 설치 파일이 표시된다.
+`main`에서 정식 공개는 `publish`, 미공증·미서명 베타 공개는 `publish_beta`를 켠다. 기본 실행은 설치 파일만 만든다.
+베타 릴리스는 다운로드 메뉴에 베타와 설치 경고를 표시한다. 정식 공개에서는 macOS 디스크 이미지를 공증하고 플랫폼 서명을 검증한다.
+설치 파일 세 개의 R2 다운로드 검증이 끝나면 `releases/latest.json`을 갱신한다. 사이트를 다시 배포할 필요는 없다.
 
-GitHub의 `Production – wallpaper` 환경에 [Apple Developer ID와 공증](https://v2.tauri.app/distribute/sign/macos/),
-[Windows Azure Artifact Signing](https://v2.tauri.app/distribute/sign/windows/#azure-artifact-signing),
-[전용 버킷에 권한을 제한한 R2 S3 키](https://developers.cloudflare.com/r2/api/tokens/)를 설정한다.
+`Production – wallpaper installers` GitHub 환경에는 [전용 버킷에 권한을 제한한 R2 S3 키](https://developers.cloudflare.com/r2/api/tokens/)를 설정한다.
+정식 빌드에 필요한 [Apple Developer ID와 공증](https://v2.tauri.app/distribute/sign/macos/),
+[Windows Azure Artifact Signing](https://v2.tauri.app/distribute/sign/windows/#azure-artifact-signing)은 `Production – wallpaper`에 설정한다.
 필요한 변수와 시크릿 이름은 워크플로에 있다.

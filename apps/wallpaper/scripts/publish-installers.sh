@@ -7,6 +7,11 @@ root="${1:?Installer artifact directory required}"
 : "${AWS_SECRET_ACCESS_KEY:?Set WALLPAPER_R2_SECRET_ACCESS_KEY}"
 : "${GITHUB_RUN_ID:?GitHub run ID required}"
 : "${GITHUB_RUN_ATTEMPT:?GitHub run attempt required}"
+channel="${RELEASE_CHANNEL:-stable}"
+case "$channel" in
+  stable|beta) ;;
+  *) echo "Invalid release channel" >&2; exit 1 ;;
+esac
 version="$(jq -er '.version' apps/wallpaper/src-tauri/tauri.conf.json)"
 build="$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
 [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[[:alnum:]_.-]+)?$ && "$build" =~ ^[0-9]+-[0-9]+$ ]]
@@ -47,8 +52,8 @@ for file in "$scratch/"*.{dmg,exe}; do
   sizes="$(jq -c --arg name "${name%.*}" --argjson bytes "$bytes" '. + {($name): $bytes}' <<< "$sizes")"
 done
 
-jq -n --arg version "$version" --arg build "$build" --argjson sizes "$sizes" \
-  '{version: $version, build: $build, sizes: $sizes}' > "$scratch/latest.json"
+jq -n --arg version "$version" --arg build "$build" --arg channel "$channel" --argjson sizes "$sizes" \
+  '{version: $version, build: $build, channel: $channel, sizes: $sizes}' > "$scratch/latest.json"
 aws s3 cp "$scratch/latest.json" "s3://$bucket/releases/latest.json" --endpoint-url "$endpoint" \
   --only-show-errors --content-type application/json --cache-control 'no-store'
 curl --fail --silent --show-error --retry 3 "$origin/releases/latest.json" | cmp "$scratch/latest.json" -

@@ -55,7 +55,15 @@ export const SDownloadPopover = () => {
       >
         {(downloads) => (
           <>
-            <p class="mt-2 text-xs text-muted">버전 {downloads().version}</p>
+            <p class="mt-2 text-xs text-muted">
+              {downloads().isBeta ? '베타 ' : '버전 '}
+              {downloads().version}
+            </p>
+            <Show when={downloads().isBeta}>
+              <p class="mt-2 text-xs leading-6 text-muted">
+                설치 시 macOS 공증 또는 Windows 게시자 확인 경고가 표시될 수 있어요.
+              </p>
+            </Show>
             <div class="mt-5 grid gap-3">
               <For each={downloads().files}>
                 {(download) => (

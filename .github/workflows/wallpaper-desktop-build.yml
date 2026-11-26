@@ -7,6 +7,10 @@ on:
         description: Publish signed installers to wallpaper.poffo.io from main
         type: boolean
         default: false
+      publish_beta:
+        description: Publish beta installers without release signing or notarization from main
+        type: boolean
+        default: false
 
 run-name: Build Poffo Wallpaper Desktop from ${{ github.ref_name }}
 
@@ -47,10 +51,12 @@ jobs:
       run:
         shell: bash
     steps:
-      - name: Check release branch
-        if: inputs.publish && github.ref != 'refs/heads/main'
+      - name: Validate release selection
+        if: >-
+          ((inputs.publish || inputs.publish_beta) && github.ref != 'refs/heads/main') ||
+          (inputs.publish && inputs.publish_beta)
         run: |
-          echo "::error::Publishing Wallpaper installers requires main."
+          echo "::error::Choose one Wallpaper release mode and publish from main."
           exit 1
 
       - name: Checkout repository
@@ -204,12 +210,12 @@ jobs:
           echo "[Download ${BUILD_TARGET} installer](${ARTIFACT_URL}) (retained for 30 days)." >> "$GITHUB_STEP_SUMMARY"
 
   publish:
-    name: Publish signed installers
-    if: inputs.publish && github.ref == 'refs/heads/main'
+    name: Publish installers
+    if: (inputs.publish || inputs.publish_beta) && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment: Production – wallpaper
+    environment: Production – wallpaper installers
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -224,6 +230,7 @@ jobs:
 
       - name: Publish release
         env:
+          RELEASE_CHANNEL: ${{ inputs.publish_beta && 'beta' || 'stable' }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           AWS_ACCESS_KEY_ID: ${{ secrets.WALLPAPER_R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.WALLPAPER_R2_SECRET_ACCESS_KEY }}
