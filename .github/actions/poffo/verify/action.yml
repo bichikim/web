@@ -28,7 +28,7 @@ runs:
       env:
         NODE_OPTIONS: '--no-experimental-webstorage'
       run: |
-        pnpm exec vitest run --project=unit apps/poffo \
+        pnpm exec vitest run --project=unit-poffo apps/poffo \
           packages/puppet/src/editor/model \
           packages/puppet/src/editor-element \
           packages/puppet/src/design-system \
@@ -36,6 +36,6 @@ runs:
           packages/puppet/src/editor/__tests__/use-model-history.spec.ts \
           packages/puppet/src/editor/internal/__tests__/use-temporary-form.spec.ts \
           packages/puppet/src/editor/internal/__tests__/use-editor-state.spec.ts
-        pnpm test:integration --project=integration apps/poffo/src \
+        pnpm test:integration --project=integration-poffo apps/poffo/src \
           packages/puppet/src/editor/__tests__/PuppetEditor.lifecycle.integration.tsx
       shell: bash

@@ -2,6 +2,7 @@
 import {cleanup, fireEvent, render, waitFor, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {createDemoDocument} from '@winter-love/puppet/player'
+import {flush} from 'solid-js'
 import {EditorFixture as PuppetEditor} from './fixtures/Editor'
 import {createDeformer} from '../../../../../packages/puppet/src/editor/internal/scene-graph'
 import {addParameter} from '../../../../../packages/puppet/src/editor/internal/parameter-keyforms'
@@ -18,7 +19,7 @@ let frameId = 0
 const paint = () => {
   const pending = [...frames.values()]
   frames.clear()
-  pending.forEach((callback) => callback(0))
+  flush(() => pending.forEach((callback) => callback(0)))
 }
 beforeEach(() => {
   localStorage.clear()

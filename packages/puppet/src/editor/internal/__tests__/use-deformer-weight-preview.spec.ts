@@ -1,4 +1,4 @@
-import {createRoot, createSignal} from 'solid-js'
+import {createRoot, createSignal, flush} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument} from '../../../player'
 import {convertSceneContainers} from '../container-conversion'
@@ -16,7 +16,7 @@ test('should skip document traversal while disabled and derive the latest vertic
     throw new Error('Expected a deformer')
   }
   const read = vi.fn()
-  createRoot((dispose) => {
+  const {dispose, preview, setDocument, setEnabled} = createRoot((dispose) => {
     const [enabled, setEnabled] = createSignal(false)
     const [document, setDocument] = createSignal(initial)
     const preview = useDeformerWeightPreview({
@@ -28,21 +28,24 @@ test('should skip document traversal while disabled and derive the latest vertic
       enabled,
       node,
     })
-    expect(preview.vertices()).toEqual([])
-    expect(preview.triangles()).toEqual([])
-    expect(read).not.toHaveBeenCalled()
-    setDocument({...initial, parts: initial.parts.filter((part) => part.id !== 'shape-circle')})
-    expect(read).not.toHaveBeenCalled()
-    setEnabled(true)
-    expect(preview.vertices().map((vertex) => vertex.partId)).not.toContain('shape-circle')
-    expect(preview.vertices().length).toBeGreaterThan(0)
-    expect(preview.triangles().length).toBeGreaterThan(0)
-    setEnabled(false)
-    read.mockClear()
-    setDocument(initial)
-    expect(preview.vertices()).toEqual([])
-    expect(preview.vertexWeights().size).toBe(0)
-    expect(read).not.toHaveBeenCalled()
-    dispose()
+    return {dispose, preview, setDocument, setEnabled}
   })
+  expect(preview.vertices()).toEqual([])
+  expect(preview.triangles()).toEqual([])
+  expect(read).not.toHaveBeenCalled()
+  flush(() =>
+    setDocument({...initial, parts: initial.parts.filter((part) => part.id !== 'shape-circle')}),
+  )
+  expect(read).not.toHaveBeenCalled()
+  flush(() => setEnabled(true))
+  expect(preview.vertices().map((vertex) => vertex.partId)).not.toContain('shape-circle')
+  expect(preview.vertices().length).toBeGreaterThan(0)
+  expect(preview.triangles().length).toBeGreaterThan(0)
+  flush(() => setEnabled(false))
+  read.mockClear()
+  flush(() => setDocument(initial))
+  expect(preview.vertices()).toEqual([])
+  expect(preview.vertexWeights().size).toBe(0)
+  expect(read).not.toHaveBeenCalled()
+  dispose()
 })

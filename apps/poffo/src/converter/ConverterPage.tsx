@@ -78,7 +78,7 @@ export const ConverterPage = () => {
               multiple
               onChange={handleFolderChange}
               type="file"
-              bool:webkitdirectory={true}
+              webkitdirectory={true}
             />
             <span class="block text-sm text-[var(--puppet-color-text-secondary,#cbd5e1)]">
               .moc3와 PNG를 자동으로 찾습니다. model3.json이 있으면 텍스처 순서도 읽습니다.

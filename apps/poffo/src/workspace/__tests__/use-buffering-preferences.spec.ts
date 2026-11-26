@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {flush} from 'solid-js'
 import {renderHook} from '@solidjs/testing-library'
 import {expect, test} from 'vitest'
 import {useBufferingPreferences} from '../use-buffering-preferences'
@@ -18,6 +19,7 @@ test('should default on and restore the user choice independently from model his
   const first = renderHook(() => useBufferingPreferences(storage))
   expect(first.result.enabled()).toBe(true)
   first.result.setEnabled(false)
+  flush()
   first.cleanup()
   const second = renderHook(() => useBufferingPreferences(storage))
   expect(second.result.enabled()).toBe(false)
@@ -33,9 +35,11 @@ test('should apply the in-memory switch and report an unavailable preference sto
   }
   const {result} = renderHook(() => useBufferingPreferences(storage))
   result.setEnabled(false)
+  flush()
   expect(result.enabled()).toBe(false)
   expect(result.error()).toBe('재생 버퍼 설정을 저장하지 못했습니다.')
   result.dismissError()
+  flush()
   expect(result.error()).toBeNull()
 })
 
@@ -53,12 +57,14 @@ test('should report a read failure while allowing a later write to the supplied 
   expect(result.enabled()).toBe(true)
   expect(result.error()).toBe('재생 버퍼 설정을 불러오지 못했습니다.')
   result.setEnabled(false)
+  flush()
   expect(stored).toBe('false')
 })
 
 test('should keep independent preference stores isolated', () => {
   const first = renderHook(() => useBufferingPreferences(createStorage()))
   first.result.setEnabled(false)
+  flush()
   const second = renderHook(() => useBufferingPreferences(createStorage()))
   expect(second.result.enabled()).toBe(true)
   expect(first.result.enabled()).toBe(false)

@@ -1,4 +1,4 @@
-import {createEffect, createSignal, on, onCleanup} from 'solid-js'
+import {createEffect, createSignal, onCleanup} from 'solid-js'
 
 import {EditorDiamondButton} from '../../design-system'
 import type {ParameterTimelineKeyframe, ParameterTimelineTrack} from './timeline-keyframe-selection'
@@ -125,11 +125,9 @@ export const TimelineKeyframeMarker = (props: TimelineKeyframeMarkerProps) => {
     cancel()
   })
   createEffect(
-    on(
-      () => props.keyframe,
-      () => finishDrag(false),
-      {defer: true},
-    ),
+    () => props.keyframe,
+    () => finishDrag(false),
+    {defer: true},
   )
   const handleKeyDown = (event: KeyboardEvent & {currentTarget: HTMLButtonElement}) => {
     const frameDirection = event.key === 'ArrowLeft' ? -1 : event.key === 'ArrowRight' ? 1 : 0
@@ -163,7 +161,7 @@ export const TimelineKeyframeMarker = (props: TimelineKeyframeMarkerProps) => {
     <EditorDiamondButton
       aria-keyshortcuts={props.onMove === undefined ? undefined : 'ArrowLeft ArrowRight'}
       aria-label={`${props.parameterName} ${displayTime().toFixed(2)}초 키프레임`}
-      aria-pressed={props.selected}
+      aria-pressed={props.selected ? 'true' : 'false'}
       class="timeline-keyframe"
       data-draggable={props.onMove === undefined ? undefined : ''}
       data-dragging={drag() === null ? undefined : ''}

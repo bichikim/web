@@ -1,4 +1,4 @@
-import type {JSX} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 
 import type {PuppetParameterValueMap, PuppetParameterValues} from '../deformation'
 import type {PuppetDocument} from '../player/document'

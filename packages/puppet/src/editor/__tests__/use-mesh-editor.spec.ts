@@ -1,4 +1,4 @@
-import {createRoot, createSignal} from 'solid-js'
+import {createRoot, createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createDemoDocument} from '../../player'
 import {useMeshEditor} from '../use-mesh-editor'
@@ -37,16 +37,16 @@ test('should skip unselected meshes and reuse poses during vertex selection', ()
   const {mesh} = root
   expect(mesh.partViews()).toEqual([])
   expect(mesh.clippedPartViews()).toEqual([])
-  setTime(1)
+  flush(() => setTime(1))
   expect(mocks.sample).not.toHaveBeenCalled()
-  setSelected(['mesh-preview'])
+  flush(() => setSelected(['mesh-preview']))
   expect(mesh.vertices()[4]).toMatchObject({x: 320, y: 176})
   const samples = mocks.sample.mock.calls.length
   expect(samples).toBe(document.parts.length)
-  setVertex(4)
+  flush(() => setVertex(4))
   expect(mesh.selectedVertex()).toBe(4)
   expect(mocks.sample).toHaveBeenCalledTimes(samples)
-  setTime(0)
+  flush(() => setTime(0))
   expect(mesh.vertices()[4]).toMatchObject({x: 320, y: 240})
   expect(mocks.sample).toHaveBeenCalledTimes(samples + document.parts.length)
   root.dispose()

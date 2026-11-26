@@ -1,4 +1,4 @@
-import {type Accessor, createEffect, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createTrackedEffect, onCleanup, onSettled} from 'solid-js'
 import type {useWorkspaceLayout} from './graph/use-workspace-layout'
 import {
   DESKTOP_MENU_ACTION,
@@ -35,7 +35,7 @@ export const useRuntimeDesktopMenu = (props: UseRuntimeDesktopMenuProps) => {
     [DESKTOP_MENU_ACTION.studioOpen]: openStudio,
     [DESKTOP_MENU_ACTION.studioSave]: () => props.onSave(),
   }
-  createEffect(() => {
+  createTrackedEffect(() => {
     if (props.desktopMenu) {
       const enabled = props.active()
       setDesktopMenuItemEnabled(DESKTOP_MENU_ACTION.modelOpen, enabled)
@@ -49,7 +49,7 @@ export const useRuntimeDesktopMenu = (props: UseRuntimeDesktopMenuProps) => {
       )
     }
   })
-  onMount(() => {
+  onSettled(() => {
     if (!props.desktopMenu) {
       return
     }
@@ -60,7 +60,8 @@ export const useRuntimeDesktopMenu = (props: UseRuntimeDesktopMenuProps) => {
       handlers[action]?.()
     }
     const unsubscribe = listenDesktopMenuAction(handleAction)
-    onCleanup(unsubscribe)
+
+    return unsubscribe
   })
   onCleanup(() => {
     if (props.desktopMenu) {

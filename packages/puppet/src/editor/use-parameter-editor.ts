@@ -5,7 +5,7 @@ import type {
 export type {ParameterEditorResult} from './internal/parameter-editor/types'
 import {useInfluencePreview} from './internal/use-influence-preview'
 import {setParameterInfluences} from './internal/parameter-influences'
-import {type Accessor, batch, createEffect, createMemo, createSignal, type Setter} from 'solid-js'
+import {type Accessor, createMemo, createSignal, type Setter, createTrackedEffect} from 'solid-js'
 
 import {
   getDefaultParameterValueMap,
@@ -90,7 +90,7 @@ const updateParameterConnection = (
 }
 
 interface ParameterSelectionSetters {
-  readonly activeBindingId: Setter<string | null>
+  readonly activeBindingId: (id: string | null) => void
   readonly activeKeyformValues: Setter<PuppetParameterValues | null>
 }
 
@@ -107,10 +107,8 @@ const selectBindingState = (
   parameterValues: PuppetParameterValueMap,
   setters: ParameterSelectionSetters,
 ) => {
-  batch(() => {
-    setters.activeBindingId(binding?.id ?? null)
-    setters.activeKeyformValues(getDefaultKeyformValues(document, binding, parameterValues))
-  })
+  setters.activeBindingId(binding?.id ?? null)
+  setters.activeKeyformValues(getDefaultKeyformValues(document, binding, parameterValues))
 }
 
 /** Connects or disconnects the selection with the active binding, if any. */
@@ -141,7 +139,7 @@ const createParameterSelectionSync = (
   options: ParameterSelectionSyncOptions,
   allParametersVisible: Accessor<boolean>,
 ) => {
-  createEffect(() => {
+  createTrackedEffect(() => {
     const document = options.props.document()
     const candidates = allParametersVisible()
       ? getDocumentParameterBindings(document)
@@ -191,9 +189,8 @@ const createKeyformRemovalHandler =
     activeKeyformValues: Accessor<PuppetParameterValues | null>,
     setActiveKeyformValues: Setter<PuppetParameterValues | null>,
   ) =>
-  () => {
+  (values = activeKeyformValues()) => {
     const binding = activeBinding()
-    const values = activeKeyformValues()
     if (binding === undefined || values === null) {
       return
     }
@@ -248,18 +245,16 @@ const createParameterValueHandler = (options: CreateParameterValueHandlerOptions
       const parameter = parameters[index]
       return parameter === undefined ? 0 : resolveParameterValue(parameter, value)
     })
-    batch(() => {
-      options.props.onBindingActivate?.(binding.id)
-      options.setParameterValueMap((currentValues) => ({
-        ...currentValues,
-        ...getParameterBindingValueMap(binding, nextValues),
-      }))
-      options.setActiveKeyformValues(
-        binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, nextValues))
-          ? nextValues
-          : null,
-      )
-    })
+    options.props.onBindingActivate?.(binding.id)
+    options.setParameterValueMap((currentValues) => ({
+      ...currentValues,
+      ...getParameterBindingValueMap(binding, nextValues),
+    }))
+    options.setActiveKeyformValues(
+      binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, nextValues))
+        ? nextValues
+        : null,
+    )
   }
 
 interface CreateKeyformMoveHandlerOptions extends CreateParameterValueHandlerOptions {
@@ -304,30 +299,31 @@ interface CreateKeyformInsertionHandlerOptions {
   readonly setActiveKeyformValues: Setter<PuppetParameterValues | null>
 }
 
-const createKeyformInsertionHandler = (options: CreateKeyformInsertionHandlerOptions) => () => {
-  const binding = options.activeBinding()
-  const values = options.parameterValues()
-  if (binding === undefined) {
-    return
-  }
+const createKeyformInsertionHandler =
+  (options: CreateKeyformInsertionHandlerOptions) =>
+  (values = options.parameterValues()) => {
+    const binding = options.activeBinding()
+    if (binding === undefined) {
+      return
+    }
 
-  if (binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, values))) {
-    options.setActiveKeyformValues(values)
-    options.props.onNotice('현재 값에는 이미 키폼이 있습니다.')
-    return
-  }
+    if (binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, values))) {
+      options.setActiveKeyformValues(values)
+      options.props.onNotice('현재 값에는 이미 키폼이 있습니다.')
+      return
+    }
 
-  const document = insertParameterKeyform({
-    bindingId: binding.id,
-    document: options.props.document(),
-    values,
-  })
-  if (document !== undefined) {
-    options.props.onDocumentChange(document)
-    options.setActiveKeyformValues(values)
-    options.props.onNotice(null)
+    const document = insertParameterKeyform({
+      bindingId: binding.id,
+      document: options.props.document(),
+      values,
+    })
+    if (document !== undefined) {
+      options.props.onDocumentChange(document)
+      options.setActiveKeyformValues(values)
+      options.props.onNotice(null)
+    }
   }
-}
 
 const applyInfluences = (
   props: UseParameterEditorProps,
@@ -432,6 +428,9 @@ const createVisibilityHandler =
     return visible
   }
 
+const getBinding = (document: PuppetDocument, id: string | null) =>
+  getDocumentParameterBindings(document).find((binding) => binding.id === id)
+
 const createBindingSelectionHandler =
   (
     props: UseParameterEditorProps,
@@ -440,9 +439,7 @@ const createBindingSelectionHandler =
   ) =>
   (bindingId: string) => {
     const document = props.document()
-    const binding = getDocumentParameterBindings(document).find(
-      (candidate) => candidate.id === bindingId,
-    )
+    const binding = getBinding(document, bindingId)
     if (binding !== undefined) {
       selectBindingState(document, binding, parameterValueMap(), setters)
       props.onBindingActivate?.(bindingId)
@@ -454,9 +451,16 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
     props.document(),
     getDocumentParameterBindings(props.document()),
   )
-  const [activeBindingId, setActiveBindingId] = createSignal<string | null>(
-    initialBinding?.id ?? null,
-  )
+  let currentBindingId: string | null = initialBinding?.id ?? null
+  const [bindingId, publishBindingId] = createSignal<string | null>(currentBindingId)
+  const activeBindingId = () => {
+    bindingId()
+    return currentBindingId
+  }
+  const setActiveBindingId = (next: string | null) => {
+    currentBindingId = next
+    publishBindingId(next)
+  }
   const [parameterValueMap, setParameterValueMap] = createSignal<PuppetParameterValueMap>(
     getDefaultParameterValueMap(props.document()),
   )
@@ -465,11 +469,8 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
   )
   const [allParametersVisible, setAllParametersVisible] = createSignal(false)
   const setters = {activeBindingId: setActiveBindingId, activeKeyformValues: setActiveKeyformValues}
-  const activeBinding = createMemo(() =>
-    getDocumentParameterBindings(props.document()).find(
-      (binding) => binding.id === activeBindingId(),
-    ),
-  )
+  const readActiveBinding = () => getBinding(props.document(), activeBindingId())
+  const activeBinding = createMemo(readActiveBinding)
   const {previewDocument, previewInfluences, influence} = useInfluencePreview({
     binding: activeBinding,
     document: props.document,
@@ -495,7 +496,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
   )
   const selectBinding = createBindingSelectionHandler(props, parameterValueMap, setters)
   const updateValues = createParameterValueHandler({
-    activeBinding,
+    activeBinding: readActiveBinding,
     props,
     setActiveKeyformValues,
     setParameterValueMap,
@@ -504,19 +505,19 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
     (dimension) => createParameterBindingHandler(props, parameterValueMap, setters, dimension),
   )
   const createKeyform = createKeyformInsertionHandler({
-    activeBinding,
+    activeBinding: readActiveBinding,
     parameterValues,
     props,
     setActiveKeyformValues,
   })
   const removeKeyform = createKeyformRemovalHandler(
     props,
-    activeBinding,
+    readActiveBinding,
     activeKeyformValues,
     setActiveKeyformValues,
   )
   const moveKeyform = createKeyformMoveHandler({
-    activeBinding,
+    activeBinding: readActiveBinding,
     onDocumentChange: props.onDocumentChange,
     onNotice: props.onNotice,
     props,
@@ -542,7 +543,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
     allParametersVisible,
     connectSelection: createConnectionHandler(props, activeBinding, 'connect'),
     deleteKeyform: removeKeyform,
-    deleteKeyformPlane: createPlaneRemovalHandler(props, activeBinding, setActiveKeyformValues),
+    deleteKeyformPlane: createPlaneRemovalHandler(props, readActiveBinding, setActiveKeyformValues),
     deleteParameter(bindingId) {
       const document = deleteParameter({bindingId, document: props.document()})
       if (document === undefined) {
@@ -566,7 +567,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
     previewDocument,
     previewInfluences,
     renameParameter: (parameterId, name) =>
-      applyParameterName(props, activeBindingId(), parameterId, name),
+      applyParameterName(props, currentBindingId, parameterId, name),
     requestBinding: (bindingId) =>
       props.onSelectionRequest === undefined
         ? selectBinding(bindingId)

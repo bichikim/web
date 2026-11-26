@@ -1,4 +1,4 @@
-import {createEffect, createUniqueId, on} from 'solid-js'
+import {createEffect, createUniqueId} from 'solid-js'
 
 import type {ParameterTimelineTrack} from './timeline-keyframe-selection'
 import {TimelineParameterValueField} from './TimelineParameterValueField'
@@ -22,7 +22,7 @@ export const TimelineParameterRowLabel = (props: TimelineParameterRowLabelProps)
   const swipe = useSwipeDelete(() =>
     props.onParameterRemove === undefined ? undefined : handleRemove,
   )
-  createEffect(on(() => props.track.parameter.id, swipe.reset, {defer: true}))
+  createEffect(() => props.track.parameter.id, swipe.reset, {defer: true})
   const handlePointerDown = (event: PointerEvent) => {
     if (event.target instanceof Element && event.target.closest('input, select')) {
       return
@@ -52,8 +52,7 @@ export const TimelineParameterRowLabel = (props: TimelineParameterRowLabelProps)
 
   return (
     <div
-      class="timeline-row-label-swipe"
-      classList={{armed: swipe.armed(), dragging: swipe.dragging()}}
+      class={['timeline-row-label-swipe', {armed: swipe.armed(), dragging: swipe.dragging()}]}
       style={{'--parameter-swipe-offset': `${swipe.offset()}px`}}
     >
       <div class="timeline-row-swipe-delete" aria-hidden="true">
@@ -72,7 +71,7 @@ export const TimelineParameterRowLabel = (props: TimelineParameterRowLabelProps)
           aria-label={`${props.track.parameter.name} 타임라인 행`}
           onKeyDown={handleKeyDown}
           role="button"
-          tabIndex={props.onParameterRemove === undefined ? undefined : 0}
+          tabindex={props.onParameterRemove === undefined ? undefined : 0}
         >
           {props.track.parameter.name}
         </strong>

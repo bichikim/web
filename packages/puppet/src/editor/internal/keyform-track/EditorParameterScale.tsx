@@ -35,11 +35,13 @@ export const EditorParameterScale = (props: EditorParameterScaleProps) => {
   }
   return (
     <div
-      class="parameter-track-scale"
-      classList={{
-        'parameter-grid-scale-x': props.axis === 'x',
-        'parameter-grid-scale-y': props.axis === 'y',
-      }}
+      class={[
+        'parameter-track-scale',
+        {
+          'parameter-grid-scale-x': props.axis === 'x',
+          'parameter-grid-scale-y': props.axis === 'y',
+        },
+      ]}
       aria-hidden="true"
     >
       <For each={values()}>

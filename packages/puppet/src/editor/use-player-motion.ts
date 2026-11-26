@@ -10,17 +10,18 @@ interface PlayerMotionOptions {
 export const usePlayerMotion = (options: PlayerMotionOptions) => {
   let appliedPlayer: Player | null = null
   let appliedMotion: string | undefined
-  createEffect(() => {
-    const player = options.player()
-    const motionId = options.motionId()
-    if (
-      player !== null &&
-      motionId !== undefined &&
-      (player !== appliedPlayer || motionId !== appliedMotion)
-    ) {
-      player.setMotion(motionId)
-      appliedPlayer = player
-      appliedMotion = motionId
-    }
-  })
+  createEffect(
+    () => ({motionId: options.motionId(), player: options.player()}),
+    ({player, motionId}) => {
+      if (
+        player !== null &&
+        motionId !== undefined &&
+        (player !== appliedPlayer || motionId !== appliedMotion)
+      ) {
+        player.setMotion(motionId)
+        appliedPlayer = player
+        appliedMotion = motionId
+      }
+    },
+  )
 }

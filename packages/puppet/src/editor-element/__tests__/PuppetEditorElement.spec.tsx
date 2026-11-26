@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {onCleanup} from 'solid-js'
+import {flush, onCleanup, onSettled} from 'solid-js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import type {PuppetEditorProps} from '../../editor/types'
 import {createEditorControl} from '../../editor/create-editor-control'
@@ -28,7 +28,9 @@ vi.mock('../../editor/PuppetEditor', () => ({
       setPanelOpen: () => undefined,
       stop: () => undefined,
     })
-    props.onControl?.(control)
+    onSettled(() => {
+      props.onControl?.(control)
+    })
     return <div />
   },
 }))
@@ -36,6 +38,7 @@ vi.mock('../../editor/PuppetEditor', () => ({
 const connect = () => {
   const element = document.createElement(PUPPET_EDITOR_TAG_NAME)
   document.body.append(element)
+  flush()
   return element
 }
 const binding = () => (mocks.editor.mock.lastCall?.[0] as PuppetEditorProps).model

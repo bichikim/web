@@ -1,5 +1,5 @@
 import 'virtual:uno.css'
-import {render} from 'solid-js/web'
+import {render} from '@solidjs/web'
 import {initializeDesktopMenu} from './desktop/menu'
 
 import {WorkspaceApp} from './WorkspaceApp'

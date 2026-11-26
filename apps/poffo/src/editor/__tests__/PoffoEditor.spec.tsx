@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import {createResource, onMount, Suspense} from 'solid-js'
+import {createMemo, Loading, onSettled} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createEmptyDocument, serializePoffoDocument} from '@winter-love/puppet/player'
 import {createEditorControl, packTextureAtlas, PuppetEditor} from '@winter-love/puppet/editor'
@@ -25,7 +25,7 @@ afterEach(() => {
 })
 
 const PendingPage = (props: {readonly ready: Promise<string>}) => {
-  const [value] = createResource(() => props.ready)
+  const value = createMemo(() => props.ready)
   return <span>{value()}</span>
 }
 
@@ -47,7 +47,7 @@ test('should initialize the restored editor independently of a pending sibling p
       setPanelOpen: () => {},
       stop: () => {},
     })
-    onMount(() => props.onControl?.(control))
+    onSettled(() => props.onControl?.(control))
     return <span>모델 편집</span>
   })
   const ready = Promise.withResolvers<string>()
@@ -55,10 +55,12 @@ test('should initialize the restored editor independently of a pending sibling p
   const view = render(() => {
     const model = createModelSession({document: createEmptyDocument(), sessionId: 'restored'})
     return (
-      <Suspense fallback={<span>다른 화면 준비 중</span>}>
+      <>
         <PoffoEditor model={model} onControl={onControl} />
-        <PendingPage ready={ready.promise} />
-      </Suspense>
+        <Loading fallback={<span>다른 화면 준비 중</span>}>
+          <PendingPage ready={ready.promise} />
+        </Loading>
+      </>
     )
   })
   expect(view.getByText('다른 화면 준비 중')).toBeVisible()

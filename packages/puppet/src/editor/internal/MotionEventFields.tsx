@@ -1,4 +1,4 @@
-import {Index} from 'solid-js'
+import {For} from 'solid-js'
 import {EditorButton, EditorNumberField} from '../../design-system'
 import type {PuppetDocument, PuppetMotion, PuppetMotionEvent} from '../../player/document'
 import {setMotionEvent, setMotionSettings} from './motion-settings'
@@ -36,7 +36,7 @@ export const MotionEventFields = (props: MotionEventFieldsProps) => {
         Events have no ID; rows are addressed by position so edits keep them mounted. A time edit
         does not reorder them (playback sorts events itself), so every row keeps its event.
       */}
-      <Index each={events()}>
+      <For keyed={false} each={events()}>
         {(event, index) => (
           <div class="editor-color-row">
             <EditorNumberField
@@ -67,7 +67,7 @@ export const MotionEventFields = (props: MotionEventFieldsProps) => {
             </EditorButton>
           </div>
         )}
-      </Index>
+      </For>
       <EditorButton
         disabled={props.disabled}
         onClick={() => apply([...events(), {time: props.currentTime, value: 'event'}])}

@@ -1,6 +1,6 @@
 import type {PuppetParameter, PuppetParameterInfluence} from '../../player/document'
 import type {PuppetParameterValueMap} from '../../deformation'
-import {createEffect, createMemo, createSignal, on, onCleanup} from 'solid-js'
+import {createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
 import type {InfluencePreset, useInfluenceDraft} from './use-influence-draft'
 
 const WHOLE_PERCENT = 100
@@ -49,7 +49,9 @@ export const useInfluenceSettings = (props: InfluenceRelationProps) => {
   const [expanded, setExpanded] = createSignal(false)
   const relation = () => props.draft.relations()[props.index]!
   const sourceId = createMemo(() => relation().parameterId)
-  createEffect(on(sourceId, () => setChosenDirection(null)))
+  createEffect(sourceId, () => {
+    setChosenDirection(null)
+  })
   const maximum = () => Math.max(...relation().points.map((point) => point.weight))
   const direction = (): InfluenceDirection => {
     const chosen = chosenDirection()

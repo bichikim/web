@@ -132,6 +132,11 @@ export default defineConfig({
         'solid/style-prop': 'warn',
       },
     },
+    // Oxlint plugin settings are project-wide. Keep the Solid 1 import rule out of Solid 2 packages.
+    {
+      files: ['apps/poffo/**/*.{ts,tsx}', 'packages/puppet/**/*.{ts,tsx}'],
+      rules: {'solid/imports': 'off'},
+    },
     // test mock files
     {
       files: ['**/__mocks__/**/*.{ts,mts,js,mjs}'],

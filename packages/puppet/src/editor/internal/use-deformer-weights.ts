@@ -1,6 +1,6 @@
 import {useWeightSelection} from './use-weight-selection'
 import {useDeformerWeightPreview} from './use-deformer-weight-preview'
-import {createEffect, createMemo, createSignal, mergeProps, on} from 'solid-js'
+import {createEffect, createMemo, createSignal, merge} from 'solid-js'
 import {getDocumentScene, type PuppetVertexReference} from '../../player'
 import {setDeformerVertexWeight, setDeformerVertexWeights} from './deformer-weights'
 import {findNodeLock} from './scene-tree'
@@ -14,7 +14,7 @@ export const useDeformerWeights = (props: SelectedDeformerProps) => {
   const INITIAL_WEIGHT = 0.5
   const [batchWeight, setBatchWeight] = createSignal(INITIAL_WEIGHT)
   const preview = useDeformerWeightPreview(
-    mergeProps(props, {
+    merge(props, {
       get boneIndex() {
         return boneIndex()
       },
@@ -45,7 +45,7 @@ export const useDeformerWeights = (props: SelectedDeformerProps) => {
   }
   const editableSelection = () => selectedVertices().filter((vertex) => !vertexLocked(vertex))
   const brush = useWeightPaint(
-    mergeProps(props, {
+    merge(props, {
       get boneIndex() {
         return boneIndex()
       },
@@ -96,23 +96,19 @@ export const useDeformerWeights = (props: SelectedDeformerProps) => {
   }
   const nodeId = createMemo(() => `${props.node.id}:${props.node.controlPoints.length}`)
   createEffect(
-    on(
-      () => props.deformerMode,
-      () => {
-        brush.stop()
-        setEnabled(false)
-      },
-      {defer: true},
-    ),
-  )
-  createEffect(
-    on(nodeId, () => {
+    () => props.deformerMode,
+    () => {
       brush.stop()
-      selection.clear()
       setEnabled(false)
-      setBoneIndex(0)
-    }),
+    },
+    {defer: true},
   )
+  createEffect(nodeId, () => {
+    brush.stop()
+    selection.clear()
+    setEnabled(false)
+    setBoneIndex(0)
+  })
   return {
     applySelection,
     batchWeight,

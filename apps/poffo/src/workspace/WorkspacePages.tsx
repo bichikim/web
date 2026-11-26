@@ -6,7 +6,7 @@ const RuntimePage = lazy(() =>
 )
 export const WorkspacePages = (props: DocumentEditorProps) => {
   const workspace = useWorkspace()!
-  const runtime = createMemo((previous) => previous || workspace.mode() !== 'editor', false)
+  const runtime = createMemo((previous = false) => previous || workspace.mode() !== 'editor')
   return (
     <>
       <div

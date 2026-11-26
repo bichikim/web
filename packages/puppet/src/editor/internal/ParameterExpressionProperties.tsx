@@ -65,7 +65,7 @@ export const ParameterExpressionProperties = (props: ParameterExpressionProperti
           // still shown keep one.
           let pendingRename: {readonly from: string; readonly to: string} | undefined
           let nextCardKey = 0
-          const cardKeys = createMemo<ReadonlyMap<string, string>>((previous) => {
+          const cardKeys = createMemo<ReadonlyMap<string, string>>((previous = new Map()) => {
             const ids = entries().map((item) => item.expression.id)
             const rename = pendingRename
             pendingRename = undefined
@@ -79,7 +79,7 @@ export const ParameterExpressionProperties = (props: ParameterExpressionProperti
                 previous.get(id) ?? inherited(id) ?? `card-${(nextCardKey += 1)}`,
               ]),
             )
-          }, new Map())
+          })
           const moveCardKey = (from: string, to: string) => {
             pendingRename = {from, to}
           }

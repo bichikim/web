@@ -1,6 +1,7 @@
 import type {ControlSizeProps} from './control-size'
 import {TextField, type TextFieldInputProps} from '@kobalte/core/text-field'
-import {type JSX, splitProps} from 'solid-js'
+import {type JSX} from '@solidjs/web'
+import {omit} from 'solid-js'
 
 interface EditorTextInputProps
   extends
@@ -9,11 +10,11 @@ interface EditorTextInputProps
     ControlSizeProps {}
 
 export const EditorTextInput = (props: EditorTextInputProps) => {
-  const [local, rest] = splitProps(props, ['class', 'size'])
+  const rest = omit(props, 'class', 'size')
   return (
     <TextField.Input
-      data-control-size={local.size ?? 'sm'}
-      class={`editor-control editor-text-input ${local.class ?? ''}`}
+      data-control-size={props.size ?? 'sm'}
+      class={['editor-control editor-text-input', props.class]}
       {...rest}
     />
   )

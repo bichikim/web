@@ -12,8 +12,10 @@ export const EditorLayerTreeToggle = (props: EditorLayerTreeToggleProps) => (
   >
     <span
       aria-hidden="true"
-      class="puppet-icon puppet-icon-caret-right-filled layer-tree-toggle-icon puppet-layer-tree-toggle-icon"
-      classList={{expanded: props.expanded}}
+      class={[
+        'puppet-icon puppet-icon-caret-right-filled layer-tree-toggle-icon puppet-layer-tree-toggle-icon',
+        {expanded: props.expanded},
+      ]}
     />
   </Collapsible.Trigger>
 )

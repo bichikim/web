@@ -26,13 +26,13 @@ export const DeformerRotationControls = (props: DeformerRotationControlsProps) =
   }
 
   return (
-    <g class="rotation-deformer-controls" classList={{blocked: !props.editable}}>
+    <g class={['rotation-deformer-controls', {blocked: !props.editable}]}>
       <line x1={props.origin.x} x2={props.handle.x} y1={props.origin.y} y2={props.handle.y} />
       <circle
-        aria-disabled={!props.editable}
+        aria-disabled={props.editable ? 'false' : 'true'}
         aria-keyshortcuts="Enter Space"
         aria-label="자유 변형 회전 중심"
-        aria-pressed={props.isSelected({kind: 'rotationOrigin'})}
+        aria-pressed={props.isSelected({kind: 'rotationOrigin'}) ? 'true' : 'false'}
         class="rotation-origin-hit"
         cx={props.origin.x}
         cy={props.origin.y}
@@ -45,20 +45,18 @@ export const DeformerRotationControls = (props: DeformerRotationControlsProps) =
       />
       <circle
         aria-hidden="true"
-        class="rotation-origin"
-        classList={{selected: props.isSelected({kind: 'rotationOrigin'})}}
+        class={['rotation-origin', {selected: props.isSelected({kind: 'rotationOrigin'})}]}
         cx={props.origin.x}
         cy={props.origin.y}
         pointer-events="none"
         r={props.radius * ROTATION_ORIGIN_RADIUS_MULTIPLIER}
       />
       <circle
-        aria-disabled={!props.editable}
+        aria-disabled={props.editable ? 'false' : 'true'}
         aria-keyshortcuts="Enter Space"
         aria-label="자유 변형 회전 핸들"
-        aria-pressed={props.isSelected({kind: 'rotation'})}
-        class="angle-handle"
-        classList={{selected: props.isSelected({kind: 'rotation'})}}
+        aria-pressed={props.isSelected({kind: 'rotation'}) ? 'true' : 'false'}
+        class={['angle-handle', {selected: props.isSelected({kind: 'rotation'})}]}
         cx={props.handle.x}
         cy={props.handle.y}
         r={props.radius}

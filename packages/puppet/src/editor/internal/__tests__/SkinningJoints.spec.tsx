@@ -10,11 +10,11 @@ test('should render accessible joint markers and select them by pointer and keyb
   const document = createSkinDocument()
   const session = createSkinSession()
   const view = render(() => (
-    <SkinSessionContext.Provider value={session}>
+    <SkinSessionContext value={session}>
       <svg>
         <SkinningJoints document={document} />
       </svg>
-    </SkinSessionContext.Provider>
+    </SkinSessionContext>
   ))
   const shoulder = view.getByRole('button', {name: 'Shoulder 스키닝 관절 선택'})
   const elbow = view.getByRole('button', {name: 'Elbow 스키닝 관절 선택'})

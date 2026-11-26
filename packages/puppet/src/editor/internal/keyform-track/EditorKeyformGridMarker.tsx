@@ -148,10 +148,9 @@ export const EditorKeyformGridMarker = (props: EditorKeyformGridMarkerProps) => 
     <EditorDiamondButton
       aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown"
       aria-label={label()}
-      aria-pressed={props.active === true}
+      aria-pressed={props.active === true ? 'true' : 'false'}
       data-tooltip={label()}
-      class="parameter-grid-keyform"
-      classList={{selected: props.active === true}}
+      class={['parameter-grid-keyform', {selected: props.active === true}]}
       style={{
         bottom: `${y() === undefined ? 0 : getParameterProgress(y()!, values()[1] ?? 0)}%`,
         left: `${x() === undefined ? 0 : getParameterProgress(x()!, values()[0] ?? 0)}%`,

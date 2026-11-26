@@ -1,5 +1,5 @@
 import {TextField} from '@kobalte/core/text-field'
-import {createSignal, onMount, Show} from 'solid-js'
+import {createSignal, onSettled, Show} from 'solid-js'
 
 import {EditorTextInput} from '../../design-system'
 
@@ -31,7 +31,7 @@ export const MotionNameEditor = (props: MotionNameEditorProps) => {
     props.onRename(name)
   }
 
-  onMount(() => {
+  onSettled(() => {
     input()?.focus()
     input()?.select()
   })

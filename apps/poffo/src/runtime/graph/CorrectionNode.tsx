@@ -64,7 +64,7 @@ export const CorrectionNode = (props: NodeProps) => {
             />
             <EditorButton
               class="nodrag nopan"
-              aria-expanded={!current().collapsed}
+              aria-expanded={current().collapsed ? 'false' : 'true'}
               aria-label={`${parameter()?.name} 보정 ${current().collapsed ? '펼치기' : '접기'}`}
               onClick={() => update({collapsed: !current().collapsed})}
             >

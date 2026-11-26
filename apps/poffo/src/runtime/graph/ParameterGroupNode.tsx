@@ -62,17 +62,19 @@ export const ParameterGroupNode = (props: NodeProps) => {
           <header class="puppet-group-title">
             <EditorButton
               class="nodrag nopan shrink-0"
-              aria-expanded={!current().collapsed}
+              aria-expanded={current().collapsed ? 'false' : 'true'}
               aria-label={`${current().name} 그룹 ${current().collapsed ? '펼치기' : '접기'}`}
               onClick={toggleCollapsed}
             >
               <span
-                class="puppet-icon"
+                class={[
+                  'puppet-icon',
+                  {
+                    'puppet-icon-chevron-down': !current().collapsed,
+                    'puppet-icon-chevron-right': current().collapsed,
+                  },
+                ]}
                 aria-hidden="true"
-                classList={{
-                  'puppet-icon-chevron-down': !current().collapsed,
-                  'puppet-icon-chevron-right': current().collapsed,
-                }}
               />
             </EditorButton>
             <GroupName group={current()} />

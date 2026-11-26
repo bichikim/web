@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import {cleanup, fireEvent, render, screen, within} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {WorkspaceNavigation} from '../WorkspaceNavigation'
 const frames = new Map<number, FrameRequestCallback>()
@@ -161,6 +161,7 @@ test('should cancel a deferred navigation when browser history changes externall
   render(() => <WorkspaceNavigation current={current()} />)
   fireEvent.click(screen.getByRole('link', {name: 'Editor'}))
   setCurrent('studio')
+  flush()
   paint()
   paint()
   expect(screen.getByRole('link', {name: 'Studio'})).toHaveAttribute('data-selected')
@@ -211,6 +212,7 @@ test('should hold the accepted destination until the next workspace is rendered'
   expect(screen.getByRole('link', {current: 'page', name: 'Editor'})).toBeVisible()
 
   setCurrent('studio')
+  flush()
   expect(screen.getByRole('link', {current: 'page', name: 'Studio'})).toHaveAttribute(
     'data-selected',
   )
@@ -223,10 +225,10 @@ test('should restore the current selection when the navigation was declined', as
   paint()
   paint()
   handoff.resolve(false)
-  await handoff.promise
-
-  expect(screen.getByRole('link', {current: 'page', name: 'Editor'})).toHaveAttribute(
-    'data-selected',
+  await waitFor(() =>
+    expect(screen.getByRole('link', {current: 'page', name: 'Editor'})).toHaveAttribute(
+      'data-selected',
+    ),
   )
 })
 

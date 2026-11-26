@@ -26,12 +26,13 @@ test.each(['blur', 'Escape'])('should cancel keyform relocation on %s', (cancel)
     new DOMRect(0, 0, 100, 20),
   )
   fireEvent(marker, pointer('pointerdown', 0))
-  globalThis.dispatchEvent(pointer('pointermove', 50))
+  fireEvent(globalThis.window, pointer('pointermove', 50))
   expect(marker).toHaveAccessibleName('p 0.5 키폼')
-  globalThis.dispatchEvent(
+  fireEvent(
+    globalThis.window,
     cancel === 'blur' ? new Event('blur') : new KeyboardEvent('keydown', {key: 'Escape'}),
   )
-  globalThis.dispatchEvent(pointer('pointerup', 50))
+  fireEvent(globalThis.window, pointer('pointerup', 50))
   expect(onMove).not.toHaveBeenCalled()
   expect(marker).toHaveAccessibleName('p 0 키폼')
 })

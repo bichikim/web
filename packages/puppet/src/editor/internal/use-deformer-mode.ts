@@ -1,4 +1,4 @@
-import {type Accessor, createEffect, createSignal} from 'solid-js'
+import {type Accessor, createSignal, createTrackedEffect} from 'solid-js'
 import type {PuppetDocument} from '../../player'
 import type {DeformerEditMode} from './DeformerMode'
 import {isDeformerRestEditable, preserveDeformerPlacement} from './deformer-placement'
@@ -11,7 +11,7 @@ interface DeformerModeOptions {
 
 export const useDeformerMode = (options: DeformerModeOptions) => {
   const [mode, setMode] = createSignal<DeformerEditMode>('pose')
-  createEffect(() => {
+  createTrackedEffect(() => {
     if (mode() === 'rest' && !isDeformerRestEditable(options.document(), options.nodeId() ?? '')) {
       setMode('pose')
     }

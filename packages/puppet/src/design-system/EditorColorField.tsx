@@ -24,12 +24,14 @@ export const EditorColorField = (props: EditorColorFieldProps) => {
   const [surface, setSurface] = createSignal<HTMLDivElement>()
   const popup = usePopoverSurface({open, surface, trigger})
   const [color, setColor] = createSignal(untrack(() => parseColor(props.value).toFormat('hsb')))
-  createEffect(() => {
-    const value = parseColor(props.value)
-    if (value.toString('hex') !== untrack(color).toString('hex')) {
-      setColor(value.toFormat('hsb'))
-    }
-  })
+  createEffect(
+    () => parseColor(props.value),
+    (value) => {
+      if (value.toString('hex') !== untrack(color).toString('hex')) {
+        setColor(value.toFormat('hsb'))
+      }
+    },
+  )
   const handleChange = (value: ReturnType<typeof parseColor>) => {
     setColor(value.toFormat('hsb'))
     const hex = value.toString('hex')
@@ -62,7 +64,7 @@ export const EditorColorField = (props: EditorColorFieldProps) => {
           ref={setSurface}
           class="mask-picker editor-color-picker"
           popover="manual"
-          data-top-layer={popup.active()}
+          data-top-layer={String(popup.active())}
           style={{
             '--color-picker-x': `${popup.position().x}px`,
             '--color-picker-y': `${popup.position().y}px`,

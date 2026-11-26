@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {expect, test} from 'vitest'
 import {createDemoDocument} from '../../../player'
 import {createHistory as useDocumentHistory} from '../../__tests__/fixtures/history'
@@ -38,7 +38,7 @@ test('should switch distance mode and retain the manual distance', () => {
     />
   ))
   expect(view.queryByRole('group', {name: '선택 파츠 붙이기'})).toBeNull()
-  setSelectedPartIds(['mesh-preview', 'shape-diamond'])
+  flush(() => setSelectedPartIds(['mesh-preview', 'shape-diamond']))
   expect(view.getByRole('group', {name: '선택 파츠 붙이기'})).toBeInTheDocument()
   expect(view.queryByRole('spinbutton', {name: '경계 연결 거리'})).toBeNull()
   fireEvent.click(view.getByRole('button', {name: '수동'}))

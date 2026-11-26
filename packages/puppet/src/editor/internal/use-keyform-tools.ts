@@ -1,4 +1,4 @@
-import {createEffect, createSignal, on} from 'solid-js'
+import {createEffect, createSignal} from 'solid-js'
 import type {EditorKeyformToolsProps} from './EditorKeyformTools'
 
 export const CUSTOM_REFERENCE = 'custom'
@@ -23,29 +23,27 @@ export const useKeyformTools = (props: EditorKeyformToolsProps) => {
     operation() === 'mirror'
       ? hasSource() && props.onMirror !== undefined
       : (props.binding?.parameterIds.length ?? 0) >= 2 && props.onGenerate !== undefined
-  createEffect(
-    on(open, (visible) => {
-      if (visible) {
-        setOperation(hasSource() ? 'mirror' : 'corners')
-        setAxis('x')
-        setCenterReference(props.centers?.length ? '0' : CUSTOM_REFERENCE)
-        setCenterValue(props.centers?.[0]?.point.x ?? 0)
-        setParameterId(parameters()[0]?.id ?? '')
-        setOverwrite(false)
-        setReference('default')
-        setPlanes('current')
-        setError(null)
-      }
-    }),
-  )
-  const referencePoint = () => props.centers?.[Number(centerReference())]?.point
+  createEffect(open, (visible) => {
+    if (visible) {
+      setOperation(hasSource() ? 'mirror' : 'corners')
+      setAxis('x')
+      setCenterReference(props.centers?.length ? '0' : CUSTOM_REFERENCE)
+      setCenterValue(props.centers?.[0]?.point.x ?? 0)
+      setParameterId(parameters()[0]?.id ?? '')
+      setOverwrite(false)
+      setReference('default')
+      setPlanes('current')
+      setError(null)
+    }
+  })
+  const getReferencePoint = (reference: string) => props.centers?.[Number(reference)]?.point
   const handleAxisChange = (value: 'x' | 'y') => {
     setAxis(value)
-    setCenterValue(referencePoint()?.[value] ?? center())
+    setCenterValue(getReferencePoint(centerReference())?.[value] ?? center())
   }
   const selectCenterReference = (reference: string) => {
     setCenterReference(reference)
-    setCenterValue(referencePoint()?.[axis()] ?? center())
+    setCenterValue(getReferencePoint(reference)?.[axis()] ?? center())
   }
   /** A typed value leaves the chosen reference. */
   const setCenter = (value: number) => {

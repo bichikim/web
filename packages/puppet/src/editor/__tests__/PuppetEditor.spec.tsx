@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, render} from '@solidjs/testing-library'
-import {createResource, onCleanup, onMount, Suspense} from 'solid-js'
+import {createMemo, Loading, onCleanup, onSettled} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createElementModel} from '../../editor-element/create-element-model'
 import {createEmptyDocument} from '../../player'
@@ -20,7 +20,7 @@ test('should release a suspended editor before reporting its controller without 
   const stopped = vi.fn()
   const reported = vi.fn()
   vi.mocked(EditorBody).mockImplementation((props) => {
-    const [pending] = createResource(() => new Promise<never>(() => {}))
+    const pending = createMemo(() => new Promise<never>(() => {}))
     onCleanup(released)
     const control = createEditorControl({
       model: props.model,
@@ -39,15 +39,15 @@ test('should release a suspended editor before reporting its controller without 
       setPanelOpen: () => {},
       stop: stopped,
     })
-    onMount(() => props.onControl?.(control))
+    onSettled(() => props.onControl?.(control))
     return <span>{pending()}</span>
   })
   const view = render(() => {
     const model = createElementModel({document: createEmptyDocument(), sessionId: 'host'})
     return (
-      <Suspense fallback={<span>Loading</span>}>
+      <Loading fallback={<span>Loading</span>}>
         <PuppetEditor model={model} onControl={reported} />
-      </Suspense>
+      </Loading>
     )
   })
   expect(reported).not.toHaveBeenCalled()

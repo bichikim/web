@@ -6,7 +6,7 @@ import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import {createDemoDocument, type PuppetDocument} from '../../../player'
 import {EditorTimeline} from '../EditorTimeline'
-import {createTimelineTestDocument} from './timeline/fixtures'
+import {createTimelineTestDocument, expectNoUnexpectedTimelineWarnings} from './timeline/fixtures'
 
 const createSelectionPreservationDocument = (): PuppetDocument => {
   const document = createDemoDocument()
@@ -41,7 +41,7 @@ beforeEach(() => {
 
 afterEach(() => {
   try {
-    expect(console.warn).not.toHaveBeenCalled()
+    expectNoUnexpectedTimelineWarnings()
   } finally {
     cleanup()
     vi.restoreAllMocks()
@@ -106,15 +106,15 @@ describe('EditorTimeline', () => {
     const row = view.getByRole('button', {name: 'Angle Y 타임라인 행'})
 
     expect(angleXTrack).toBeVisible()
-    row.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 280}))
-    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 200}))
-    globalThis.dispatchEvent(new MouseEvent('pointerup'))
+    fireEvent(row, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 280}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 200}))
+    fireEvent(globalThis.window, new MouseEvent('pointerup'))
     expect(angleYTrack).toBeVisible()
 
-    row.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
+    fireEvent(row, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 280}))
     expect(view.getByText('놓아 삭제')).toBeVisible()
-    globalThis.dispatchEvent(new MouseEvent('pointerup'))
+    fireEvent(globalThis.window, new MouseEvent('pointerup'))
 
     expect(view.queryByLabelText('Angle Y 트랙')).not.toBeInTheDocument()
     expect(view.getByLabelText('Angle X 트랙')).toBeVisible()
@@ -157,9 +157,9 @@ describe('EditorTimeline', () => {
     ))
     const row = view.getByRole('button', {name: 'Angle X 타임라인 행'})
 
-    row.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
-    globalThis.dispatchEvent(new MouseEvent('pointerup'))
+    fireEvent(row, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 280}))
+    fireEvent(globalThis.window, new MouseEvent('pointerup'))
 
     expect(view.queryByRole('button', {name: 'Angle X 타임라인 행'})).not.toBeInTheDocument()
     const nextRow = view.getByRole('button', {name: 'Angle Y 타임라인 행'})
@@ -180,7 +180,7 @@ describe('EditorTimeline', () => {
 
     fireEvent.keyDown(view.getByRole('button', {name: '타임라인 파라미터 추가'}), {key: 'Enter'})
     const parameter = await screen.findByRole('menuitem', {name: 'Angle X'})
-    parameter.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+    fireEvent(parameter, new MouseEvent('pointerup', {bubbles: true, button: 0}))
 
     expect(view.getByLabelText('Angle X 트랙')).toBeVisible()
     expect(document().motions[0]?.timelineParameterIds).toEqual(['angle-x'])

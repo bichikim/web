@@ -4,7 +4,7 @@ import {createKeyedParameter} from './parameter-keyforms/fixtures'
 
 import {fireEvent, render} from '@solidjs/testing-library'
 import {transformDeformerPoint} from '../../../deformation'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 import {createDemoDocument, type PuppetSceneDeformerNode} from '../../../player'
 import {DeformerEditor} from '../DeformerEditor'
@@ -532,7 +532,7 @@ test('should end a drag before switching the selected deformer', () => {
     view.getByRole('button', {name: '자유 변형 회전 핸들'}),
     new MouseEvent('pointerdown', {bubbles: true, clientX: 330, clientY: 170}),
   )
-  setActive('second')
+  flush(() => setActive('second'))
   const before = document()
   fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 210, clientY: 220}))
   expect(document()).toBe(before)
@@ -603,7 +603,7 @@ test('should end a control point gesture when the window loses focus', () => {
     view.getByRole('button', {name: '격자 제어점 1'}),
     new MouseEvent('pointerdown', {bubbles: true, button: 0}),
   )
-  globalThis.dispatchEvent(new Event('blur'))
+  fireEvent(globalThis.window, new Event('blur'))
   expect(end).toHaveBeenCalledOnce()
   fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 300, clientY: 250}))
   expect(save).not.toHaveBeenCalled()

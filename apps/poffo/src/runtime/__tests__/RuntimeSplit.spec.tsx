@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {RuntimeSplit} from '../RuntimeSplit'
 
@@ -39,12 +39,15 @@ test('should retain independent viewer and studio sizes across mode changes', ()
   fireEvent.keyDown(divider, {key: 'ArrowRight'})
   expect(divider).toHaveAttribute('aria-valuenow', '62')
   setStudio(true)
+  flush()
   expect(divider).toHaveAttribute('aria-valuenow', '40')
   fireEvent.keyDown(divider, {key: 'ArrowLeft'})
   expect(divider).toHaveAttribute('aria-valuenow', '38')
   setStudio(false)
+  flush()
   expect(divider).toHaveAttribute('aria-valuenow', '62')
   setStudio(true)
+  flush()
   expect(divider).toHaveAttribute('aria-valuenow', '38')
 })
 

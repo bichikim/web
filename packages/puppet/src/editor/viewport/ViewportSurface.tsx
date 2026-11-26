@@ -6,28 +6,31 @@ import type {ViewportProps} from './types'
 export const ViewportSurface = (props: ViewportProps) => {
   const [renderScale, setRenderScale] = createSignal(1)
   const [status, setStatus] = createSignal<PlayerCanvasStatus>('loading')
-  createEffect(() => {
-    const listener = props.onStatusChange
-    const current = status()
-    untrack(() => listener?.(current))
-  })
+  createEffect(
+    () => ({current: status(), listener: props.onStatusChange}),
+    ({listener, current}) => {
+      listener?.(current)
+    },
+  )
   const [player, setPlayer] = createSignal<Player | null>(null)
-  createEffect(() => {
-    const listener = props.onPlayerChange
-    const current = player()
-    untrack(() => listener?.(current))
-  })
-  createEffect(() => {
-    const current = player()
-    const playing = props.playing
-    if (playing !== undefined && current !== null) {
-      if (playing) {
-        current.resume()
-      } else {
-        current.pause()
+  createEffect(
+    () => ({current: player(), listener: props.onPlayerChange}),
+    ({listener, current}) => {
+      listener?.(current)
+    },
+  )
+  createEffect(
+    () => ({current: player(), playing: props.playing}),
+    ({current, playing}) => {
+      if (playing !== undefined && current !== null) {
+        if (playing) {
+          current.resume()
+        } else {
+          current.pause()
+        }
       }
-    }
-  })
+    },
+  )
   return (
     <div class="workspace-viewport" style={{'--viewport-background': props.background}}>
       <CameraViewport

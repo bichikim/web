@@ -1,6 +1,7 @@
 import {BaseHeader} from '../workspace/BaseHeader'
 import {WorkspaceNavigation} from '../WorkspaceNavigation'
-import {createMemo, type JSX, Show} from 'solid-js'
+import {createMemo, Show} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import {RuntimeMenu} from './RuntimeMenu'
 import type {useWorkspaceLayout} from './graph/use-workspace-layout'
 interface RuntimeHeaderProps {

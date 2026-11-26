@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {createSkinSession, SkinSessionContext} from '../skin-session'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import smoothExample from '../../../../examples/three-parts-skinning.json'
 import {fireEvent, render} from '@solidjs/testing-library'
 import {expect, test} from 'vitest'
@@ -53,7 +53,7 @@ test('should connect two rotations, edit one vertex, and undo the changes', () =
   fireEvent.click(view.getByRole('button', {name: '자동 가중치 다시 계산'}))
   expect(view.getByRole('spinbutton', {name: 'Shoulder 스키닝 가중치'})).not.toHaveValue(80)
   fireEvent.click(view.getByRole('button', {name: '스키닝 해제'}))
-  history.undo()
+  flush(() => history.undo())
   expect(view.getByRole('button', {name: '스키닝 해제'})).toBeInTheDocument()
 })
 
@@ -139,7 +139,7 @@ test('should apply the parent, owner and child in one click without unrelated ro
     'wrist',
   ])
   expect(node.skinning?.influences[2]?.weights[24]).toBe(0.5)
-  history.undo()
+  flush(() => history.undo())
   expect(view.getByRole('button', {name: '스키닝 적용'})).toBeInTheDocument()
 })
 
@@ -190,16 +190,16 @@ test('should edit the joint selected in the shared session without a dropdown', 
   const initial = createSkinDocument()
   const session = createSkinSession()
   const view = render(() => (
-    <SkinSessionContext.Provider value={session}>
+    <SkinSessionContext value={session}>
       <SkinningEditor
         document={initial}
         partId={initial.parts[0]!.id}
         onDocumentChange={() => {}}
       />
-    </SkinSessionContext.Provider>
+    </SkinSessionContext>
   ))
-  session.start(initial.parts[0]!.id)
-  session.pick(initial, 'Elbow')
+  flush(() => session.start(initial.parts[0]!.id))
+  flush(() => session.pick(initial, 'Elbow'))
   expect(view.getAllByRole('spinbutton', {name: /스키닝 영향 강도/})).toHaveLength(1)
   expect(view.getByRole('spinbutton', {name: 'Elbow 스키닝 영향 강도'})).toBeTruthy()
   expect(view.queryByRole('button', {name: /스키닝 편집 관절/})).toBeNull()

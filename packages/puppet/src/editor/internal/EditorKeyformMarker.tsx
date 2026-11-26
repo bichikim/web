@@ -121,9 +121,11 @@ export const EditorKeyformMarker = (props: EditorKeyformMarkerProps) => {
     <EditorDiamondButton
       aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
       aria-label={`${props.parameter.name} ${displayValue()} ${props.label ?? '키폼'}`}
-      aria-pressed={props.active}
-      class="keyform-marker"
-      classList={{draggable: props.onMove !== undefined, dragging: dragValue() !== null}}
+      aria-pressed={props.active ? 'true' : 'false'}
+      class={[
+        'keyform-marker',
+        {draggable: props.onMove !== undefined, dragging: dragValue() !== null},
+      ]}
       style={{left: `${getParameterProgress(props.parameter, displayValue())}%`}}
       type="button"
       onClick={(event) => {

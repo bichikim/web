@@ -1,5 +1,5 @@
 import {TextField} from '@kobalte/core/text-field'
-import {createSignal, onMount} from 'solid-js'
+import {createSignal, onSettled} from 'solid-js'
 import {EditorTextInput} from '../../design-system'
 
 interface EditorParameterNameFieldProps {
@@ -26,7 +26,7 @@ export const EditorParameterNameField = (props: EditorParameterNameFieldProps) =
     props.onCancel()
   }
 
-  onMount(() => {
+  onSettled(() => {
     input()?.focus()
     input()?.select()
   })

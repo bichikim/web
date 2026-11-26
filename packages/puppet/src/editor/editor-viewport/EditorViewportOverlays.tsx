@@ -1,7 +1,8 @@
 import {getSceneNode} from '../internal/scene-graph'
 import {SkinningTools} from '../internal/SkinningTools'
-import {type JSX, Show} from 'solid-js'
-import {Portal} from 'solid-js/web'
+import {type JSX, Portal} from '@solidjs/web'
+import {Show} from 'solid-js'
+
 import type {PuppetDocument} from '../../player'
 import {DeformerEditor} from '../internal/DeformerEditor'
 import {MeshEditor} from '../MeshEditor'
@@ -29,9 +30,9 @@ export const EditorViewportOverlays = (props: EditorViewportOverlaysProps) => {
   return (
     <div
       class="editing-overlays"
-      data-hidden={!props.visible}
+      data-hidden={String(!props.visible)}
       inert={!props.visible}
-      aria-hidden={!props.visible}
+      aria-hidden={props.visible ? 'false' : 'true'}
     >
       <MeshEditor
         brushControlsMount={meshBrushMount()}

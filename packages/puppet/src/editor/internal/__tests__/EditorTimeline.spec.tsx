@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 import {
@@ -74,8 +74,8 @@ const createAllMotionTimeline = () => {
   const [document, setDocument] = createSignal<PuppetDocument>(createDemoDocument())
   const [motionId, setMotionId] = createSignal('idle-deform')
   const onMotionSeek = vi.fn((nextMotionId: string, time: number) => {
-    setMotionId(nextMotionId)
-    setCurrentTime(time)
+    flush(() => setMotionId(nextMotionId))
+    flush(() => setCurrentTime(time))
   })
   const view = render(() => (
     <EditorTimeline
@@ -135,7 +135,7 @@ describe('EditorTimeline', () => {
     const manageMotions = view.getByRole('button', {name: '모션 관리'})
     fireEvent.keyDown(manageMotions, {key: 'Enter'})
     const duplicate = await screen.findByRole('menuitem', {name: '복제'})
-    duplicate.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+    fireEvent(duplicate, new MouseEvent('pointerup', {bubbles: true, button: 0}))
 
     expect(motionId()).toBe('motion-copy')
     expect(document().motions.at(-1)?.id).toBe('motion-copy')
@@ -156,7 +156,7 @@ describe('EditorTimeline', () => {
 
     fireEvent.keyDown(manageMotions, {key: 'Enter'})
     const rename = await screen.findByRole('menuitem', {name: '이름 변경'})
-    rename.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+    fireEvent(rename, new MouseEvent('pointerup', {bubbles: true, button: 0}))
     const nameInput = view.getByRole('textbox', {name: '모션 이름'})
     fireEvent.input(nameInput, {target: {value: 'wave'}})
     fireEvent.keyDown(nameInput, {key: 'Enter'})
@@ -179,7 +179,7 @@ describe('EditorTimeline', () => {
     const manageMotions = view.getByRole('button', {name: '모션 관리'})
     fireEvent.keyDown(manageMotions, {key: 'Enter'})
     const remove = await screen.findByRole('menuitem', {name: '삭제'})
-    remove.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+    fireEvent(remove, new MouseEvent('pointerup', {bubbles: true, button: 0}))
 
     expect(motionId()).toBe('blink')
     expect(document().motions.some((motion) => motion.id === 'nod')).toBe(false)

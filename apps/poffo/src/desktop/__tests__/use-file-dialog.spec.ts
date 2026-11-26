@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {flush} from 'solid-js'
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {open} from '@tauri-apps/plugin-dialog'
@@ -54,6 +55,7 @@ test('should expose a read error that can be dismissed', async () => {
   expect(await result.openFile(options)).toBeUndefined()
   expect(result.error()).toBe('파일을 열지 못했습니다.')
   result.dismissError()
+  flush()
   expect(result.error()).toBeNull()
 })
 

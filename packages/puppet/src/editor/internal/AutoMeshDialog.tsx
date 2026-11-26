@@ -55,6 +55,23 @@ const getPresetCellSize = (preset: Exclude<AutoMeshPreset, 'custom'>, maximumSiz
   return Math.max(1, Math.ceil(maximumSize / (option?.divisions ?? DEFAULT_GRID_DIVISIONS)))
 }
 
+const AutoMeshPresets = (props: {value: AutoMeshPreset; onChange: (value: string) => void}) => (
+  <RadioGroup as="fieldset" class="auto-mesh-presets" value={props.value} onChange={props.onChange}>
+    <RadioGroup.Label as="legend">프리셋</RadioGroup.Label>
+    <For each={PRESET_OPTIONS}>
+      {(option) => (
+        <RadioGroup.Item as="label" value={option.value}>
+          <RadioGroup.ItemInput aria-label={option.label} />
+          <RadioGroup.ItemControl as="span">
+            <strong>{option.label}</strong>
+            <small>{option.description}</small>
+          </RadioGroup.ItemControl>
+        </RadioGroup.Item>
+      )}
+    </For>
+  </RadioGroup>
+)
+
 export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
   const portalMount = useEditorPortalMount()
   const [surface, setSurface] = createSignal<HTMLDivElement>()
@@ -66,20 +83,21 @@ export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
   const maximumSize = () => Math.max(props.textureWidth ?? 1, props.textureHeight ?? 1)
   const minimumCellSize = () =>
     getMinimumAutoMeshCellSize(props.textureWidth ?? 1, props.textureHeight ?? 1)
-  const getOnGenerate = () => props.onGenerate
-
-  createEffect(() => {
-    if (props.isOpen) {
+  createEffect(
+    () => (props.isOpen ? maximumSize() : undefined),
+    (size) => {
+      if (size === undefined) {
+        return
+      }
       setPreset('balanced')
-      setCellSize(getPresetCellSize('balanced', maximumSize()))
+      setCellSize(getPresetCellSize('balanced', size))
       setAlphaThreshold(DEFAULT_ALPHA_THRESHOLD)
       setIsGenerating(false)
-    }
-  })
+    },
+  )
 
   const handlePresetChange = (value: string) => {
     const nextPreset = PRESET_OPTIONS.find((option) => option.value === value)?.value
-
     if (nextPreset !== undefined) {
       setPreset(nextPreset)
       setCellSize(getPresetCellSize(nextPreset, maximumSize()))
@@ -88,7 +106,7 @@ export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
 
   const handleSubmit = async (event: SubmitEvent) => {
     event.preventDefault()
-    const onGenerate = getOnGenerate()
+    const {onGenerate} = props
 
     if (onGenerate === undefined || isGenerating()) {
       return
@@ -117,7 +135,7 @@ export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
         <Dialog.Content
           {...dismissal}
           ref={setSurface}
-          aria-busy={isGenerating()}
+          aria-busy={isGenerating() ? 'true' : 'false'}
           class="auto-mesh-dialog-content"
         >
           <form onSubmit={handleSubmit}>
@@ -133,25 +151,7 @@ export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
               </Dialog.CloseButton>
             </header>
 
-            <RadioGroup
-              as="fieldset"
-              class="auto-mesh-presets"
-              value={preset()}
-              onChange={handlePresetChange}
-            >
-              <RadioGroup.Label as="legend">프리셋</RadioGroup.Label>
-              <For each={PRESET_OPTIONS}>
-                {(option) => (
-                  <RadioGroup.Item as="label" value={option.value}>
-                    <RadioGroup.ItemInput aria-label={option.label} />
-                    <RadioGroup.ItemControl as="span">
-                      <strong>{option.label}</strong>
-                      <small>{option.description}</small>
-                    </RadioGroup.ItemControl>
-                  </RadioGroup.Item>
-                )}
-              </For>
-            </RadioGroup>
+            <AutoMeshPresets value={preset()} onChange={handlePresetChange} />
 
             <div class="auto-mesh-settings">
               <label>

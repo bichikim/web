@@ -23,8 +23,8 @@ export interface EditorKeyformPanelProps {
   readonly onBindingSelect?: (bindingId: string) => void
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
-  readonly onKeyformAdd?: () => void
-  readonly onKeyformDelete?: () => void
+  readonly onKeyformAdd?: (values: PuppetParameterValues) => void
+  readonly onKeyformDelete?: (values: PuppetParameterValues) => void
   /** Deletes a 3D binding's plane at third value `value`. */
   readonly onKeyformPlaneDelete?: (bindingId: string, value: number) => void
   readonly onKeyformMove?: (

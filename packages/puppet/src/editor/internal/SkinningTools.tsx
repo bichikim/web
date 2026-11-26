@@ -1,7 +1,7 @@
 import {SkinningJoints} from './SkinningJoints'
 import {getDeformerPreviewDocument} from './mesh-preview'
 import {SkinningControls} from './SkinningControls'
-import {Index, Show} from 'solid-js'
+import {For, Show} from 'solid-js'
 import {type SkinningToolsProps, useSkinningTools} from './use-skinning-tools'
 import {getEditorViewBox} from './viewport'
 
@@ -19,7 +19,7 @@ export const SkinningTools = (props: SkinningToolsProps) => {
         <div class="skin-inspection">
           <svg
             aria-label="스키닝 가중치 편집 영역"
-            tabIndex={0}
+            tabindex={0}
             preserveAspectRatio="xMidYMid meet"
             viewBox={`${viewBox().x} ${viewBox().y} ${viewBox().width} ${viewBox().height}`}
             onPointerDown={state.start}
@@ -35,12 +35,12 @@ export const SkinningTools = (props: SkinningToolsProps) => {
               }
             }}
           >
-            <Index each={state.triangles()}>
+            <For keyed={false} each={state.triangles()}>
               {(triangle) => (
                 <polygon
                   class="skin-heat-triangle"
-                  data-flipped={triangle().flipped}
-                  data-stretched={triangle().stretched}
+                  data-flipped={String(triangle().flipped)}
+                  data-stretched={String(triangle().stretched)}
                   style={{
                     '--weight':
                       triangle().indices.reduce((sum, index) => sum + weight(index), 0) /
@@ -62,19 +62,19 @@ export const SkinningTools = (props: SkinningToolsProps) => {
                   </title>
                 </polygon>
               )}
-            </Index>
-            <Index each={state.binding()!.influences[0]!.weights}>
+            </For>
+            <For keyed={false} each={state.binding()!.influences[0]!.weights}>
               {(_, index) => (
                 <circle
                   class="skin-weight-point"
-                  data-selected={state.selected().includes(index)}
+                  data-selected={String(state.selected().includes(index))}
                   style={{'--weight': weight(index)}}
                   cx={state.positions()[index * 2]}
                   cy={state.positions()[index * 2 + 1]}
                   role="button"
-                  tabIndex={state.tool() === 'select' ? 0 : undefined}
+                  tabindex={state.tool() === 'select' ? 0 : undefined}
                   aria-label={`정점 ${index + 1} 가중치 ${Math.round(weight(index) * PERCENT)}%`}
-                  aria-pressed={state.selected().includes(index)}
+                  aria-pressed={state.selected().includes(index) ? 'true' : 'false'}
                   onPointerDown={(event) => {
                     if (state.tool() === 'select') {
                       event.stopPropagation()
@@ -90,7 +90,7 @@ export const SkinningTools = (props: SkinningToolsProps) => {
                   }}
                 />
               )}
-            </Index>
+            </For>
             <Show when={state.cursor() !== null && state.tool() !== 'select'}>
               <circle
                 class="weight-brush-ring"

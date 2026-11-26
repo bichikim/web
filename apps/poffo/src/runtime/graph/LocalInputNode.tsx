@@ -64,7 +64,7 @@ export const LocalInputNode = (props: LocalInputNodeProps) => {
                 ) : (
                   <EditorButton
                     aria-label={`${label()} 토글`}
-                    aria-pressed={value() === 1}
+                    aria-pressed={value() === 1 ? 'true' : 'false'}
                     onClick={() => graph.controls.setInputValue(input, value() === 1 ? 0 : 1)}
                   >
                     {label()} · {value() === 1 ? '켜짐 · 1' : '꺼짐 · 0'}

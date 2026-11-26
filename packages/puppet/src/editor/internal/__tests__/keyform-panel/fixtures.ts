@@ -1,3 +1,4 @@
+import {flush} from 'solid-js'
 import {createKeyedParameter} from '../parameter-keyforms/fixtures'
 import {createDemoDocument} from '../../../../player'
 import {insertParameterKeyform} from '../../parameter-keyforms'
@@ -47,5 +48,5 @@ export const dispatchPointerEvent = (options: DispatchPointerEventOptions) => {
     clientY: options.clientY ?? 0,
   })
   Object.defineProperty(event, 'pointerId', {value: options.pointerId})
-  options.target.dispatchEvent(event)
+  flush(() => options.target.dispatchEvent(event))
 }

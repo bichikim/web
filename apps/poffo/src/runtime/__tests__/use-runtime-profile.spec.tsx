@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {flush} from 'solid-js'
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, expect, test} from 'vitest'
 import {createDemoDocument} from '@winter-love/puppet/player'
@@ -39,6 +40,7 @@ test('should automatically restore unsaved changes from the current tab session'
     inputs: {buttonValue: 1, manualValue: 0.7},
     view: {camera: {x: 120, y: -80, zoom: 0.75}, fitted: false},
   })
+  flush()
   first.cleanup()
   const restored = renderHook(() => useRuntimeProfile(() => document))
   expect(restored.result.profile()?.view).toEqual({

@@ -27,40 +27,45 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
-test('should expose the requested value immediately and commit after an intervening frame', () =>
-  createRoot((dispose) => {
-    const onCommit = vi.fn()
-    const state = useDeferredValue({initialValue: 'old', onCommit})
-    state.select('new')
-    expect(state.value()).toBe('new')
-    expect(state.committed()).toBe('old')
-    expect(state.pending()).toBe(true)
-    paint()
-    expect(onCommit).not.toHaveBeenCalled()
-    expect(state.committed()).toBe('old')
-    paint()
-    expect(onCommit).toHaveBeenCalledExactlyOnceWith('new')
-    expect(state.committed()).toBe('new')
-    expect(state.pending()).toBe(false)
-    dispose()
+const setup = () => {
+  const onCommit = vi.fn()
+  return createRoot((dispose) => ({
+    dispose,
+    onCommit,
+    state: useDeferredValue({initialValue: 'old', onCommit}),
   }))
+}
 
-test('should discard superseded callbacks and commit only the last requested value', () =>
-  createRoot((dispose) => {
-    const onCommit = vi.fn()
-    const state = useDeferredValue({initialValue: 'old', onCommit})
-    state.select('first')
-    paint()
-    const stale = [...frames.values()][0]!
-    state.select('last')
-    stale(0)
-    expect(state.committed()).toBe('old')
-    paint()
-    paint()
-    expect(state.value()).toBe('last')
-    expect(onCommit).toHaveBeenCalledExactlyOnceWith('last')
-    dispose()
-  }))
+test('should expose the requested value immediately and commit after an intervening frame', () => {
+  const {dispose, onCommit, state} = setup()
+  state.select('new')
+  expect(state.value()).toBe('new')
+  expect(state.committed()).toBe('old')
+  expect(state.pending()).toBe(true)
+  paint()
+  expect(onCommit).not.toHaveBeenCalled()
+  expect(state.committed()).toBe('old')
+  paint()
+  expect(onCommit).toHaveBeenCalledExactlyOnceWith('new')
+  expect(state.committed()).toBe('new')
+  expect(state.pending()).toBe(false)
+  dispose()
+})
+
+test('should discard superseded callbacks and commit only the last requested value', () => {
+  const {dispose, onCommit, state} = setup()
+  state.select('first')
+  paint()
+  const stale = [...frames.values()][0]!
+  state.select('last')
+  stale(0)
+  expect(state.committed()).toBe('old')
+  paint()
+  paint()
+  expect(state.value()).toBe('last')
+  expect(onCommit).toHaveBeenCalledExactlyOnceWith('last')
+  dispose()
+})
 
 test('should cancel pending work on reset and when its owner is disposed', () => {
   const onCommit = vi.fn()

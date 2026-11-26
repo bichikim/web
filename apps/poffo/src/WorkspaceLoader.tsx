@@ -1,5 +1,5 @@
 import {EditorLoading} from './editor/EditorLoading'
-import {Show, Suspense} from 'solid-js'
+import {Loading, Show} from 'solid-js'
 import {EditorToast} from '@winter-love/puppet/editor'
 import type {EditorAppProps} from './EditorApp'
 import {useDocumentSession} from './use-document-session'
@@ -14,11 +14,11 @@ export const WorkspaceLoader = (props: EditorAppProps) => {
   })
   return (
     <>
-      <Suspense fallback={<EditorLoading mode={props.initialWorkspace} />}>
+      <Loading fallback={<EditorLoading mode={props.initialWorkspace} />}>
         <Show when={session.document()}>
           {(document) => <ModelWorkspace {...props} document={document()} recovery={session} />}
         </Show>
-      </Suspense>
+      </Loading>
       <EditorToast
         tone="error"
         message={

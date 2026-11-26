@@ -1,4 +1,5 @@
-import {createSignal, createUniqueId, type JSX, Show} from 'solid-js'
+import {createSignal, createUniqueId, Show} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 
 import {MotionNameEditor} from './MotionNameEditor'
 import {useSwipeDelete} from './use-swipe-delete'
@@ -51,8 +52,7 @@ export const TimelineMotionName = (props: TimelineMotionNameProps) => {
 
   return (
     <div
-      class="timeline-motion-name-swipe"
-      classList={{armed: swipe.armed(), dragging: swipe.dragging()}}
+      class={['timeline-motion-name-swipe', {armed: swipe.armed(), dragging: swipe.dragging()}]}
       style={{'--timeline-motion-name-offset': `${swipe.offset()}px`}}
     >
       <div class="timeline-motion-name-delete" aria-hidden="true">

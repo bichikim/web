@@ -1,4 +1,5 @@
-import {type JSX, untrack} from 'solid-js'
+import {type JSX} from '@solidjs/web'
+import {untrack} from 'solid-js'
 import type {PuppetDocument} from '@winter-love/puppet/player'
 import {getRuntimeParameters} from '../tracking/parameter-groups'
 import {useGraphEditor} from './graph/use-graph-editor'

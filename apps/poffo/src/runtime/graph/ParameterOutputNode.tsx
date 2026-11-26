@@ -16,8 +16,7 @@ export const ParameterOutputNode = (props: NodeProps) => {
     <Show when={parameter()}>
       {(current) => (
         <section
-          class="puppet-parameter-block"
-          classList={{'puppet-parameter-row': grouped() && !props.dragging}}
+          class={['puppet-parameter-block', {'puppet-parameter-row': grouped() && !props.dragging}]}
           aria-label={`${current().name} 파라미터`}
         >
           <span>{current().name}</span>

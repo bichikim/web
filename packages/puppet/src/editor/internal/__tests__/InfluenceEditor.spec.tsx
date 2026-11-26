@@ -1,6 +1,7 @@
+import {flush} from 'solid-js'
 /** @vitest-environment jsdom */
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+
 import {expect, test, vi} from 'vitest'
 import type {PuppetParameterInfluence} from '../../../player/document'
 import {createDemoDocument} from '../../../player'
@@ -46,13 +47,13 @@ test('should group a slider gesture into one undo and update the inline controls
   fireEvent.input(slider, {target: {value: '60'}})
   fireEvent.pointerUp(slider, {pointerId: 1})
   expect(history.undoCount()).toBe(2)
-  expect(history.undo()).toBe(true)
+  expect(flush(() => history.undo())).toBe(true)
   expect(slider).toHaveValue('100')
-  expect(history.redo()).toBe(true)
+  expect(flush(() => history.redo())).toBe(true)
   expect(slider).toHaveValue('60')
   fireEvent.click(screen.getByRole('radio', {name: '중간에서 최대'}))
   expect(screen.getByRole('radio', {name: '중간에서 최대'})).toBeChecked()
-  history.undo()
+  flush(() => history.undo())
   expect(screen.getByRole('radio', {name: '약하게'})).toBeChecked()
 })
 
@@ -84,10 +85,10 @@ test('should collapse controls and the custom popover without changing saved inf
   expect(toggle).toHaveAttribute('aria-expanded', 'false')
   const animationEnd = new Event('animationend', {bubbles: true})
   Object.defineProperty(animationEnd, 'animationName', {value: ''})
-  screen
-    .getByRole('button', {name: '기준 추가'})
-    .closest('.influence-drawer')!
-    .dispatchEvent(animationEnd)
+  fireEvent(
+    screen.getByRole('button', {name: '기준 추가'}).closest('.influence-drawer')!,
+    animationEnd,
+  )
   await waitFor(() =>
     expect(screen.queryByRole('button', {name: '기준 추가'})).not.toBeInTheDocument(),
   )

@@ -1,5 +1,5 @@
 import type {useGraphEditor} from './graph/use-graph-editor'
-import {lazy, Show, Suspense} from 'solid-js'
+import {lazy, Loading, Show} from 'solid-js'
 import type {PuppetDocument} from '@winter-love/puppet/player'
 import type {RuntimeControls} from './use-runtime-controls'
 import {ParameterControls} from './ParameterControls'
@@ -42,13 +42,13 @@ export const RuntimeTools = (props: RuntimeToolsProps) => (
       />
       <Show when={props.workspace}>
         {(workspace) => (
-          <Suspense>
+          <Loading>
             <MappingGraph
               parameters={props.document.parameters ?? []}
               controls={props.controls}
               workspace={workspace()}
             />
-          </Suspense>
+          </Loading>
         )}
       </Show>
     </Show>

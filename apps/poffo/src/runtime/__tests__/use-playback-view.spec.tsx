@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, expect, test, vi} from 'vitest'
 import {usePlaybackView} from '../use-playback-view'
@@ -38,6 +38,7 @@ test('should restore saved pan and zoom without fitting them away on resize', as
   resized?.([], {} as ResizeObserver)
   expect(result.camera()).toEqual({x: 120, y: -40, zoom: 0.75})
   setSaved({camera: {x: -20, y: 30, zoom: 2}, fitted: false})
+  flush()
   expect(result.camera()).toEqual({x: -20, y: 30, zoom: 2})
   result.fit()
   await Promise.resolve()

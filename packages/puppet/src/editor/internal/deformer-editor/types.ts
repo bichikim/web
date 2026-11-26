@@ -1,5 +1,5 @@
 import type {DeformerEditMode} from '../DeformerMode'
-import type {JSX} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import type {PuppetParameterValues} from '../../../deformation'
 import type {PuppetDocument} from '../../../player'
 import type {DeformerControlSelection} from '../deformer-control-selection'

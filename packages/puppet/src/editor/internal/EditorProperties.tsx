@@ -1,4 +1,5 @@
-import {type JSX, Show} from 'solid-js'
+import {type JSX} from '@solidjs/web'
+import {Show} from 'solid-js'
 import type {UseEditorStateResult} from './use-editor-state'
 import {EditorInspector} from './EditorInspector'
 import {EditorParameterProperties} from './EditorParameterProperties'

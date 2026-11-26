@@ -1,0 +1,131 @@
+diff --git a/dist/dismissable-layer/D_MF27Ne.jsx b/dist/dismissable-layer/D_MF27Ne.jsx
+--- a/dist/dismissable-layer/D_MF27Ne.jsx
++++ b/dist/dismissable-layer/D_MF27Ne.jsx
+@@ -1,5 +1,5 @@
+ import { n as layerStack } from "../layer-stack/DUp9FXTP.jsx";
+-import { createContext, createEffect, createMemo, createSignal, omit, onSettled, untrack, useContext } from "solid-js";
++import { createContext, createEffect, createMemo, createSignal, omit, untrack, useContext } from "solid-js";
+ import { interactOutside } from "@solid-primitives/interaction";
+ import { createShortcut } from "@solid-primitives/keyboard";
+ //#region src/dismissable-layer/dismissable-layer-context.tsx
+@@ -60,22 +60,21 @@
+ 			}
+ 		});
+ 	}, { preventDefault: false });
+-	onSettled(() => {
+-		if (!ref()) return;
++	createEffect(ref, (node) => {
++		if (!node) return;
+ 		layerStack.addLayer({
+-			node: ref(),
+-			isPointerBlocking: isPointerBlocking(),
+-			dismiss: props.onDismiss
++			node,
++			isPointerBlocking: untrack(isPointerBlocking),
++			dismiss: untrack(() => props.onDismiss)
+ 		});
+-		const unregisterFromParentLayer = parentContext?.registerNestedLayer(ref());
++		const unregisterFromParentLayer = parentContext?.registerNestedLayer(node);
+ 		layerStack.assignPointerEventToLayers();
+-		layerStack.disableBodyPointerEvents(ref());
++		layerStack.disableBodyPointerEvents(node);
+ 		return () => {
+-			if (!ref()) return;
+-			layerStack.removeLayer(ref());
++			layerStack.removeLayer(node);
+ 			unregisterFromParentLayer?.();
+ 			layerStack.assignPointerEventToLayers();
+-			layerStack.restoreBodyPointerEvents(ref());
++			layerStack.restoreBodyPointerEvents(node);
+ 		};
+ 	});
+ 	createEffect(() => ({
+diff --git a/dist/dismissable-layer/DoCcOu3x.js b/dist/dismissable-layer/DoCcOu3x.js
+--- a/dist/dismissable-layer/DoCcOu3x.js
++++ b/dist/dismissable-layer/DoCcOu3x.js
+@@ -1,6 +1,6 @@
+ import { n as layerStack } from "../layer-stack/DUp9FXTP.js";
+ import { createComponent, insert, ref, spread, template } from "@solidjs/web";
+-import { createContext, createEffect, createMemo, createSignal, omit, onSettled, untrack, useContext } from "solid-js";
++import { createContext, createEffect, createMemo, createSignal, omit, untrack, useContext } from "solid-js";
+ import { interactOutside } from "@solid-primitives/interaction";
+ import { createShortcut } from "@solid-primitives/keyboard";
+ //#region src/dismissable-layer/dismissable-layer-context.tsx
+@@ -62,22 +62,21 @@
+ 			}
+ 		});
+ 	}, { preventDefault: false });
+-	onSettled(() => {
+-		if (!ref$1()) return;
++	createEffect(ref$1, (node) => {
++		if (!node) return;
+ 		layerStack.addLayer({
+-			node: ref$1(),
+-			isPointerBlocking: isPointerBlocking(),
+-			dismiss: props.onDismiss
++			node,
++			isPointerBlocking: untrack(isPointerBlocking),
++			dismiss: untrack(() => props.onDismiss)
+ 		});
+-		const unregisterFromParentLayer = parentContext?.registerNestedLayer(ref$1());
++		const unregisterFromParentLayer = parentContext?.registerNestedLayer(node);
+ 		layerStack.assignPointerEventToLayers();
+-		layerStack.disableBodyPointerEvents(ref$1());
++		layerStack.disableBodyPointerEvents(node);
+ 		return () => {
+-			if (!ref$1()) return;
+-			layerStack.removeLayer(ref$1());
++			layerStack.removeLayer(node);
+ 			unregisterFromParentLayer?.();
+ 			layerStack.assignPointerEventToLayers();
+-			layerStack.restoreBodyPointerEvents(ref$1());
++			layerStack.restoreBodyPointerEvents(node);
+ 		};
+ 	});
+ 	createEffect(() => ({
+diff --git a/dist/slider/BINRqWa9.jsx b/dist/slider/BINRqWa9.jsx
+--- a/dist/slider/BINRqWa9.jsx
++++ b/dist/slider/BINRqWa9.jsx
+@@ -9,7 +9,7 @@
+ import { t as FormControlLabel } from "../form-control-label/Dva3OScj.jsx";
+ import { a as stopEventDefaultAndPropagation, i as linearScale, n as getNextSortedValues, r as hasMinStepsBetweenValues, t as getClosestValueIndex } from "../utils/9uVKQNrd.jsx";
+ import { combineStyle } from "@solid-primitives/props";
+-import { createContext, createEffect, createMemo, createSignal, createUniqueId, merge, omit, onSettled, useContext } from "solid-js";
++import { createContext, createEffect, createMemo, createSignal, createUniqueId, merge, omit, useContext } from "solid-js";
+ import { access } from "@solid-primitives/utils";
+ import { callHandler, clamp, snapValueToStep, visuallyHiddenStyles } from "@kobalte/utils";
+ import { createFormResetListener } from "@solid-primitives/form";
+@@ -111,8 +111,8 @@
+ 		callHandler(e, mergedProps.onBlur);
+ 		context.state.setFocusedThumb(void 0);
+ 	};
+-	onSettled(() => {
+-		context.state.setThumbEditable(index(), !context.state.isDisabled());
++	createEffect(() => [index(), !context.state.isDisabled()], ([thumbIndex, editable]) => {
++		if (thumbIndex >= 0) context.state.setThumbEditable(thumbIndex, editable);
+ 	});
+ 	return <ThumbContext value={{ index }}>
+ 			<Polymorphic as="span" ref={[setRef, mergedProps.ref]} role="slider" id={fieldProps.id()} tabindex={context.state.isDisabled() ? void 0 : 0} style={combineStyle({
+diff --git a/dist/slider/DMk4Lgrg.js b/dist/slider/DMk4Lgrg.js
+--- a/dist/slider/DMk4Lgrg.js
++++ b/dist/slider/DMk4Lgrg.js
+@@ -10,7 +10,7 @@
+ import { a as stopEventDefaultAndPropagation, i as linearScale, n as getNextSortedValues, r as hasMinStepsBetweenValues, t as getClosestValueIndex } from "../utils/9uVKQNrd.js";
+ import { createComponent, mergeProps, spread, template } from "@solidjs/web";
+ import { combineStyle } from "@solid-primitives/props";
+-import { createContext, createEffect, createMemo, createSignal, createUniqueId, merge, omit, onSettled, useContext } from "solid-js";
++import { createContext, createEffect, createMemo, createSignal, createUniqueId, merge, omit, useContext } from "solid-js";
+ import { access } from "@solid-primitives/utils";
+ import { callHandler, clamp, snapValueToStep, visuallyHiddenStyles } from "@kobalte/utils";
+ import { createFormResetListener } from "@solid-primitives/form";
+@@ -119,8 +119,8 @@
+ 		callHandler(e, mergedProps.onBlur);
+ 		context.state.setFocusedThumb(void 0);
+ 	};
+-	onSettled(() => {
+-		context.state.setThumbEditable(index(), !context.state.isDisabled());
++	createEffect(() => [index(), !context.state.isDisabled()], ([thumbIndex, editable]) => {
++		if (thumbIndex >= 0) context.state.setThumbEditable(thumbIndex, editable);
+ 	});
+ 	return createComponent(ThumbContext, {
+ 		value: { index },

@@ -1,6 +1,6 @@
 import {usePointerGesture} from './use-pointer-gesture'
 import {solveBoneIk} from '../../deformation/inverse-kinematics'
-import {type Accessor, createEffect, createMemo, createSignal, on, onCleanup} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
 import type {PuppetPoint, PuppetSceneDeformerNode} from '../../player'
 import type {DeformerEditorProps} from './DeformerEditor'
 import {moveBoneJoint} from '../../deformation/bone'
@@ -159,14 +159,12 @@ export const useBoneEditor = (props: UseBoneEditorProps) => {
 
   const {stop} = gesture
   const nodeId = createMemo(() => props.node.id)
-  createEffect(
-    on(nodeId, () => {
-      stop()
-      setInverse(false)
-      setMode('pose')
-      setSelected(null)
-    }),
-  )
+  createEffect(nodeId, () => {
+    stop()
+    setInverse(false)
+    setMode('pose')
+    setSelected(null)
+  })
   onCleanup(stop)
   return {
     bind: (element: SVGSVGElement) => {

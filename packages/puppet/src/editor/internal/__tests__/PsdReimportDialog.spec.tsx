@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {flush} from 'solid-js'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {expect, test, vi} from 'vitest'
 import type {ModelCommandResult} from '../../model'
@@ -61,6 +62,7 @@ test('should allow dismissal while loading and display a read failure without en
     return <PsdReimportDialog controller={controller} />
   })
   const loading = controller.load(new File([], 'model.psd'))
+  flush()
   expect(screen.getByRole('status')).toHaveTextContent('불러오는 중')
   expect(screen.getByRole('button', {name: '적용 0개'})).toBeDisabled()
   fireEvent.click(screen.getByRole('button', {name: '취소'}))

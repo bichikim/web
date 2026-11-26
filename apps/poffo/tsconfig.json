@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "jsxImportSource": "@solidjs/web",
     "types": ["vite/client", "@testing-library/jest-dom"],
     "isolatedModules": true,
     "moduleDetection": "force",

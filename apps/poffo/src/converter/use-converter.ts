@@ -22,22 +22,27 @@ interface ConversionError {
 
 type ConversionState = {readonly kind: 'idle' | 'working'} | ConversionReady | ConversionError
 
+interface ConversionInput {
+  readonly folder: ReadonlyArray<File>
+  readonly model: File | null
+  readonly sdk?: File
+  readonly textures: ReadonlyArray<File>
+}
+
 /** 파일 선택과 텍스처 순서 변경을 변환에 반영하며 최신 결과의 다운로드 URL을 소유한다. */
 export const useConverter = () => {
   const [state, setState] = createSignal<ConversionState>({kind: 'idle'})
-  const [source, setSource] = createSignal<File | null>(null)
-  const [folder, setFolder] = createSignal<ReadonlyArray<File>>([])
-  const [textures, setTextures] = createSignal<ReadonlyArray<File>>([])
-  let sdk: File | undefined
+  let input: ConversionInput = {folder: [], model: null, textures: []}
+  const [selection, setSelection] = createSignal(input)
   let downloadUrl: string | undefined
   let conversionId = 0
   let controller: AbortController | undefined
   const format = () => {
-    if (folder().length > 0) {
+    const {folder, model} = selection()
+    if (folder.length > 0) {
       return 'folder'
     }
-    const file = source()
-    return file === null ? undefined : getModelFormat(file.name)
+    return model === null ? undefined : getModelFormat(model.name)
   }
   const releaseDownload = () => {
     if (downloadUrl !== undefined) {
@@ -51,7 +56,10 @@ export const useConverter = () => {
     releaseDownload()
   })
 
-  const convert = async () => {
+  const convert = async (next: ConversionInput) => {
+    input = next
+    setSelection(next)
+    const {folder: files, model, sdk, textures} = next
     conversionId += 1
     const current = conversionId
     controller?.abort()
@@ -59,9 +67,6 @@ export const useConverter = () => {
     controller = nextController
     releaseDownload()
     setState({kind: 'idle'})
-    const model = source()
-    const files = folder()
-    const selected = textures()
     if (model === null && files.length === 0) {
       return
     }
@@ -74,7 +79,7 @@ export const useConverter = () => {
               model,
               sdk,
               signal: nextController.signal,
-              textures: selected,
+              textures,
             })
       if (current !== conversionId) {
         return
@@ -100,38 +105,24 @@ export const useConverter = () => {
   }
   const selectSource = (file: File | undefined) => {
     const selectedFormat = file === undefined ? undefined : getModelFormat(file.name)
-    if (selectedFormat === 'moc3' || selectedFormat === 'zip') {
-      sdk = undefined
-    }
-    setSource(file ?? null)
-    setFolder([])
-    setTextures([])
-    return convert()
+    const sdk = selectedFormat === 'moc3' || selectedFormat === 'zip' ? undefined : input.sdk
+    return convert({folder: [], model: file ?? null, sdk, textures: []})
   }
   const selectFolder = (files: ReadonlyArray<File>) => {
-    if (files.length === 0) {
-      return
+    if (files.length > 0) {
+      return convert({folder: files, model: null, textures: []})
     }
-    sdk = undefined
-    setSource(null)
-    setTextures([])
-    setFolder(files)
-    return convert()
   }
-  const selectSdk = (file: File | undefined) => {
-    sdk = file
-    return convert()
-  }
-  const selectTextures = (files: ReadonlyArray<File>) => {
-    setTextures(
-      [...files].sort((first, second) =>
+  const selectSdk = (file: File | undefined) => convert({...input, sdk: file})
+  const selectTextures = (files: ReadonlyArray<File>) =>
+    convert({
+      ...input,
+      textures: files.toSorted((first, second) =>
         first.name.localeCompare(second.name, undefined, {numeric: true}),
       ),
-    )
-    return convert()
-  }
+    })
   const moveTexture = (index: number, direction: -1 | 1) => {
-    const next = [...textures()]
+    const next = [...input.textures]
     const destination = index + direction
     if (destination < 0 || destination >= next.length) {
       return
@@ -141,8 +132,7 @@ export const useConverter = () => {
       return
     }
     next.splice(destination, 0, moved)
-    setTextures(next)
-    return convert()
+    return convert({...input, textures: next})
   }
   return {
     error: () => {
@@ -150,7 +140,7 @@ export const useConverter = () => {
       return value.kind === 'error' ? value.message : undefined
     },
     format,
-    moc3Source: () => (format() === 'moc3' ? source() : null),
+    moc3Source: () => (format() === 'moc3' ? selection().model : null),
     moveTexture,
     ready: () => {
       const value = state()
@@ -160,7 +150,7 @@ export const useConverter = () => {
     selectSdk,
     selectSource,
     selectTextures,
-    textures,
+    textures: () => selection().textures,
     working: () => state().kind === 'working',
   }
 }

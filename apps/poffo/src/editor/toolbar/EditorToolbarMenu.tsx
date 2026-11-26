@@ -8,7 +8,7 @@ import {FileAction} from '../FileAction'
 import {Popover} from '@kobalte/core/popover'
 import {Button} from '@kobalte/core/button'
 import {EditorHelp} from '../EditorHelp'
-import {createEffect, createSignal, For, Show} from 'solid-js'
+import {createSignal, createTrackedEffect, For, Show} from 'solid-js'
 import {EditorMenuAction} from './EditorMenuAction'
 import {ColorThemeDialog} from '../../color-theme/ColorThemeDialog'
 import {hasDesktopMenu} from '../../desktop/menu'
@@ -25,8 +25,8 @@ export const EditorToolbarMenu = (props: EditorToolbarMenuProps) => {
   const [menuOpen, setMenuOpen] = createSignal(false)
   const [helpOpen, setHelpOpen] = createSignal(false)
   const [themeOpen, setThemeOpen] = createSignal(false)
-  createEffect(() => {
-    if (workspace !== undefined && workspace.mode() !== 'editor') {
+  createTrackedEffect(() => {
+    if (workspace !== undefined && (workspace.mode() !== 'editor' || !workspace.active())) {
       setMenuOpen(false)
       setThemeOpen(false)
     }

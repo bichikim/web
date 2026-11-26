@@ -1,4 +1,4 @@
-import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+import {createEffect, createSignal, onSettled} from 'solid-js'
 
 interface LayerNameProps {
   readonly name: string
@@ -9,26 +9,24 @@ export const LayerName = (props: LayerNameProps) => {
   let viewport: HTMLElement | undefined
   let text: HTMLSpanElement | undefined
   const [overflow, setOverflow] = createSignal(0)
-  onMount(() => {
-    const measure = () => {
-      if (viewport !== undefined && text !== undefined) {
-        setOverflow(Math.max(0, text.scrollWidth - viewport.clientWidth))
-      }
+  const measure = () => {
+    if (viewport !== undefined && text !== undefined) {
+      setOverflow(Math.max(0, text.scrollWidth - viewport.clientWidth))
     }
-    createEffect(() => {
-      props.name
-      measure()
-    })
-    if (typeof ResizeObserver !== 'undefined') {
-      const observer = new ResizeObserver(measure)
-      if (viewport !== undefined) {
-        observer.observe(viewport)
-      }
-      if (text !== undefined) {
-        observer.observe(text)
-      }
-      onCleanup(() => observer.disconnect())
+  }
+  createEffect(() => props.name, measure)
+  onSettled(() => {
+    if (typeof ResizeObserver === 'undefined') {
+      return
     }
+    const observer = new ResizeObserver(measure)
+    if (viewport !== undefined) {
+      observer.observe(viewport)
+    }
+    if (text !== undefined) {
+      observer.observe(text)
+    }
+    return () => observer.disconnect()
   })
   return (
     <strong

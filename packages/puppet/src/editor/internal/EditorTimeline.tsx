@@ -1,5 +1,5 @@
 import {clamp} from 'es-toolkit/math'
-import {createEffect, createMemo, createSignal, createUniqueId, on, Show} from 'solid-js'
+import {createEffect, createMemo, createSignal, createUniqueId, Show, untrack} from 'solid-js'
 
 import {getDefaultParameterValueMap, type PuppetParameterValueMap} from '../../deformation'
 import {
@@ -74,16 +74,6 @@ const hasEditableSelection = (
   selection: SelectedKeyframe | null,
   onDocumentChange: EditorTimelineProps['onDocumentChange'],
 ) => selection !== null && selection.editableTimes.length > 0 && onDocumentChange !== undefined
-
-const getMotionSeekAction = (
-  motionSeek: EditorTimelineProps['onMotionSeek'],
-  motionChange: EditorTimelineProps['onMotionChange'],
-  seek: EditorTimelineProps['onSeek'],
-  action: (motionId: string, time: number) => void,
-) =>
-  motionSeek !== undefined || (motionChange !== undefined && seek !== undefined)
-    ? action
-    : undefined
 
 // eslint-disable-next-line max-lines-per-function
 export const EditorTimeline = (props: EditorTimelineProps) => {
@@ -166,10 +156,12 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
       return
     }
 
-    if (motion()?.id !== motionId) {
-      props.onMotionChange?.(motionId)
+    if (props.onMotionChange !== undefined && props.onSeek !== undefined) {
+      if (motion()?.id !== motionId) {
+        props.onMotionChange(motionId)
+      }
+      props.onSeek(time)
     }
-    props.onSeek?.(time)
   }
 
   const applyMotionEdit = (
@@ -260,44 +252,44 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
   }
 
   createEffect(
-    on(
-      () => props.currentTime,
-      (time) => {
-        setSelection((current) =>
-          retainKeyframeSelectionAtTime({
-            framesPerSecond: framesPerSecond(),
-            parameterId: activeParameterId(),
-            selection: current,
-            time: clamp(time ?? 0, 0, duration()),
-            tracks: parameterTracks(),
-          }),
-        )
-      },
-    ),
+    () => props.currentTime,
+    (time) => {
+      setSelection((current) =>
+        retainKeyframeSelectionAtTime({
+          framesPerSecond: framesPerSecond(),
+          parameterId: activeParameterId(),
+          selection: current,
+          time: clamp(time ?? 0, 0, duration()),
+          tracks: parameterTracks(),
+        }),
+      )
+    },
   )
 
-  createEffect(() => {
-    const activeMotion = motion()
-    const time = props.currentTime
+  createEffect(
+    () => ({activeMotionId: motion()?.id, time: props.currentTime}),
+    ({activeMotionId, time}, previous) => {
+      if (
+        activeMotionId === undefined ||
+        time === undefined ||
+        (previous?.activeMotionId === activeMotionId && previous.time === time)
+      ) {
+        return
+      }
 
-    if (activeMotion === undefined || time === undefined) {
-      return
-    }
-
-    const nextTime = clamp(time, 0, activeMotion.duration)
-    setMotionTimes((current) =>
-      current[activeMotion.id] === nextTime ? current : {...current, [activeMotion.id]: nextTime},
-    )
-  })
+      const nextTime = clamp(time, 0, untrack(duration))
+      setMotionTimes((current) =>
+        current[activeMotionId] === nextTime ? current : {...current, [activeMotionId]: nextTime},
+      )
+    },
+  )
 
   createEffect(
-    on(
-      () => props.motionId,
-      () => {
-        setSelection(null)
-      },
-      {defer: true},
-    ),
+    () => props.motionId,
+    () => {
+      setSelection(null)
+    },
+    {defer: true},
   )
 
   const updateParameterKeyframe = (parameterId: string, value: number) => {
@@ -419,7 +411,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
       class="timeline"
       aria-labelledby={titleId}
       inert={props.selectionPending}
-      aria-busy={props.selectionPending || undefined}
+      aria-busy={props.selectionPending ? 'true' : undefined}
     >
       <Show
         when={allMotionsVisible()}
@@ -554,12 +546,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
           onMotionAdd={getAvailableAction(props.onDocumentChange, motionActions.add)}
           onMotionDelete={getAvailableAction(props.onDocumentChange, motionActions.deleteById)}
           onKeyframeMove={getAvailableAction(props.onDocumentChange, updateKeyframeTimes)}
-          onMotionSeek={getMotionSeekAction(
-            props.onMotionSeek,
-            props.onMotionChange,
-            props.onSeek,
-            handleMotionSeek,
-          )}
+          onMotionSeek={handleMotionSeek}
           onMotionRename={getAvailableAction(props.onDocumentChange, motionActions.renameById)}
           onParameterRemove={getAvailableAction(props.onDocumentChange, parameterRows.remove)}
           onViewChange={handleViewChange}

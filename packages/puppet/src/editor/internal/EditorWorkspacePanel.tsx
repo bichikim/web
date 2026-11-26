@@ -48,7 +48,7 @@ export const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
       class="modeling-panel"
       aria-label="Parameter와 키폼 편집"
       inert={props.selectionPending}
-      aria-busy={props.selectionPending || undefined}
+      aria-busy={props.selectionPending ? 'true' : undefined}
     >
       <EditorModelingKeyformPanel
         document={props.document}

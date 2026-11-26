@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, renderHook} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {useStudioShortcuts} from '../use-studio-shortcuts'
 afterEach(() => {
@@ -87,6 +87,7 @@ test('should follow workspace availability and remove the listener when disposed
   expect(fireEvent.keyDown(document.body, {ctrlKey: true, key: 'O'})).toBe(true)
   expect(onOpen).not.toHaveBeenCalled()
   setEnabled(true)
+  flush()
   expect(fireEvent.keyDown(document.body, {ctrlKey: true, key: 'S'})).toBe(false)
   expect(onSave).toHaveBeenCalledTimes(1)
   expect(fireEvent.keyDown(document.body, {ctrlKey: true, key: 'O'})).toBe(false)
@@ -111,6 +112,7 @@ test('should save from a focused input without moving focus or handling a consum
   const consumed = new KeyboardEvent('keydown', {cancelable: true, key: 's', metaKey: true})
   consumed.preventDefault()
   globalThis.dispatchEvent(consumed)
+  flush()
   expect(onSave).toHaveBeenCalledTimes(1)
   input.remove()
 })

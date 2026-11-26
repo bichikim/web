@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {render} from 'solid-js/web'
+import {render} from '@solidjs/web'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 import {useDocumentHistoryShortcuts} from '../use-document-history-shortcuts'

@@ -1,4 +1,5 @@
-import {type Accessor, createMemo, For, type JSX, untrack} from 'solid-js'
+import {type Accessor, createMemo, For, untrack} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 
 interface KeyedForProps<T> {
   readonly each: ReadonlyArray<T>

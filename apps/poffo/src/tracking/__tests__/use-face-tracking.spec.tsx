@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {flush} from 'solid-js'
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, expect, test, vi} from 'vitest'
 import {useFaceTracking} from '../use-face-tracking'
@@ -51,8 +52,10 @@ test('should release the worker, frame callback and media stream on unmount', as
   const options = mocks.createFaceTracker.mock.lastCall![0]
   options.onReady()
   options.onFrame({timestamp: 1, values: {mouthOpen: 0.5}})
+  flush()
   expect(result.status()).toBe('tracking')
   options.onFrame({timestamp: 2, values: null})
+  flush()
   expect(result.status()).toBe('missing')
   cleanup()
   expect(dispose).toHaveBeenCalledOnce()

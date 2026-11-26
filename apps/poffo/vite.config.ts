@@ -1,7 +1,7 @@
 import {readFile, readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
 import {defineConfig, type Plugin} from 'vite'
-import solid from 'vite-plugin-solid'
+import solid from '@solidjs/vite-plugin'
 import UnoCSS from 'unocss/vite'
 
 const vendorAssets = [

@@ -1,4 +1,4 @@
-import {type Accessor, createMemo} from 'solid-js'
+import {type Accessor, createMemo, flush} from 'solid-js'
 import {
   isKeyframeSelected,
   type KeyframeSelection,
@@ -23,14 +23,12 @@ export interface UseTimelineKeyframesProps {
 
 export const useTimelineKeyframes = (props: UseTimelineKeyframesProps) => {
   let pendingMoves: ReadonlyArray<TimelineKeyframeMove> | undefined
-  const views = createMemo<ReadonlyArray<TimelineKeyframeView>>(
-    (previous) =>
-      reconcileTimelineKeyframes({
-        keyframes: props.track().keyframes,
-        moves: pendingMoves,
-        previous,
-      }),
-    [],
+  const views = createMemo<ReadonlyArray<TimelineKeyframeView>>((previous = []) =>
+    reconcileTimelineKeyframes({
+      keyframes: props.track().keyframes,
+      moves: pendingMoves,
+      previous,
+    }),
   )
   const move = (
     track: ParameterTimelineTrack,
@@ -47,6 +45,8 @@ export const useTimelineKeyframes = (props: UseTimelineKeyframesProps) => {
     }))
     try {
       props.onMove?.(track, keyframe, time)
+      // Keep the move mapping until the host document and marker identity have settled.
+      flush()
     } finally {
       pendingMoves = undefined
     }

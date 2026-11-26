@@ -1,6 +1,6 @@
 import {isTwoDimensionalParameterBinding} from '../../deformation'
 import {render} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument, type PuppetDocument, type PuppetParameterBinding} from '../../player'
 import {type ParameterEditorResult, useParameterEditor} from '../use-parameter-editor'
@@ -38,13 +38,13 @@ test('should select and insert a Glue-only keyform from either endpoint part', (
     })
     return <div />
   })
-  editor.setAllParametersVisible(false)
+  flush(() => editor.setAllParametersVisible(false))
   expect(editor.activeBindingId()).toBe('join')
-  setSelection(['shape-diamond'])
+  flush(() => setSelection(['shape-diamond']))
   expect(editor.activeBindingId()).toBe('join')
   expect(editor.activeTargetNodeIds()).toEqual(['mesh-preview', 'shape-diamond'])
-  editor.setParameterValues([0])
-  editor.addKeyform()
+  flush(() => editor.setParameterValues([0]))
+  flush(() => editor.addKeyform())
   expect(document().parameterBindings![0]!.keyforms[1]!.glue).toEqual([
     {id: 'glue-1', strength: 0.5, weight: 0.5},
   ])
@@ -77,13 +77,14 @@ test('should persist relations and allow keyform editing while their influence i
       },
     ]),
   ).toBe(true)
+  flush()
   expect(editor.influence()).toBe(0.5)
   expect(notice).toHaveBeenLastCalledWith(null)
   expect(editor.activeKeyformValues()).toEqual([0, 0])
-  editor.setParameterValues([15, 0])
-  editor.addKeyform()
+  flush(() => editor.setParameterValues([15, 0]))
+  flush(() => editor.addKeyform())
   expect(editor.activeKeyformValues()).toEqual([15, 0])
-  editor.setParameterValues([0, 30])
+  flush(() => editor.setParameterValues([0, 30]))
   expect(editor.influence()).toBe(1)
   expect(editor.activeKeyformValues()).toEqual([0, 30])
 })
@@ -103,17 +104,17 @@ test('should keep preview changes outside document history and discard them', ()
     return <div />
   })
   const influences = [{parameterId: 'angle-y', points: [{value: 0, weight: 0.25}]}]
-  editor.previewInfluences(influences)
+  flush(() => editor.previewInfluences(influences))
   expect(editor.influence()).toBe(0.25)
   expect(editor.previewDocument()).not.toBe(initial)
   expect(document()).toBe(initial)
   expect(onDocumentChange).not.toHaveBeenCalled()
-  editor.previewInfluences(null)
+  flush(() => editor.previewInfluences(null))
   expect(editor.previewDocument()).toBe(initial)
   expect(editor.influence()).toBe(1)
-  editor.previewInfluences(influences)
+  flush(() => editor.previewInfluences(influences))
   expect(editor.setInfluences(influences)).toBe(true)
-  editor.previewInfluences(null)
+  flush(() => editor.previewInfluences(null))
   expect(onDocumentChange).toHaveBeenCalledTimes(1)
   expect(editor.influence()).toBe(0.25)
 })
@@ -168,8 +169,8 @@ test('should select a visible parameter instead of an internal physics output', 
   })
 
   expect(editor.activeBindingId()).toBe(visibleBinding.id)
-  editor.setAllParametersVisible(true)
-  editor.selectBinding(hiddenBinding.id)
+  flush(() => editor.setAllParametersVisible(true))
+  flush(() => editor.selectBinding(hiddenBinding.id))
   expect(editor.activeBindingId()).toBe(visibleBinding.id)
 })
 
@@ -186,10 +187,11 @@ test('should select the mirrored destination and record one document change', ()
     })
     return <div />
   })
-  editor.selectKeyform([30, 0])
+  flush(() => editor.selectKeyform([30, 0]))
   expect(
     editor.mirrorKeyform({axis: 'x', center: 320, overwrite: true, parameterIndex: 0}),
   ).toBeNull()
+  flush()
   expect(save).toHaveBeenCalledTimes(1)
   expect(editor.activeKeyformValues()).toEqual([-30, 0])
   expect(editor.parameterValues()).toEqual([-30, 0])
@@ -221,7 +223,7 @@ test('should create four missing corners in one document change without moving t
     })
     return <div />
   })
-  expect(editor.generateCorners({overwrite: false})).toBeNull()
+  expect(flush(() => editor.generateCorners({overwrite: false}))).toBeNull()
   expect(save).toHaveBeenCalledTimes(1)
   expect(document().parameterBindings![0]!.keyforms).toHaveLength(9)
   expect(editor.parameterValues()).toEqual([0, 0])
@@ -254,10 +256,10 @@ test('should insert an interpolated keyform for a group-only binding', () => {
     })
     return <div />
   })
-  editor.setAllParametersVisible(true)
-  editor.selectBinding('group-only')
-  editor.setParameterValues([0])
-  editor.addKeyform()
+  flush(() => editor.setAllParametersVisible(true))
+  flush(() => editor.selectBinding('group-only'))
+  flush(() => editor.setParameterValues([0]))
+  flush(() => editor.addKeyform())
   expect(document().parameterBindings![0]!.keyforms).toHaveLength(3)
   expect(document().parameterBindings![0]!.keyforms[1]!.groups).toEqual([
     expect.objectContaining({

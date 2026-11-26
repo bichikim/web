@@ -1,4 +1,4 @@
-import {createEffect, createMemo, createSignal, Show} from 'solid-js'
+import {createMemo, createSignal, createTrackedEffect, Show} from 'solid-js'
 import {TextField} from '@kobalte/core/text-field'
 import {EditorTextInput} from '@winter-love/puppet/editor'
 interface EditableCardNameProps {
@@ -10,7 +10,7 @@ export const EditableCardName = (props: EditableCardNameProps) => {
   const [draft, setDraft] = createSignal<string | undefined>()
   const editing = createMemo(() => draft() !== undefined)
   let input: HTMLInputElement | undefined
-  createEffect(() => {
+  createTrackedEffect(() => {
     if (editing()) {
       input?.focus()
       input?.select()
@@ -53,7 +53,7 @@ export const EditableCardName = (props: EditableCardNameProps) => {
           role="button"
           aria-label={`${props.name} 이름 바꾸기`}
           onDblClick={begin}
-          on:keydown={nameKey}
+          onKeyDown={nameKey}
         >
           {props.name}
         </strong>
@@ -68,7 +68,7 @@ export const EditableCardName = (props: EditableCardNameProps) => {
           value={draft() ?? ''}
           onInput={(event) => setDraft(event.currentTarget.value)}
           onBlur={save}
-          on:keydown={editKey}
+          onKeyDown={editKey}
         />
       </TextField>
     </Show>

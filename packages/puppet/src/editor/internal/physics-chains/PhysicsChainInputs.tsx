@@ -1,4 +1,4 @@
-import {Index} from 'solid-js'
+import {For} from 'solid-js'
 import {EditorButton, EditorCheckbox, EditorNumberField, EditorSelect} from '../../../design-system'
 import {PUPPET_PHYSICS_AXES} from '../../../player'
 import {createChainInput, patchItem} from '../physics-chains'
@@ -8,7 +8,7 @@ import {AXIS_LABELS, isAxis, parameterLabel, parameterOptions, RATIO_STEP} from 
 export const PhysicsChainInputs = (props: ChainProps) => (
   <fieldset class="entry-fields">
     <legend>입력</legend>
-    <Index each={props.chain.inputs}>
+    <For keyed={false} each={props.chain.inputs}>
       {(input, index) => (
         <div class="entry-fields">
           <EditorSelect
@@ -82,7 +82,7 @@ export const PhysicsChainInputs = (props: ChainProps) => (
           </EditorButton>
         </div>
       )}
-    </Index>
+    </For>
     <EditorButton
       disabled={props.disabled || createChainInput(props.document, props.chain) === undefined}
       onClick={() => {

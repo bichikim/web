@@ -9,7 +9,7 @@ interface JointControlsProps {
 export const JointControls = (props: JointControlsProps) => (
   <For each={props.editor.indices()}>
     {(index) => (
-      <g classList={{blocked: !props.editor.editable()}}>
+      <g class={{blocked: !props.editor.editable()}}>
         <circle
           role="button"
           aria-label={
@@ -19,12 +19,12 @@ export const JointControls = (props: JointControlsProps) => (
                 : '회전 방향 손잡이'
               : `본 관절 ${index + 1}`
           }
-          aria-pressed={props.editor.selected() === index}
-          aria-disabled={!props.editor.editable()}
+          aria-pressed={props.editor.selected() === index ? 'true' : 'false'}
+          aria-disabled={props.editor.editable() ? 'false' : 'true'}
           tabindex={props.editor.editable() ? 0 : -1}
           cx={props.editor.point(index).x}
           cy={props.editor.point(index).y}
-          classList={{
+          class={{
             'angle-handle': props.rotation && index === 1,
             'joint-origin-hit': props.rotation && index === 0,
             'rotation-origin-hit': props.rotation && index === 0,
@@ -37,8 +37,7 @@ export const JointControls = (props: JointControlsProps) => (
         <Show when={props.rotation && index === 0}>
           <circle
             aria-hidden="true"
-            class="rotation-origin joint-origin"
-            classList={{selected: props.editor.selected() === index}}
+            class={['rotation-origin joint-origin', {selected: props.editor.selected() === index}]}
             cx={props.editor.point(index).x}
             cy={props.editor.point(index).y}
             r={props.editor.radius()}

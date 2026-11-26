@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 
 import {EditorNumberField} from '../EditorNumberField'
@@ -42,9 +42,11 @@ describe('EditorNumberField', () => {
     const input = view.getByRole('spinbutton', {name: '값'})
 
     input.focus()
+    flush()
     fireEvent.input(input, {target: {value: '60'}})
     expect(value()).toBe(60)
     setValue(30)
+    flush()
 
     expect(view.getByRole('spinbutton', {name: '값'})).toBe(input)
     expect(input).toHaveValue(30)
@@ -125,7 +127,7 @@ describe('EditorNumberField', () => {
     expect(onValueChange).toHaveBeenLastCalledWith(12)
   })
 
-  test('should finish an active edit when the field unmounts during scrubbing', () => {
+  test('should finish an active edit when the field unmounts during scrubbing', async () => {
     const onEditEnd = vi.fn()
     const onEditStart = vi.fn()
     const onValueChange = vi.fn()
@@ -145,6 +147,7 @@ describe('EditorNumberField', () => {
     expect(onEditStart).toHaveBeenCalledOnce()
 
     view.unmount()
+    await Promise.resolve()
 
     expect(onEditEnd).toHaveBeenCalledOnce()
     const changeCount = onValueChange.mock.calls.length
@@ -378,8 +381,10 @@ test.each([49.8266384778, 0.123456789012345])(
     const input = view.getByRole('spinbutton', {name: '값'})
     expect(input).toHaveValue(Number(value.toFixed(2)))
     input.focus()
+    flush()
     expect(input).toHaveValue(value)
     input.blur()
+    flush()
     expect(input).toHaveValue(Number(value.toFixed(2)))
     expect(onValueChange).not.toHaveBeenCalled()
   },
@@ -395,6 +400,7 @@ test('should retain external updates and end a drag rather than overwrite them',
   fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 100}))
   fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 120}))
   setValue(60)
+  flush()
   fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 140}))
   expect(value()).toBe(60)
   expect(input).toHaveValue(60)
@@ -460,6 +466,7 @@ test('should keep bounded integer scrubbing aligned to supported steps', () => {
       onValueChange={(next) => {
         if (Number.isInteger(next)) {
           setValue(next)
+          flush()
         }
       }}
     />

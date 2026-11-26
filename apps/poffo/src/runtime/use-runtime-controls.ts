@@ -1,7 +1,7 @@
 import {expandGroupValues} from '../tracking/expand-group-values'
 import {calibrateMouthValues} from '../tracking/mouth-calibration'
 import {useLocalInputs} from './use-local-inputs'
-import {type Accessor, createEffect, createMemo, createSignal, on} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal} from 'solid-js'
 import {type PuppetDocument, type PuppetParameterValueMap} from '@winter-love/puppet/player'
 
 import {useRuntimeHotkeys} from './use-runtime-hotkeys'
@@ -34,17 +34,15 @@ export const useRuntimeControls = (props: UseRuntimeControlsProps) => {
     ...local.inputValues(),
   }))
   let lastTimestamp: number | undefined
-  createEffect(
-    on(props.document, () => {
-      setManual({})
-      setTracked({})
-      setActiveExpression(null)
-      setModelExpressions([])
-      setRaw(null)
-      setTrackingInputs(null)
-      lastTimestamp = undefined
-    }),
-  )
+  createEffect(props.document, () => {
+    setManual({})
+    setTracked({})
+    setActiveExpression(null)
+    setModelExpressions([])
+    setRaw(null)
+    setTrackingInputs(null)
+    lastTimestamp = undefined
+  })
   const handleFrame = (frame: TrackingFrame) => {
     setRaw(frame.values)
     if (frame.values === null) {
@@ -67,15 +65,13 @@ export const useRuntimeControls = (props: UseRuntimeControlsProps) => {
   const toggleExpression = (id: string) =>
     setActiveExpression((current) => (current === id ? null : id))
   useRuntimeHotkeys({onExpression: toggleExpression, onMotion: (id) => props.onMotion(id), profile})
-  createEffect(
-    on(profile, (current) => {
-      setActiveExpression((id) =>
-        current?.expressions.some((preset) => preset.id === id) ? id : null,
-      )
-      setTracked({})
-      lastTimestamp = undefined
-    }),
-  )
+  createEffect(profile, (current) => {
+    setActiveExpression((id) =>
+      current?.expressions.some((preset) => preset.id === id) ? id : null,
+    )
+    setTracked({})
+    lastTimestamp = undefined
+  })
   const correctionValues = createMemo(() => ({...tracked(), ...local.localValues()}))
   const mappedValues = createMemo(() => ({
     ...correctionValues(),

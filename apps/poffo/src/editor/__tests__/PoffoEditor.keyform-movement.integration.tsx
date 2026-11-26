@@ -133,10 +133,10 @@ test('should commit one XY drag within the current Z and keep other keyforms int
   vi.spyOn(marker.parentElement!, 'getBoundingClientRect').mockReturnValue(
     new DOMRect(0, 0, 120, 120),
   )
-  marker.dispatchEvent(pointer('pointerdown'))
-  globalThis.dispatchEvent(pointer('pointermove'))
+  fireEvent(marker, pointer('pointerdown'))
+  fireEvent(globalThis.window, pointer('pointermove'))
   expect(onDocumentChange).not.toHaveBeenCalled()
-  globalThis.dispatchEvent(pointer('pointerup'))
+  fireEvent(globalThis.window, pointer('pointerup'))
   await waitFor(() => expect(view.getByRole('button', {name: '키폼 선택: 15, 15'})).toHaveFocus())
   expect(getValues()).toEqual([15, 15, -10])
   expect(onDocumentChange).toHaveBeenCalledOnce()

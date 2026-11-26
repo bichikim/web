@@ -287,3 +287,22 @@ test('should retain an active expression while another is toggled through the re
   await page.getByRole('button', {name: '표정 모두 해제'}).click()
   await expect.poll(async () => (await surface.screenshot()).equals(rest)).toBe(true)
 })
+
+test('should align the camera rulers and show the grabbing cursor while panning', async ({
+  page,
+}) => {
+  await page.goto('/editor')
+  const horizontal = page.getByRole('img', {name: '가로 좌표 자'})
+  const vertical = page.getByRole('img', {name: '세로 좌표 자'})
+  await expect(horizontal).toHaveCSS('grid-column-start', '2')
+  await expect(vertical).toHaveCSS('grid-row-start', '2')
+  const viewport = page.getByRole('region', {name: '모델 보기'})
+  await viewport.hover()
+  await page.mouse.down({button: 'middle'})
+  try {
+    await expect(viewport).toHaveCSS('cursor', 'grabbing')
+  } finally {
+    await page.mouse.up({button: 'middle'})
+  }
+  await expect(viewport).not.toHaveCSS('cursor', 'grabbing')
+})

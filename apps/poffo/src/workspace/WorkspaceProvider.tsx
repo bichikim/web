@@ -1,7 +1,8 @@
 import {useBufferingPreferences} from './use-buffering-preferences'
 import {createSurfaceRegistry} from './create-surface-registry'
-import {createMemo, createSignal, type JSX, Show} from 'solid-js'
-import {Portal} from 'solid-js/web'
+import {createEffect, createMemo, createSignal, Show} from 'solid-js'
+import {type JSX, Portal} from '@solidjs/web'
+
 import {WorkspaceContext} from './context'
 import {HeaderSurface} from './HeaderSurface'
 import {RenderingSettings} from './RenderingSettings'
@@ -87,13 +88,18 @@ export const WorkspaceProvider = (props: WorkspaceProviderProps) => {
   const editorFit = createMemo(() => viewports.current('editor')?.props.fitRevision)
   const fitRevision = createMemo(() => ({revision: editorFit()}))
   const headerProps = () => header()?.props ?? headers.current('editor')?.props
-  // Resource owners live outside Portal's mount effect; only its container changes on navigation.
+  // Move the mounted header intact when the active outlet changes.
+  const headerMount = (<div class="contents" />) as HTMLDivElement
+  createEffect(
+    () => header()?.mount ?? headers.current('editor')?.mount,
+    (mount) => mount?.append(headerMount),
+  )
   const headerContent = (
-    <WorkspaceContext.Provider value={context}>
+    <WorkspaceContext value={context}>
       <Show when={headerProps() !== undefined}>
         <HeaderSurface {...headerProps()!} />
       </Show>
-    </WorkspaceContext.Provider>
+    </WorkspaceContext>
   )
   const viewportContent = (
     <Show when={document() !== undefined && active() !== undefined}>
@@ -101,9 +107,9 @@ export const WorkspaceProvider = (props: WorkspaceProviderProps) => {
         {...active()!}
         fitRevision={fitRevision()}
         viewSettings={
-          <WorkspaceContext.Provider value={context}>
+          <WorkspaceContext value={context}>
             <RenderingSettings />
-          </WorkspaceContext.Provider>
+          </WorkspaceContext>
         }
         buffering={props.mode === 'viewer' && props.active !== false && buffering.enabled()}
         onBufferingChange={setBufferingInfo}
@@ -119,21 +125,17 @@ export const WorkspaceProvider = (props: WorkspaceProviderProps) => {
     </Show>
   )
   return (
-    <WorkspaceContext.Provider value={context}>
-      <ViewportContext.Provider value={{bind: viewports.bind}}>
-        {props.children}
-      </ViewportContext.Provider>
+    <WorkspaceContext value={context}>
+      <ViewportContext value={{bind: viewports.bind}}>{props.children}</ViewportContext>
       <EditorToast
         tone="error"
         message={rendering.error() ?? buffering.error() ?? undefined}
         onDismiss={dismissSettingsError}
       />
-      <Show when={header()?.mount}>
-        {(mount) => <Portal mount={mount()}>{headerContent}</Portal>}
-      </Show>
-      <Show when={viewport()?.mount}>
+      <Portal mount={headerMount}>{headerContent}</Portal>
+      <Show when={viewport()?.mount ?? viewports.current('editor')?.mount}>
         {(mount) => <Portal mount={mount()}>{viewportContent}</Portal>}
       </Show>
-    </WorkspaceContext.Provider>
+    </WorkspaceContext>
   )
 }

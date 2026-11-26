@@ -3,7 +3,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
-  For,
+  createTrackedEffect,
   onCleanup,
   type Setter,
   Show,
@@ -272,31 +272,33 @@ const useMeshPreviewRenderer = (
   const [previewRenderer, setPreviewRenderer] = createSignal<SpatialMeshPreviewRenderer>()
   const [gizmo, setGizmo] = createSignal<SpatialPreviewGizmo>()
   const [renderError, setRenderError] = createSignal<string>()
-  createEffect(() => {
-    const canvas = previewElement()
-    if (!props.isOpen || canvas === undefined) {
-      return
-    }
-    try {
-      const renderer = createSpatialMeshPreviewRenderer(canvas)
-      setRenderError(undefined)
-      setPreviewRenderer(renderer)
-      const observer =
-        typeof ResizeObserver === 'undefined'
-          ? undefined
-          : new ResizeObserver(() => setGizmo(renderer.resize()))
-      observer?.observe(canvas)
-      onCleanup(() => {
-        observer?.disconnect()
-        setPreviewRenderer(undefined)
-        setGizmo(undefined)
-        renderer.destroy()
-      })
-    } catch (error) {
-      setRenderError(error instanceof Error ? error.message : '3D 미리보기를 시작할 수 없습니다.')
-    }
-  })
-  createEffect(() => {
+  createEffect(
+    () => (props.isOpen ? previewElement() : undefined),
+    (canvas) => {
+      if (canvas === undefined) {
+        return
+      }
+      try {
+        const renderer = createSpatialMeshPreviewRenderer(canvas)
+        setRenderError(undefined)
+        setPreviewRenderer(renderer)
+        const observer =
+          typeof ResizeObserver === 'undefined'
+            ? undefined
+            : new ResizeObserver(() => setGizmo(renderer.resize()))
+        observer?.observe(canvas)
+        return () => {
+          observer?.disconnect()
+          setPreviewRenderer(undefined)
+          setGizmo(undefined)
+          renderer.destroy()
+        }
+      } catch (error) {
+        setRenderError(error instanceof Error ? error.message : '3D 미리보기를 시작할 수 없습니다.')
+      }
+    },
+  )
+  createTrackedEffect(() => {
     const renderer = previewRenderer()
     if (renderer === undefined) {
       return
@@ -482,11 +484,12 @@ const usePreviewDrag = ({
   const cancel = () => stopDrag()
   globalThis.addEventListener('blur', cancel)
   onCleanup(() => globalThis.removeEventListener('blur', cancel))
-  createEffect(() => {
-    props.isOpen
-    props.tool
-    stopDrag()
-  })
+  createEffect(
+    () => [props.isOpen, props.tool],
+    () => {
+      stopDrag()
+    },
+  )
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Escape') {
       stopDrag()
@@ -505,11 +508,14 @@ const usePreviewDrag = ({
 export const SpatialMeshPreview = (props: SpatialMeshPreviewProps) => {
   const [previewElement, setPreviewElement] = createSignal<HTMLCanvasElement>()
   const [orbit, setOrbit] = createSignal<SpatialPreviewOrbit>(DEFAULT_ORBIT)
-  createEffect(() => {
-    if (props.isOpen) {
-      setOrbit(DEFAULT_ORBIT)
-    }
-  })
+  createEffect(
+    () => props.isOpen,
+    (open) => {
+      if (open) {
+        setOrbit(DEFAULT_ORBIT)
+      }
+    },
+  )
   const mesh = createMemo(() => {
     try {
       const preview = createPreviewMesh(props.objects, props.operations)
@@ -553,7 +559,7 @@ export const SpatialMeshPreview = (props: SpatialMeshPreviewProps) => {
           onPointerUp={stopDrag}
           onPointerCancel={stopDrag}
           onLostPointerCapture={stopDrag}
-          on:keydown={handleKeyDown}
+          onKeyDown={handleKeyDown}
         />
         <Show when={props.tool === 'move' || props.tool === 'rotate' ? gizmo() : undefined}>
           {(projected) => (

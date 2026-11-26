@@ -1,11 +1,11 @@
 import {playwright} from '@vitest/browser-playwright'
 import {fileURLToPath} from 'node:url'
-import solidPlugin from 'vite-plugin-solid'
+import solidPlugin from '@solidjs/vite-plugin'
 import {defineConfig} from 'vitest/config'
 
 export default defineConfig({
   optimizeDeps: {exclude: ['es-toolkit']},
-  plugins: [solidPlugin({hot: false})],
+  plugins: [solidPlugin()],
   root: fileURLToPath(new URL('.', import.meta.url)),
   server: {
     headers: {

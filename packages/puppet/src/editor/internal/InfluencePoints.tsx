@@ -1,5 +1,5 @@
 import {EditorButton, EditorNumberField} from '../../design-system'
-import {Index} from 'solid-js'
+import {For} from 'solid-js'
 import type {InfluenceRelationProps, useInfluenceSettings} from './use-influence-settings'
 const WHOLE_PERCENT = 100
 interface InfluencePointsProps extends InfluenceRelationProps {
@@ -10,7 +10,7 @@ export const InfluencePoints = (props: InfluencePointsProps) => (
     <p>
       입력값 사이에서 적용량이 점진적으로 바뀝니다. 양 끝 바깥에서는 끝점의 적용량을 유지합니다.
     </p>
-    <Index each={props.settings.relation().points}>
+    <For keyed={false} each={props.settings.relation().points}>
       {(point, pointIndex) => (
         <div class="influence-point">
           <label>
@@ -55,7 +55,7 @@ export const InfluencePoints = (props: InfluencePointsProps) => (
           </EditorButton>
         </div>
       )}
-    </Index>
+    </For>
     <EditorButton
       disabled={!props.draft.canAddPoint(props.index)}
       onClick={() => {

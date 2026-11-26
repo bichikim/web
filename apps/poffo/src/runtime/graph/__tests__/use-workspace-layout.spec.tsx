@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import {createSignal} from 'solid-js'
-import {createStore} from 'solid-js/store'
+import {createSignal, createStore, flush} from 'solid-js'
+
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createDemoDocument, createEmptyDocument} from '@winter-love/puppet/player'
@@ -34,14 +34,19 @@ const mount = (source = () => document, layoutStorage?: Pick<Storage, 'getItem' 
   })
 test('should save moved positions and restore once without resetting subsequent profile edits', async () => {
   const first = mount()
-  first.result.setNodes(0, 'position', {x: 123, y: -45})
+  first.result.setNodes((draft) => {
+    draft[0]!.position = {x: 123, y: -45}
+  })
+  flush()
   first.result.controls.setInputValue('manualValue', 0.7)
+  flush()
   expect(first.result.controls.inputValues().manualValue).toBe(0.7)
   first.cleanup()
   const second = mount()
   await Promise.resolve()
   expect(second.result.nodes[0]?.position).toEqual({x: 123, y: -45})
   second.result.controls.setInputValue('manualValue', 0.9)
+  flush()
   expect(second.result.controls.inputValues().manualValue).toBe(0.9)
   expect(second.result.nodes[0]?.position).toEqual({x: 123, y: -45})
 })
@@ -107,7 +112,10 @@ test('should save and restore graph positions through the provided session stora
   const storage = createStorage()
   const first = mount(undefined, storage)
   const key = `puppet:studio-layout:v1:${first.result.controls.profile()!.signature}`
-  first.result.setNodes(0, 'position', {x: 123, y: -45})
+  first.result.setNodes((draft) => {
+    draft[0]!.position = {x: 123, y: -45}
+  })
+  flush()
   expect(JSON.parse(storage.getItem(key) ?? 'null')).toMatchObject({
     positions: [{id: 'manual', x: 123, y: -45}],
   })
@@ -133,7 +141,11 @@ test.each(['read-failure', 'invalid-json'] as const)(
     expect(result.workspace.error()).toBe('스튜디오 배치를 복원하지 못했습니다.')
     expect(result.nodes[0]?.position).toEqual({x: 0, y: 0})
     result.workspace.dismissError()
-    result.setNodes(0, 'position', {x: 42, y: -3})
+    flush()
+    result.setNodes((draft) => {
+      draft[0]!.position = {x: 42, y: -3}
+    })
+    flush()
     const key = `puppet:studio-layout:v1:${result.controls.profile()!.signature}`
     expect(JSON.parse(storage.getItem(key) ?? 'null')).toMatchObject({
       positions: [{id: 'manual', x: 42, y: -3}],
@@ -150,7 +162,11 @@ test('should retain graph edits after a write failure and persist later changes'
   const {result} = mount(undefined, storage)
   expect(result.workspace.error()).toBe('스튜디오 배치를 보관하지 못했습니다.')
   result.workspace.dismissError()
-  result.setNodes(0, 'position', {x: 15, y: 24})
+  flush()
+  result.setNodes((draft) => {
+    draft[0]!.position = {x: 15, y: 24}
+  })
+  flush()
   expect(result.nodes[0]?.position).toEqual({x: 15, y: 24})
   const key = `puppet:studio-layout:v1:${result.controls.profile()!.signature}`
   expect(JSON.parse(storage.getItem(key) ?? 'null')).toMatchObject({
@@ -212,6 +228,7 @@ test.each(['disposal', 'model-change'] as const)(
       mounted.cleanup()
     } else {
       setSource(createEmptyDocument())
+      flush()
     }
     await Promise.resolve()
     expect(mounted.result.nodes[0]?.position).toEqual({x: 0, y: 0})
@@ -227,6 +244,7 @@ test.each(['success', 'failure'] as const)(
     const previous = result.controls.profile()
     const pending = result.workspace.importStudio(studioFile(reading.promise))
     setSource(createEmptyDocument())
+    flush()
     const notice = '모델이 바뀌었습니다. 스튜디오 파일을 다시 선택해 주세요.'
     const profile = result.controls.profile()
     expect(result.workspace.error()).toBe(notice)
@@ -251,10 +269,13 @@ test.each([false, true])(
     const {controls, workspace} = result
     const parameter = document.parameters![0]!
     controls.setManual(parameter.id, parameter.maximum)
+    flush()
     controls.addExpression('Pose')
+    flush()
     const id = controls.activeExpression()
     expect(id).not.toBeNull()
     controls.setManual(parameter.id, parameter.minimum)
+    flush()
     const profile = controls.profile()!
     await workspace.importStudio(
       studioFile(
@@ -272,6 +293,7 @@ test.each([false, true])(
     expect(controls.manual()).toEqual({[parameter.id]: parameter.minimum})
     expect(controls.values()[parameter.id]).toBe(parameter.minimum)
     controls.clearManual()
+    flush()
     expect(controls.values()[parameter.id]).toBe(retainId ? parameter.maximum : undefined)
   },
 )

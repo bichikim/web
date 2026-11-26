@@ -1,5 +1,5 @@
 import {getDocumentParameterBindings} from './parameter-keyforms'
-import {type Accessor, createEffect, on, untrack} from 'solid-js'
+import {type Accessor, createEffect, untrack} from 'solid-js'
 import type {PuppetDocument} from '../../player'
 import {getSceneNode, type SceneSelection} from './scene-graph'
 import {useDeferredValue} from '../../use-deferred-value'
@@ -25,7 +25,8 @@ export const useEditorSelection = (options: EditorSelectionOptions) => {
   })
   const reset = () => state.reset(options.current())
   createEffect(
-    on([options.document, options.current], ([document], previous) => {
+    () => [options.document(), options.current()] as const,
+    ([document], previous) => {
       const targetRemoved =
         document !== previous?.[0] &&
         (state.value().layers.nodeIds.some((id) => getSceneNode(document, id) === undefined) ||
@@ -36,7 +37,7 @@ export const useEditorSelection = (options: EditorSelectionOptions) => {
       if (!state.pending() || targetRemoved) {
         reset()
       }
-    }),
+    },
   )
   const select = (next: EditorSelectionIntent) => {
     const current = options.current()

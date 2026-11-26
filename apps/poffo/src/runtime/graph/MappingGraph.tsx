@@ -80,7 +80,7 @@ export const MappingGraph = (props: MappingGraphProps) => {
     })
   }
   return (
-    <MappingGraphContext.Provider
+    <MappingGraphContext
       value={{
         get controls() {
           return props.controls
@@ -122,7 +122,7 @@ export const MappingGraph = (props: MappingGraphProps) => {
               edges={graph.edges}
               nodeTypes={NODE_TYPES}
               edgeTypes={EDGE_TYPES}
-              colorMode="dark"
+              forceColorMode="dark"
               ariaLabelConfig={{
                 'controls.fitView.ariaLabel': '그래프 맞춤',
                 'controls.zoomIn.ariaLabel': '그래프 확대',
@@ -156,6 +156,6 @@ export const MappingGraph = (props: MappingGraphProps) => {
           </div>
         </div>
       </section>
-    </MappingGraphContext.Provider>
+    </MappingGraphContext>
   )
 }

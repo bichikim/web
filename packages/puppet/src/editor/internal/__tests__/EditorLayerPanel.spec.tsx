@@ -9,6 +9,12 @@ import {createDeformer, type SceneSelection} from '../scene-graph'
 import {EditorLayerPanel} from '../EditorLayerPanel'
 import {convertSceneContainers} from '../container-conversion'
 
+const dispatchDrag = (row: HTMLElement, type: 'dragover' | 'drop', clientY: number) => {
+  const event = new MouseEvent(type, {bubbles: true, cancelable: true, clientY})
+  Object.defineProperty(event, 'dataTransfer', {value: {dropEffect: 'none'}})
+  fireEvent(row, event)
+}
+
 describe('EditorLayerPanel', () => {
   test('should preserve the filter while Escape is cancelling IME composition', () => {
     const view = render(() => <EditorLayerPanel document={createDemoDocument()} />)
@@ -263,11 +269,9 @@ describe('EditorLayerPanel', () => {
     fireEvent.dragStart(
       view.getByRole('button', {name: 'mesh-preview 레이어 선택'}).closest('[role="treeitem"]')!,
     )
-    groupRow!.dispatchEvent(
-      new MouseEvent('dragover', {bubbles: true, cancelable: true, clientY: 120}),
-    )
+    dispatchDrag(groupRow!, 'dragover', 120)
     expect(groupRow).toHaveClass('drop-inside')
-    groupRow!.dispatchEvent(new MouseEvent('drop', {bubbles: true, cancelable: true, clientY: 120}))
+    dispatchDrag(groupRow!, 'drop', 120)
 
     expect(document().scene?.roots).toHaveLength(1)
     expect(document().scene?.roots[0]).toMatchObject({
@@ -296,13 +300,9 @@ describe('EditorLayerPanel', () => {
       y: 100,
     })
     fireEvent.dragStart(nestedPart!)
-    currentGroupRow!.dispatchEvent(
-      new MouseEvent('dragover', {bubbles: true, cancelable: true, clientY: 139}),
-    )
+    dispatchDrag(currentGroupRow!, 'dragover', 139)
     expect(currentGroupRow).toHaveClass('drop-after')
-    currentGroupRow!.dispatchEvent(
-      new MouseEvent('drop', {bubbles: true, cancelable: true, clientY: 139}),
-    )
+    dispatchDrag(currentGroupRow!, 'drop', 139)
 
     expect(document().scene?.roots.map((node) => node.id)).toEqual(['mesh-preview', 'shapes'])
   })
@@ -471,14 +471,14 @@ test('should offer clipboard actions and rename in the layer context menu', asyn
   open()
   const copy = await screen.findByRole('menuitem', {name: '복사'})
   expect(screen.queryByRole('menuitem', {name: '붙여넣기'})).not.toBeInTheDocument()
-  copy.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  fireEvent(copy, new MouseEvent('pointerup', {bubbles: true, button: 0}))
   open()
   const paste = await screen.findByRole('menuitem', {name: '붙여넣기'})
-  paste.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  fireEvent(paste, new MouseEvent('pointerup', {bubbles: true, button: 0}))
   expect(document().parts).toHaveLength(4)
   open()
   const rename = await screen.findByRole('menuitem', {name: '이름 바꾸기'})
-  rename.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  fireEvent(rename, new MouseEvent('pointerup', {bubbles: true, button: 0}))
   expect(view.getByRole('textbox', {name: 'mesh-preview 파츠 이름'})).toBeVisible()
 })
 
@@ -499,11 +499,11 @@ test('should cut and paste into an empty layer list', async () => {
   ))
   fireEvent.contextMenu(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
   const cut = await screen.findByRole('menuitem', {name: '잘라내기'})
-  cut.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  fireEvent(cut, new MouseEvent('pointerup', {bubbles: true, button: 0}))
   expect(document().parts).toHaveLength(0)
   fireEvent.contextMenu(view.getByLabelText('레이어 목록 스크롤'))
   const paste = await screen.findByRole('menuitem', {name: '붙여넣기'})
-  paste.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  fireEvent(paste, new MouseEvent('pointerup', {bubbles: true, button: 0}))
   expect(document().parts).toHaveLength(source.parts.length)
 })
 

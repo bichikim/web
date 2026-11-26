@@ -5,8 +5,15 @@ import {useCardDeletion} from './use-card-deletion'
 import {useParameterDrop} from './use-parameter-drop'
 import {createGraphElements} from './create-graph-elements'
 import {type Edge, type Node} from '@dschz/solid-flow'
-import {batch, createEffect, createMemo, createSignal, untrack} from 'solid-js'
-import {createStore, reconcile} from 'solid-js/store'
+import {
+  createMemo,
+  createSignal,
+  createStore,
+  createTrackedEffect,
+  reconcile,
+  untrack,
+} from 'solid-js'
+
 import type {PuppetParameter} from '@winter-love/puppet/player'
 import type {RuntimeControls} from '../use-runtime-controls'
 import {type GraphConnection, resolveConnection} from './resolve-connection'
@@ -40,7 +47,7 @@ export const useGraphEditor = (props: UseGraphEditorProps) => {
       setExtraPorts((previous) => [...new Set([...previous, id])])
     }
   }
-  createEffect(() => {
+  createTrackedEffect(() => {
     revision()
     const mappings = visible()
     const elements = createGraphElements({
@@ -74,27 +81,26 @@ export const useGraphEditor = (props: UseGraphEditorProps) => {
     const result = resolve(connection)
     const profile = props.controls.profile()
     if (result !== undefined && profile !== undefined) {
-      batch(() => {
-        deletion.revealCard(`mapping:${result.mapping.parameterId}`)
-        if (result.previousId !== undefined && result.previousId !== result.mapping.parameterId) {
-          setNodes(
-            (node) => node.id === `mapping:${result.previousId}`,
-            'id',
-            `mapping:${result.mapping.parameterId}`,
-          )
-        }
-        props.controls.updateProfile({
-          ...profile,
-          drafts: profile.drafts?.filter((id) => id !== result.previousId),
-          mappings: [
-            ...profile.mappings.filter(
-              (mapping) =>
-                mapping.parameterId !== result.previousId &&
-                mapping.parameterId !== result.mapping.parameterId,
-            ),
-            result.mapping,
-          ],
+      deletion.revealCard(`mapping:${result.mapping.parameterId}`)
+      if (result.previousId !== undefined && result.previousId !== result.mapping.parameterId) {
+        setNodes((draft) => {
+          const node = draft.find((entry) => entry.id === `mapping:${result.previousId}`)
+          if (node !== undefined) {
+            node.id = `mapping:${result.mapping.parameterId}`
+          }
         })
+      }
+      props.controls.updateProfile({
+        ...profile,
+        drafts: profile.drafts?.filter((id) => id !== result.previousId),
+        mappings: [
+          ...profile.mappings.filter(
+            (mapping) =>
+              mapping.parameterId !== result.previousId &&
+              mapping.parameterId !== result.mapping.parameterId,
+          ),
+          result.mapping,
+        ],
       })
     }
     setRevision((value) => value + 1)
@@ -115,10 +121,8 @@ export const useGraphEditor = (props: UseGraphEditorProps) => {
     setSelectedEdge(null)
   }
   const handleDelete = (removed: {nodes: Node[]; edges: Edge[]}) => {
-    batch(() => {
-      disconnect(removed.edges.map((edge) => edge.id))
-      removed.nodes.forEach((node) => deletion.removeCard(node.id))
-    })
+    disconnect(removed.edges.map((edge) => edge.id))
+    removed.nodes.forEach((node) => deletion.removeCard(node.id))
     setRevision((value) => value + 1)
   }
   const selectedMapping = () =>

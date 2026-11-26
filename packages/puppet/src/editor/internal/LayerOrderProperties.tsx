@@ -127,7 +127,7 @@ export const LayerOrderProperties = (props: LayerOrderPropertiesProps) => {
                       {summary().targetName} → {summary().placementLabel}
                     </strong>
                     <span class="order-rule-condition">{summary().conditionLabel}</span>
-                    <span class="order-rule-state" data-active={ruleActive(rule)}>
+                    <span class="order-rule-state" data-active={String(ruleActive(rule))}>
                       현재 {rule.when.parameterIds.length > 1 ? '합계' : '값'} {ruleTotal(rule)} ·{' '}
                       {ruleActive(rule) ? '조건 충족' : '조건 미충족'}
                     </span>

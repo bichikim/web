@@ -1,7 +1,8 @@
 import {hasTextureAtlas} from '../editor/internal/texture-atlas'
 import {unpackTextureAtlas} from '../editor/internal/texture-atlas-canvas'
-import {createEffect, createSignal, untrack} from 'solid-js'
-import {render} from 'solid-js/web'
+import {createSignal, createTrackedEffect, flush, onCleanup, untrack} from 'solid-js'
+import {render} from '@solidjs/web'
+
 import {PuppetEditor} from '../editor/PuppetEditor'
 import type {EditorController, EditorState} from '../editor/control'
 import type {ModelApplied, ModelBinding, ModelChange} from '../editor/model'
@@ -64,12 +65,14 @@ export class PuppetEditorElement extends HTMLElement {
       return
     }
     this.#sequence += 1
-    connection.model.request({
-      document: parsed,
-      ownerId: connection.id,
-      requestId: `reset:${this.#sequence}`,
-      type: 'reset',
-    })
+    flush(() =>
+      connection.model?.request({
+        document: parsed,
+        ownerId: connection.id,
+        requestId: `reset:${this.#sequence}`,
+        type: 'reset',
+      }),
+    )
   }
 
   get control(): PuppetEditorElementControl | undefined {
@@ -97,7 +100,9 @@ export class PuppetEditorElement extends HTMLElement {
     }
     this.#connection = connection
     const shadow = this.shadowRoot ?? this.attachShadow({mode: 'open'})
+    const portal = this.ownerDocument.createElement('div')
     connection.dispose = render(() => {
+      onCleanup(() => portal.remove())
       const [control, setControl] = createSignal<EditorController>()
       const model = createElementModel({
         document: this.#currentDocument,
@@ -105,7 +110,7 @@ export class PuppetEditorElement extends HTMLElement {
         sessionId: connection.id,
       })
       connection.model = model
-      createEffect(() => {
+      createTrackedEffect(() => {
         control()?.getState()
         model.read()
         untrack(() => {
@@ -115,7 +120,7 @@ export class PuppetEditorElement extends HTMLElement {
         })
       })
       return (
-        <EditorPortalProvider mount={shadow}>
+        <EditorPortalProvider mount={portal}>
           <PuppetEditor
             model={model}
             onControl={(control) => {
@@ -128,6 +133,7 @@ export class PuppetEditorElement extends HTMLElement {
         </EditorPortalProvider>
       )
     }, shadow)
+    shadow.append(portal)
     connection.opening = false
     const revision = connection.model?.read().revision
     this.#emit('puppet-document-change', this.document)

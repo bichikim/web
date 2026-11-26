@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
-import {renderHook} from '@solidjs/testing-library'
+import {flush} from 'solid-js'
+import {fireEvent, renderHook} from '@solidjs/testing-library'
 import {describe, expect, test, vi} from 'vitest'
 import {createDemoDocument} from '../../player'
 import {useMeshEditor} from '../use-mesh-editor'
@@ -32,7 +33,7 @@ const setup = () => {
       stopPropagation: vi.fn(),
     }) as unknown as PointerEvent
   const start = editor.vertices()[4]!
-  editor.handlePointerDown(event(1, circle), 'mesh-preview', start)
+  flush(() => editor.handlePointerDown(event(1, circle), 'mesh-preview', start))
   return {cleanup, editor, event, onDocumentChange, start}
 }
 
@@ -48,7 +49,7 @@ describe('useMeshEditor pointer ownership', () => {
 
   test.each(['up', 'cancel'])('should retain the owner drag after another pointer %s', (type) => {
     const {cleanup, editor, event, onDocumentChange} = setup()
-    editor.handlePointerMove(event(1))
+    flush(() => editor.handlePointerMove(event(1)))
     if (type === 'up') {
       editor.handlePointerEnd(event(2))
     } else {
@@ -63,7 +64,8 @@ describe('useMeshEditor pointer ownership', () => {
   test.each(['blur', 'Escape'])('should discard an unfinished vertex drag on %s', (type) => {
     const {cleanup, editor, event, onDocumentChange, start} = setup()
     editor.handlePointerMove(event(1))
-    globalThis.dispatchEvent(
+    fireEvent(
+      globalThis.window,
       type === 'blur' ? new Event('blur') : new KeyboardEvent('keydown', {key: 'Escape'}),
     )
     expect(editor.vertices()[4]).toEqual(start)

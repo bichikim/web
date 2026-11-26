@@ -1,4 +1,4 @@
-import {type Accessor, createEffect, createMemo, on} from 'solid-js'
+import {type Accessor, createEffect, createMemo} from 'solid-js'
 import {sampleTimelineRowValues} from '../timeline-row-values'
 import {
   getKeyframeSelectionAtTime,
@@ -104,25 +104,23 @@ export const useAllMotionTimelineGroup = (source: Accessor<AllMotionTimelineGrou
   }
 
   createEffect(
-    on(
-      () => source().currentTime,
-      (time) => {
-        const parameterId = source().selection?.parameterId ?? source().selectedParameterId
-        if (parameterId === null) {
-          return
-        }
-        source().onSelectionChange(
-          retainKeyframeSelectionAtTime({
-            framesPerSecond: source().framesPerSecond,
-            parameterId,
-            selection: source().selection,
-            time,
-            tracks: tracks(),
-          }),
-        )
-      },
-      {defer: true},
-    ),
+    () => source().currentTime,
+    (time) => {
+      const parameterId = source().selection?.parameterId ?? source().selectedParameterId
+      if (parameterId === null) {
+        return
+      }
+      source().onSelectionChange(
+        retainKeyframeSelectionAtTime({
+          framesPerSecond: source().framesPerSecond,
+          parameterId,
+          selection: source().selection,
+          time,
+          tracks: tracks(),
+        }),
+      )
+    },
+    {defer: true},
   )
 
   return {

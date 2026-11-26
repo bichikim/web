@@ -1,4 +1,4 @@
-import {createEffect, on, untrack} from 'solid-js'
+import {createEffect, untrack} from 'solid-js'
 import type {DocumentRecovery, EditorController} from '@winter-love/puppet/editor'
 import {createEmptyDocument, type PuppetDocument} from '@winter-love/puppet/player'
 import {PoffoEditor} from '../../PoffoEditor'
@@ -22,22 +22,22 @@ export const EditorFixture = (props: EditorFixtureProps) => {
     onCommit: (document) => props.onDocumentCommit?.(document),
     sessionId: 'integration-model',
   })
-  createEffect(on(model.document, (document) => props.onDocumentChange?.(document)))
+  createEffect(model.document, (document) => {
+    props.onDocumentChange?.(document)
+  })
   createEffect(
-    on(
-      () => props.replacementDocument,
-      (document) => {
-        if (document !== undefined) {
-          model.request({
-            document,
-            expectedRevision: model.read().revision,
-            ownerId: 'integration-host',
-            requestId: 'replacement',
-            type: 'replace',
-          })
-        }
-      },
-    ),
+    () => props.replacementDocument,
+    (document) => {
+      if (document !== undefined) {
+        model.request({
+          document,
+          expectedRevision: model.read().revision,
+          ownerId: 'integration-host',
+          requestId: 'replacement',
+          type: 'replace',
+        })
+      }
+    },
   )
   return (
     <PoffoEditor

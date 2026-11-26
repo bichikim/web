@@ -2,7 +2,7 @@ import type {ControlSizeProps} from './control-size'
 import {NumberField} from '@kobalte/core/number-field'
 import {Button} from '@kobalte/core/button'
 import {clamp} from 'es-toolkit/math'
-import {createEffect, createSignal, on, onCleanup, Show} from 'solid-js'
+import {createEffect, createSignal, onCleanup, Show} from 'solid-js'
 
 const DEFAULT_STEP = 1
 const DISPLAY_FRACTION_DIGITS = 4
@@ -172,22 +172,20 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
   let removeGestureListeners: (() => void) | undefined
 
   createEffect(
-    on(
-      () => props.value,
-      (value) => {
-        if (!sameValue(value, lastEmittedValue)) {
-          if (scrubbing()) {
-            removeGestureListeners?.()
-            removeGestureListeners = undefined
-            setScrubbing(false)
-            endEdit()
-          }
-          setDraft(null)
-          editStartValue = value ?? 0
-          lastEmittedValue = value ?? null
+    () => props.value,
+    (value) => {
+      if (!sameValue(value, lastEmittedValue)) {
+        if (scrubbing()) {
+          removeGestureListeners?.()
+          removeGestureListeners = undefined
+          setScrubbing(false)
+          endEdit()
         }
-      },
-    ),
+        setDraft(null)
+        editStartValue = value ?? 0
+        lastEmittedValue = value ?? null
+      }
+    },
   )
 
   const isBounded = () =>
@@ -356,11 +354,11 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
     })
   }
 
-  const handleDraftChange = (value: string) => {
+  const handleDraftChange = (value: string | number) => {
     if (isDisabled()) {
       return
     }
-    setDraft(value)
+    setDraft(String(value))
     const number = Number(value)
     if (
       value !== '' &&
@@ -387,7 +385,8 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
 
   onCleanup(() => {
     removeGestureListeners?.()
-    endEdit()
+    // Let the editor release its transaction before descendants finish a field gesture.
+    queueMicrotask(endEdit)
   })
 
   return (
@@ -396,7 +395,7 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
       ref={(element) => {
         field = element
       }}
-      tabIndex={-1}
+      tabindex={-1}
       value={displayedValue()}
       format={false}
       minValue={props.minimum}
@@ -408,7 +407,7 @@ export const EditorNumberField = (props: EditorNumberFieldProps) => {
       step={arrowStep()}
       changeOnWheel={false}
       data-control-size={props.size ?? 'sm'}
-      classList={{'editor-control': true, 'editor-number-field': true, scrubbing: scrubbing()}}
+      class={{'editor-control': true, 'editor-number-field': true, scrubbing: scrubbing()}}
       data-bounded={isBounded() ? '' : undefined}
       style={{'--number-field-progress': `${progress()}%`}}
     >

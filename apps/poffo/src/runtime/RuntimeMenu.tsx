@@ -18,8 +18,8 @@ export const RuntimeMenu = (props: RuntimeMenuProps) => {
   const active = () =>
     workspace === undefined || (workspace.active() && workspace.mode() !== 'editor')
   const [open, setOpen] = createSignal(false)
-  createEffect(() => {
-    if (!active()) {
+  createEffect(active, (isActive) => {
+    if (!isActive) {
       setOpen(false)
     }
   })
@@ -57,6 +57,7 @@ export const RuntimeMenu = (props: RuntimeMenuProps) => {
   const handleFileChange = (event: Event & {currentTarget: HTMLInputElement}) => {
     const file = event.currentTarget.files?.[0]
     event.currentTarget.value = ''
+    handleClose()
     handleImport(file)
   }
   const handleSave = () => {
@@ -100,7 +101,7 @@ export const RuntimeMenu = (props: RuntimeMenuProps) => {
           onEscapeKeyDown={handleEscape}
           class="toolbar-menu-content puppet-runtime-menu"
           popover="manual"
-          data-top-layer={popup.active()}
+          data-top-layer={String(popup.active())}
           style={{
             '--runtime-menu-x': `${popup.position().x}px`,
             '--runtime-menu-y': `${popup.position().y}px`,

@@ -4,7 +4,8 @@ import {
   type ModelCommandResult,
   type ViewportProps,
 } from '@winter-love/puppet/editor'
-import type {Accessor, JSX} from 'solid-js'
+import {type Accessor} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import type {
   PlayerAntialiasing,
   PlayerBufferingInfo,

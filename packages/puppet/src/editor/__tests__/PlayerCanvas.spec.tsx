@@ -3,7 +3,7 @@
 import {createPlayerFixture} from './fixtures/player'
 
 import {render, waitFor} from '@solidjs/testing-library'
-import {batch, createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 import {
@@ -87,7 +87,7 @@ describe('PlayerCanvas', () => {
     ))
     await waitFor(() => expect(view.getByText('WebGPU unavailable')).toBeVisible())
     expect(mocks.createPlayer).toHaveBeenCalledOnce()
-    setRenderer('pixi-webgl')
+    flush(() => setRenderer('pixi-webgl'))
     await waitFor(() => expect(onStatusChange).toHaveBeenLastCalledWith('ready'))
     expect(mocks.createPlayer).toHaveBeenCalledTimes(2)
     expect(mocks.createPlayer).toHaveBeenLastCalledWith(
@@ -110,7 +110,7 @@ describe('PlayerCanvas', () => {
       <PlayerCanvas document={model} renderer={renderer()} onStatusChange={onStatusChange} />
     ))
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
-    setRenderer('pixi-webgl')
+    flush(() => setRenderer('pixi-webgl'))
     fail(new Error('Obsolete GPU failure'))
     await waitFor(() => expect(onStatusChange).toHaveBeenLastCalledWith('ready'))
     expect(mocks.createPlayer).toHaveBeenCalledTimes(2)
@@ -134,7 +134,7 @@ describe('PlayerCanvas', () => {
     )
     render(() => <PlayerCanvas document={model()} onStatusChange={onStatusChange} />)
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
-    setModel(latest)
+    flush(() => setModel(latest))
     fail(new Error('Obsolete document failure'))
     await waitFor(() => expect(onStatusChange).toHaveBeenLastCalledWith('ready'))
     expect(mocks.createPlayer).toHaveBeenCalledTimes(2)
@@ -168,12 +168,12 @@ describe('PlayerCanvas', () => {
     ))
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
     await Promise.resolve()
-    setRenderer('pixi-webgpu')
+    flush(() => setRenderer('pixi-webgpu'))
     await waitFor(() => expect(configureRenderer).toHaveBeenCalledOnce())
     const applied = configureRenderer.mock.calls[0]![0].canvas
     info.renderer = 'webgpu'
     complete('applied')
-    setRenderer('pixi-webgl')
+    flush(() => setRenderer('pixi-webgl'))
     await waitFor(() => expect(onRenderingError).toHaveBeenCalledWith('Unavailable'))
     expect(view.getByLabelText('모델 뷰어')).toBe(applied)
   })
@@ -199,9 +199,9 @@ describe('PlayerCanvas', () => {
       })
     render(() => <PlayerCanvas document={model()} renderer={renderer()} />)
     await waitFor(() => expect(player.getRenderingInfo).toHaveBeenCalled())
-    setRenderer('pixi-webgpu')
+    flush(() => setRenderer('pixi-webgpu'))
     await waitFor(() => expect(configurePrevious).toHaveBeenCalledOnce())
-    setModel(createDemoDocument())
+    flush(() => setModel(createDemoDocument()))
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledTimes(2))
     await Promise.resolve()
     expect(configureNext).not.toHaveBeenCalled()
@@ -220,10 +220,10 @@ describe('PlayerCanvas', () => {
       <PlayerCanvas document={createDemoDocument()} renderer={renderer()} />
     ))
     await waitFor(() => expect(player.getRenderingInfo).toHaveBeenCalled())
-    setRenderer('pixi-webgpu')
+    flush(() => setRenderer('pixi-webgpu'))
     await waitFor(() => expect(configureRenderer).toHaveBeenCalledOnce())
     const obsolete = configureRenderer.mock.calls[0]![0].canvas
-    setRenderer('pixi-webgl')
+    flush(() => setRenderer('pixi-webgl'))
     await waitFor(() => expect(configureRenderer).toHaveBeenCalledTimes(2))
     const latest = configureRenderer.mock.calls[1]![0].canvas
     complete('superseded')
@@ -242,7 +242,7 @@ describe('PlayerCanvas', () => {
     await waitFor(() => expect(view.getByLabelText('모델 뷰어')).toBeInTheDocument())
     await waitFor(() => expect(retained.getRenderingInfo).toHaveBeenCalled())
     const canvas = view.getByLabelText('모델 뷰어')
-    setRenderer('pixi-webgpu')
+    flush(() => setRenderer('pixi-webgpu'))
     await waitFor(() => expect(configureRenderer).toHaveBeenCalledOnce())
     await waitFor(() => expect(view.getByLabelText('모델 뷰어')).not.toBe(canvas))
     expect(mocks.createPlayer).toHaveBeenCalledOnce()
@@ -269,14 +269,14 @@ describe('PlayerCanvas', () => {
     ))
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
     await Promise.resolve()
-    setSurface({document: model, node: {} as SpatialThreeSurface['node']})
+    flush(() => setSurface({document: model, node: {} as SpatialThreeSurface['node']}))
     await waitFor(() =>
       expect(configureRenderer).toHaveBeenCalledWith(
         expect.objectContaining({renderer: 'pixi-webgl'}),
       ),
     )
     await waitFor(() => expect(mocks.createSpatialThreeOverlay).toHaveBeenCalledOnce())
-    setSurface(undefined)
+    flush(() => setSurface(undefined))
     await waitFor(() =>
       expect(configureRenderer).toHaveBeenLastCalledWith(
         expect.objectContaining({renderer: 'pixi-webgpu'}),
@@ -295,7 +295,7 @@ describe('PlayerCanvas', () => {
     await Promise.resolve()
     expect(configureRenderer).not.toHaveBeenCalled()
 
-    setRenderer('auto')
+    flush(() => setRenderer('auto'))
 
     await waitFor(() =>
       expect(configureRenderer).toHaveBeenCalledExactlyOnceWith(
@@ -319,7 +319,7 @@ describe('PlayerCanvas', () => {
     ))
     await waitFor(() => expect(player.getRenderingInfo).toHaveBeenCalled())
     const canvas = view.getByLabelText('모델 뷰어')
-    setRenderer('pixi-webgpu')
+    flush(() => setRenderer('pixi-webgpu'))
     await waitFor(() => expect(onRenderingError).toHaveBeenCalledExactlyOnceWith(failure.message))
     expect(view.getByLabelText('모델 뷰어')).toBe(canvas)
   })
@@ -347,7 +347,7 @@ describe('PlayerCanvas', () => {
     const statuses = onStatusChange.mock.calls.length
     const players = onPlayerChange.mock.calls.length
     expect(frames).toBeGreaterThan(0)
-    setExternal(1)
+    flush(() => setExternal(1))
     expect(onFrame).toHaveBeenCalledTimes(frames)
     expect(onStatusChange).toHaveBeenCalledTimes(statuses)
     expect(onPlayerChange).toHaveBeenCalledTimes(players)
@@ -359,18 +359,19 @@ describe('PlayerCanvas', () => {
     const [document, replace] = createSignal(initial)
     const first = vi.fn()
     const latest = vi.fn()
-    const [notify, changeNotify] = createSignal(first)
+    const [notify, changeNotify] = createSignal(() => first)
     const previous = {...player, destroy: vi.fn(), updateDocument: vi.fn(() => false)}
     mocks.createPlayer.mockResolvedValueOnce(previous).mockResolvedValueOnce(player)
     render(() => <PlayerCanvas document={document()} onBufferingChange={notify()} />)
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    await waitFor(() => expect(player.setParameterValues).toHaveBeenCalled())
     const info = {enabled: true, framesAhead: 3, status: 'active' as const}
     mocks.createPlayer.mock.calls[0]?.[0].onBufferingChange(info)
     expect(first).toHaveBeenCalledExactlyOnceWith(info)
-    replace({...initial, parts: initial.parts.slice()})
+    flush(() => replace({...initial, parts: initial.parts.slice()}))
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledTimes(2))
     expect(previous.destroy).toHaveBeenCalledOnce()
-    changeNotify(() => latest)
+    flush(() => changeNotify(() => latest))
     mocks.createPlayer.mock.calls[1]?.[0].onBufferingChange(info)
     expect(latest).toHaveBeenCalledExactlyOnceWith(info)
     expect(first).toHaveBeenCalledOnce()
@@ -398,7 +399,7 @@ describe('PlayerCanvas', () => {
     expect(mocks.overlay.prepare).toHaveBeenCalledOnce()
     expect(mocks.overlay.render).toHaveBeenCalledOnce()
 
-    setSelectedSurface(undefined)
+    flush(() => setSelectedSurface(undefined))
     await waitFor(() => expect(mocks.overlay.update).toHaveBeenLastCalledWith(undefined))
     expect(options.externalRendering()).toBe(false)
     expect(player.redraw).toHaveBeenCalled()
@@ -421,23 +422,25 @@ describe('PlayerCanvas', () => {
 
     expect(firstPart).toBeDefined()
 
-    setDocument({
-      ...initialDocument,
-      parts:
-        firstPart === undefined
-          ? []
-          : [
-              {
-                ...firstPart,
-                mesh: {
-                  ...firstPart.mesh,
-                  vertices: firstPart.mesh.vertices.map((value, index) =>
-                    index === 0 ? value + 1 : value,
-                  ),
+    flush(() =>
+      setDocument({
+        ...initialDocument,
+        parts:
+          firstPart === undefined
+            ? []
+            : [
+                {
+                  ...firstPart,
+                  mesh: {
+                    ...firstPart.mesh,
+                    vertices: firstPart.mesh.vertices.map((value, index) =>
+                      index === 0 ? value + 1 : value,
+                    ),
+                  },
                 },
-              },
-            ],
-    })
+              ],
+      }),
+    )
 
     await waitFor(() => expect(mocks.updateDocument).toHaveBeenCalledTimes(1))
     expect(mocks.createPlayer).toHaveBeenCalledTimes(1)
@@ -490,7 +493,7 @@ describe('PlayerCanvas', () => {
       'angle-y': 0,
     })
 
-    setParameterValues({'angle-x': 15, 'angle-y': -15})
+    flush(() => setParameterValues({'angle-x': 15, 'angle-y': -15}))
     await waitFor(() =>
       expect(parameterPlayer.setParameterValues).toHaveBeenLastCalledWith({
         'angle-x': 15,
@@ -557,8 +560,8 @@ describe('PlayerCanvas', () => {
       ...initialDocument,
       viewport: {...initialDocument.viewport},
     }
-    setDocument({...initialDocument, motions: []})
-    setDocument(latest)
+    flush(() => setDocument({...initialDocument, motions: []}))
+    flush(() => setDocument(latest))
     expect(mocks.createPlayer).toHaveBeenCalledOnce()
 
     resolvePlayer?.(pendingCreatedPlayer)
@@ -590,11 +593,11 @@ test('should match display density when fitting and zooming without replacing th
   await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
   expect(mocks.createPlayer.mock.calls[0]?.[0].resolution).toBeCloseTo(0.2)
   await waitFor(() => expect(player.resize).toHaveBeenCalledWith(0.2))
-  setScale(0.2)
+  flush(() => setScale(0.2))
   expect(player.resize).toHaveBeenLastCalledWith(0.4)
-  setScale(1)
+  flush(() => setScale(1))
   expect(player.resize).toHaveBeenLastCalledWith(4096 / 9000)
-  setScale(0.1)
+  flush(() => setScale(0.1))
   expect(player.resize).toHaveBeenLastCalledWith(0.2)
   expect(mocks.createPlayer).toHaveBeenCalledOnce()
 })
@@ -617,13 +620,13 @@ test('should apply a document and parameter change together without rendering th
   vi.mocked(player.setParameterValues).mockClear()
   mocks.updateDocument.mockClear()
   const next = {...source, parts: source.parts.slice()}
-  batch(() => {
+  flush(() => {
     setValues({'angle-x': 15})
     setDocument(next)
   })
   expect(mocks.updateDocument).toHaveBeenCalledExactlyOnceWith(next, {'angle-x': 15})
   expect(player.setParameterValues).not.toHaveBeenCalled()
-  setValues({'angle-x': 20})
+  flush(() => setValues({'angle-x': 20}))
   expect(player.setParameterValues).toHaveBeenCalledExactlyOnceWith({'angle-x': 20})
 })
 
@@ -638,7 +641,7 @@ test('should replace a pending renderer only when it cannot accept the latest do
   const [document, replace] = createSignal(source)
   render(() => <PlayerCanvas document={document()} />)
   const latest = {...source, viewport: {height: 100, width: 100}}
-  replace(latest)
+  flush(() => replace(latest))
   resolvePending?.(previous)
   await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledTimes(2))
   expect(previous.destroy).toHaveBeenCalledOnce()
@@ -674,7 +677,7 @@ test('should release a pending player and report a failed document update', asyn
   mocks.createPlayer.mockReturnValueOnce(pending)
   const [document, replace] = createSignal(createDemoDocument())
   const view = render(() => <PlayerCanvas document={document()} />)
-  replace(createDemoDocument())
+  flush(() => replace(createDemoDocument()))
   resolvePending?.(created)
   await waitFor(() => expect(view.getByText('invalid geometry')).toBeInTheDocument())
   expect(created.destroy).toHaveBeenCalledOnce()

@@ -1,6 +1,7 @@
 import {Popover} from '@kobalte/core/popover'
 import {preventInternalDismiss} from '../../design-system/prevent-internal-dismiss'
-import {createEffect, createSignal, type JSX, onCleanup, Show} from 'solid-js'
+import {createSignal, createTrackedEffect, Show} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import {
   EditorButton,
   EditorNumberField,
@@ -41,7 +42,7 @@ export const ViewCameraControls = (props: ViewCameraControlsProps) => {
       trigger()?.focus()
     }
   }
-  createEffect(() => {
+  createTrackedEffect(() => {
     const button = trigger()
     const surface = settings()
     if (!expanded() || button === undefined || surface === undefined) {
@@ -65,10 +66,11 @@ export const ViewCameraControls = (props: ViewCameraControlsProps) => {
       }
     })
     observer.observe(button.getRootNode(), {childList: true, subtree: true})
-    onCleanup(() => {
+
+    return () => {
       document.removeEventListener('pointerdown', dismiss, true)
       observer.disconnect()
-    })
+    }
   })
   return (
     <div class="view-camera-controls" role="group" aria-label="보기 컨트롤">
@@ -101,7 +103,7 @@ export const ViewCameraControls = (props: ViewCameraControlsProps) => {
             role="dialog"
             aria-label="보기 설정"
             popover="manual"
-            data-top-layer={popup.active()}
+            data-top-layer={String(popup.active())}
             style={{
               '--view-settings-x': `${popup.position().x}px`,
               '--view-settings-y': `${popup.position().y}px`,

@@ -100,7 +100,7 @@ export const WorkspaceNavigation = (props: WorkspaceNavigationProps) => {
             type="button"
             disabled={props.onStudioOpen === undefined}
             onClick={() => navigation.select('studio')}
-            aria-pressed={navigation.selected() === 'studio'}
+            aria-pressed={navigation.selected() === 'studio' ? 'true' : 'false'}
             data-selected={navigation.selected() === 'studio' ? '' : undefined}
             aria-label="Studio"
             title="Studio"
@@ -112,7 +112,7 @@ export const WorkspaceNavigation = (props: WorkspaceNavigationProps) => {
             type="button"
             disabled={props.onViewerOpen === undefined}
             onClick={() => navigation.select('viewer')}
-            aria-pressed={navigation.selected() === 'viewer'}
+            aria-pressed={navigation.selected() === 'viewer' ? 'true' : 'false'}
             data-selected={navigation.selected() === 'viewer' ? '' : undefined}
             aria-label="Viewer"
             title="Viewer"

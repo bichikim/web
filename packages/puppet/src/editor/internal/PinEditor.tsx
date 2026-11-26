@@ -93,10 +93,10 @@ export const PinEditor = (props: PinEditorProps) => {
             <circle
               aria-label={`핀 ${index + 1}`}
               role="button"
-              aria-pressed={editor.selected() === index}
-              aria-disabled={!editor.editable()}
+              aria-pressed={editor.selected() === index ? 'true' : 'false'}
+              aria-disabled={editor.editable() ? 'false' : 'true'}
               tabindex={editor.editable() ? 0 : -1}
-              classList={{selected: editor.selected() === index}}
+              class={{selected: editor.selected() === index}}
               cx={editor.point(index).x}
               cy={editor.point(index).y}
               r={editor.radius()}

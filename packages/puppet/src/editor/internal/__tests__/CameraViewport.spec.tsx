@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {CameraViewport} from '../CameraViewport'
 
@@ -26,7 +26,7 @@ test('should report fitting and zoom changes without tracking the consumer', () 
   })
   const calls = onZoomChange.mock.calls.length
   expect(onZoomChange.mock.calls.at(-1)?.[0]).toBeGreaterThan(1)
-  setExternal(1)
+  flush(() => setExternal(1))
   expect(onZoomChange).toHaveBeenCalledTimes(calls)
 })
 
@@ -53,12 +53,12 @@ test('should refit after layout settles while retaining manual navigation on lat
   ))
   const viewport = view.getByRole('region', {name: '모델 보기'})
   height.mockReturnValue(355)
-  resize()
+  flush(resize)
   expect(Number(viewport.style.getPropertyValue('--camera-zoom'))).toBeCloseTo(0.05)
   fireEvent.wheel(viewport, {deltaX: 40, deltaY: 60})
   const offset = viewport.style.getPropertyValue('--camera-x')
   height.mockReturnValue(500)
-  resize()
+  flush(resize)
   expect(viewport.style.getPropertyValue('--camera-x')).toBe(offset)
   expect(Number(viewport.style.getPropertyValue('--camera-zoom'))).toBeCloseTo(0.05)
 })
@@ -76,7 +76,7 @@ test('should fit the initial document once layout is measured without resetting 
   expect(Number(viewport.style.getPropertyValue('--camera-zoom'))).toBeCloseTo(0.08)
   fireEvent.wheel(viewport, {deltaX: 40, deltaY: 60})
   const offset = viewport.style.getPropertyValue('--camera-x')
-  setWidth(4100)
+  flush(() => setWidth(4100))
   expect(viewport.style.getPropertyValue('--camera-x')).toBe(offset)
 })
 
@@ -178,13 +178,13 @@ test('should fit large imported documents below ten percent without resetting su
   const viewport = view.getByRole('region', {name: '모델 보기'})
   Object.defineProperty(viewport, 'clientWidth', {value: 400})
   Object.defineProperty(viewport, 'clientHeight', {value: 568})
-  setRevision(1)
+  flush(() => setRevision(1))
   expect(Number(viewport.style.getPropertyValue('--camera-zoom'))).toBeCloseTo(0.08)
   fireEvent.wheel(viewport, {deltaX: 40, deltaY: 60})
   const offset = viewport.style.getPropertyValue('--camera-x')
-  setWidth(4100)
+  flush(() => setWidth(4100))
   expect(viewport.style.getPropertyValue('--camera-x')).toBe(offset)
-  setRevision(2)
+  flush(() => setRevision(2))
   expect(viewport.style.getPropertyValue('--camera-x')).toBe('0px')
   fireEvent.click(view.getByRole('button', {name: '원점 · 100%'}))
   fireEvent.click(view.getByRole('button', {name: '화면 맞춤'}))

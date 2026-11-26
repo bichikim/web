@@ -29,9 +29,9 @@ export const SkinningJoints = (props: {readonly document: PuppetDocument}) => {
           cx={joint.point.x}
           cy={joint.point.y}
           role="button"
-          tabIndex={0}
+          tabindex={0}
           aria-label={`${joint.name} 스키닝 관절 선택`}
-          aria-pressed={session?.jointId() === joint.id}
+          aria-pressed={session?.jointId() === joint.id ? 'true' : 'false'}
           onPointerDown={(event) => {
             event.stopPropagation()
             event.preventDefault()

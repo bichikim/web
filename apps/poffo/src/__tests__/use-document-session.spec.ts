@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {flush} from 'solid-js'
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createDocumentSession} from '../create-document-session'
@@ -149,6 +150,7 @@ test('should suppress repeated failed writes after dismissal until saving recove
   await result.save(document)
   expect(result.failure()).toBe('save')
   result.dismissFailure()
+  flush()
   expect(result.failure()).toBeNull()
   await result.save(document)
   expect(result.failure()).toBeNull()

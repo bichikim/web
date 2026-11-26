@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {cleanup, renderHook} from '@solidjs/testing-library'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {createElementModel} from '../../editor-element/create-element-model'
@@ -30,11 +30,15 @@ const setup = () =>
       }),
       resetSelection: () => {
         setRequested(mode())
+        flush()
         setPending(false)
+        flush()
       },
       selectMode: (next) => {
         setRequested(next)
+        flush()
         setPending(next !== mode())
+        flush()
       },
       setPanelOpen: (_panel, open) => setLeft(open),
       stop,
@@ -56,7 +60,9 @@ describe('createEditorControl', () => {
       throw new Error('Mode request rejected')
     }
     result.setMode('animation')
+    flush()
     result.setPending(false)
+    flush()
     await expect(accepted.operation.finished).resolves.toEqual({
       status: 'completed',
       value: 'animation',
@@ -98,6 +104,7 @@ describe('createEditorControl', () => {
     result.control.lifecycle.activate()
     expect(result.control.getState().canUndo).toBe(true)
     result.control.commands.setPanelOpen('left', false)
+    flush()
     expect(result.control.getState().panels.left).toBe(false)
   })
 
@@ -106,12 +113,14 @@ describe('createEditorControl', () => {
     const before = result.model.read().document
     const origin = {ownerId: 'editor', requestId: 'gesture', transactionId: 'gesture'}
     result.model.request({...origin, type: 'begin'})
+    flush()
     result.model.request({
       ...origin,
       document: {...before, framesPerSecond: 48},
       expectedRevision: 0,
       type: 'edit',
     })
+    flush()
     expect(result.control.lifecycle.deactivate()).toEqual({reason: 'busy', status: 'rejected'})
     expect(result.control.commands.undo()).toEqual({error: {code: 'busy'}, ok: false})
     result.control.lifecycle.dispose()

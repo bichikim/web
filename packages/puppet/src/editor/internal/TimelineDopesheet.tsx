@@ -1,5 +1,6 @@
 import {clamp} from 'es-toolkit/math'
-import {createMemo, createSignal, type JSX, Show} from 'solid-js'
+import {createMemo, createSignal, Show} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import {KeyedFor} from './KeyedFor'
 import {TimelineTrack} from './TimelineTrack'
 import {DEFAULT_PUPPET_FRAMES_PER_SECOND, type PuppetMotion} from '../../player/document'
@@ -119,7 +120,7 @@ export const TimelineDopesheet = (props: TimelineDopesheetProps) => {
     <div
       aria-label="키프레임 타임라인"
       class="timeline-dopesheet"
-      data-fit={props.zoom === 'fit'}
+      data-fit={String(props.zoom === 'fit')}
       role="group"
       style={{
         '--timeline-frame-count': Math.max(1, getFrame(props.duration, framesPerSecond())),

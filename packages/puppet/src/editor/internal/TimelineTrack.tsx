@@ -31,8 +31,7 @@ export const TimelineTrack = (props: TimelineTrackProps) => {
     () => props.onKeyframeAdd === undefined && props.onKeyframesDelete === undefined,
   )
   const move = createMemo(() => (props.onKeyframeMove === undefined ? undefined : keyframes.move))
-  const handleCloseAutoFocus = (event: Event) => {
-    event.preventDefault()
+  const handleCloseFocus = () => {
     if (actions.restoreFocus()) {
       element()?.focus({preventScroll: true})
     }
@@ -44,7 +43,7 @@ export const TimelineTrack = (props: TimelineTrackProps) => {
       disabled={menuDisabled()}
       onOpenChange={actions.handleMenuOpenChange}
       onInteractOutside={actions.handleInteractOutside}
-      onCloseAutoFocus={handleCloseAutoFocus}
+      onCloseFocus={handleCloseFocus}
     >
       <div
         class="timeline-row"

@@ -1,4 +1,4 @@
-import {createEffect, createMemo, For, on, Show} from 'solid-js'
+import {createEffect, createMemo, For, Show} from 'solid-js'
 import {TextField} from '@kobalte/core/text-field'
 import {ToggleButton} from '@kobalte/core/toggle-button'
 import {EditorTextInput} from '../../design-system'
@@ -32,7 +32,9 @@ export const SceneNodeSelect = (props: SceneNodeSelectProps) => {
     node: () => props.node,
     onDocumentChange: (document) => props.onDocumentChange?.(document),
   })
-  createEffect(() => props.onRenamingChange(nameEditor.isRenaming()))
+  createEffect(nameEditor.isRenaming, (isRenaming) => {
+    props.onRenamingChange(isRenaming)
+  })
   const part = createMemo(() => props.document.parts.find((part) => part.id === props.node.id))
 
   const handleSelect = (event: MouseEvent) => {
@@ -45,11 +47,9 @@ export const SceneNodeSelect = (props: SceneNodeSelectProps) => {
     props.onSelect(event, props.node)
   }
   createEffect(
-    on(
-      () => props.renameRequest,
-      () => nameEditor.startRenaming(),
-      {defer: true},
-    ),
+    () => props.renameRequest,
+    () => nameEditor.startRenaming(),
+    {defer: true},
   )
 
   return (
@@ -68,8 +68,10 @@ export const SceneNodeSelect = (props: SceneNodeSelectProps) => {
           </Show>
           <ToggleButton
             aria-label={getLayerSelectionLabel(props.node)}
-            class="layer-select"
-            classList={{'mask-pick-candidate': props.maskPicking && !props.maskPickDisabled}}
+            class={[
+              'layer-select',
+              {'mask-pick-candidate': props.maskPicking && !props.maskPickDisabled},
+            ]}
             disabled={props.maskPickDisabled}
             pressed={props.selected}
             title={

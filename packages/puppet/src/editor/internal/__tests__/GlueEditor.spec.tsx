@@ -2,7 +2,7 @@
 
 import {addGlue} from '../glue'
 import {fireEvent, render} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {expect, test} from 'vitest'
 import {createDemoDocument} from '../../../player'
 import {createHistory as useDocumentHistory} from '../../__tests__/fixtures/history'
@@ -29,13 +29,13 @@ test('should connect selected boundary points and support undo and unlink', () =
   ))
   fireEvent.click(view.getByRole('button', {name: '선택 정점에서 연결 시작'}))
   expect(view.getByRole('button', {name: '이 정점과 붙이기'})).toBeDisabled()
-  setPart('shape-diamond')
+  flush(() => setPart('shape-diamond'))
   fireEvent.click(view.getByRole('button', {name: '이 정점과 붙이기'}))
   expect(history.document().glue).toHaveLength(1)
   expect(view.getByRole('spinbutton', {name: 'glue-1 붙임 강도'})).toHaveValue(100)
-  history.undo()
+  flush(() => history.undo())
   expect(history.document().glue).toBeUndefined()
-  history.redo()
+  flush(() => history.redo())
   fireEvent.click(view.getByRole('button', {name: '연결 해제'}))
   expect(history.document().glue).toEqual([])
 })
@@ -66,9 +66,9 @@ test('should edit the selected keyform with one undo transaction and preserve st
   fireEvent.blur(input)
   expect(input).toHaveValue(40)
   expect(history.document().glue![0]!.strength).toBe(1)
-  expect(history.undo()).toBe(true)
+  expect(flush(() => history.undo())).toBe(true)
   expect(input).toHaveValue(100)
-  expect(history.redo()).toBe(true)
+  expect(flush(() => history.redo())).toBe(true)
   expect(input).toHaveValue(40)
 })
 
@@ -100,7 +100,7 @@ test('should edit and undo static Glue without creating a parameter', () => {
   expect(history.document().glue![0]!.strength).toBe(0.35)
   expect(history.document().parameterBindings).toEqual([])
   expect(history.document().parameters).toEqual([])
-  expect(history.undo()).toBe(true)
+  expect(flush(() => history.undo())).toBe(true)
   expect(input).toHaveValue(100)
 })
 
@@ -121,8 +121,8 @@ test('should select whole-part translation and undo it as one document edit', ()
   fireEvent.click(view.getByRole('button', {name: '전체 이동'}))
   expect(history.document().glue![0]!.mode).toBe('translate')
   expect(view.getByRole('button', {name: '전체 이동'})).toHaveAttribute('aria-pressed', 'true')
-  expect(history.undo()).toBe(true)
+  expect(flush(() => history.undo())).toBe(true)
   expect(history.document().glue![0]!.mode).toBeUndefined()
-  expect(history.redo()).toBe(true)
+  expect(flush(() => history.redo())).toBe(true)
   expect(history.document().glue![0]!.mode).toBe('translate')
 })

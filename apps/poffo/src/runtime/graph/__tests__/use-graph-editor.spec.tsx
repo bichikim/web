@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createDemoDocument} from '@winter-love/puppet/player'
@@ -50,8 +50,11 @@ test.each(['missing', 'invalid-json', 'invalid-layout', 'read-failure'] as const
   async (stored) => {
     const {result} = mount()
     result.workspace.addPort('angle-x')
+    flush()
     result.workspace.removeCard('parameter:angle-x')
+    flush()
     result.workspace.removeCard('manual')
+    flush()
     expect(nodeIds(result.workspace)).not.toContain('parameter:angle-x')
     expect(nodeIds(result.workspace)).not.toContain('manual')
     if (stored === 'invalid-json') {
@@ -71,7 +74,9 @@ test.each(['missing', 'invalid-json', 'invalid-layout', 'read-failure'] as const
     }
     const writes = vi.spyOn(Storage.prototype, 'setItem')
     result.setDocument(second)
+    flush()
     await Promise.resolve()
+    flush()
     expect(nodeIds(result.workspace)).toContain('parameter:angle-x')
     expect(nodeIds(result.workspace)).toContain('manual')
     const layouts = writes.mock.calls
@@ -85,7 +90,9 @@ test.each(['missing', 'invalid-json', 'invalid-layout', 'read-failure'] as const
         : null,
     )
     result.setDocument(first)
+    flush()
     await Promise.resolve()
+    flush()
     expect(nodeIds(result.workspace)).not.toContain('parameter:angle-x')
     expect(nodeIds(result.workspace)).not.toContain('manual')
   },
@@ -94,7 +101,9 @@ test.each(['missing', 'invalid-json', 'invalid-layout', 'read-failure'] as const
 test('should restore each model hidden cards and positions before saving during A to B to A', async () => {
   const {result} = mount()
   result.workspace.addPort('angle-x')
+  flush()
   result.workspace.removeCard('parameter:angle-x')
+  flush()
   const firstLayout = JSON.parse(sessionStorage.getItem(layoutKey())!)
   const nextLayout = {
     ...firstLayout,
@@ -106,7 +115,9 @@ test('should restore each model hidden cards and positions before saving during 
   sessionStorage.setItem(layoutKey(second), JSON.stringify(nextLayout))
   const writes = vi.spyOn(Storage.prototype, 'setItem')
   result.setDocument(second)
+  flush()
   await Promise.resolve()
+  flush()
   expect(nodeIds(result.workspace)).toContain('parameter:angle-x')
   expect(nodeIds(result.workspace)).not.toContain('manual')
   expect(result.workspace.nodes.find((node) => node.id === 'parameter:angle-x')?.position).toEqual({
@@ -122,7 +133,9 @@ test('should restore each model hidden cards and positions before saving during 
     expect(layout.positions).toContainEqual({id: 'parameter:angle-x', x: 321, y: 456})
   }
   result.setDocument(first)
+  flush()
   await Promise.resolve()
+  flush()
   expect(nodeIds(result.workspace)).not.toContain('parameter:angle-x')
   expect(nodeIds(result.workspace)).toContain('manual')
   expect(JSON.parse(sessionStorage.getItem(layoutKey())!).hiddenIds).toEqual(firstLayout.hiddenIds)
@@ -131,7 +144,9 @@ test('should restore each model hidden cards and positions before saving during 
 test('should retain hidden cards during edits to the same model profile', () => {
   const {result} = mount()
   result.workspace.removeCard('manual')
+  flush()
   result.controls.setInputValue('buttonValue', 1)
+  flush()
   expect(nodeIds(result.workspace)).not.toContain('manual')
   expect(JSON.parse(sessionStorage.getItem(layoutKey())!).hiddenIds).toEqual(['manual'])
 })
@@ -139,11 +154,17 @@ test('should retain hidden cards during edits to the same model profile', () => 
 test('should retain the latest model layout when models switch before queued positions restore', async () => {
   const {result} = mount()
   result.workspace.removeCard('manual')
+  flush()
   result.setDocument(second)
+  flush()
   result.workspace.removeCard('button')
+  flush()
   result.setDocument(first)
+  flush()
   result.setDocument(second)
+  flush()
   await Promise.resolve()
+  flush()
   expect(nodeIds(result.workspace)).toContain('manual')
   expect(nodeIds(result.workspace)).not.toContain('button')
   expect(JSON.parse(sessionStorage.getItem(layoutKey(second))!).hiddenIds).toEqual(['button'])

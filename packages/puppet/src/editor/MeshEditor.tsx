@@ -1,6 +1,7 @@
 import {EditorToggleButton} from '../design-system'
-import {createEffect, createSignal, createUniqueId, Index, Show} from 'solid-js'
-import {Portal} from 'solid-js/web'
+import {createEffect, createSignal, createUniqueId, For, Show} from 'solid-js'
+import {Portal} from '@solidjs/web'
+
 import type {MeshEditorProps} from './mesh-editor-contract'
 import {getEditorViewBox} from './internal/viewport'
 import {type MeshTriangle, useMeshEditor} from './use-mesh-editor'
@@ -24,15 +25,17 @@ export const MeshEditor = (props: MeshEditorProps) => {
   const editor = useMeshEditor(props)
   const maskClipId = createUniqueId()
   const [maskBoundaryVisible, setMaskBoundaryVisible] = createSignal(true)
-  createEffect(() => {
-    if (
+  createEffect(
+    () =>
       props.brushControlsExternal &&
       props.brushControlsMount === undefined &&
-      editor.brushEnabled()
-    ) {
-      editor.setBrushEnabled(false)
-    }
-  })
+      editor.brushEnabled(),
+    (disabled) => {
+      if (disabled) {
+        editor.setBrushEnabled(false)
+      }
+    },
+  )
   const viewBox = () => getEditorViewBox(props.document)
   const activePartView = () =>
     editor.partViews().find((partView) => partView.partId === editor.part()?.id)
@@ -73,7 +76,7 @@ export const MeshEditor = (props: MeshEditorProps) => {
       <Show when={editor.partViews().length > 0}>
         <svg
           aria-label="메시 정점 편집 영역"
-          tabIndex={0}
+          tabindex={0}
           preserveAspectRatio="xMidYMid meet"
           style={{'--active-mask-clip': `url("#${maskClipId}")`}}
           viewBox={`${viewBox().x} ${viewBox().y} ${viewBox().width} ${viewBox().height}`}
@@ -103,16 +106,16 @@ export const MeshEditor = (props: MeshEditorProps) => {
               </Show>
             </clipPath>
           </defs>
-          <Index each={editor.partViews()}>
+          <For keyed={false} each={editor.partViews()}>
             {(partView) => (
               <g data-part-id={partView().partId}>
-                <Index each={partView().triangles}>
+                <For keyed={false} each={partView().triangles}>
                   {(triangle) => <polygon points={getTrianglePoints(triangle())} />}
-                </Index>
-                <Index each={partView().vertices}>
+                </For>
+                <For keyed={false} each={partView().vertices}>
                   {(vertex) => (
                     <circle
-                      classList={{
+                      class={{
                         selected:
                           editor.part()?.id === partView().partId &&
                           editor.selectedVertex() === vertex().index,
@@ -126,10 +129,10 @@ export const MeshEditor = (props: MeshEditorProps) => {
                       }}
                     />
                   )}
-                </Index>
+                </For>
               </g>
             )}
-          </Index>
+          </For>
           <Show when={editor.brushEnabled() && editor.brushCursor()}>
             {(cursor) => (
               <circle
@@ -141,7 +144,7 @@ export const MeshEditor = (props: MeshEditorProps) => {
             )}
           </Show>
           <Show when={maskBoundaryVisible()}>
-            <Index each={editor.clippedPartViews()}>
+            <For keyed={false} each={editor.clippedPartViews()}>
               {(clippedPartView) => (
                 <g
                   aria-label={`${clippedPartView().partId} 클리핑 적용 영역`}
@@ -160,7 +163,7 @@ export const MeshEditor = (props: MeshEditorProps) => {
                   />
                 </g>
               )}
-            </Index>
+            </For>
           </Show>
         </svg>
       </Show>

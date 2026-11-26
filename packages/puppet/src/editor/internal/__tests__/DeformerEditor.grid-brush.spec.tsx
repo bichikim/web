@@ -2,8 +2,9 @@
 
 import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {fireEvent, render, within} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
-import {Portal} from 'solid-js/web'
+import {createSignal, flush} from 'solid-js'
+import {Portal} from '@solidjs/web'
+
 import {expect, test, vi} from 'vitest'
 import type {PuppetDocument, PuppetSceneDeformerNode} from '../../../player'
 import {DeformerEditor} from '../DeformerEditor'
@@ -54,7 +55,7 @@ test('should keep the grid selector in the shared toolbar and settings above the
   fireEvent.click(brush)
   expect(within(settings).getByRole('spinbutton', {name: '디포머 브러시 반경'})).toBeVisible()
   expect(within(controls).queryByRole('spinbutton')).toBeNull()
-  setMount(undefined)
+  flush(() => setMount(undefined))
   expect(view.queryByRole('button', {name: '디포머 변형 브러시'})).toBeNull()
   expect(within(settings).queryByRole('spinbutton')).toBeNull()
 })

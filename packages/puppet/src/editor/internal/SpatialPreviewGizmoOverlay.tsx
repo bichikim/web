@@ -42,7 +42,7 @@ export const SpatialPreviewGizmoOverlay = (props: GizmoProps) => (
               aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Enter Space"
               class="spatial-mesh-preview-axis-hit"
               onPointerDown={(event) => props.onAxisDown(event, handle.axis)}
-              on:keydown={(event) => props.onAxisKeyDown(event, handle.axis)}
+              onKeyDown={(event) => props.onAxisKeyDown(event, handle.axis)}
             />
             <text x={handle.end.x} y={handle.end.y} class="spatial-mesh-preview-axis-label">
               {handle.axis.toUpperCase()}

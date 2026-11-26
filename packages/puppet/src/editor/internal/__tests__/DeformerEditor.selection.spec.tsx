@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {describe, expect, test} from 'vitest'
 import {createDemoDocument} from '../../../player'
 import {DeformerEditor} from '../DeformerEditor'
@@ -134,8 +134,8 @@ describe('DeformerEditor selection', () => {
     fireEvent(firstPoint, new MouseEvent('pointerdown', {bubbles: true}))
     expect(firstPoint).toHaveAttribute('aria-pressed', 'true')
 
-    setActiveNodeId(secondDeformer.id)
-    setActiveNodeId(firstDeformer.id)
+    flush(() => setActiveNodeId(secondDeformer.id))
+    flush(() => setActiveNodeId(firstDeformer.id))
 
     expect(view.getByRole('button', {name: /^격자 제어점 1$/})).toHaveAttribute(
       'aria-pressed',
@@ -147,19 +147,21 @@ describe('DeformerEditor selection', () => {
       view.getByRole('button', {name: /^격자 제어점 1$/}),
       new MouseEvent('pointerdown', {bubbles: true}),
     )
-    setDocument({
-      ...document(),
-      scene: {
-        roots: [
-          {
-            ...firstDeformer,
-            columns: 2,
-            controlPoints: [0, 0, 50, 0, 100, 0, 0, 100, 50, 100, 100, 100],
-          },
-          secondDeformer,
-        ],
-      },
-    })
+    flush(() =>
+      setDocument({
+        ...document(),
+        scene: {
+          roots: [
+            {
+              ...firstDeformer,
+              columns: 2,
+              controlPoints: [0, 0, 50, 0, 100, 0, 0, 100, 50, 100, 100, 100],
+            },
+            secondDeformer,
+          ],
+        },
+      }),
+    )
 
     expect(view.getByRole('button', {name: /^격자 제어점 1$/})).toHaveAttribute(
       'aria-pressed',

@@ -2,15 +2,16 @@ import type {StudioFile} from './parse-studio-file'
 import {useStudioImport} from './use-studio-import'
 import {
   type Accessor,
-  batch,
   createEffect,
   createMemo,
   createSignal,
-  on,
+  createTrackedEffect,
   onCleanup,
+  reconcile,
+  type StoreSetter,
   untrack,
 } from 'solid-js'
-import {reconcile, type SetStoreFunction} from 'solid-js/store'
+
 import type {Node} from '@dschz/solid-flow'
 import type {RuntimeControls} from '../use-runtime-controls'
 import {
@@ -25,7 +26,7 @@ interface UseWorkspaceLayoutProps {
   /** Current graph nodes, including positions captured in layout snapshots. */
   readonly nodes: Accessor<Node[]>
   /** Applies restored positions after the profile rebuilds graph membership. */
-  readonly setNodes: SetStoreFunction<Node[]>
+  readonly setNodes: StoreSetter<Node[]>
   /** Parameter ports explicitly added to the graph. */
   readonly extraPorts: Accessor<readonly string[]>
   /** Restores the explicitly added ports from a layout snapshot. */
@@ -76,11 +77,9 @@ export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
     restoreVersion += 1
     const version = restoreVersion
     setRestoring(true)
-    batch(() => {
-      props.setExtraPorts([...layout.extraPorts])
-      props.restoreHiddenIds(layout.hiddenIds)
-      props.controls.updateProfile(applyWorkspaceCollapse(profile, layout))
-    })
+    props.setExtraPorts([...layout.extraPorts])
+    props.restoreHiddenIds(layout.hiddenIds)
+    props.controls.updateProfile(applyWorkspaceCollapse(profile, layout))
     // Restore positions after the profile change rebuilds graph membership.
     queueMicrotask(() => {
       if (disposed || version !== restoreVersion) {
@@ -93,27 +92,25 @@ export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
     })
   }
   const signature = createMemo(() => props.controls.profile()?.signature)
-  createEffect(
-    on(signature, (signature) => {
-      if (signature === undefined) {
-        return setRestoredSignature(undefined)
+  createEffect(signature, (signature) => {
+    if (signature === undefined) {
+      return setRestoredSignature(undefined)
+    }
+    props.restoreHiddenIds([])
+    try {
+      const storage = props.sessionStorage ?? globalThis.sessionStorage
+      const stored = storage.getItem(storageKey(signature))
+      const layout =
+        stored === null ? undefined : parseWorkspaceLayout(JSON.parse(stored), signature)
+      if (layout !== undefined) {
+        untrack(() => restore(layout))
       }
-      props.restoreHiddenIds([])
-      try {
-        const storage = props.sessionStorage ?? globalThis.sessionStorage
-        const stored = storage.getItem(storageKey(signature))
-        const layout =
-          stored === null ? undefined : parseWorkspaceLayout(JSON.parse(stored), signature)
-        if (layout !== undefined) {
-          untrack(() => restore(layout))
-        }
-      } catch {
-        setError('스튜디오 배치를 복원하지 못했습니다.')
-      }
-      setRestoredSignature(signature)
-    }),
-  )
-  createEffect(() => {
+    } catch {
+      setError('스튜디오 배치를 복원하지 못했습니다.')
+    }
+    setRestoredSignature(signature)
+  })
+  createTrackedEffect(() => {
     if (restoring() || signature() !== restoredSignature()) {
       return
     }

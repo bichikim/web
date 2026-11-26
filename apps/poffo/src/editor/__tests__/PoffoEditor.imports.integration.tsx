@@ -213,6 +213,6 @@ describe('PuppetEditor', () => {
     })
 
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledTimes(2))
-    expect(replacementPlayer.pause).toHaveBeenCalledOnce()
+    await waitFor(() => expect(replacementPlayer.pause).toHaveBeenCalledOnce())
   })
 })

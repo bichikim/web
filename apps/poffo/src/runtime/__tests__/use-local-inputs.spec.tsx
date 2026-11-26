@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {renderHook} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createDemoDocument} from '@winter-love/puppet/player'
 import {createRuntimeProfile} from '../../tracking/create-runtime-profile'
@@ -42,12 +42,17 @@ test('should smooth local input changes on animation frames and stop scheduling 
     useLocalInputs({document: () => document, profile, updateProfile: setProfile}),
   )
   advance(0)
+  flush()
   expect(result.localValues().manual).toBe(0)
   result.setInputValue('manualValue', 0.5)
+  flush()
   advance(0)
+  flush()
   advance(100)
+  flush()
   expect(result.localValues().manual).toBeCloseTo(1 - Math.exp(-1))
   advance(1000)
+  flush()
   expect(result.localValues().manual).toBe(1)
   expect(callbacks.size).toBe(0)
 })

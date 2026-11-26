@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render} from '@solidjs/testing-library'
-import {createRoot, createSignal} from 'solid-js'
+import {createRoot, createSignal, flush} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument} from '../../../player'
 import {createHistory as useDocumentHistory} from '../../__tests__/fixtures/history'
@@ -41,7 +41,7 @@ test.each(['dispose', 'cancel', 'commit', 'replace'] as const)(
     const marker = view.getByRole('button')
     fireEvent(marker, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
     if (end === 'replace') {
-      setSource({...keyframe, time: 1})
+      flush(() => setSource({...keyframe, time: 1}))
       fireEvent(marker, new MouseEvent('pointerup', {bubbles: true}))
     } else if (end === 'cancel') {
       fireEvent(marker, new MouseEvent('pointercancel', {bubbles: true}))
@@ -85,7 +85,7 @@ test('should cancel the preview transaction on window blur', () => {
   const marker = view.getByRole('button')
   fireEvent(marker, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
   fireEvent(marker, new MouseEvent('pointermove', {bubbles: true}))
-  globalThis.dispatchEvent(new Event('blur'))
+  fireEvent(globalThis.window, new Event('blur'))
   expect(onEditEnd).toHaveBeenCalledOnce()
   fireEvent(marker, new MouseEvent('pointerup', {bubbles: true}))
   expect(onMove).not.toHaveBeenCalled()

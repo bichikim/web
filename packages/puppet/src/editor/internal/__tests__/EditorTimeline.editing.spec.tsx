@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {createDemoDocument, type PuppetDocument} from '../../../player'
 import {EditorTimeline} from '../EditorTimeline'
@@ -48,9 +48,13 @@ const mockBounds = (track: HTMLElement) =>
     .spyOn(track, 'getBoundingClientRect')
     .mockReturnValue(DOMRect.fromRect({height: 38, width: 240}))
 const selectMenu = (name: string) =>
-  screen
-    .getByRole('menuitem', {name})
-    .dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  fireEvent(
+    screen.getByRole('menuitem', {name}),
+    new MouseEvent('pointerup', {
+      bubbles: true,
+      button: 0,
+    }),
+  )
 
 beforeEach(() => {
   const getComputedStyle = globalThis.getComputedStyle
@@ -257,18 +261,21 @@ describe('EditorTimeline keyframe editing', () => {
     fireEvent.click(view.getByRole('button', {name: 'Angle Y 1.00초 키프레임'}))
     const track = view.getByRole('group', {name: 'Angle Y 트랙'})
     track.focus()
-    setDocument({
-      ...document(),
-      motions: document().motions.map((motion) => ({
-        ...motion,
-        tracks: motion.tracks.map((track) => ({
-          ...track,
-          keyframes: track.keyframes.map((keyframe) =>
-            keyframe.time === 1 ? {...keyframe, time: 0.5} : keyframe,
-          ),
+    flush(() =>
+      setDocument({
+        ...document(),
+        motions: document().motions.map((motion) => ({
+          ...motion,
+          tracks: motion.tracks.map((track) => ({
+            ...track,
+            keyframes: track.keyframes.map((keyframe) =>
+              keyframe.time === 1 ? {...keyframe, time: 0.5} : keyframe,
+            ),
+          })),
         })),
-      })),
-    })
+      }),
+    )
+    flush()
     const previous = document()
     expect(view.getByRole('button', {name: 'Angle Y 0.50초 키프레임'})).toHaveAttribute(
       'aria-pressed',
@@ -292,13 +299,13 @@ describe('EditorTimeline keyframe editing', () => {
     mockBounds(track)
     const marker = view.getByRole('button', {name: 'Angle Y 1.00초 키프레임'})
     fireEvent.click(marker)
-    setEditable(false)
+    flush(() => setEditable(false))
     fireEvent.keyDown(marker, {key: 'Backspace'})
     fireEvent.contextMenu(track, {clientX: 60})
     fireEvent.dblClick(track, {clientX: 60})
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
     expect(onDocumentChange).not.toHaveBeenCalled()
-    setEditable(true)
+    flush(() => setEditable(true))
     fireEvent.contextMenu(track, {clientX: 60})
     selectMenu('키프레임 추가')
     expect(onDocumentChange).toHaveBeenCalledOnce()

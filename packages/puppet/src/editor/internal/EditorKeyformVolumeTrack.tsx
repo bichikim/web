@@ -1,4 +1,4 @@
-import {createMemo} from 'solid-js'
+import {createMemo, untrack} from 'solid-js'
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetParameterBinding3D} from '../../player/document'
 import {EditorKeyformFlatTrack} from './EditorKeyformFlatTrack'
@@ -42,7 +42,8 @@ export const EditorKeyformVolumeTrack = (props: EditorKeyformVolumeTrackProps) =
   }
   const handleDepthSelect = (_bindingId: string, point: PuppetParameterValues) =>
     handleDepthChange(point)
-  const handleDepthDelete = () => props.onKeyformPlaneDelete?.(props.binding.id, currentZ())
+  const handleDepthDelete = ([depth]: PuppetParameterValues) =>
+    props.onKeyformPlaneDelete?.(props.binding.id, depth)
   const handleDepthMove: NonNullable<EditorKeyformTrackProps['onKeyformMove']> = (
     bindingId,
     [from],
@@ -56,9 +57,13 @@ export const EditorKeyformVolumeTrack = (props: EditorKeyformVolumeTrackProps) =
     )?.values
     if (point !== undefined) {
       props.onKeyformMove?.(bindingId, point, inPlane(point, to))
-      if (values()[2] === to) {
-        props.onValueChange?.([x, y, to])
-      }
+      queueMicrotask(() =>
+        untrack(() => {
+          if (values()[2] === to) {
+            props.onValueChange?.([x, y, to])
+          }
+        }),
+      )
     }
   }
   const volume = createMemo(() => {

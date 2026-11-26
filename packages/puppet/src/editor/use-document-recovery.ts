@@ -1,4 +1,4 @@
-import {type Accessor, batch, createSignal, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createSignal, onCleanup, onSettled} from 'solid-js'
 import type {ModelCommandResult} from './model'
 import type {PuppetDocument} from '../player'
 import type {DocumentRecovery, DocumentRecoveryEntry} from './document-recovery'
@@ -24,10 +24,8 @@ export const useDocumentRecovery = (props: UseDocumentRecoveryProps) => {
     disposed = true
   })
   const refresh = async () => {
-    batch(() => {
-      setLoading(true)
-      setError(null)
-    })
+    setLoading(true)
+    setError(null)
     try {
       const entries = await props.recovery.listRecoveries()
       if (!disposed) {
@@ -43,16 +41,16 @@ export const useDocumentRecovery = (props: UseDocumentRecoveryProps) => {
       }
     }
   }
-  onMount(refresh)
+  onSettled(() => {
+    refresh()
+  })
   const restore = async (id: string) => {
     if (restoring() || disposed) {
       return
     }
     const revision = props.revision?.()
-    batch(() => {
-      setRestoring(true)
-      setError(null)
-    })
+    setRestoring(true)
+    setError(null)
     try {
       const document = await props.recovery.loadRecovery(id)
       if (disposed) {

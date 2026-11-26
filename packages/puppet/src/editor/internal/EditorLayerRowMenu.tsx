@@ -1,4 +1,5 @@
-import {createMemo, createSignal, type JSX} from 'solid-js'
+import {createMemo} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import type {PuppetSceneNode} from '../../player'
 import type {LayerClipboard} from './use-layer-clipboard'
 import {EditorContextMenu} from './EditorContextMenu'
@@ -17,20 +18,10 @@ interface EditorLayerRowMenuProps {
 }
 
 export const EditorLayerRowMenu = (props: EditorLayerRowMenuProps) => {
-  const [renaming, setRenaming] = createSignal(false)
-  const handleRename = () => {
-    setRenaming(true)
-    props.onRename()
-  }
   const handleContextMenu = (event: MouseEvent) => {
     event.stopPropagation()
     if (!props.selected) {
       props.onSelect(event, props.node)
-    }
-  }
-  const handleCloseAutoFocus = (event: Event) => {
-    if (renaming()) {
-      event.preventDefault()
     }
   }
   const entries = createMemo(() =>
@@ -39,7 +30,7 @@ export const EditorLayerRowMenu = (props: EditorLayerRowMenuProps) => {
       editable: props.editable,
       locked: props.locked,
       node: props.node,
-      onRename: handleRename,
+      onRename: () => props.onRename(),
     }),
   )
   return (
@@ -49,12 +40,6 @@ export const EditorLayerRowMenu = (props: EditorLayerRowMenuProps) => {
       disabled={props.disabled}
       triggerClass="puppet-layer-row-menu"
       onContextMenu={handleContextMenu}
-      onCloseAutoFocus={handleCloseAutoFocus}
-      onOpenChange={(open) => {
-        if (open) {
-          setRenaming(false)
-        }
-      }}
     >
       {props.children}
     </EditorContextMenu>

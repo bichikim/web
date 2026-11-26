@@ -1,4 +1,4 @@
-import {createEffect, createMemo, Index, Show} from 'solid-js'
+import {createMemo, createTrackedEffect, For, Show} from 'solid-js'
 import {EditorButton} from '../../design-system'
 import {EditorPropertyGroup} from './EditorPropertyGroup'
 import type {ModelHistoryEntry as DocumentHistoryEntry} from '../model'
@@ -11,7 +11,7 @@ interface DocumentHistoryPanelProps {
 export const DocumentHistoryPanel = (props: DocumentHistoryPanelProps) => {
   const entries = createMemo(() => props.entries.toReversed())
   let list: HTMLOListElement | undefined
-  createEffect(() => {
+  createTrackedEffect(() => {
     const current = entries().findIndex((entry) => entry.state === 'current')
     const entry = list?.children.item(current)
     if (list === undefined || entry === null || entry === undefined) {
@@ -33,7 +33,7 @@ export const DocumentHistoryPanel = (props: DocumentHistoryPanelProps) => {
             list = element
           }}
         >
-          <Index each={entries()}>
+          <For keyed={false} each={entries()}>
             {(entry) => (
               <li>
                 <EditorButton
@@ -54,7 +54,7 @@ export const DocumentHistoryPanel = (props: DocumentHistoryPanelProps) => {
                 </EditorButton>
               </li>
             )}
-          </Index>
+          </For>
         </ol>
       </EditorPropertyGroup>
     </section>
