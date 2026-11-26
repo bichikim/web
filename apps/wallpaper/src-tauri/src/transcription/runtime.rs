@@ -55,6 +55,8 @@ pub(super) fn whisper_executable() -> Result<PathBuf, Error> {
     {
         let platform = if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
             "aarch64-apple-darwin"
+        } else if cfg!(all(target_os = "macos", target_arch = "x86_64")) {
+            "x86_64-apple-darwin"
         } else if cfg!(all(target_os = "windows", target_arch = "x86_64")) {
             "x86_64-pc-windows-msvc.exe"
         } else if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
