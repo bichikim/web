@@ -97,8 +97,39 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: pnpm run test:vitest --changed="$BASE_SHA" --passWithNoTests
 
+  integration-scope:
+    name: Select integration tests
+    runs-on: ubuntu-24.04
+    outputs:
+      required: ${{ steps.scope.outputs.required }}
+      projects: ${{ steps.scope.outputs.projects }}
+      directories: ${{ steps.scope.outputs.directories }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+
+      - name: Check integration scope rules
+        run: node --test scripts/ci/__tests__/integration-scope.spec.mjs
+
+      - name: Select affected integration tests
+        id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/ci/integration-scope.mjs "$BASE_SHA"
+
   integration-tests:
     name: Integration tests
+    needs: integration-scope
+    if: needs.integration-scope.outputs.required == 'true'
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
@@ -145,13 +176,26 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium webkit
 
       - name: Run integration tests
-        run: pnpm test:integration --project=integration --project=wallpaper-web-browser --project=pomo-album-editor-browser
+        env:
+          INTEGRATION_PROJECTS: ${{ needs.integration-scope.outputs.projects }}
+          INTEGRATION_DIRECTORIES: ${{ needs.integration-scope.outputs.directories }}
+        run: |
+          project_lines=$(jq -r '.[] | "--project=" + .' <<< "$INTEGRATION_PROJECTS")
+          mapfile -t projects <<< "$project_lines"
+          directories=()
+          if [[ "$INTEGRATION_DIRECTORIES" != '[]' ]]; then
+            directory_lines=$(jq -r --arg workspace "$GITHUB_WORKSPACE" '.[] | $workspace + "/" + . + "/"' <<< "$INTEGRATION_DIRECTORIES")
+            mapfile -t directories <<< "$directory_lines"
+            projects+=(--passWithNoTests)
+          fi
+          pnpm test:integration "${projects[@]}" "${directories[@]}"
 
   tests:
     name: Tests
     needs:
       - typecheck
       - unit-tests
+      - integration-scope
       - integration-tests
     if: ${{ always() }}
     runs-on: ubuntu-latest
@@ -160,8 +204,14 @@ jobs:
         env:
           TYPECHECK_RESULT: ${{ needs.typecheck.result }}
           UNIT_TESTS_RESULT: ${{ needs.unit-tests.result }}
+          INTEGRATION_SCOPE_RESULT: ${{ needs.integration-scope.result }}
+          INTEGRATION_REQUIRED: ${{ needs.integration-scope.outputs.required }}
           INTEGRATION_TESTS_RESULT: ${{ needs.integration-tests.result }}
         run: |
-          if [[ "$TYPECHECK_RESULT" != 'success' || "$UNIT_TESTS_RESULT" != 'success' || "$INTEGRATION_TESTS_RESULT" != 'success' ]]; then
+          if [[ "$TYPECHECK_RESULT" != 'success' || "$UNIT_TESTS_RESULT" != 'success' || "$INTEGRATION_SCOPE_RESULT" != 'success' ]]; then
             exit 1
           fi
+          case "$INTEGRATION_REQUIRED:$INTEGRATION_TESTS_RESULT" in
+            true:success|false:skipped) ;;
+            *) exit 1 ;;
+          esac
