@@ -1,0 +1,237 @@
+name: Build Poffo Wallpaper Desktop
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish signed installers to wallpaper.poffo.io from main
+        type: boolean
+        default: false
+      publish_beta:
+        description: Publish beta installers without release signing or notarization from main
+        type: boolean
+        default: false
+
+run-name: Build Poffo Wallpaper Desktop from ${{ github.ref_name }}
+
+concurrency:
+  group: wallpaper-desktop-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '24.x'
+  PNPM_VERSION: 11.8.0
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    environment: ${{ inputs.publish && github.ref == 'refs/heads/main' && 'Production – wallpaper' || '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+            bundles: dmg
+            extension: dmg
+          - runner: macos-15-intel
+            target: x86_64-apple-darwin
+            bundles: dmg
+            extension: dmg
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundles: nsis
+            extension: exe
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Validate release selection
+        if: >-
+          ((inputs.publish || inputs.publish_beta) && github.ref != 'refs/heads/main') ||
+          (inputs.publish && inputs.publish_beta)
+        run: |
+          echo "::error::Choose one Wallpaper release mode and publish from main."
+          exit 1
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/wallpaper/src-tauri -> target
+          key: ${{ matrix.target }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Puppet distribution
+        run: pnpm --filter @winter-love/puppet build
+
+      - name: Prepare Windows signing tool
+        if: inputs.publish && runner.os == 'Windows'
+        run: cargo install artifact-signing-cli --locked --version 0.12.0
+
+      - name: Build desktop installer
+        env:
+          BUILD_TARGET: ${{ matrix.target }}
+          BUILD_BUNDLES: ${{ matrix.bundles }}
+          PUBLISH: ${{ inputs.publish }}
+          APPLE_CERTIFICATE: ${{ inputs.publish && runner.os == 'macOS' && secrets.WALLPAPER_APPLE_CERTIFICATE || '' }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ inputs.publish && runner.os == 'macOS' && secrets.WALLPAPER_APPLE_CERTIFICATE_PASSWORD || '' }}
+          APPLE_SIGNING_IDENTITY: ${{ inputs.publish && runner.os == 'macOS' && vars.WALLPAPER_APPLE_SIGNING_IDENTITY || '' }}
+          AZURE_CLIENT_ID: ${{ inputs.publish && runner.os == 'Windows' && secrets.WALLPAPER_WINDOWS_AZURE_CLIENT_ID || '' }}
+          AZURE_CLIENT_SECRET: ${{ inputs.publish && runner.os == 'Windows' && secrets.WALLPAPER_WINDOWS_AZURE_CLIENT_SECRET || '' }}
+          AZURE_TENANT_ID: ${{ inputs.publish && runner.os == 'Windows' && secrets.WALLPAPER_WINDOWS_AZURE_TENANT_ID || '' }}
+          AZURE_ARTIFACT_SIGNING_ENDPOINT: ${{ inputs.publish && runner.os == 'Windows' && vars.WALLPAPER_WINDOWS_SIGNING_ENDPOINT || '' }}
+          AZURE_ARTIFACT_SIGNING_ACCOUNT: ${{ inputs.publish && runner.os == 'Windows' && vars.WALLPAPER_WINDOWS_SIGNING_ACCOUNT || '' }}
+          AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE: ${{ inputs.publish && runner.os == 'Windows' && vars.WALLPAPER_WINDOWS_SIGNING_PROFILE || '' }}
+          AZURE_ARTIFACT_SIGNING_DESCRIPTION: Poffo Wallpaper
+        run: |
+          require_settings() {
+            for setting in "$@"; do
+              if [[ -z "${!setting}" ]]; then
+                echo "::error::Missing Wallpaper signing setting: $setting"
+                exit 1
+              fi
+            done
+          }
+
+          bundle_config='{"bundle":{"active":true}}'
+          if [[ "$RUNNER_OS" == Windows ]]; then
+            # Keep Vite's static copy source on the workspace drive.
+            export LOCALAPPDATA="$GITHUB_WORKSPACE/.cache/desktop-build"
+            if [[ "$PUBLISH" == true ]]; then
+              require_settings AZURE_CLIENT_ID AZURE_CLIENT_SECRET AZURE_TENANT_ID \
+                AZURE_ARTIFACT_SIGNING_ENDPOINT AZURE_ARTIFACT_SIGNING_ACCOUNT \
+                AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE
+              bundle_config='{"bundle":{"active":true,"windows":{"signCommand":"artifact-signing-cli %1"}}}'
+            fi
+          elif [[ "$PUBLISH" == true ]]; then
+            require_settings APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY
+            if [[ "$APPLE_SIGNING_IDENTITY" != "Developer ID Application:"* ]]; then
+              echo "::error::Wallpaper distribution requires a Developer ID Application identity."
+              exit 1
+            fi
+          else
+            unset APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY
+            bundle_config='{"bundle":{"active":true,"macOS":{"signingIdentity":"-"}}}'
+          fi
+
+          pnpm --filter @apps/wallpaper exec tauri build --ci \
+            --target "$BUILD_TARGET" --bundles "$BUILD_BUNDLES" \
+            --config "$bundle_config" -- --locked
+
+      - name: Notarize the macOS disk image
+        if: inputs.publish && runner.os == 'macOS'
+        env:
+          BUILD_TARGET: ${{ matrix.target }}
+          APPLE_ID: ${{ secrets.WALLPAPER_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.WALLPAPER_APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ vars.WALLPAPER_APPLE_TEAM_ID }}
+        run: |
+          installers=(apps/wallpaper/src-tauri/target/"$BUILD_TARGET"/release/bundle/dmg/*.dmg)
+          if [[ "${#installers[@]}" != 1 || ! -s "${installers[0]}" ]]; then
+            echo "::error::Expected one Wallpaper disk image."
+            exit 1
+          fi
+          : "${APPLE_ID:?Set WALLPAPER_APPLE_ID}"
+          : "${APPLE_PASSWORD:?Set WALLPAPER_APPLE_PASSWORD}"
+          : "${APPLE_TEAM_ID:?Set WALLPAPER_APPLE_TEAM_ID}"
+          dmg="${installers[0]}"
+          codesign --verify --strict "$dmg"
+          report="$(xcrun notarytool submit "$dmg" --wait --timeout 20m --output-format json \
+            --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID")"
+          jq -er '"Notarization \(.id): \(.status)"' <<< "$report"
+          jq -e '.status == "Accepted"' <<< "$report" > /dev/null
+          xcrun stapler staple "$dmg"
+          xcrun stapler validate "$dmg"
+          spctl --assess --type open --context context:primary-signature "$dmg"
+
+          mount_path="$(mktemp -d)"
+          hdiutil attach "$dmg" -readonly -nobrowse -mountpoint "$mount_path"
+          trap 'hdiutil detach "$mount_path"; rmdir "$mount_path"' EXIT
+          app="$mount_path/Wallpaper.app"
+          codesign --verify --deep --strict "$app"
+
+      - name: Verify Windows installer signature
+        if: inputs.publish && runner.os == 'Windows'
+        shell: pwsh
+        env:
+          BUILD_TARGET: ${{ matrix.target }}
+        run: |
+          $installers = @(Get-ChildItem "apps/wallpaper/src-tauri/target/$env:BUILD_TARGET/release/bundle/nsis/*.exe")
+          if ($installers.Count -ne 1) { throw 'Expected one Windows installer.' }
+          $signature = Get-AuthenticodeSignature -LiteralPath $installers[0].FullName
+          if ($signature.Status -ne 'Valid' -or !$signature.TimeStamperCertificate) {
+            throw "Wallpaper installer signature or timestamp failed verification: $($signature.Status)"
+          }
+
+      - name: Upload installer
+        id: installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: poffo-wallpaper-desktop-${{ matrix.target }}-${{ github.run_id }}
+          overwrite: true
+          path: apps/wallpaper/src-tauri/target/${{ matrix.target }}/release/bundle/${{ matrix.bundles }}/*.${{ matrix.extension }}
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+
+      - name: Summarize download
+        env:
+          ARTIFACT_URL: ${{ steps.installer.outputs.artifact-url }}
+          BUILD_TARGET: ${{ matrix.target }}
+        run: |
+          echo "[Download ${BUILD_TARGET} installer](${ARTIFACT_URL}) (retained for 30 days)." >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    name: Publish installers
+    if: (inputs.publish || inputs.publish_beta) && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: Production – wallpaper installers
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Download installers
+        uses: actions/download-artifact@v8
+        with:
+          path: installers
+          pattern: poffo-wallpaper-desktop-*-${{ github.run_id }}
+
+      - name: Publish release
+        env:
+          RELEASE_CHANNEL: ${{ inputs.publish_beta && 'beta' || 'stable' }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.WALLPAPER_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.WALLPAPER_R2_SECRET_ACCESS_KEY }}
+        run: bash apps/wallpaper/scripts/publish-installers.sh installers

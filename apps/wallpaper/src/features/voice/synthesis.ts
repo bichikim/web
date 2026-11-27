@@ -2,6 +2,7 @@ import type {SynthesisReply, SynthesisRequest} from './protocol'
 import type {PoffoVoice} from '@winter-love/wallpaper/settings/voice'
 import type {VoiceStatus} from './readout'
 import type {LipSyncCue} from '../lipsync/types'
+import {Channel, convertFileSrc, invoke, isTauri} from '@tauri-apps/api/core'
 
 export interface VoiceAudio {
   readonly text?: string
@@ -28,6 +29,7 @@ export const createSynthesis = (): SynthesisClient => {
   let nextId = 0
   let disposed = false
   let cancel: (() => void) | null = null
+  let prepared: {model: PoffoVoice['model']; path: string} | null = null
   const reset = () => {
     worker?.terminate()
     worker = null
@@ -93,18 +95,51 @@ export const createSynthesis = (): SynthesisClient => {
           runtime.addEventListener('error', fail)
           runtime.addEventListener('messageerror', fail)
           signal.addEventListener('abort', abort, {once: true})
-          try {
-            runtime.postMessage({
-              id,
-              text,
-              type: 'generate',
-              voice: settings,
-            } satisfies SynthesisRequest)
-          } catch (cause) {
-            clean()
-            reset()
-            reject(cause)
+          const send = (modelPath?: string) => {
+            if (cancel !== abort) {
+              return
+            }
+            try {
+              runtime.postMessage({
+                id,
+                text,
+                type: 'generate',
+                voice: settings,
+                ...(modelPath === undefined ? {} : {modelPath}),
+              } satisfies SynthesisRequest)
+            } catch (cause) {
+              clean()
+              reset()
+              reject(cause)
+            }
           }
+          if (!isTauri()) {
+            send()
+            return
+          }
+          if (prepared?.model === settings.model) {
+            send(prepared.path)
+            return
+          }
+          const downloading = new Channel<null>()
+          downloading.onmessage = () => {
+            if (cancel === abort) {
+              status('download')
+            }
+          }
+          invoke<string>('prepare_voice_model', {downloading, model: settings.model})
+            .then((path) => {
+              if (cancel === abort) {
+                prepared = {model: settings.model, path: `${convertFileSrc(path)}/`}
+                send(prepared.path)
+              }
+            })
+            .catch((cause: unknown) => {
+              if (cancel === abort) {
+                clean()
+                reject(new Error('음성 모델을 준비하지 못했어요. 다시 시도해 주세요.', {cause}))
+              }
+            })
         },
       )
       signal.throwIfAborted()

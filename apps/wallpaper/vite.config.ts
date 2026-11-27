@@ -12,6 +12,7 @@ import {
   prepareVoiceAssets,
   voiceAssets,
   voiceDirectory,
+  voiceModelAssets,
   voiceRuntime,
 } from './scripts/prepare-voice-assets.mjs'
 import {dirname} from 'node:path'
@@ -40,6 +41,7 @@ export default defineConfig(async ({command}) => {
     },
     plugins: [
       conversationAssets(),
+      voiceModelAssets(),
       UnoCSS(),
       solid(),
       viteStaticCopy({

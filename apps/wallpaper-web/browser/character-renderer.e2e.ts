@@ -1,5 +1,21 @@
 import {expect, test} from 'playwright/test'
 
+test('renders the character on a return visit with the browser cache enabled', async ({page}) => {
+  const worker = page.waitForResponse((response) =>
+    /\/prepare-puppet-document-worker-[\w-]+\.js$/.test(new URL(response.url()).pathname),
+  )
+  await page.goto('/')
+  const response = await worker
+  expect(response.ok()).toBe(true)
+  expect(response.headers()['cross-origin-embedder-policy']).toBe('require-corp')
+  expect(response.headers()['cache-control']).toContain('immutable')
+
+  const pause = page.getByRole('button', {exact: true, name: '일시 정지'})
+  await expect(pause).toBeVisible()
+  await page.reload()
+  await expect(pause).toBeVisible()
+})
+
 for (const isolated of [true, false]) {
   test(`renders the landing character with Rust ${isolated ? 'in an isolated page' : 'without isolation'}`, async ({
     page,

@@ -7,6 +7,11 @@
       "target": "aarch64-apple-darwin",
       "sha256": "5a09eb645748a060a6c2c40e74df95ab61390374e2e11100889ce4cbc1b0fc97"
     },
+    "darwin-x64": {
+      "archive": "crispasr-macos-x86_64.tar.gz",
+      "target": "x86_64-apple-darwin",
+      "sha256": "d618bb933c939f7ace8120f7c4f81029f53525fc8ac77b1fa7b06fa46a87590a"
+    },
     "win32-x64": {
       "archive": "crispasr-windows-x86_64-cpu.zip",
       "target": "x86_64-pc-windows-msvc",

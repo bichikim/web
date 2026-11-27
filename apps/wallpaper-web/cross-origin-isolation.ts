@@ -1,4 +1,5 @@
 import type {Plugin, ViteDevServer} from 'vite'
+import buildAssets from './build-assets.json'
 import isolationHeaders from './isolation-headers.json'
 
 const attachHeaders = ({middlewares}: Pick<ViteDevServer, 'middlewares'>): void => {
@@ -12,7 +13,17 @@ const attachHeaders = ({middlewares}: Pick<ViteDevServer, 'middlewares'>): void 
 }
 
 export const crossOriginIsolation = (): Plugin => ({
-  configurePreviewServer: attachHeaders,
+  configurePreviewServer(server) {
+    attachHeaders(server)
+    server.middlewares.use((request, response, next) => {
+      if (request.url?.startsWith(`/${buildAssets.directory}/`)) {
+        for (const [name, value] of Object.entries(buildAssets.headers)) {
+          response.setHeader(name, value)
+        }
+      }
+      next()
+    })
+  },
   configureServer: attachHeaders,
   name: 'wallpaper-cross-origin-isolation',
 })

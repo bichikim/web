@@ -72,7 +72,8 @@ runs:
           --meta githubCommitRef="$GITHUB_REF_NAME")"
         url="$(node --input-type=module -e '
           import {readFileSync} from "node:fs"
-          const {deployment} = JSON.parse(readFileSync(0, "utf8"))
+          const response = JSON.parse(readFileSync(0, "utf8"))
+          const deployment = response.deployment ?? response
           const target = deployment?.target === null ? "preview" : deployment?.target
           if (target !== process.env.TARGET || deployment?.readyState !== "READY") {
             throw new Error("Vercel did not return a ready deployment for the requested target")
