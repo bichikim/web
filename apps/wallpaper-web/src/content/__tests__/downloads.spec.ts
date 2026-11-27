@@ -16,6 +16,7 @@ describe('Wallpaper release downloads', () => {
     const downloads = parseReleaseDownloads(release)
     expect(downloads?.version).toBe(release.version)
     expect(downloads?.isBeta).toBe(false)
+    expect(downloads?.macosNotarized).toBe(false)
     expect(downloads?.files.map(({href}) => href)).toEqual(
       ['macos-arm64.dmg', 'macos-x64.dmg', 'windows-x64.exe'].map(
         (name) => `https://wallpaper-files.pomofi.io/releases/0.1.0/12345-1/${name}`,
@@ -26,6 +27,12 @@ describe('Wallpaper release downloads', () => {
 
   it('identifies a beta release', () => {
     expect(parseReleaseDownloads({...release, channel: 'beta'})?.isBeta).toBe(true)
+  })
+
+  it('should recognize macOS notarization in a beta release', () => {
+    const downloads = parseReleaseDownloads({...release, channel: 'beta', macosNotarized: true})
+    expect(downloads?.isBeta).toBe(true)
+    expect(downloads?.macosNotarized).toBe(true)
   })
 
   it('rejects incomplete or invalid releases', () => {

@@ -81,6 +81,7 @@ test('downloads the chosen desktop installer from the latest release', async ({p
       json: {
         build: '100-1',
         channel: 'beta',
+        macosNotarized: true,
         sizes: {
           'macos-arm64': 95_000_000,
           'macos-x64': 96_000_000,
@@ -103,6 +104,8 @@ test('downloads the chosen desktop installer from the latest release', async ({p
   await page.getByRole('button', {exact: true, name: '다운로드'}).click()
   const dialog = page.getByRole('dialog', {name: 'Poffo Wallpaper 다운로드'})
   await expect(dialog.getByText('베타 0.1.0')).toBeVisible()
+  await expect(dialog.getByText(/macOS 공증 완료/u)).toBeVisible()
+  await expect(dialog.getByText(/Windows 설치 시 게시자 확인 경고/u)).toBeVisible()
   const arm = dialog.getByRole('link', {name: /Apple Silicon/u})
   const intel = dialog.getByRole('link', {name: /Intel/u})
   const windows = dialog.getByRole('link', {name: /Windows/u})
