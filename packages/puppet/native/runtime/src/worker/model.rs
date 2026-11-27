@@ -1,9 +1,9 @@
 //! Model activation for JSON messages and packed runtime sections.
-use super::{WorkerError, WorkerReply, WorkerRuntime, frame};
+use super::{WorkerError, WorkerReply, WorkerRuntime, coordinate_groups::coordinate_groups, frame};
 use crate::{Model, Player};
 use poffo_format::PoffoFile;
 use serde_json::{Value, json};
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 impl WorkerRuntime {
     pub fn write_runtime_section(
@@ -39,7 +39,7 @@ impl WorkerRuntime {
     ) -> Result<WorkerReply<'_>, WorkerError> {
         let mut model = Model::new(document);
         for (id, group) in coordinates {
-            if let Some(index) = model.deformers.iter().position(|d| d.node.id == id) {
+            if let Some(&index) = model.deformer_index.get(&id) {
                 model.coordinate_ids[index] = group;
             }
         }
@@ -68,109 +68,4 @@ impl WorkerRuntime {
             json!({"id":id,"kind":"initialized","bytes":bytes}),
         ))
     }
-}
-
-pub(super) fn coordinate_groups(document: &Value) -> Result<Vec<(String, usize)>, WorkerError> {
-    fn visit(
-        nodes: &Value,
-        parent: usize,
-        document: &Value,
-        keys: &mut HashMap<String, usize>,
-        groups: &mut Vec<(String, usize)>,
-    ) -> Result<(), WorkerError> {
-        for node in nodes.as_array().into_iter().flatten() {
-            let mut next = parent;
-            if node["kind"] == "deformer" {
-                let id = node["id"].as_str().unwrap_or("");
-                let excluded = [
-                    "id",
-                    "name",
-                    "kind",
-                    "visible",
-                    "locked",
-                    "children",
-                    "properties",
-                    "parameterVisibility",
-                ];
-                let shape = Value::Object(
-                    node.as_object()
-                        .into_iter()
-                        .flatten()
-                        .filter(|(k, _)| !excluded.contains(&k.as_str()))
-                        .map(|(k, v)| (k.clone(), v.clone()))
-                        .collect(),
-                );
-                let inputs = document["parameterBindings"]
-                    .as_array()
-                    .into_iter()
-                    .flatten()
-                    .filter(|b| {
-                        b["targetDeformerIds"]
-                            .as_array()
-                            .is_some_and(|ids| ids.iter().any(|v| v == id))
-                    })
-                    .map(|b| {
-                        let mut input = json!({});
-                        for key in [
-                            "parameterIds",
-                            "influenceMode",
-                            "influences",
-                            "interpolation",
-                            "keyformRange",
-                            "sampling",
-                        ] {
-                            if let Some(value) = b.get(key) {
-                                input[key] = value.clone();
-                            }
-                        }
-                        input["keyforms"] = json!(
-                            b["keyforms"]
-                                .as_array()
-                                .into_iter()
-                                .flatten()
-                                .map(|form| {
-                                    let keyed = form["deformers"].as_array().and_then(|entries| {
-                                        entries.iter().find(|d| d["nodeId"] == id)
-                                    });
-                                    let coordinates = keyed
-                                        .map(|v| {
-                                            Value::Object(
-                                                v.as_object()
-                                                    .into_iter()
-                                                    .flatten()
-                                                    .filter(|(key, _)| {
-                                                        !["nodeId", "properties"]
-                                                            .contains(&key.as_str())
-                                                    })
-                                                    .map(|(k, v)| (k.clone(), v.clone()))
-                                                    .collect(),
-                                            )
-                                        })
-                                        .unwrap_or_else(|| json!({}));
-                                    json!({"values":form["values"],"coordinates":coordinates})
-                                })
-                                .collect::<Vec<_>>()
-                        );
-                        input
-                    })
-                    .collect::<Vec<_>>();
-                let key = serde_json::to_string(&json!([parent, shape, inputs]))
-                    .map_err(WorkerError::Json)?;
-                let candidate = keys.len() + 1;
-                next = *keys.entry(key).or_insert(candidate);
-                groups.push((id.to_owned(), next));
-            }
-            visit(&node["children"], next, document, keys, groups)?;
-        }
-        Ok(())
-    }
-    let mut groups = Vec::new();
-    visit(
-        &document["scene"]["roots"],
-        0,
-        document,
-        &mut HashMap::new(),
-        &mut groups,
-    )?;
-    Ok(groups)
 }
