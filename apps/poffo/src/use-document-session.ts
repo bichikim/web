@@ -1,4 +1,4 @@
-import {type Accessor, createResource, createSignal, onCleanup, type Resource} from 'solid-js'
+import {type Accessor, createMemo, createSignal, onCleanup} from 'solid-js'
 import {createDocumentSession, type DocumentSession} from './create-document-session'
 import type {PuppetDocument} from '@winter-love/puppet/player'
 import type {DocumentRecovery} from '@winter-love/puppet/editor'
@@ -12,7 +12,7 @@ interface UseDocumentSessionProps {
 export type DocumentSessionFailure = 'restore' | 'save'
 
 interface UseDocumentSessionResult extends DocumentRecovery {
-  readonly document: Resource<PuppetDocument>
+  readonly document: Accessor<PuppetDocument>
   readonly failure: Accessor<DocumentSessionFailure | null>
   readonly dismissFailure: () => void
   readonly save: (document: PuppetDocument) => Promise<void>
@@ -35,7 +35,8 @@ export const useDocumentSession = (props: UseDocumentSessionProps): UseDocumentS
       setFailure(kind)
     }
   }
-  const [document] = createResource(async () => {
+  const document = createMemo(async () => {
+    await Promise.resolve()
     try {
       session =
         props.session ??

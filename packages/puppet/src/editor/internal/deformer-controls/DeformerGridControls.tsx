@@ -1,4 +1,5 @@
-import {For, type JSX, Show} from 'solid-js'
+import {For, Show} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import type {PuppetPoint, PuppetSceneDeformerNode} from '../../../player'
 import {createGridPaths, createTranslationPath} from '../deformer-paths'
 import {getDeformerPoint} from '../deformer-transform'
@@ -71,7 +72,7 @@ export const DeformerGridControls = (props: DeformerGridControlsProps) => {
   }
 
   return (
-    <g class="grid-deformer-controls" classList={{blocked: !props.editable}}>
+    <g class={['grid-deformer-controls', {blocked: !props.editable}]}>
       <path
         aria-label="자유 변형 이동 영역"
         class="translation-handle"
@@ -81,7 +82,7 @@ export const DeformerGridControls = (props: DeformerGridControlsProps) => {
       <For each={createGridPaths(props.deformer, props.transform)}>
         {(path) => (
           <>
-            <path d={path.data} data-tangent={path.tangent} />
+            <path d={path.data} data-tangent={String(path.tangent)} />
             <Show when={props.deformer.curveAxis !== undefined && !path.tangent}>
               <path
                 class="curve-hit"
@@ -105,18 +106,18 @@ export const DeformerGridControls = (props: DeformerGridControlsProps) => {
 
           return (
             <circle
-              aria-disabled={!props.editable}
+              aria-disabled={props.editable ? 'false' : 'true'}
               aria-keyshortcuts="Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight"
               aria-label={
                 props.deformer.curveAxis === undefined
                   ? `격자 제어점 ${pointIndex + 1}`
                   : `곡선 ${pointIndex % CUBIC_DEGREE === 0 ? '제어점' : '핸들'} ${pointIndex + 1}`
               }
-              aria-pressed={selected()}
-              classList={{selected: selected()}}
-              data-tangent={
-                props.deformer.curveAxis !== undefined && pointIndex % CUBIC_DEGREE !== 0
-              }
+              aria-pressed={selected() ? 'true' : 'false'}
+              class={{selected: selected()}}
+              data-tangent={String(
+                props.deformer.curveAxis !== undefined && pointIndex % CUBIC_DEGREE !== 0,
+              )}
               cx={point().x}
               cy={point().y}
               r={props.radius}

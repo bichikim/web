@@ -1,4 +1,4 @@
-import {For, mergeProps, Show} from 'solid-js'
+import {For, merge, Show} from 'solid-js'
 import {useDeformerGestureCancellation} from './use-deformer-gesture-cancellation'
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetDocument, PuppetPoint, PuppetSceneDeformerNode} from '../../player'
@@ -206,7 +206,7 @@ export const SpatialDeformerEditor = (props: SpatialDeformerEditorProps) => {
     }
     props.onEditEnd?.()
   }
-  const gestureProps = mergeProps(props, {
+  const gestureProps = merge(props, {
     get activeNodeId() {
       return props.node.id
     },
@@ -258,7 +258,7 @@ export const SpatialDeformerEditor = (props: SpatialDeformerEditorProps) => {
               <ellipse
                 role="button"
                 tabindex={editable() ? 0 : -1}
-                aria-disabled={!editable()}
+                aria-disabled={editable() ? 'false' : 'true'}
                 aria-label={`3D ${axis}축 회전`}
                 aria-keyshortcuts="ArrowLeft ArrowRight"
                 class={`spatial-rotation-axis spatial-rotation-axis-${axis.toLowerCase()}`}
@@ -283,7 +283,7 @@ export const SpatialDeformerEditor = (props: SpatialDeformerEditorProps) => {
                 <circle
                   role="button"
                   tabindex={editable() ? 0 : -1}
-                  aria-disabled={!editable()}
+                  aria-disabled={editable() ? 'false' : 'true'}
                   aria-label={`3D ${axis}축 이동`}
                   aria-keyshortcuts="ArrowLeft ArrowRight"
                   cx={moveHandle(index()).x}

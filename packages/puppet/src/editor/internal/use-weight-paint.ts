@@ -1,4 +1,4 @@
-import {createEffect, createMemo, createSignal, on, onCleanup} from 'solid-js'
+import {createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
 import type {PuppetDocument, PuppetPoint} from '../../player'
 import {
   createWeightPaintStroke,
@@ -71,18 +71,18 @@ export const useWeightPaint = (props: UseWeightPaintProps) => {
       props.node.controlPoints.length,
     ].join(':'),
   )
-  createEffect(
-    on(context, () => {
-      stop()
-      setCursor(null)
-    }),
-  )
-  createEffect(() => {
-    const {document} = props
-    if (stroke !== null && expected !== document) {
-      stop()
-    }
+  createEffect(context, () => {
+    stop()
+    setCursor(null)
   })
+  createEffect(
+    () => props.document,
+    (document) => {
+      if (stroke !== null && expected !== document) {
+        stop()
+      }
+    },
+  )
   onCleanup(stop)
   return {
     cursor,

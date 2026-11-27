@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {flush} from 'solid-js'
 import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {afterEach, expect, test, vi} from 'vitest'
 import {EditorTooltip} from '../EditorTooltip'
@@ -27,8 +28,10 @@ test('should describe an icon after hover delay and dismiss on Escape', () => {
   const button = view.getByRole('button')
   fireEvent.pointerOver(button)
   vi.advanceTimersByTime(399)
+  flush()
   expect(view.queryByRole('tooltip')).toBeNull()
   vi.advanceTimersByTime(1)
+  flush()
   expect(view.getByRole('tooltip')).toHaveTextContent('화면 맞춤')
   expect(button).toHaveAttribute('aria-describedby')
   fireEvent.keyDown(button, {key: 'Escape'})
@@ -53,6 +56,7 @@ test('should prefer explanatory text and preserve existing descriptions', () => 
   const button = view.getByRole('button')
   fireEvent.pointerOver(button)
   vi.advanceTimersByTime(400)
+  flush()
   expect(view.getByRole('tooltip')).toHaveTextContent('현재 값에 키폼 추가')
   fireEvent.pointerDown(button)
   expect(button).toHaveAttribute('aria-describedby', 'existing')

@@ -1,8 +1,8 @@
-import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
+import {type Accessor, createSignal, createTrackedEffect} from 'solid-js'
 
 export const useElementSize = (element: Accessor<HTMLElement | null>) => {
   const [size, setSize] = createSignal({height: 0, width: 0})
-  createEffect(() => {
+  createTrackedEffect(() => {
     const current = element()
     if (current === null) {
       return
@@ -14,7 +14,8 @@ export const useElementSize = (element: Accessor<HTMLElement | null>) => {
     }
     const observer = new ResizeObserver(measure)
     observer.observe(current)
-    onCleanup(() => observer.disconnect())
+
+    return () => observer.disconnect()
   })
   return size
 }

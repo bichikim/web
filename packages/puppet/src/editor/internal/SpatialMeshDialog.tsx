@@ -79,23 +79,31 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
       setSelection([object.id])
     },
   })
-  createEffect(() => {
-    resetImport()
-    if (!props.isOpen) {
-      return
-    }
-    setObjects(
-      props.initialObjects ??
+  createEffect(
+    () => {
+      if (!props.isOpen) {
+        return undefined
+      }
+      return (
+        props.initialObjects ??
         (props.initialMesh === undefined
           ? legacySpatialObjects(props.initialOperations ?? [])
-          : [createSpatialMeshObject(props.initialMesh)]),
-    )
-    setSelection([])
-    setHistory([])
-    setFuture([])
-    setTool('orbit')
-    setImportError(undefined)
-  })
+          : [createSpatialMeshObject(props.initialMesh)])
+      )
+    },
+    (initialObjects) => {
+      resetImport()
+      if (initialObjects === undefined) {
+        return
+      }
+      setObjects(initialObjects)
+      setSelection([])
+      setHistory([])
+      setFuture([])
+      setTool('orbit')
+      setImportError(undefined)
+    },
+  )
   const commit = (next: ReadonlyArray<PuppetSpatialObject>) => {
     setHistory((items) => [...items, objects()])
     setFuture([])
@@ -251,7 +259,7 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
                   {(item) => (
                     <EditorButton
                       type="button"
-                      aria-pressed={tool() === item.value}
+                      aria-pressed={tool() === item.value ? 'true' : 'false'}
                       onClick={() => setTool(item.value)}
                     >
                       <span
@@ -297,7 +305,7 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
                         {(row) => (
                           <li
                             data-depth={row().depth}
-                            data-selected={selection().includes(row().object.id)}
+                            data-selected={String(selection().includes(row().object.id))}
                           >
                             <input
                               type="checkbox"
@@ -340,11 +348,13 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
                             >
                               <span
                                 aria-hidden="true"
-                                class="puppet-icon"
-                                classList={{
-                                  'puppet-icon-eye': row().object.visible,
-                                  'puppet-icon-eye-off': !row().object.visible,
-                                }}
+                                class={[
+                                  'puppet-icon',
+                                  {
+                                    'puppet-icon-eye': row().object.visible,
+                                    'puppet-icon-eye-off': !row().object.visible,
+                                  },
+                                ]}
                               />
                             </button>
                             <button

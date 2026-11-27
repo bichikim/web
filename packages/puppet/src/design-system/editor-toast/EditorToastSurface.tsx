@@ -1,4 +1,4 @@
-import {createSignal, onCleanup, onMount, Show} from 'solid-js'
+import {createEffect, createSignal, Show} from 'solid-js'
 import {EditorButton} from '../EditorButton'
 import type {EditorToastProps} from './types'
 
@@ -10,14 +10,14 @@ export const EditorToastSurface = (props: EditorToastProps) => {
       props.onDismiss?.()
     }
   }
-  onMount(() => {
-    const element = surface()
+  createEffect(surface, (element) => {
     if (element === null) {
       return
     }
     const previousFocus = element.ownerDocument.activeElement
     element.showPopover?.()
-    onCleanup(() => {
+
+    return () => {
       if (
         element.contains(element.ownerDocument.activeElement) &&
         previousFocus instanceof HTMLElement &&
@@ -25,7 +25,7 @@ export const EditorToastSurface = (props: EditorToastProps) => {
       ) {
         previousFocus.focus()
       }
-    })
+    }
   })
   return (
     <div

@@ -144,6 +144,9 @@ jobs:
       - name: Install integration test browsers
         run: pnpm exec playwright install --with-deps chromium webkit
 
+      - name: Run Poffo integration tests
+        run: pnpm test:integration --project=integration-poffo
+
       - name: Run integration tests
         run: pnpm test:integration --project=integration --project=wallpaper-web-browser --project=pomo-album-editor-browser
 

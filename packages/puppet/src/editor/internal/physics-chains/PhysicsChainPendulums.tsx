@@ -1,4 +1,4 @@
-import {For, Index} from 'solid-js'
+import {For} from 'solid-js'
 import {EditorButton, EditorNumberField} from '../../../design-system'
 import {DEFAULT_CHAIN_PENDULUM, patchItem} from '../physics-chains'
 import {RATIO_STEP} from './fields'
@@ -14,7 +14,7 @@ const PENDULUM_FIELDS = [
 export const PhysicsChainPendulums = (props: ChainProps) => (
   <fieldset class="entry-fields">
     <legend>진자 (위에서 아래로)</legend>
-    <Index each={props.chain.pendulums}>
+    <For keyed={false} each={props.chain.pendulums}>
       {(pendulum, index) => (
         <div class="entry-fields">
           <For each={PENDULUM_FIELDS}>
@@ -59,7 +59,7 @@ export const PhysicsChainPendulums = (props: ChainProps) => (
           </EditorButton>
         </div>
       )}
-    </Index>
+    </For>
     <EditorButton
       disabled={props.disabled}
       onClick={() =>

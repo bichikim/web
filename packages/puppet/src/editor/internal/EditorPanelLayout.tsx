@@ -1,5 +1,6 @@
 import {EditorTooltip} from '../../design-system'
-import {type JSX, untrack} from 'solid-js'
+import {type JSX} from '@solidjs/web'
+import {untrack} from 'solid-js'
 
 import {usePanelLayout} from '../use-panel-layout'
 import {EditorPanelResizer} from './EditorPanelResizer'
@@ -43,14 +44,16 @@ export const EditorPanelLayout = (props: EditorPanelLayoutProps) => {
 
   return (
     <main
-      class="puppet-editor"
+      class={[
+        'puppet-editor',
+        {
+          'bottom-panel-closed': !layout.bottomOpen(),
+          'left-panel-closed': !layout.leftOpen(),
+          'right-panel-closed': !layout.rightOpen(),
+          'without-header': props.toolbar === undefined,
+        },
+      ]}
       inert={props.inactive}
-      classList={{
-        'bottom-panel-closed': !layout.bottomOpen(),
-        'left-panel-closed': !layout.leftOpen(),
-        'right-panel-closed': !layout.rightOpen(),
-        'without-header': props.toolbar === undefined,
-      }}
       style={{
         '--bottom-panel-size': `${layout.bottomSize()}px`,
         '--left-panel-size': `${layout.leftSize()}px`,

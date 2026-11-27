@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import {createRequire} from 'node:module'
 import {readFileSync, writeFileSync} from 'node:fs'
 import {resolve} from 'node:path'

@@ -1,13 +1,13 @@
 /** @vitest-environment jsdom */
-import {createRoot, createSignal} from 'solid-js'
+import {createRoot, createSignal, flush} from 'solid-js'
 import {expect, test} from 'vitest'
 import {createDemoDocument} from '../../../player'
 import {createKeyformPanelModel} from '../keyform-panel-model'
 import type {PuppetParameter, PuppetParameterBinding} from '../../../player/document'
 import type {PuppetParameterValues} from '../../../deformation'
 
-test('should follow replaced parameters and values while retaining the selected binding', () =>
-  createRoot((dispose) => {
+test('should follow replaced parameters and values while retaining the selected binding', () => {
+  const {bindings, dispose, model, parameters, setParameters, setValues} = createRoot((dispose) => {
     const document = createDemoDocument()
     const bindings = document.parameterBindings!
     const [parameters, setParameters] = createSignal(document.parameters!)
@@ -21,13 +21,15 @@ test('should follow replaced parameters and values while retaining the selected 
         return values()
       },
     })
-    expect(model.bindingParameters(bindings[0]!)[0]!.name).toBe(parameters()[0]!.name)
-    setParameters(parameters().map((parameter) => ({...parameter, name: 'Renamed'})))
-    expect(model.bindingParameters(bindings[0]!)[0]!.name).toBe('Renamed')
-    setValues({'angle-x': 10, 'angle-y': -15})
-    expect(model.bindingValues(bindings[0]!)).toEqual([10, -15])
-    dispose()
-  }))
+    return {bindings, dispose, model, parameters, setParameters, setValues}
+  })
+  expect(model.bindingParameters(bindings[0]!)[0]!.name).toBe(parameters()[0]!.name)
+  flush(() => setParameters(parameters().map((parameter) => ({...parameter, name: 'Renamed'}))))
+  expect(model.bindingParameters(bindings[0]!)[0]!.name).toBe('Renamed')
+  flush(() => setValues({'angle-x': 10, 'angle-y': -15}))
+  expect(model.bindingValues(bindings[0]!)).toEqual([10, -15])
+  dispose()
+})
 
 test.each([
   {id: 'one', keyforms: [], parameterIds: ['angle-x']},
@@ -51,8 +53,8 @@ test.each([
     }),
 )
 
-test('should leave incomplete bindings without editable values and recover when parameters return', () =>
-  createRoot((dispose) => {
+test('should leave incomplete bindings without editable values and recover when parameters return', () => {
+  const {binding, dispose, document, model, setParameters} = createRoot((dispose) => {
     const document = createDemoDocument()
     const binding = document.parameterBindings![0]!
     const [parameters, setParameters] = createSignal<ReadonlyArray<PuppetParameter>>(
@@ -64,16 +66,18 @@ test('should leave incomplete bindings without editable values and recover when 
         return parameters()
       },
     })
-    expect(model.bindingValues(binding)).toBeUndefined()
-    setParameters([])
-    expect(model.bindingValues(binding)).toBeUndefined()
-    setParameters(document.parameters!)
-    expect(model.bindingValues(binding)).toEqual([0, 0])
-    dispose()
-  }))
+    return {binding, dispose, document, model, setParameters}
+  })
+  expect(model.bindingValues(binding)).toBeUndefined()
+  flush(() => setParameters([]))
+  expect(model.bindingValues(binding)).toBeUndefined()
+  flush(() => setParameters(document.parameters!))
+  expect(model.bindingValues(binding)).toEqual([0, 0])
+  dispose()
+})
 
-test('should reject mismatched active values and accept a matching tuple when it changes', () =>
-  createRoot((dispose) => {
+test('should reject mismatched active values and accept a matching tuple when it changes', () => {
+  const {binding, dispose, model, setValues, values} = createRoot((dispose) => {
     const document = createDemoDocument()
     const binding = document.parameterBindings![0]!
     const [values, setValues] = createSignal<PuppetParameterValues>([10])
@@ -85,8 +89,10 @@ test('should reject mismatched active values and accept a matching tuple when it
         return values()
       },
     })
-    expect(model.bindingValues(binding)).toBeUndefined()
-    setValues([10, 20])
-    expect(model.bindingValues(binding)).toBe(values())
-    dispose()
-  }))
+    return {binding, dispose, model, setValues, values}
+  })
+  expect(model.bindingValues(binding)).toBeUndefined()
+  flush(() => setValues([10, 20]))
+  expect(model.bindingValues(binding)).toBe(values())
+  dispose()
+})

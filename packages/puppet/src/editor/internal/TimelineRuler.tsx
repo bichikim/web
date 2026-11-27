@@ -1,5 +1,6 @@
 import {Slider} from '@kobalte/core/slider'
-import {For, type JSX, Show} from 'solid-js'
+import {For, Show} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import type {PuppetMotion} from '../../player/document'
 import {getFrame} from './timeline-keyframe-selection'
 
@@ -25,7 +26,7 @@ export const TimelineRuler = (props: TimelineRulerProps) => (
     <For each={props.rulerTimes}>
       {(time) => (
         <span
-          data-end={time === props.duration}
+          data-end={String(time === props.duration)}
           style={{left: `${props.duration === 0 ? 0 : (time / props.duration) * PERCENT}%`}}
         >
           {getFrame(time, props.framesPerSecond)}f
@@ -46,7 +47,9 @@ export const TimelineRuler = (props: TimelineRulerProps) => (
         <Slider.Thumb
           class="timeline-seek-thumb"
           aria-label={props.seekLabel ?? '재생 위치'}
-          aria-disabled={props.motion === undefined || props.onSeek === undefined}
+          aria-disabled={
+            props.motion === undefined || props.onSeek === undefined ? 'true' : 'false'
+          }
         >
           <Slider.Input />
         </Slider.Thumb>

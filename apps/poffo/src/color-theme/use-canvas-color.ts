@@ -1,10 +1,10 @@
-import {createSignal, onCleanup, onMount} from 'solid-js'
+import {createSignal, onSettled} from 'solid-js'
 import {normalizeThemeColor} from './normalize-theme-color'
 
 /** Keeps the runtime background picker aligned with the inherited canvas theme. */
 export const useCanvasColor = () => {
   const [color, setColor] = createSignal('#111715')
-  onMount(() => {
+  onSettled(() => {
     const root = document.documentElement
     const update = () => {
       const style = getComputedStyle(root)
@@ -20,7 +20,8 @@ export const useCanvasColor = () => {
     update()
     const observer = new MutationObserver(update)
     observer.observe(root, {attributeFilter: ['class', 'style'], attributes: true})
-    onCleanup(() => observer.disconnect())
+
+    return () => observer.disconnect()
   })
   return color
 }

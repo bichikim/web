@@ -1,6 +1,6 @@
 import {useWorkspace} from '../workspace/context'
 import {TrackingMappings} from './TrackingMappings'
-import {createEffect, createSignal, For, on, Show, untrack} from 'solid-js'
+import {createEffect, createSignal, For, Show, untrack} from 'solid-js'
 import {EditorButton} from '@winter-love/puppet/editor'
 import type {PuppetDocument} from '@winter-love/puppet/player'
 import {useFaceTracking} from '../tracking/use-face-tracking'
@@ -27,12 +27,15 @@ export const TrackingPanel = (props: TrackingPanelProps) => {
   const [video, setVideo] = createSignal<HTMLVideoElement>()
   const workspace = useWorkspace()
   const tracking = useFaceTracking({onFrame: (frame) => props.controls.handleFrame(frame), video})
-  createEffect(on(() => props.document, tracking.stop, {defer: true}))
-  createEffect(() => {
-    if (workspace !== undefined && (!workspace.active() || workspace.mode() === 'editor')) {
-      untrack(tracking.stop)
-    }
-  })
+  createEffect(() => props.document, tracking.stop, {defer: true})
+  createEffect(
+    () => workspace !== undefined && (!workspace.active() || workspace.mode() === 'editor'),
+    (inactive) => {
+      if (inactive) {
+        untrack(tracking.stop)
+      }
+    },
+  )
   const handleStart = async () => {
     await tracking.start()
     const error = tracking.error()
@@ -56,7 +59,7 @@ export const TrackingPanel = (props: TrackingPanelProps) => {
       />
       <div class="puppet-runtime-actions">
         <EditorButton
-          aria-pressed={cameraVisible()}
+          aria-pressed={cameraVisible() ? 'true' : 'false'}
           onClick={() => setCameraVisible((value) => !value)}
         >
           카메라 표시

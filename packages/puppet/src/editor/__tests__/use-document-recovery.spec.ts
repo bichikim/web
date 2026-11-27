@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {flush} from 'solid-js'
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument} from '../../player'
@@ -69,6 +70,7 @@ test('should not replace the document after the recovery dialog has been closed'
   const onClose = vi.fn()
   const {result, cleanup} = renderHook(() => useDocumentRecovery({onClose, onRestore, recovery}))
   const restoring = result.restore('previous')
+  flush()
   expect(result.restoring()).toBe(true)
   cleanup()
   finish(document)

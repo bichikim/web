@@ -1,4 +1,4 @@
-import {createRoot, createSignal} from 'solid-js'
+import {createRoot, createSignal, flush} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument, parseDocumentValue, type PuppetDocument} from '../../../player'
 import {addGlue} from '../glue'
@@ -59,8 +59,8 @@ test('should edit the direct Glue keyform through the panel without changing bas
 })
 
 test('should follow binding selection and prevent base edits when no direct keyform is active', () => {
-  createRoot((dispose) => {
-    try {
+  const {dispose, editor, glue, onDocumentChange, onKeyformChange, setSelected} = createRoot(
+    (dispose) => {
       const source = document()
       const [selected, setSelected] = createSignal<string | undefined>()
       const onDocumentChange = vi.fn()
@@ -76,18 +76,27 @@ test('should follow binding selection and prevent base edits when no direct keyf
         onKeyformChange,
         partId: 'mesh-preview',
       })
-      const glue = source.glue![0]!
-      expect(editor.canEdit(glue)).toBe(false)
-      editor.change(glue, {strength: 0.2, weight: 0.7})
-      expect(onDocumentChange).not.toHaveBeenCalled()
-      expect(onKeyformChange).not.toHaveBeenCalled()
-      setSelected('join')
-      expect(editor.canEdit(glue)).toBe(true)
-      expect(editor.sampled(glue).strength).toBe(0)
-      setSelected(undefined)
-      expect(editor.canEdit(glue)).toBe(false)
-    } finally {
-      dispose()
-    }
-  })
+      return {
+        dispose,
+        editor,
+        glue: source.glue![0]!,
+        onDocumentChange,
+        onKeyformChange,
+        setSelected,
+      }
+    },
+  )
+  try {
+    expect(editor.canEdit(glue)).toBe(false)
+    editor.change(glue, {strength: 0.2, weight: 0.7})
+    expect(onDocumentChange).not.toHaveBeenCalled()
+    expect(onKeyformChange).not.toHaveBeenCalled()
+    flush(() => setSelected('join'))
+    expect(editor.canEdit(glue)).toBe(true)
+    expect(editor.sampled(glue).strength).toBe(0)
+    flush(() => setSelected(undefined))
+    expect(editor.canEdit(glue)).toBe(false)
+  } finally {
+    dispose()
+  }
 })

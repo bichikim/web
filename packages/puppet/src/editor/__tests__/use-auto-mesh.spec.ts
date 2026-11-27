@@ -70,7 +70,7 @@ describe('useAutoMesh', () => {
     const onNotice = vi.fn()
     mocks.autoMeshPart.mockReturnValue({document: generatedDocument, ok: true})
 
-    await createRoot(async (dispose) => {
+    const {dispose, autoMesh} = createRoot((dispose) => {
       const [partIds] = createSignal<ReadonlyArray<string>>(['mesh-preview'])
       const [sourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
@@ -80,20 +80,21 @@ describe('useAutoMesh', () => {
         onNotice,
         partIds,
       })
-
-      await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(true)
-      expect(mocks.readTexturePixels).toHaveBeenCalledWith({texture: document.parts[0]?.texture})
-      expect(mocks.autoMeshPart).toHaveBeenCalledWith({
-        document,
-        partId: 'mesh-preview',
-        pixels,
-        settings: {alphaThreshold: 16, cellSize: 32},
-      })
-      expect(onBeforeApply).toHaveBeenCalledOnce()
-      expect(onDocumentChange).toHaveBeenCalledWith(generatedDocument)
-      expect(onNotice).toHaveBeenLastCalledWith(null)
-      dispose()
+      return {autoMesh, dispose}
     })
+
+    await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(true)
+    expect(mocks.readTexturePixels).toHaveBeenCalledWith({texture: document.parts[0]?.texture})
+    expect(mocks.autoMeshPart).toHaveBeenCalledWith({
+      document,
+      partId: 'mesh-preview',
+      pixels,
+      settings: {alphaThreshold: 16, cellSize: 32},
+    })
+    expect(onBeforeApply).toHaveBeenCalledOnce()
+    expect(onDocumentChange).toHaveBeenCalledWith(generatedDocument)
+    expect(onNotice).toHaveBeenLastCalledWith(null)
+    dispose()
   })
 
   test('should apply every selected part in one document update', async () => {
@@ -106,7 +107,7 @@ describe('useAutoMesh', () => {
       .mockReturnValueOnce({document: firstDocument, ok: true})
       .mockReturnValueOnce({document: generatedDocument, ok: true})
 
-    await createRoot(async (dispose) => {
+    const {dispose, autoMesh} = createRoot((dispose) => {
       const [partIds] = createSignal<ReadonlyArray<string>>(['shape-circle', 'shape-diamond'])
       const [sourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
@@ -115,20 +116,21 @@ describe('useAutoMesh', () => {
         onNotice,
         partIds,
       })
-
-      await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(true)
-      expect(mocks.autoMeshPart).toHaveBeenCalledTimes(2)
-      expect(mocks.autoMeshPart).toHaveBeenNthCalledWith(2, {
-        document: firstDocument,
-        partId: 'shape-diamond',
-        pixels,
-        settings: {alphaThreshold: 16, cellSize: 32},
-      })
-      expect(onDocumentChange).toHaveBeenCalledOnce()
-      expect(onDocumentChange).toHaveBeenCalledWith(generatedDocument)
-      expect(onNotice).toHaveBeenLastCalledWith(null)
-      dispose()
+      return {autoMesh, dispose}
     })
+
+    await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(true)
+    expect(mocks.autoMeshPart).toHaveBeenCalledTimes(2)
+    expect(mocks.autoMeshPart).toHaveBeenNthCalledWith(2, {
+      document: firstDocument,
+      partId: 'shape-diamond',
+      pixels,
+      settings: {alphaThreshold: 16, cellSize: 32},
+    })
+    expect(onDocumentChange).toHaveBeenCalledOnce()
+    expect(onDocumentChange).toHaveBeenCalledWith(generatedDocument)
+    expect(onNotice).toHaveBeenLastCalledWith(null)
+    dispose()
   })
 
   test('should avoid partial updates when any selected texture fails', async () => {
@@ -138,7 +140,7 @@ describe('useAutoMesh', () => {
       .mockResolvedValueOnce({ok: true, pixels})
       .mockResolvedValueOnce({error: {code: 'decode-failed'}, ok: false})
 
-    await createRoot(async (dispose) => {
+    const {dispose, autoMesh} = createRoot((dispose) => {
       const [partIds] = createSignal<ReadonlyArray<string>>(['shape-circle', 'shape-diamond'])
       const [sourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
@@ -146,12 +148,13 @@ describe('useAutoMesh', () => {
         onDocumentChange,
         partIds,
       })
-
-      await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(false)
-      expect(mocks.autoMeshPart).not.toHaveBeenCalled()
-      expect(onDocumentChange).not.toHaveBeenCalled()
-      dispose()
+      return {autoMesh, dispose}
     })
+
+    await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(false)
+    expect(mocks.autoMeshPart).not.toHaveBeenCalled()
+    expect(onDocumentChange).not.toHaveBeenCalled()
+    dispose()
   })
 
   test('should discard a result when the document changes during generation', async () => {
@@ -167,7 +170,7 @@ describe('useAutoMesh', () => {
     const onDocumentChange = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
     const onNotice = vi.fn()
 
-    await createRoot(async (dispose) => {
+    const {dispose, autoMesh, setSourceDocument} = createRoot((dispose) => {
       const [partIds] = createSignal<ReadonlyArray<string>>(['mesh-preview'])
       const [sourceDocument, setSourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
@@ -176,19 +179,20 @@ describe('useAutoMesh', () => {
         onNotice,
         partIds,
       })
-      const generation = autoMesh.generate({alphaThreshold: 16, cellSize: 32})
-
-      setSourceDocument({...document})
-      resolvePixels?.({ok: true, pixels})
-
-      await expect(generation).resolves.toBe(false)
-      expect(mocks.autoMeshPart).not.toHaveBeenCalled()
-      expect(onDocumentChange).not.toHaveBeenCalled()
-      expect(onNotice).toHaveBeenCalledWith(
-        '편집 대상이 변경되어 자동 메시 결과를 적용하지 않았습니다.',
-      )
-      dispose()
+      return {autoMesh, dispose, setSourceDocument}
     })
+    const generation = autoMesh.generate({alphaThreshold: 16, cellSize: 32})
+
+    setSourceDocument({...document})
+    resolvePixels?.({ok: true, pixels})
+
+    await expect(generation).resolves.toBe(false)
+    expect(mocks.autoMeshPart).not.toHaveBeenCalled()
+    expect(onDocumentChange).not.toHaveBeenCalled()
+    expect(onNotice).toHaveBeenCalledWith(
+      '편집 대상이 변경되어 자동 메시 결과를 적용하지 않았습니다.',
+    )
+    dispose()
   })
 
   test('should discard a result after the dialog is dismissed', async () => {
@@ -204,7 +208,7 @@ describe('useAutoMesh', () => {
     const onDocumentChange = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
     const onNotice = vi.fn()
 
-    await createRoot(async (dispose) => {
+    const {dispose, autoMesh} = createRoot((dispose) => {
       const [partIds] = createSignal<ReadonlyArray<string>>(['mesh-preview'])
       const [sourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
@@ -213,19 +217,20 @@ describe('useAutoMesh', () => {
         onNotice,
         partIds,
       })
-
-      autoMesh.onOpenChange(true)
-      const generation = autoMesh.generate({alphaThreshold: 16, cellSize: 32})
-      autoMesh.onOpenChange(false)
-      resolvePixels?.({ok: true, pixels})
-
-      await expect(generation).resolves.toBe(false)
-      expect(autoMesh.isOpen()).toBe(false)
-      expect(onDocumentChange).not.toHaveBeenCalled()
-      expect(onNotice).not.toHaveBeenCalled()
-      expect(mocks.autoMeshPart).not.toHaveBeenCalled()
-      dispose()
+      return {autoMesh, dispose}
     })
+
+    autoMesh.onOpenChange(true)
+    const generation = autoMesh.generate({alphaThreshold: 16, cellSize: 32})
+    autoMesh.onOpenChange(false)
+    resolvePixels?.({ok: true, pixels})
+
+    await expect(generation).resolves.toBe(false)
+    expect(autoMesh.isOpen()).toBe(false)
+    expect(onDocumentChange).not.toHaveBeenCalled()
+    expect(onNotice).not.toHaveBeenCalled()
+    expect(mocks.autoMeshPart).not.toHaveBeenCalled()
+    dispose()
   })
 
   test('should convert an unexpected generation rejection into an actionable notice', async () => {
@@ -234,7 +239,7 @@ describe('useAutoMesh', () => {
     const onNotice = vi.fn()
     mocks.readTexturePixels.mockRejectedValue(new Error('unexpected'))
 
-    await createRoot(async (dispose) => {
+    const {dispose, autoMesh} = createRoot((dispose) => {
       const [partIds] = createSignal<ReadonlyArray<string>>(['mesh-preview'])
       const [sourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
@@ -243,12 +248,13 @@ describe('useAutoMesh', () => {
         onNotice,
         partIds,
       })
-
-      await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(false)
-      expect(onDocumentChange).not.toHaveBeenCalled()
-      expect(onNotice).toHaveBeenCalledWith('자동 메시 생성 중 예상하지 못한 오류가 발생했습니다.')
-      dispose()
+      return {autoMesh, dispose}
     })
+
+    await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(false)
+    expect(onDocumentChange).not.toHaveBeenCalled()
+    expect(onNotice).toHaveBeenCalledWith('자동 메시 생성 중 예상하지 못한 오류가 발생했습니다.')
+    dispose()
   })
 
   test('should translate expected texture reading failures into an actionable notice', async () => {
@@ -257,7 +263,7 @@ describe('useAutoMesh', () => {
     const onNotice = vi.fn()
     mocks.readTexturePixels.mockResolvedValue({error: {code: 'decode-failed'}, ok: false})
 
-    await createRoot(async (dispose) => {
+    const {dispose, autoMesh} = createRoot((dispose) => {
       const [partIds] = createSignal<ReadonlyArray<string>>(['mesh-preview'])
       const [sourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
@@ -266,13 +272,14 @@ describe('useAutoMesh', () => {
         onNotice,
         partIds,
       })
-
-      await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(false)
-      expect(onDocumentChange).not.toHaveBeenCalled()
-      expect(onNotice).toHaveBeenCalledWith('선택한 파트의 텍스처를 해석하지 못했습니다.')
-      expect(autoMesh.errorMessage()).toBe('선택한 파트의 텍스처를 해석하지 못했습니다.')
-      dispose()
+      return {autoMesh, dispose}
     })
+
+    await expect(autoMesh.generate({alphaThreshold: 16, cellSize: 32})).resolves.toBe(false)
+    expect(onDocumentChange).not.toHaveBeenCalled()
+    expect(onNotice).toHaveBeenCalledWith('선택한 파트의 텍스처를 해석하지 못했습니다.')
+    expect(autoMesh.errorMessage()).toBe('선택한 파트의 텍스처를 해석하지 못했습니다.')
+    dispose()
   })
 
   test('should reject invalid settings before reading texture pixels', async () => {
@@ -280,7 +287,7 @@ describe('useAutoMesh', () => {
     const onDocumentChange = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
     const onNotice = vi.fn()
 
-    await createRoot(async (dispose) => {
+    const {dispose, autoMesh} = createRoot((dispose) => {
       const [partIds] = createSignal<ReadonlyArray<string>>(['mesh-preview'])
       const [sourceDocument] = createSignal<PuppetDocument>(document)
       const autoMesh = useAutoMesh({
@@ -289,19 +296,20 @@ describe('useAutoMesh', () => {
         onNotice,
         partIds,
       })
-
-      await expect(autoMesh.generate({alphaThreshold: 256, cellSize: 32})).resolves.toBe(false)
-      expect(mocks.readTexturePixels).not.toHaveBeenCalled()
-      expect(mocks.autoMeshPart).not.toHaveBeenCalled()
-      expect(onDocumentChange).not.toHaveBeenCalled()
-      expect(onNotice).toHaveBeenCalledWith('자동 메시 생성 설정이 올바르지 않습니다.')
-      dispose()
+      return {autoMesh, dispose}
     })
+
+    await expect(autoMesh.generate({alphaThreshold: 256, cellSize: 32})).resolves.toBe(false)
+    expect(mocks.readTexturePixels).not.toHaveBeenCalled()
+    expect(mocks.autoMeshPart).not.toHaveBeenCalled()
+    expect(onDocumentChange).not.toHaveBeenCalled()
+    expect(onNotice).toHaveBeenCalledWith('자동 메시 생성 설정이 올바르지 않습니다.')
+    dispose()
   })
 })
 
 test('should keep the generator open when the host rejects the document commit', async () => {
-  await createRoot(async (dispose) => {
+  const {dispose, session, changed} = createRoot((dispose) => {
     const document = createDemoDocument()
     const generated = {...document, framesPerSecond: 48}
     mocks.autoMeshPart.mockReturnValue({document: generated, ok: true})
@@ -311,12 +319,13 @@ test('should keep the generator open when the host rejects the document commit',
       onDocumentChange: changed,
       partIds: () => [document.parts[0]!.id],
     })
-    session.onOpenChange(true)
-    const applied = await session.generate({alphaThreshold: 1, cellSize: 20})
-    expect(changed).toHaveBeenCalledOnce()
-    expect(applied).toBe(false)
-    expect(session.isOpen()).toBe(true)
-    expect(session.errorMessage()).not.toBeNull()
-    dispose()
+    return {changed, dispose, session}
   })
+  session.onOpenChange(true)
+  const applied = await session.generate({alphaThreshold: 1, cellSize: 20})
+  expect(changed).toHaveBeenCalledOnce()
+  expect(applied).toBe(false)
+  expect(session.isOpen()).toBe(true)
+  expect(session.errorMessage()).not.toBeNull()
+  dispose()
 })

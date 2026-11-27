@@ -80,12 +80,25 @@ const handleLayerDragStart = (
   onDragStart(nodeId)
 }
 
+const getLayerDrop = (
+  event: DragEvent & {currentTarget: HTMLElement},
+  node: PuppetSceneNode,
+  dragging: boolean,
+) => {
+  event.preventDefault()
+  event.stopPropagation()
+  if (dragging && event.dataTransfer !== null) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+  return getNodeDropTarget(node, event)
+}
+
 export const EditorSceneNodeItem = (props: EditorSceneNodeItemProps) => {
   const [renameRequest, setRenameRequest] = createSignal(0)
   const [renaming, setRenaming] = createSignal(false)
   const isExpanded = () =>
     isSceneContainerNode(props.node) && props.expandedGroupIds.has(props.node.id)
-  const retainChildren = createMemo((retained: boolean) => retained || isExpanded(), false)
+  const retainChildren = createMemo((retained: boolean = false) => retained || isExpanded())
   const locked = () => props.inheritedLocked || props.node.locked
   const visible = () => props.inheritedVisible && props.node.visible
   const parameterLinks = createMemo(() => getNodeParameterLinks(props.document, props.node.id))
@@ -102,12 +115,16 @@ export const EditorSceneNodeItem = (props: EditorSceneNodeItemProps) => {
   return (
     <Show when={props.visibleNodeIds === undefined || props.visibleNodeIds.has(props.node.id)}>
       <li
-        aria-expanded={isSceneContainerNode(props.node) ? isExpanded() : undefined}
+        aria-expanded={
+          isSceneContainerNode(props.node) ? (isExpanded() ? 'true' : 'false') : undefined
+        }
         aria-level={props.depth}
-        aria-selected={props.selectedNodeIds.has(props.node.id)}
-        class="layer-tree-item puppet-layer-tree-item"
-        classList={{dragging: props.draggedNodeId === props.node.id}}
-        draggable={!locked() && props.maskPickSourcePartId === undefined}
+        aria-selected={props.selectedNodeIds.has(props.node.id) ? 'true' : 'false'}
+        class={[
+          'layer-tree-item puppet-layer-tree-item',
+          {dragging: props.draggedNodeId === props.node.id},
+        ]}
+        draggable={!locked() && props.maskPickSourcePartId === undefined ? 'true' : 'false'}
         role="treeitem"
         onDragEnd={() => props.onDragStart('')}
         onDragStart={(event) => handleLayerDragStart(event, props.node.id, props.onDragStart)}
@@ -133,33 +150,24 @@ export const EditorSceneNodeItem = (props: EditorSceneNodeItemProps) => {
             onRename={() => setRenameRequest((request) => request + 1)}
           >
             <div
-              class="layer-row"
-              classList={{
-                'drop-after': dropPosition() === 'after',
-                'drop-before': dropPosition() === 'before',
-                'drop-inside': dropPosition() === 'inside',
-              }}
+              class={[
+                'layer-row',
+                {
+                  'drop-after': dropPosition() === 'after',
+                  'drop-before': dropPosition() === 'before',
+                  'drop-inside': dropPosition() === 'inside',
+                },
+              ]}
               style={{'--layer-depth': props.depth - 1}}
               onDragOver={(event) => {
-                if (props.draggedNodeId === null) {
-                  return
+                if (props.draggedNodeId !== null) {
+                  props.onDragOver(getLayerDrop(event, props.node, true))
                 }
-
-                event.preventDefault()
-                event.stopPropagation()
-                if (event.dataTransfer) {
-                  event.dataTransfer.dropEffect = 'move'
-                }
-                props.onDragOver(getNodeDropTarget(props.node, event))
               }}
               onDrop={(event) => {
-                if (props.draggedNodeId === null) {
-                  return
+                if (props.draggedNodeId !== null) {
+                  props.onDrop(getLayerDrop(event, props.node, false))
                 }
-
-                event.preventDefault()
-                event.stopPropagation()
-                props.onDrop(getNodeDropTarget(props.node, event))
               }}
             >
               <Show

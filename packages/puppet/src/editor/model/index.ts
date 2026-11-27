@@ -1,3 +1,4 @@
+export * from './create-model-binding'
 export * from './create-model-state'
 export * from './get-model-view'
 export * from './reduce-model'

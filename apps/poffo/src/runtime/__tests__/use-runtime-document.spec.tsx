@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {flush} from 'solid-js'
 import {cleanup, renderHook} from '@solidjs/testing-library'
 import {afterEach, expect, test} from 'vitest'
 import {createDemoDocument, serializeDocument} from '@winter-love/puppet/player'
@@ -37,9 +38,11 @@ test('should share host edits and undo with no separate runtime document', () =>
     requestId: 'edit',
     type: 'edit',
   })
+  flush()
   expect(runtime.document()).toBe(model.read().document)
   expect(runtime.document().framesPerSecond).toBe(48)
   model.request({ownerId: 'editor', requestId: 'undo', type: 'undo'})
+  flush()
   expect(runtime.document()).toBe(before)
 })
 
@@ -68,6 +71,7 @@ test('should reject late file results even when undo has restored the original d
   })
   const before = model.read().document
   const importing = runtime.loadFile(file(source))
+  flush()
   model.request({
     document: {...before, framesPerSecond: 48},
     expectedRevision: 0,
@@ -75,7 +79,9 @@ test('should reject late file results even when undo has restored the original d
     requestId: 'edit',
     type: 'edit',
   })
+  flush()
   model.request({ownerId: 'editor', requestId: 'undo', type: 'undo'})
+  flush()
   finish(serializeDocument({...before, framesPerSecond: 60}))
   await importing
   expect(runtime.document()).toBe(before)
@@ -106,8 +112,10 @@ test('should cancel pending file reading without replacing the shared document',
   })
   expect(runtime.pendingFile()).toBeNull()
   const importing = runtime.loadFile(file(source))
+  flush()
   expect(runtime.pendingFile()).toBe('model.json')
   runtime.cancel()
+  flush()
   expect(runtime.pendingFile()).toBeNull()
   finish(serializeDocument({...before, framesPerSecond: 48}))
   await importing
@@ -145,6 +153,7 @@ test('should cancel a pending import when its runtime owner is released', async 
     finish = resolve
   })
   const importing = runtime.loadFile(file(source))
+  flush()
   cleanup()
   finish(serializeDocument({...before, framesPerSecond: 48}))
   await importing

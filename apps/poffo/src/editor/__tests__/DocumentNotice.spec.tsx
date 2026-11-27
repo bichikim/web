@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createEmptyDocument, serializePoffoDocument} from '@winter-love/puppet/player'
 import {DocumentNotice} from '../DocumentNotice'
@@ -56,6 +56,7 @@ test.each(['json', 'poffo'])(
       vi.mocked(serializePoffoDocument).mockResolvedValueOnce(new Blob(['native']))
       await exporting.exportPoffoDocument()
     }
+    flush()
     expect(screen.getByRole('alert')).toHaveTextContent(
       '내보낸 문서에는 임시 변경이 포함되지 않았습니다.',
     )
@@ -83,6 +84,7 @@ test('should dismiss the current export state when its controller prop changes',
   await first.exportPoffoDocument()
   await second.exportPoffoDocument()
   selectSecond()
+  flush()
   fireEvent.click(screen.getByRole('button', {name: '알림 닫기'}))
   expect(second.notice()).toBeNull()
   expect(first.notice()).toBe('문서를 저장하지 못했습니다.')

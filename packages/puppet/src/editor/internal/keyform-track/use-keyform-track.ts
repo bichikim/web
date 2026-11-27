@@ -15,6 +15,7 @@ export interface UseKeyformTrackProps {
 }
 
 export interface UseKeyformTrackResult {
+  readonly canOpenMenu: Accessor<boolean>
   readonly contextEntries: Accessor<ReadonlyArray<EditorContextMenuEntry>>
   readonly firstParameter: Accessor<PuppetParameter | undefined>
   readonly secondParameter: Accessor<PuppetParameter | undefined>
@@ -68,21 +69,27 @@ const handleFocusedDeletion = (source: EditorKeyformTrackProps, event: KeyboardE
   }
   event.preventDefault()
   event.stopPropagation()
-  source.onKeyformDelete()
+  source.onKeyformDelete(source.activeKeyformValues)
   if (event.currentTarget instanceof HTMLElement) {
     event.currentTarget.focus()
   }
 }
 
 export const useKeyformTrack = (props: UseKeyformTrackProps): UseKeyformTrackResult => {
-  const [requestedValues, setRequestedValues] = createSignal<PuppetParameterValues | null>(null)
+  let requestedValues: PuppetParameterValues | null = null
+  const [publishedValues, publishValues] = createSignal<PuppetParameterValues | null>(null)
+  const setRequestedValues = (values: PuppetParameterValues | null) => {
+    requestedValues = values
+    publishValues(values)
+  }
   const [interactedOutside, setInteractedOutside] = createSignal(false)
   const firstParameter = () => props.source().parameters[0]
   const secondParameter = () => props.source().parameters[1]
   const contextValues = (): PuppetParameterValues => {
     const source = props.source()
+    publishedValues()
     return (
-      requestedValues() ??
+      requestedValues ??
       source.values ??
       (isTwoDimensionalParameterBinding(source.binding)
         ? [source.parameters[0]?.defaultValue ?? 0, source.parameters[1]?.defaultValue ?? 0]
@@ -104,12 +111,18 @@ export const useKeyformTrack = (props: UseKeyformTrackProps): UseKeyformTrackRes
     const source = props.source()
     if (source.onKeyformAdd !== undefined && !hasKeyform(values)) {
       selectValues(values)
-      source.onKeyformAdd()
+      source.onKeyformAdd(values)
     }
   }
   const handleContextDelete = () => {
-    selectValues(contextValues())
-    props.source().onKeyformDelete?.()
+    const values = contextValues()
+    selectValues(values)
+    props.source().onKeyformDelete?.(values)
+  }
+  const canOpenMenu = () => {
+    const source = props.source()
+    const action = hasKeyform(contextValues()) ? source.onKeyformDelete : source.onKeyformAdd
+    return action !== undefined
   }
   const contextEntries = (): ReadonlyArray<EditorContextMenuEntry> => {
     const source = props.source()
@@ -192,6 +205,7 @@ export const useKeyformTrack = (props: UseKeyformTrackProps): UseKeyformTrackRes
     }
   }
   return {
+    canOpenMenu,
     contextEntries,
     firstParameter,
     handleContextMenu,

@@ -16,6 +16,7 @@ import {
   createAllMotionTimeline,
   createTimelineTestDocument,
   enterAllMotionView,
+  expectNoUnexpectedTimelineWarnings,
 } from './timeline/fixtures'
 
 const createMotionManagementDocument = (): PuppetDocument => ({
@@ -32,7 +33,7 @@ beforeEach(() => {
 
 afterEach(() => {
   try {
-    expect(console.warn).not.toHaveBeenCalled()
+    expectNoUnexpectedTimelineWarnings()
   } finally {
     cleanup()
     vi.restoreAllMocks()
@@ -59,14 +60,14 @@ describe('EditorTimeline', () => {
 
     fireEvent.keyDown(view.getByRole('button', {name: '모션 관리'}), {key: 'Enter'})
     const duplicate = await screen.findByRole('menuitem', {name: '복제'})
-    duplicate.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+    fireEvent(duplicate, new MouseEvent('pointerup', {bubbles: true, button: 0}))
 
     await waitFor(() => expect(motionId()).toBe('motion-copy'))
     expect(document().motions.at(-1)?.id).toBe('motion-copy')
 
     fireEvent.keyDown(view.getByRole('button', {name: '모션 관리'}), {key: 'Enter'})
     const rename = await screen.findByRole('menuitem', {name: '이름 변경'})
-    rename.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+    fireEvent(rename, new MouseEvent('pointerup', {bubbles: true, button: 0}))
     const nameInput = await view.findByRole('textbox', {name: '모션 이름'})
     fireEvent.input(nameInput, {target: {value: 'wave'}})
     fireEvent.keyDown(nameInput, {key: 'Enter'})
@@ -76,7 +77,7 @@ describe('EditorTimeline', () => {
 
     fireEvent.keyDown(view.getByRole('button', {name: '모션 관리'}), {key: 'Enter'})
     const remove = await screen.findByRole('menuitem', {name: '삭제'})
-    remove.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+    fireEvent(remove, new MouseEvent('pointerup', {bubbles: true, button: 0}))
 
     await waitFor(() => expect(motionId()).toBe('motion'))
     expect(document().motions.some((motion) => motion.id === 'wave')).toBe(false)
@@ -115,8 +116,8 @@ describe('EditorTimeline', () => {
     expect(document().motions.slice(1)).toEqual(source.motions.slice(1))
     expect(view.getByText('16f / 90f · 0.52s')).toBeVisible()
 
-    duration.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 120}))
+    fireEvent(duration, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 120}))
     expect(view.queryByText('놓아 삭제')).not.toBeInTheDocument()
 
     const track = view.getByLabelText('Angle X 트랙')
@@ -159,13 +160,13 @@ describe('EditorTimeline', () => {
     expect(blinkName.closest('.timeline-motion-name-surface')).toContainElement(
       within(blinkGroup).getByRole('spinbutton', {name: 'blink 모션 길이'}),
     )
-    blinkName.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 120}))
+    fireEvent(blinkName, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 120}))
 
     expect(within(blinkGroup).getByText('놓아 삭제')).toBeVisible()
     expect(document().motions.some((motion) => motion.id === 'blink')).toBe(true)
 
-    globalThis.dispatchEvent(new MouseEvent('pointerup'))
+    fireEvent(globalThis.window, new MouseEvent('pointerup'))
 
     await waitFor(() =>
       expect(document().motions.some((motion) => motion.id === 'blink')).toBe(false),

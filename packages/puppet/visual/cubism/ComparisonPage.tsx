@@ -1,4 +1,5 @@
-import {createMemo, createSignal, type JSX, onCleanup, onMount, Show} from 'solid-js'
+import {createMemo, createSignal, onSettled, Show} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import {
   EditorButton,
   EditorRangeInput,
@@ -31,13 +32,10 @@ export const ComparisonPage = (props: ComparisonPageProps) => {
   const [parametersVisible, setParametersVisible] = createSignal(true)
   const reportError = (failure: unknown) =>
     setError(failure instanceof Error ? failure.message : String(failure))
-  onMount(() => {
+  onSettled(() => {
     const abort = new AbortController()
     let running: Comparison | null = null
-    onCleanup(() => {
-      abort.abort()
-      running?.destroy()
-    })
+
     const load = async () => {
       const setup = await loadSetup(abort.signal)
       setModel(setup.document)
@@ -66,6 +64,10 @@ export const ComparisonPage = (props: ComparisonPageProps) => {
         reportError(failure)
       }
     })
+    return () => {
+      abort.abort()
+      running?.destroy()
+    }
   })
   const motions = createMemo(() => [
     NO_MOTION,

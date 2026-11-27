@@ -370,11 +370,14 @@ const useSurfaceEditor = (props: DeformerEditorProps) => {
 
 export const DeformerSurfaceEditor = (props: DeformerEditorProps) => {
   const editor = useSurfaceEditor(props)
-  createEffect(() => {
-    if (props.brushControlsExternal && props.brushControlsMount === undefined) {
-      editor.brush.setMode('select')
-    }
-  })
+  createEffect(
+    () => props.brushControlsExternal && props.brushControlsMount === undefined,
+    (disabled) => {
+      if (disabled) {
+        editor.brush.setMode('select')
+      }
+    },
+  )
   const controls = () => (
     <DeformerTools
       mount={props.brushControlsMount}

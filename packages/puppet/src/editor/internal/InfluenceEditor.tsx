@@ -1,6 +1,7 @@
 import {Collapsible} from '@kobalte/core/collapsible'
 import {EditorButton} from '../../design-system'
-import {createEffect, createSignal, Index, type JSX, untrack} from 'solid-js'
+import {createEffect, createSignal, For, untrack} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import type {PuppetParameterValueMap} from '../../deformation'
 import type {PuppetParameter, PuppetParameterInfluence} from '../../player/document'
 import {InfluenceEditorTrigger} from './InfluenceEditorTrigger'
@@ -25,11 +26,12 @@ export const InfluenceEditor = (props: InfluenceEditorProps) => {
   const draft = useInfluenceDraft(props)
   const [localExpanded, setExpanded] = createSignal(true)
   const expanded = () => props.expanded ?? localExpanded()
-  createEffect(() => {
-    props.influences
-    props.parameters
-    untrack(draft.reset)
-  })
+  createEffect(
+    () => [props.influences, props.parameters],
+    () => {
+      draft.reset()
+    },
+  )
   return (
     <Collapsible
       open={expanded()}
@@ -47,7 +49,7 @@ export const InfluenceEditor = (props: InfluenceEditorProps) => {
 
       <Collapsible.Content class="influence-drawer" inert={!expanded()}>
         <div class="influence-inline">
-          <Index each={draft.relations()}>
+          <For keyed={false} each={draft.relations()}>
             {(_, index) => (
               <InfluenceRelation
                 draft={draft}
@@ -58,7 +60,7 @@ export const InfluenceEditor = (props: InfluenceEditorProps) => {
                 onEditEnd={props.onEditEnd}
               />
             )}
-          </Index>
+          </For>
           <EditorButton
             disabled={props.onChange === undefined || draft.availableSources().length === 0}
             onClick={draft.addRelation}

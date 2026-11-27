@@ -1,13 +1,10 @@
 import {fileURLToPath} from 'node:url'
 import {configDefaults, type ViteUserConfig} from 'vitest/config'
+import {createPoffoTestProject, poffoTestSources} from './apps/poffo/vitest.config'
 import baseConfig from './vitest.base.config.mts'
 
 export default {
-  ...baseConfig,
   test: {
-    ...baseConfig.test,
-    environment: 'jsdom',
-    exclude: [...configDefaults.exclude, '**/.cache/**'],
     // Shared inputs and files read outside the module graph can affect every unit test.
     forceRerunTriggers: [
       ...configDefaults.forceRerunTriggers,
@@ -27,8 +24,23 @@ export default {
       '**/__snapshots__/**',
       '**/.github/workflows/checks.yml',
     ].map((pattern) => fileURLToPath(new URL(pattern, import.meta.url))),
-    include: ['**/*.spec.?(c|m)[jt]s?(x)'],
     maxWorkers: 3,
-    name: 'unit',
+    projects: [
+      {
+        ...baseConfig,
+        test: {
+          ...baseConfig.test,
+          environment: 'jsdom',
+          exclude: [
+            ...configDefaults.exclude,
+            '**/.cache/**',
+            ...poffoTestSources.map((directory) => `${directory}/**`),
+          ],
+          include: ['**/*.spec.?(c|m)[jt]s?(x)'],
+          name: 'unit',
+        },
+      },
+      createPoffoTestProject('unit'),
+    ],
   },
 } satisfies ViteUserConfig

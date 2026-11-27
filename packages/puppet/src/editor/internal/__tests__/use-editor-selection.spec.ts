@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {createRoot, createSignal} from 'solid-js'
+import {createRoot, createSignal, flush} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {createDemoDocument} from '../../../player'
 import {createSceneSelection} from '../selection-actions'
@@ -10,7 +10,7 @@ let frameId = 0
 const paint = () => {
   const pending = [...frames.values()]
   frames.clear()
-  pending.forEach((callback) => callback(0))
+  flush(() => pending.forEach((callback) => callback(0)))
 }
 beforeEach(() => {
   frames.clear()
@@ -23,8 +23,8 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
-const createSelection = () =>
-  createRoot((dispose) => {
+const createSelection = () => {
+  const fixture = createRoot((dispose) => {
     const [document, setDocument] = createSignal(createDemoDocument())
     const [current, setCurrent] = createSignal<EditorSelectionIntent>({
       bindingId: null,
@@ -35,6 +35,9 @@ const createSelection = () =>
     const state = useEditorSelection({current, document, onCommit: commit})
     return {commit, current, dispose, document, setDocument, state}
   })
+  flush()
+  return fixture
+}
 
 test('should preserve a pending selection through edits that retain its target', () => {
   const fixture = createSelection()
@@ -52,7 +55,7 @@ test('should preserve a pending selection through edits that retain its target',
 test('should cancel a removed target and explicit document replacement before preparation', () => {
   const fixture = createSelection()
   fixture.state.selectLayer(createSceneSelection('shape-circle'))
-  fixture.setDocument({...fixture.document(), scene: {roots: []}})
+  flush(() => fixture.setDocument({...fixture.document(), scene: {roots: []}}))
   expect(fixture.state.layers()).toBe(fixture.current().layers)
   paint()
   paint()
@@ -89,7 +92,7 @@ test('should combine rapid layer, parameter and workspace requests into the late
 test('should discard a pending binding removed by a document edit', () => {
   const fixture = createSelection()
   fixture.state.selectBinding(fixture.document().parameterBindings![0]!.id)
-  fixture.setDocument({...fixture.document(), parameterBindings: [], parameters: []})
+  flush(() => fixture.setDocument({...fixture.document(), parameterBindings: [], parameters: []}))
   paint()
   paint()
   expect(fixture.state.bindingId()).toBeNull()

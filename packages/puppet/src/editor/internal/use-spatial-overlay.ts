@@ -23,44 +23,42 @@ export const useSpatialOverlay = (options: SpatialOverlayOptions) => {
     overlay?.destroy()
     overlay = undefined
   }
-  createEffect(() => {
-    const canvas = options.canvas()
-    const player = options.player()
-    const surface = options.surface()
-    if (canvas !== undefined && player !== null && surface !== undefined) {
-      onCleanup(
-        observeInheritedStyle({
+  createEffect(
+    () => ({canvas: options.canvas(), player: options.player(), surface: options.surface()}),
+    ({canvas, player, surface}) => {
+      if (canvas !== undefined && player !== null && surface !== undefined) {
+        return observeInheritedStyle({
           element: canvas,
           onChange: () => player.redraw(),
           properties: ['--spatial-mesh-face', '--spatial-mesh-edge', '--spatial-mesh-light'],
-        }),
-      )
-    }
-  })
-  createEffect(() => {
-    const current = options.player()
-    const canvas = options.canvas()
-    const surface = options.surface()
-    if (current === null || canvas === undefined) {
-      return
-    }
-    if (overlay === undefined && surface !== undefined) {
-      try {
-        overlay = createSpatialThreeOverlay(canvas)
-      } catch (error) {
-        untrack(() =>
-          options.onError(
-            error instanceof Error ? error.message : '3D 메시를 표시하지 못했습니다.',
-          ),
-        )
+        })
+      }
+    },
+  )
+  createEffect(
+    () => ({canvas: options.canvas(), current: options.player(), surface: options.surface()}),
+    ({canvas, current, surface}) => {
+      if (current === null || canvas === undefined) {
         return
       }
-    }
-    if (overlay !== undefined) {
-      overlay.update(surface)
-      current.redraw()
-    }
-  })
+      if (overlay === undefined && surface !== undefined) {
+        try {
+          overlay = createSpatialThreeOverlay(canvas)
+        } catch (error) {
+          untrack(() =>
+            options.onError(
+              error instanceof Error ? error.message : '3D 메시를 표시하지 못했습니다.',
+            ),
+          )
+          return
+        }
+      }
+      if (overlay !== undefined) {
+        overlay.update(surface)
+        current.redraw()
+      }
+    },
+  )
   onCleanup(dispose)
   return {dispose, prepare: () => overlay?.prepare(), render: () => overlay?.render()}
 }

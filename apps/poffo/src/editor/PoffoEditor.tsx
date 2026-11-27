@@ -1,4 +1,4 @@
-import {createSignal, Show, Suspense, untrack} from 'solid-js'
+import {createSignal, Loading, Show, untrack} from 'solid-js'
 import {
   type DocumentRecovery,
   DocumentRecoveryDialog,
@@ -150,7 +150,7 @@ export const PoffoEditor = (props: PoffoEditorProps) => {
   return (
     <>
       {/* Keep restored editor effects independent of document and runtime-page loading. */}
-      <Suspense>
+      <Loading>
         <PuppetEditor
           model={props.model}
           active={props.active}
@@ -159,7 +159,7 @@ export const PoffoEditor = (props: PoffoEditorProps) => {
           onControl={handleControl}
           header={renderHeader}
         />
-      </Suspense>
+      </Loading>
       <FileLoadingDialog
         title="저장하는 중…"
         fileName={exporting.pending()}

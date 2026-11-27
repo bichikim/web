@@ -1,4 +1,4 @@
-import {createRoot, createSignal, onCleanup, onMount, Show} from 'solid-js'
+import {createRoot, createSignal, onCleanup, Show} from 'solid-js'
 import type {PuppetEditorProps} from './types'
 import type {EditorController} from './control'
 import {EditorBody} from './internal/EditorBody'
@@ -25,6 +25,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         {...props}
         onControl={(next) => {
           control = next
+          props.onControl?.(next)
         }}
         onDispose={() => {
           setDisposed(true)
@@ -32,11 +33,6 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         }}
       />
     )
-  })
-  onMount(() => {
-    if (control !== undefined) {
-      props.onControl?.(control)
-    }
   })
   return <Show when={!disposed()}>{content}</Show>
 }

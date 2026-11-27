@@ -1,4 +1,4 @@
-import type {Accessor} from 'solid-js'
+import {type Accessor} from 'solid-js'
 import type {PuppetParameterBinding} from '../../player'
 import type {EditorKeyformPanelProps} from './editor-keyform-panel-props'
 import {EditorKeyformToolbar} from './EditorKeyformToolbar'

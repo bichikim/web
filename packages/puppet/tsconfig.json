@@ -10,7 +10,7 @@
     "isolatedModules": true,
     "moduleDetection": "force",
     "jsx": "preserve",
-    "jsxImportSource": "solid-js",
+    "jsxImportSource": "@solidjs/web",
     "strict": true,
     "noEmit": true,
     "types": ["vite/client"]

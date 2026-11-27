@@ -48,10 +48,9 @@ export const EditorPanelResizer = (props: EditorPanelResizerProps) => {
       aria-valuemax={EDITOR_PANEL_SPECS[props.position].maximumSize}
       aria-valuemin={EDITOR_PANEL_SPECS[props.position].minimumSize}
       aria-valuenow={props.size}
-      class={`panel-resizer ${props.position}`}
-      classList={{dragging: props.dragging}}
+      class={[`panel-resizer ${props.position}`, {dragging: props.dragging}]}
       role="separator"
-      tabIndex={0}
+      tabindex={0}
       onKeyDown={handleKeyDown}
       onPointerDown={(event) => props.onResizeStart?.(event)}
     />

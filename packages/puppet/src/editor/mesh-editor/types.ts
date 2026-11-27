@@ -1,4 +1,4 @@
-import type {JSX} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import type {UseMeshEditorResult} from '../use-mesh-editor'
 
 export interface MeshBrushControlsProps {

@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {createRoot, createSignal} from 'solid-js'
+import {createRoot, createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 
 import {createEmptyDocument, type PuppetDocument} from '@winter-love/puppet/player'
@@ -26,13 +26,19 @@ test('should retain the download URL until replacement or editor disposal', () =
   const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
   createRoot((dispose) => {
     const download = useDocumentExport(createEmptyDocument)
-    download.exportDocument()
-    expect(revoke).not.toHaveBeenCalled()
-    download.exportDocument()
-    expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:first')
-    dispose()
-    expect(revoke).toHaveBeenLastCalledWith('blob:second')
-  })
+    return () => {
+      flush()
+      download.exportDocument()
+      flush()
+      expect(revoke).not.toHaveBeenCalled()
+      download.exportDocument()
+      flush()
+      expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:first')
+      dispose()
+      flush()
+      expect(revoke).toHaveBeenLastCalledWith('blob:second')
+    }
+  })()
   expect(create).toHaveBeenCalledTimes(2)
   expect(click).toHaveBeenCalledTimes(2)
 })
@@ -45,17 +51,24 @@ test('should notify omitted temporary changes while still downloading the commit
   const blob = createRoot((dispose) => {
     const [pending, setPending] = createSignal(true)
     const download = useDocumentExport(() => document, pending)
-    download.exportDocument()
-    expect(download.omitsTemporary()).toBe(true)
-    const exported = create.mock.calls.at(-1)![0] as Blob
-    download.dismissNotice()
-    expect(download.omitsTemporary()).toBe(false)
-    setPending(false)
-    download.exportDocument()
-    expect(download.omitsTemporary()).toBe(false)
-    dispose()
-    return exported
-  })
+    return () => {
+      flush()
+      download.exportDocument()
+      flush()
+      expect(download.omitsTemporary()).toBe(true)
+      const exported = create.mock.calls.at(-1)![0] as Blob
+      download.dismissNotice()
+      flush()
+      expect(download.omitsTemporary()).toBe(false)
+      setPending(false)
+      flush()
+      download.exportDocument()
+      flush()
+      expect(download.omitsTemporary()).toBe(false)
+      dispose()
+      return exported
+    }
+  })()
   const source = await new Promise<string>((resolve) => {
     const reader = new FileReader()
     reader.onload = () => resolve(String(reader.result))
@@ -75,10 +88,13 @@ test('should not download or notify after pending atlas export is disposed', asy
   )
   const {pending, exporting} = createRoot((dispose) => {
     const exporting = useDocumentExport(createEmptyDocument)
-    const pending = exporting.exportAtlasDocument()
-    dispose()
-    return {exporting, pending}
-  })
+    return () => {
+      const pending = exporting.exportAtlasDocument()
+      flush()
+      dispose()
+      return {exporting, pending}
+    }
+  })()
   finish(createEmptyDocument())
   await pending
   expect(create).not.toHaveBeenCalled()
@@ -98,9 +114,12 @@ test('should download JSON even when whole-document stringification is unavailab
   })
   const document = createEmptyDocument()
   createRoot((dispose) => {
-    useDocumentExport(() => document).exportDocument()
-    dispose()
-  })
+    const exporting = useDocumentExport(() => document)
+    return () => {
+      exporting.exportDocument()
+      dispose()
+    }
+  })()
   const blob = create.mock.calls[0]![0] as Blob
   const json = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
@@ -148,6 +167,7 @@ test('should discard cancelled output even if the compressor resolves after canc
     return useDocumentExport(createEmptyDocument)
   })
   const pending = exporting.exportPoffoDocument()
+  flush()
   expect(exporting.pending()).not.toBeNull()
   exporting.cancelExport()
   finish(new Blob(['late']))
@@ -271,9 +291,12 @@ test('should not download or notify when JSON is requested after disposal', () =
   const create = vi.spyOn(URL, 'createObjectURL')
   const exporting = createRoot((dispose) => {
     const exporting = useDocumentExport(createEmptyDocument)
-    dispose()
-    return exporting
-  })
+    return () => {
+      flush()
+      dispose()
+      return exporting
+    }
+  })()
   exporting.exportDocument()
   expect(create).not.toHaveBeenCalled()
   expect(exporting.notice()).toBeNull()
@@ -320,6 +343,7 @@ test('should dismiss both a failure notice and omitted-change feedback', async (
   expect(exporting.notice()).toBe('문서를 저장하지 못했습니다.')
   expect(exporting.omitsTemporary()).toBe(true)
   exporting.dismissNotice()
+  flush()
   expect(exporting.notice()).toBeNull()
   expect(exporting.omitsTemporary()).toBe(false)
   dispose()
@@ -364,9 +388,12 @@ test('should download JSON even when whole-document stringification is unavailab
   })
   const document = createEmptyDocument()
   createRoot((dispose) => {
-    useDocumentExport(() => document).exportDocument()
-    dispose()
-  })
+    const exporting = useDocumentExport(() => document)
+    return () => {
+      exporting.exportDocument()
+      dispose()
+    }
+  })()
   const blob = create.mock.calls[0]![0] as Blob
   const json = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader()

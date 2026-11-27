@@ -20,6 +20,7 @@ export interface EditorKeyformFlatTrackProps extends EditorKeyformTrackProps {
 export const EditorKeyformFlatTrack = (props: EditorKeyformFlatTrackProps) => {
   const [trackElement, setTrackElement] = createSignal<HTMLDivElement>()
   const {
+    canOpenMenu,
     contextEntries,
     firstParameter,
     secondParameter,
@@ -59,8 +60,7 @@ export const EditorKeyformFlatTrack = (props: EditorKeyformFlatTrackProps) => {
       handleGridContextMenu(event)
     }
   }
-  const handleCloseAutoFocus = (event: Event) => {
-    event.preventDefault()
+  const handleCloseFocus = () => {
     if (restoreFocus()) {
       trackElement()?.focus()
     }
@@ -69,12 +69,13 @@ export const EditorKeyformFlatTrack = (props: EditorKeyformFlatTrackProps) => {
     <EditorContextMenu
       entries={contextEntries()}
       label="키폼 작업"
-      disabled={contextEntries().length === 0}
+      canOpen={canOpenMenu}
+      disabled={props.onKeyformAdd === undefined && props.onKeyformDelete === undefined}
       onOpenChange={handleMenuOpenChange}
       onContextMenu={handleTriggerContextMenu}
       onPointerDown={handleTriggerRequest}
       onInteractOutside={handleInteractOutside}
-      onCloseAutoFocus={handleCloseAutoFocus}
+      onCloseFocus={handleCloseFocus}
     >
       <Show
         when={isTwoDimensionalParameterBinding(props.binding)}
@@ -135,8 +136,10 @@ export const EditorKeyformFlatTrack = (props: EditorKeyformFlatTrackProps) => {
         }
       >
         <div
-          class="keyform-track parameter-grid-track"
-          classList={{'parameter-volume-track': props.volume !== undefined}}
+          class={[
+            'keyform-track parameter-grid-track',
+            {'parameter-volume-track': props.volume !== undefined},
+          ]}
           ref={setTrackElement}
           onContextMenu={handleGridContextRequest}
           onPointerDown={blockVolumeBackground}

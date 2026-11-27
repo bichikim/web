@@ -1,5 +1,6 @@
-import {render} from 'solid-js/web'
+import {render} from '@solidjs/web'
 import {createSignal} from 'solid-js'
+
 import {afterEach, expect, test} from 'vitest'
 import {page} from 'vitest/browser'
 

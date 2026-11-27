@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 import {TimelineDopesheet} from '../TimelineDopesheet'
@@ -97,11 +97,11 @@ describe('TimelineDopesheet', () => {
     const marker = screen.getByRole('button', {name: label})
     marker.focus()
     expect(timeline.style.getPropertyValue('--timeline-zoom')).toBe('1')
-    setZoom(200)
+    flush(() => setZoom(200))
     expect(timeline.style.getPropertyValue('--timeline-zoom')).toBe('2')
     expect(screen.getByRole('button', {name: label, pressed: true})).toBe(marker)
     expect(marker).toHaveFocus()
-    setZoom('fit')
+    flush(() => setZoom('fit'))
     expect(timeline).toHaveAttribute('data-fit', 'true')
     expect(screen.getByRole('button', {name: label, pressed: true})).toBe(marker)
     fireEvent.click(marker)

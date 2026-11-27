@@ -1,4 +1,4 @@
-import {createEffect, Show} from 'solid-js'
+import {createTrackedEffect, Show} from 'solid-js'
 import type {PuppetPoint, PuppetSceneDeformerNode} from '../../player'
 import {DeformerCurveControls} from './DeformerCurveControls'
 import type {
@@ -29,7 +29,7 @@ export interface DeformerControlsProps {
 }
 
 export const DeformerControls = (props: DeformerControlsProps) => {
-  createEffect(() => {
+  createTrackedEffect(() => {
     props.controlSelection.syncTopology({
       columns: props.deformer.columns,
       nodeId: props.deformer.id,

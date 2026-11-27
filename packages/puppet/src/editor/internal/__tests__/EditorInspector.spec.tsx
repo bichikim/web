@@ -3,7 +3,7 @@
 import {createKeyedParameter} from './parameter-keyforms/fixtures'
 
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 
 import {isTwoDimensionalParameterBinding} from '../../../deformation'
@@ -63,11 +63,11 @@ describe('EditorInspector', () => {
     expect(view.queryByRole('group', {name: '파트 렌더링'})).toBeNull()
     expect(view.queryByRole('spinbutton', {name: '자유 변형 각도'})).toBeNull()
 
-    setActiveNodeId('mesh-preview')
+    flush(() => setActiveNodeId('mesh-preview'))
     expect(view.getByRole('group', {name: '파트 렌더링'})).toBeInTheDocument()
     expect(view.queryByRole('spinbutton', {name: '자유 변형 각도'})).toBeNull()
 
-    setActiveNodeId('deformer')
+    flush(() => setActiveNodeId('deformer'))
     expect(view.queryByRole('group', {name: '파트 렌더링'})).toBeNull()
     expect(view.getByRole('spinbutton', {name: '자유 변형 각도'})).toBeInTheDocument()
   })
@@ -337,7 +337,7 @@ describe('EditorInspector', () => {
     fireEvent.click(within(partRendering).getByRole('button', {name: '자동 메시'}))
     expect(onAutoMesh).toHaveBeenCalledOnce()
 
-    setActiveNodeId(group.id)
+    flush(() => setActiveNodeId(group.id))
     const groupRendering = view.getByRole('group', {name: '파트 렌더링'})
     expect(within(groupRendering).getByRole('button', {name: '자동 메시'})).toBeEnabled()
     fireEvent.click(within(groupRendering).getByRole('button', {name: '자동 메시'}))
@@ -504,7 +504,7 @@ describe('EditorInspector', () => {
     expect(view.queryByRole('group', {name: /선택한 제어점/})).toBeNull()
     expect(view.queryByRole('spinbutton', {name: /격자 제어점/})).toBeNull()
 
-    setSelectedPointIndices([0, 1])
+    flush(() => setSelectedPointIndices([0, 1]))
 
     expect(view.getByRole('group', {name: '선택한 제어점 1'})).toBeVisible()
     expect(view.getByRole('group', {name: '선택한 제어점 2'})).toBeVisible()
@@ -512,7 +512,7 @@ describe('EditorInspector', () => {
     expect(view.getByRole('spinbutton', {name: '격자 제어점 2 X'})).toBeVisible()
     expect(view.getByRole('spinbutton', {name: '격자 제어점 2 Y'})).toBeVisible()
 
-    setSelectedPointIndices([])
+    flush(() => setSelectedPointIndices([]))
     expect(view.queryByRole('group', {name: /선택한 제어점/})).toBeNull()
   })
 
@@ -775,7 +775,9 @@ describe('EditorInspector', () => {
     expect(resized).toMatchObject({columns: 3, rows: 1})
     expect(view.getAllByRole('spinbutton', {name: /격자 제어점/})).toHaveLength(2)
 
-    setDocument(setSceneNodeState({document: document(), locked: true, nodeId: deformer.id})!)
+    flush(() =>
+      setDocument(setSceneNodeState({document: document(), locked: true, nodeId: deformer.id})!),
+    )
     expect(view.getByRole('spinbutton', {name: '격자 가로 칸'})).toBeDisabled()
     expect(view.getByRole('spinbutton', {name: '격자 제어점 1 X'})).toBeDisabled()
   })

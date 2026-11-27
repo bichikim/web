@@ -1,4 +1,4 @@
-import {createRoot} from 'solid-js'
+import {createRoot, flush} from 'solid-js'
 import {describe, expect, test} from 'vitest'
 
 import {createDemoDocument, type PuppetDocument} from '../../player'
@@ -26,22 +26,29 @@ describe('useDocumentHistory', () => {
         partId: 'mesh-preview',
         properties: {opacity: 0.5},
       })!
-      history.setDocument(edited)
-      history.setDocument(renameFirstParameter(edited, 'Next'))
-      history.undo()
-      history.setDocument(
-        setPartRenderProperties({
-          document: history.document(),
-          partId: 'mesh-preview',
-          properties: {opacity: 0.5},
-        })!,
-      )
-      expect(history.entries()).toHaveLength(3)
-      expect(history.undoCount()).toBe(1)
-      expect(history.redo()).toBe(true)
-      expect(history.document().parameters?.[0]?.name).toBe('Next')
-      dispose()
-    })
+      return () => {
+        flush()
+        history.setDocument(edited)
+        history.setDocument(renameFirstParameter(edited, 'Next'))
+        history.undo()
+        history.setDocument(
+          setPartRenderProperties({
+            document: history.document(),
+            partId: 'mesh-preview',
+            properties: {opacity: 0.5},
+          })!,
+        )
+        flush()
+        expect(history.entries()).toHaveLength(3)
+        flush()
+        expect(history.undoCount()).toBe(1)
+        flush()
+        expect(history.redo()).toBe(true)
+        flush()
+        expect(history.document().parameters?.[0]?.name).toBe('Next')
+        dispose()
+      }
+    })()
   })
 
   test('should preserve redo when a gesture returns to its starting values', () => {
@@ -52,20 +59,27 @@ describe('useDocumentHistory', () => {
         'editor',
       )
       const edited = renameFirstParameter(initialDocument, 'First')
-      history.setDocument(edited)
-      history.undo()
-      history.beginTransaction()
-      history.setDocument(renameFirstParameter(initialDocument, 'Preview'))
-      history.setDocument(
-        renameFirstParameter(initialDocument, initialDocument.parameters![0]!.name),
-      )
-      history.endTransaction()
-      expect(history.undoCount()).toBe(0)
-      expect(history.document()).toBe(initialDocument)
-      expect(history.redo()).toBe(true)
-      expect(history.document()).toBe(edited)
-      dispose()
-    })
+      return () => {
+        flush()
+        history.setDocument(edited)
+        history.undo()
+        history.beginTransaction()
+        history.setDocument(renameFirstParameter(initialDocument, 'Preview'))
+        history.setDocument(
+          renameFirstParameter(initialDocument, initialDocument.parameters![0]!.name),
+        )
+        history.endTransaction()
+        flush()
+        expect(history.undoCount()).toBe(0)
+        flush()
+        expect(history.document()).toBe(initialDocument)
+        flush()
+        expect(history.redo()).toBe(true)
+        flush()
+        expect(history.document()).toBe(edited)
+        dispose()
+      }
+    })()
   })
 
   test('should preserve redo when a canceled gesture restores its starting document', () => {
@@ -76,17 +90,23 @@ describe('useDocumentHistory', () => {
         'editor',
       )
       const edited = renameFirstParameter(initialDocument, 'First')
-      history.setDocument(edited)
-      history.undo()
-      history.beginTransaction()
-      history.setDocument(renameFirstParameter(initialDocument, 'Preview'))
-      history.setDocument(initialDocument)
-      history.endTransaction()
-      expect(history.canRedo()).toBe(true)
-      expect(history.redo()).toBe(true)
-      expect(history.document()).toBe(edited)
-      dispose()
-    })
+      return () => {
+        flush()
+        history.setDocument(edited)
+        history.undo()
+        history.beginTransaction()
+        history.setDocument(renameFirstParameter(initialDocument, 'Preview'))
+        history.setDocument(initialDocument)
+        history.endTransaction()
+        flush()
+        expect(history.canRedo()).toBe(true)
+        flush()
+        expect(history.redo()).toBe(true)
+        flush()
+        expect(history.document()).toBe(edited)
+        dispose()
+      }
+    })()
   })
 
   test('should describe the part property once for a continuous edit', () => {
@@ -96,32 +116,40 @@ describe('useDocumentHistory', () => {
         createElementModel({document: initialDocument, sessionId: 'test'}),
         'editor',
       )
-      history.beginTransaction()
-      history.setDocument(
-        setPartRenderProperties({
-          document: history.document(),
-          partId: 'mesh-preview',
-          properties: {opacity: 0.5},
-        })!,
-      )
-      history.setDocument(
-        setPartRenderProperties({
-          document: history.document(),
-          partId: 'mesh-preview',
-          properties: {opacity: 0.2},
-        })!,
-      )
-      history.endTransaction()
-      expect(history.entries().map((entry) => entry.title)).toEqual([
-        '문서 열기',
-        'mesh-preview · 불투명도 변경',
-      ])
-      expect(history.undo()).toBe(true)
-      expect(history.document()).toBe(initialDocument)
-      expect(history.redo()).toBe(true)
-      expect(history.document().parts[0]?.properties?.opacity).toBe(0.2)
-      dispose()
-    })
+      return () => {
+        flush()
+        history.beginTransaction()
+        history.setDocument(
+          setPartRenderProperties({
+            document: history.document(),
+            partId: 'mesh-preview',
+            properties: {opacity: 0.5},
+          })!,
+        )
+        history.setDocument(
+          setPartRenderProperties({
+            document: history.document(),
+            partId: 'mesh-preview',
+            properties: {opacity: 0.2},
+          })!,
+        )
+        history.endTransaction()
+        flush()
+        expect(history.entries().map((entry) => entry.title)).toEqual([
+          '문서 열기',
+          'mesh-preview · 불투명도 변경',
+        ])
+        flush()
+        expect(history.undo()).toBe(true)
+        flush()
+        expect(history.document()).toBe(initialDocument)
+        flush()
+        expect(history.redo()).toBe(true)
+        flush()
+        expect(history.document().parts[0]?.properties?.opacity).toBe(0.2)
+        dispose()
+      }
+    })()
   })
   test('should name edits and navigate directly through undo and redo entries', () => {
     createRoot((dispose) => {
@@ -131,25 +159,42 @@ describe('useDocumentHistory', () => {
         'editor',
       )
       const firstDocument = renameFirstParameter(initialDocument, 'First')
-      history.setDocument(firstDocument)
-      history.setDocument(renameFirstParameter(firstDocument, 'Second'))
-      const entries = history.entries()
-      expect(entries.map((entry) => entry.title)).toEqual([
-        '문서 열기',
-        '파라미터 이름 변경',
-        '파라미터 이름 변경',
-      ])
-      expect(history.goTo(entries[0]!.id)).toBe(true)
-      expect(history.document()).toBe(initialDocument)
-      expect(history.entries().map((entry) => entry.state)).toEqual(['current', 'future', 'future'])
-      expect(history.redoCount()).toBe(2)
-      expect(history.goTo(entries[1]!.id)).toBe(true)
-      expect(history.document()).toBe(firstDocument)
-      expect(history.entries().map((entry) => entry.state)).toEqual(['past', 'current', 'future'])
-      expect(history.goTo(entries[1]!.id)).toBe(false)
-      expect(history.goTo(-1)).toBe(false)
-      dispose()
-    })
+      return () => {
+        flush()
+        history.setDocument(firstDocument)
+        history.setDocument(renameFirstParameter(firstDocument, 'Second'))
+        const entries = history.entries()
+        flush()
+        expect(entries.map((entry) => entry.title)).toEqual([
+          '문서 열기',
+          '파라미터 이름 변경',
+          '파라미터 이름 변경',
+        ])
+        flush()
+        expect(history.goTo(entries[0]!.id)).toBe(true)
+        flush()
+        expect(history.document()).toBe(initialDocument)
+        flush()
+        expect(history.entries().map((entry) => entry.state)).toEqual([
+          'current',
+          'future',
+          'future',
+        ])
+        flush()
+        expect(history.redoCount()).toBe(2)
+        flush()
+        expect(history.goTo(entries[1]!.id)).toBe(true)
+        flush()
+        expect(history.document()).toBe(firstDocument)
+        flush()
+        expect(history.entries().map((entry) => entry.state)).toEqual(['past', 'current', 'future'])
+        flush()
+        expect(history.goTo(entries[1]!.id)).toBe(false)
+        flush()
+        expect(history.goTo(-1)).toBe(false)
+        dispose()
+      }
+    })()
   })
 
   test('should keep an explicit transaction title and discard future entries on a new edit', () => {
@@ -159,19 +204,29 @@ describe('useDocumentHistory', () => {
         createElementModel({document: initialDocument, sessionId: 'test'}),
         'editor',
       )
-      history.beginTransaction('모델 복구')
-      history.setDocument(renameFirstParameter(initialDocument, 'First'))
-      history.setDocument(renameFirstParameter(initialDocument, 'Second'))
-      expect(history.entries()).toHaveLength(1)
-      history.endTransaction()
-      const discarded = history.entries()[1]!.id
-      expect(history.entries()[1]!.title).toBe('모델 복구')
-      history.undo()
-      history.setDocument(renameFirstParameter(initialDocument, 'Replacement'), 'JSON 불러오기')
-      expect(history.entries().map((entry) => entry.title)).toEqual(['문서 열기', 'JSON 불러오기'])
-      expect(history.goTo(discarded)).toBe(false)
-      dispose()
-    })
+      return () => {
+        flush()
+        history.beginTransaction('모델 복구')
+        history.setDocument(renameFirstParameter(initialDocument, 'First'))
+        history.setDocument(renameFirstParameter(initialDocument, 'Second'))
+        flush()
+        expect(history.entries()).toHaveLength(1)
+        history.endTransaction()
+        const discarded = history.entries()[1]!.id
+        flush()
+        expect(history.entries()[1]!.title).toBe('모델 복구')
+        history.undo()
+        history.setDocument(renameFirstParameter(initialDocument, 'Replacement'), 'JSON 불러오기')
+        flush()
+        expect(history.entries().map((entry) => entry.title)).toEqual([
+          '문서 열기',
+          'JSON 불러오기',
+        ])
+        flush()
+        expect(history.goTo(discarded)).toBe(false)
+        dispose()
+      }
+    })()
   })
   test('should undo and redo document snapshots', () => {
     createRoot((dispose) => {
@@ -183,20 +238,31 @@ describe('useDocumentHistory', () => {
       const firstDocument = renameFirstParameter(initialDocument, 'First')
       const secondDocument = renameFirstParameter(firstDocument, 'Second')
 
-      history.setDocument(firstDocument)
-      history.setDocument(secondDocument)
+      return () => {
+        flush()
+        history.setDocument(firstDocument)
+        history.setDocument(secondDocument)
 
-      expect(history.canUndo()).toBe(true)
-      expect(history.canRedo()).toBe(false)
-      expect(history.undoCount()).toBe(2)
-      expect(history.undo()).toBe(true)
-      expect(history.document()).toBe(firstDocument)
-      expect(history.redoCount()).toBe(1)
-      expect(history.redo()).toBe(true)
-      expect(history.document()).toBe(secondDocument)
+        flush()
+        expect(history.canUndo()).toBe(true)
+        flush()
+        expect(history.canRedo()).toBe(false)
+        flush()
+        expect(history.undoCount()).toBe(2)
+        flush()
+        expect(history.undo()).toBe(true)
+        flush()
+        expect(history.document()).toBe(firstDocument)
+        flush()
+        expect(history.redoCount()).toBe(1)
+        flush()
+        expect(history.redo()).toBe(true)
+        flush()
+        expect(history.document()).toBe(secondDocument)
 
-      dispose()
-    })
+        dispose()
+      }
+    })()
   })
 
   test('should discard redo snapshots after a new edit', () => {
@@ -208,15 +274,20 @@ describe('useDocumentHistory', () => {
       )
       const firstDocument = renameFirstParameter(initialDocument, 'First')
 
-      history.setDocument(firstDocument)
-      history.undo()
-      history.setDocument(renameFirstParameter(initialDocument, 'Replacement'))
+      return () => {
+        flush()
+        history.setDocument(firstDocument)
+        history.undo()
+        history.setDocument(renameFirstParameter(initialDocument, 'Replacement'))
 
-      expect(history.canRedo()).toBe(false)
-      expect(history.redo()).toBe(false)
+        flush()
+        expect(history.canRedo()).toBe(false)
+        flush()
+        expect(history.redo()).toBe(false)
 
-      dispose()
-    })
+        dispose()
+      }
+    })()
   })
 
   test('should keep a transaction as one undo step', () => {
@@ -229,20 +300,29 @@ describe('useDocumentHistory', () => {
       const firstDocument = renameFirstParameter(initialDocument, 'First')
       const secondDocument = renameFirstParameter(firstDocument, 'Second')
 
-      history.beginTransaction()
-      history.setDocument(firstDocument)
-      history.setDocument(secondDocument)
-      expect(history.document()).toBe(secondDocument)
-      history.endTransaction()
-      expect(history.document()).toBe(secondDocument)
+      return () => {
+        flush()
+        history.beginTransaction()
+        history.setDocument(firstDocument)
+        history.setDocument(secondDocument)
+        flush()
+        expect(history.document()).toBe(secondDocument)
+        history.endTransaction()
+        flush()
+        expect(history.document()).toBe(secondDocument)
 
-      expect(history.undoCount()).toBe(1)
-      expect(history.undo()).toBe(true)
-      expect(history.document()).toBe(initialDocument)
-      expect(history.document()).toBe(initialDocument)
+        flush()
+        expect(history.undoCount()).toBe(1)
+        flush()
+        expect(history.undo()).toBe(true)
+        flush()
+        expect(history.document()).toBe(initialDocument)
+        flush()
+        expect(history.document()).toBe(initialDocument)
 
-      dispose()
-    })
+        dispose()
+      }
+    })()
   })
 
   test('should omit unchanged transactions and duplicate documents', () => {
@@ -253,14 +333,18 @@ describe('useDocumentHistory', () => {
         'editor',
       )
 
-      history.setDocument(initialDocument)
-      history.beginTransaction()
-      history.endTransaction()
+      return () => {
+        flush()
+        history.setDocument(initialDocument)
+        history.beginTransaction()
+        history.endTransaction()
 
-      expect(history.canUndo()).toBe(false)
+        flush()
+        expect(history.canUndo()).toBe(false)
 
-      dispose()
-    })
+        dispose()
+      }
+    })()
   })
 
   test('should limit retained undo snapshots and reset the history', () => {
@@ -274,26 +358,40 @@ describe('useDocumentHistory', () => {
       const secondDocument = renameFirstParameter(firstDocument, 'Second')
       const thirdDocument = renameFirstParameter(secondDocument, 'Third')
 
-      history.setDocument(firstDocument)
-      history.setDocument(secondDocument)
-      history.setDocument(thirdDocument)
-      const retained = history.entries()
-      expect(retained).toHaveLength(3)
-      expect(history.undoCount()).toBe(2)
-      expect(history.undo()).toBe(true)
-      expect(history.undo()).toBe(true)
-      expect(history.document()).toBe(firstDocument)
-      expect(history.undo()).toBe(false)
+      return () => {
+        flush()
+        history.setDocument(firstDocument)
+        history.setDocument(secondDocument)
+        history.setDocument(thirdDocument)
+        const retained = history.entries()
+        flush()
+        expect(retained).toHaveLength(3)
+        flush()
+        expect(history.undoCount()).toBe(2)
+        flush()
+        expect(history.undo()).toBe(true)
+        flush()
+        expect(history.undo()).toBe(true)
+        flush()
+        expect(history.document()).toBe(firstDocument)
+        flush()
+        expect(history.undo()).toBe(false)
 
-      history.resetDocument(initialDocument)
-      expect(history.entries().map((entry) => entry.state)).toEqual(['current'])
-      expect(history.goTo(retained[0]!.id)).toBe(false)
-      expect(history.document()).toBe(initialDocument)
-      expect(history.canUndo()).toBe(false)
-      expect(history.canRedo()).toBe(false)
+        history.resetDocument(initialDocument)
+        flush()
+        expect(history.entries().map((entry) => entry.state)).toEqual(['current'])
+        flush()
+        expect(history.goTo(retained[0]!.id)).toBe(false)
+        flush()
+        expect(history.document()).toBe(initialDocument)
+        flush()
+        expect(history.canUndo()).toBe(false)
+        flush()
+        expect(history.canRedo()).toBe(false)
 
-      dispose()
-    })
+        dispose()
+      }
+    })()
   })
   test('should reject history navigation until a pending gesture is completed', () => {
     createRoot((dispose) => {
@@ -304,16 +402,25 @@ describe('useDocumentHistory', () => {
       )
       const initialId = history.entries()[0]!.id
       const edited = renameFirstParameter(initialDocument, 'Dragged')
-      history.beginTransaction()
-      history.setDocument(edited)
-      expect(history.goTo(initialId)).toBe(false)
-      history.endTransaction()
-      expect(history.goTo(initialId)).toBe(true)
-      expect(history.document()).toBe(initialDocument)
-      expect(history.redoCount()).toBe(1)
-      expect(history.redo()).toBe(true)
-      expect(history.document()).toBe(edited)
-      dispose()
-    })
+      return () => {
+        flush()
+        history.beginTransaction()
+        history.setDocument(edited)
+        flush()
+        expect(history.goTo(initialId)).toBe(false)
+        history.endTransaction()
+        flush()
+        expect(history.goTo(initialId)).toBe(true)
+        flush()
+        expect(history.document()).toBe(initialDocument)
+        flush()
+        expect(history.redoCount()).toBe(1)
+        flush()
+        expect(history.redo()).toBe(true)
+        flush()
+        expect(history.document()).toBe(edited)
+        dispose()
+      }
+    })()
   })
 })

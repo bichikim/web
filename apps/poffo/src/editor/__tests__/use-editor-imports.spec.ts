@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {createRoot} from 'solid-js'
+import {createRoot, flush} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument, serializeDocument} from '@winter-love/puppet/player'
 import {useModelHistory} from '@winter-love/puppet/editor'
@@ -7,7 +7,7 @@ import {createModelSession} from '../../model/create-model-session'
 import {useEditorImports} from '../use-editor-imports'
 
 test('should append JSON or replace it according to the action, with undo for both', async () => {
-  await createRoot(async (dispose) => {
+  await createRoot((dispose) => {
     const original = createDemoDocument()
     const history = useModelHistory(
       createModelSession({document: original, sessionId: 'test'}),
@@ -21,20 +21,29 @@ test('should append JSON or replace it according to the action, with undo for bo
     })
     const file = new File([], 'model.json')
     Object.defineProperty(file, 'text', {value: async () => serializeDocument(original)})
-    await imports.handleImport(file)
-    expect(history.document().parts).toHaveLength(6)
-    await imports.handleOpen(file)
-    expect(history.document().parts).toHaveLength(3)
-    expect(history.undo()).toBe(true)
-    expect(history.document().parts).toHaveLength(6)
-    expect(history.undo()).toBe(true)
-    expect(history.document()).toEqual(original)
-    dispose()
-  })
+    return async () => {
+      flush()
+      await imports.handleImport(file)
+      flush()
+      expect(history.document().parts).toHaveLength(6)
+      await imports.handleOpen(file)
+      flush()
+      expect(history.document().parts).toHaveLength(3)
+      flush()
+      expect(history.undo()).toBe(true)
+      flush()
+      expect(history.document().parts).toHaveLength(6)
+      flush()
+      expect(history.undo()).toBe(true)
+      flush()
+      expect(history.document()).toEqual(original)
+      dispose()
+    }
+  })()
 })
 
 test('should replace a JSON document with a UTF-8 byte order mark', async () => {
-  await createRoot(async (dispose) => {
+  await createRoot((dispose) => {
     const original = createDemoDocument()
     const incoming = {...original, viewport: {height: 999, width: 999}}
     const history = useModelHistory(
@@ -55,16 +64,21 @@ test('should replace a JSON document with a UTF-8 byte order mark', async () => 
       value: async () => `\uFEFF${serializeDocument(incoming)}`,
     })
 
-    await imports.handleOpen(file)
+    return async () => {
+      flush()
+      await imports.handleOpen(file)
 
-    expect(onNotice).toHaveBeenLastCalledWith(null)
-    expect(history.document().viewport).toEqual(incoming.viewport)
-    dispose()
-  })
+      flush()
+      expect(onNotice).toHaveBeenLastCalledWith(null)
+      flush()
+      expect(history.document().viewport).toEqual(incoming.viewport)
+      dispose()
+    }
+  })()
 })
 
 test('should replace a JSON document identified by its MIME type', async () => {
-  await createRoot(async (dispose) => {
+  await createRoot((dispose) => {
     const original = createDemoDocument()
     const incoming = {...original, viewport: {height: 999, width: 999}}
     const history = useModelHistory(
@@ -85,16 +99,21 @@ test('should replace a JSON document identified by its MIME type', async () => {
       value: async () => serializeDocument(incoming),
     })
 
-    await imports.handleOpen(file)
+    return async () => {
+      flush()
+      await imports.handleOpen(file)
 
-    expect(onNotice).toHaveBeenLastCalledWith(null)
-    expect(history.document().viewport).toEqual(incoming.viewport)
-    dispose()
-  })
+      flush()
+      expect(onNotice).toHaveBeenLastCalledWith(null)
+      flush()
+      expect(history.document().viewport).toEqual(incoming.viewport)
+      dispose()
+    }
+  })()
 })
 
 test('should load an example on selection and keep the previous document in undo history', async () => {
-  await createRoot(async (dispose) => {
+  await createRoot((dispose) => {
     const original = createDemoDocument()
     const incoming = {...original, viewport: {height: 640, width: 640}}
     const history = useModelHistory(
@@ -113,13 +132,20 @@ test('should load an example on selection and keep the previous document in undo
       return file
     })
 
-    expect(load).not.toHaveBeenCalled()
-    await imports.handleOpenExample({label: '예제', load})
+    return async () => {
+      flush()
+      expect(load).not.toHaveBeenCalled()
+      await imports.handleOpenExample({label: '예제', load})
 
-    expect(load).toHaveBeenCalledOnce()
-    expect(history.document().viewport).toEqual(incoming.viewport)
-    expect(history.undo()).toBe(true)
-    expect(history.document()).toEqual(original)
-    dispose()
-  })
+      flush()
+      expect(load).toHaveBeenCalledOnce()
+      flush()
+      expect(history.document().viewport).toEqual(incoming.viewport)
+      flush()
+      expect(history.undo()).toBe(true)
+      flush()
+      expect(history.document()).toEqual(original)
+      dispose()
+    }
+  })()
 })

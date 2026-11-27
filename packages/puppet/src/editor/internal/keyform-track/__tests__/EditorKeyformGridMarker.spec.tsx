@@ -61,54 +61,54 @@ test.each([
 
 test('should preview a drag and commit once on its pointer release', () => {
   const {view, marker, onMove, onSelect} = setup()
-  marker.dispatchEvent(pointer('pointerdown'))
-  globalThis.dispatchEvent(pointer('pointermove'))
+  fireEvent(marker, pointer('pointerdown'))
+  fireEvent(globalThis.window, pointer('pointermove'))
   expect(view.getByRole('button', {name: '키폼 선택: 15, 15'})).toBe(marker)
   expect(onMove).not.toHaveBeenCalled()
-  globalThis.dispatchEvent(pointer('pointerup'))
-  globalThis.dispatchEvent(pointer('pointerup'))
+  fireEvent(globalThis.window, pointer('pointerup'))
+  fireEvent(globalThis.window, pointer('pointerup'))
   expect(onMove).toHaveBeenCalledExactlyOnceWith([0, 0], [15, 15])
   expect(onSelect).toHaveBeenCalledOnce()
 })
 
 test('should ignore another pointer and discard a cancelled drag', () => {
   const {view, marker, onMove} = setup()
-  marker.dispatchEvent(pointer('pointerdown'))
-  globalThis.dispatchEvent(pointer('pointermove', 2))
+  fireEvent(marker, pointer('pointerdown'))
+  fireEvent(globalThis.window, pointer('pointermove', 2))
   expect(view.getByRole('button', {name: '키폼 선택: 0, 0'})).toBe(marker)
-  globalThis.dispatchEvent(pointer('pointermove'))
-  globalThis.dispatchEvent(pointer('pointercancel'))
-  globalThis.dispatchEvent(pointer('pointerup'))
+  fireEvent(globalThis.window, pointer('pointermove'))
+  fireEvent(globalThis.window, pointer('pointercancel'))
+  fireEvent(globalThis.window, pointer('pointerup'))
   expect(onMove).not.toHaveBeenCalled()
   expect(view.getByRole('button', {name: '키폼 선택: 0, 0'})).toBe(marker)
 })
 
 test.each(['Escape', 'blur'])('should discard a drag on %s', (reason) => {
   const {view, marker, onMove} = setup()
-  marker.dispatchEvent(pointer('pointerdown'))
-  globalThis.dispatchEvent(pointer('pointermove'))
+  fireEvent(marker, pointer('pointerdown'))
+  fireEvent(globalThis.window, pointer('pointermove'))
   if (reason === 'Escape') {
-    globalThis.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'}))
+    fireEvent(globalThis.window, new KeyboardEvent('keydown', {key: 'Escape'}))
   } else {
-    globalThis.dispatchEvent(new Event('blur'))
+    fireEvent(globalThis.window, new Event('blur'))
   }
-  globalThis.dispatchEvent(pointer('pointerup'))
+  fireEvent(globalThis.window, pointer('pointerup'))
   expect(onMove).not.toHaveBeenCalled()
   expect(view.getByRole('button', {name: '키폼 선택: 0, 0'})).toBe(marker)
 })
 
 test('should release pending gesture listeners when unmounted', () => {
   const {view, marker, onMove} = setup()
-  marker.dispatchEvent(pointer('pointerdown'))
-  globalThis.dispatchEvent(pointer('pointermove'))
+  fireEvent(marker, pointer('pointerdown'))
+  fireEvent(globalThis.window, pointer('pointermove'))
   view.unmount()
-  globalThis.dispatchEvent(pointer('pointerup'))
+  fireEvent(globalThis.window, pointer('pointerup'))
   expect(onMove).not.toHaveBeenCalled()
 })
 
 test('should retain keyboard click selection without pointer click reselection', () => {
   const {marker, onSelect} = setup()
-  marker.dispatchEvent(pointer('pointerdown'))
+  fireEvent(marker, pointer('pointerdown'))
   fireEvent.click(marker, {detail: 1})
   expect(onSelect).toHaveBeenCalledOnce()
   fireEvent.click(marker, {detail: 0})

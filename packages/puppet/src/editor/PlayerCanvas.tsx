@@ -10,7 +10,6 @@ import {
   createEffect,
   createMemo,
   createSignal,
-  on,
   onCleanup,
   Show,
   untrack,
@@ -74,13 +73,13 @@ const usePlayerResize = (options: PlayerResizeOptions) => {
       viewport: options.document().viewport,
     }),
   )
-  createEffect(() => {
-    const nextResolution = resolution()
-    options.player()?.resize(nextResolution)
-  })
-  createEffect(() => {
-    const hostElement = options.host()
-
+  createEffect(
+    () => ({current: options.player(), nextResolution: resolution()}),
+    ({current, nextResolution}) => {
+      current?.resize(nextResolution)
+    },
+  )
+  createEffect(options.host, (hostElement) => {
     if (hostElement === undefined || typeof ResizeObserver === 'undefined') {
       return
     }
@@ -92,32 +91,35 @@ const usePlayerResize = (options: PlayerResizeOptions) => {
     const resizeObserver = new ResizeObserver(resizePlayer)
 
     resizeObserver.observe(hostElement)
-    onCleanup(() => {
+
+    return () => {
       resizeObserver.disconnect()
       resizePlayer.cancel()
-    })
+    }
   })
   return resolution
 }
 
 const usePlayerPlayback = (props: PlayerCanvasProps, player: Accessor<Player | null>) => {
-  createEffect(() => {
-    const physicsPreview = props.physicsPreview ?? true
-    player()?.setPhysicsPreview(physicsPreview)
-  })
+  createEffect(
+    () => ({current: player(), physicsPreview: props.physicsPreview ?? true}),
+    ({current, physicsPreview}) => {
+      current?.setPhysicsPreview(physicsPreview)
+    },
+  )
   usePlayerMotion({motionId: () => props.motionId, player})
-  createEffect(() => {
-    const current = player()
-    const expression = props.expressionId
-    const expressions = props.expressionIds
-    if (current !== null) {
-      if (expressions === undefined) {
-        current.setExpression(expression)
-      } else {
-        current.setExpressions(expressions)
+  createEffect(
+    () => ({current: player(), expression: props.expressionId, expressions: props.expressionIds}),
+    ({current, expression, expressions}) => {
+      if (current !== null) {
+        if (expressions === undefined) {
+          current.setExpression(expression)
+        } else {
+          current.setExpressions(expressions)
+        }
       }
-    }
-  })
+    },
+  )
 }
 
 // eslint-disable-next-line max-lines-per-function -- Document reuse and GPU changes share one canvas lifetime.
@@ -139,7 +141,6 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
         antialiasing: props.antialiasing ?? 'auto',
         renderer: props.spatialSurface === undefined ? (props.renderer ?? 'auto') : 'pixi-webgl',
       }) satisfies PlayerRenderingOptions,
-    undefined,
     {
       equals: (previous, next) =>
         previous.antialiasing === next.antialiasing && previous.renderer === next.renderer,
@@ -176,9 +177,9 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
     untrack(host)?.replaceChildren()
   }
 
-  const notifyRendering = () =>
+  const notifyRendering = (current = untrack(player)) =>
     untrack(() => {
-      const info = player()?.getRenderingInfo()
+      const info = current?.getRenderingInfo()
       if (info !== undefined) {
         props.onRenderingChange?.(info)
       }
@@ -208,138 +209,159 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
     renderScale: () => props.renderScale ?? 1,
   })
 
-  createEffect(() => {
-    const currentParameterValues = props.parameterValues
-    const document = sourceDocument()
-    const currentPlayer = player()
-    if (appliedDocument === document) {
-      currentPlayer?.setParameterValues(currentParameterValues ?? {})
-    }
-  })
+  createEffect(
+    () => ({
+      currentParameterValues: props.parameterValues,
+      currentPlayer: player(),
+      document: sourceDocument(),
+    }),
+    ({currentParameterValues, document, currentPlayer}) => {
+      if (appliedDocument === document) {
+        currentPlayer?.setParameterValues(currentParameterValues ?? {})
+      }
+    },
+  )
 
   usePlayerPlayback(props, player)
-  createEffect(() => {
-    const current = player()
-    const enabled = props.buffering ?? false
-    if (current !== null && getPlayerBufferingInfo(current).enabled !== enabled) {
-      configurePlayerBuffering(current, {enabled})
-    }
-  })
-
-  createEffect(() => {
-    const hostElement = host()
-
-    if (hostElement === undefined) {
-      return
-    }
-
-    const nextDocument = sourceDocument()
-    retry()
-    if (pending) {
-      return
-    }
-    generation += 1
-    const activeGeneration = generation
-    notifyStatus('loading')
-    const preparedDocument = markPreparedPuppetDocument(nextDocument)
-    const currentPlayer = untrack(player)
-    try {
-      if (
-        currentPlayer !== null &&
-        untrack(() => applyPlayerDocument(currentPlayer, nextDocument, props, appliedDocument))
-      ) {
-        appliedDocument = nextDocument
-        setErrorMessage(null)
-        notifyStatus('ready')
-        return
+  createEffect(
+    () => ({current: player(), enabled: props.buffering ?? false}),
+    ({current, enabled}) => {
+      if (current !== null && getPlayerBufferingInfo(current).enabled !== enabled) {
+        configurePlayerBuffering(current, {enabled})
       }
-    } catch (error) {
-      disposePlayer()
-      setErrorMessage(error instanceof Error ? error.message : '편집 데이터를 적용하지 못했습니다.')
-      notifyStatus('error')
-      return
-    }
-
-    const canvasElement = (<canvas aria-label="모델 뷰어" />) as HTMLCanvasElement
-
-    disposePlayer()
-    setErrorMessage(null)
-    hostElement.replaceChildren(canvasElement)
-    setPlayerCanvas(canvasElement)
-
-    const configuration = untrack(rendering)
-    let attemptedDocument = nextDocument
-    pending = true
-    createCanvasPlayer({
-      ...configuration,
-      buffering: untrack(() => props.buffering),
-      canvas: canvasElement,
-      document: preparedDocument,
-      externalRendering,
-      host: hostElement,
-      motionId: untrack(() => props.motionId),
-      onAfterRender: overlay.render,
-      onBeforeRender: overlay.prepare,
-      onBufferingChange: notifyBuffering,
-      onFrame: notifyFrame,
-      parameterValues: untrack(() => props.parameterValues),
-      physicsPreview: untrack(() => props.physicsPreview),
-      resolution: untrack(resolution),
-    })
-      .then((createdPlayer) => {
-        pending = false
-        if (activeGeneration !== generation) {
-          createdPlayer.destroy()
-          return
-        }
-
-        initializingPlayer = createdPlayer
-        const latest = untrack(sourceDocument)
-        attemptedDocument = latest
-        if (
-          latest !== nextDocument &&
-          !untrack(() => applyPlayerDocument(createdPlayer, latest, props, nextDocument))
-        ) {
-          createdPlayer.destroy()
-          initializingPlayer = undefined
-          setRetry((value) => value + 1)
-          return
-        }
-        appliedDocument = latest
-        initializingPlayer = undefined
-        setPlayer(createdPlayer)
-        notifyPlayerChange(createdPlayer)
-        notifyRendering()
-        notifyStatus('ready')
-      })
-      .catch((error: unknown) => {
-        pending = false
-        if (activeGeneration !== generation) {
-          return
-        }
-
-        initializingPlayer?.destroy()
-        initializingPlayer = undefined
-        disposePlayer()
-        if (attemptedDocument !== untrack(sourceDocument) || configuration !== untrack(rendering)) {
-          setRetry((value) => value + 1)
-          return
-        }
-        setErrorMessage(error instanceof Error ? error.message : '플레이어를 시작하지 못했습니다.')
-        notifyStatus('error')
-      })
-  })
+    },
+  )
 
   createEffect(
-    on(
-      rendering,
-      () => {
-        if (untrack(player) === null && !pending && untrack(errorMessage) !== null) {
-          setRetry((value) => value + 1)
+    () => {
+      const hostElement = host()
+      if (hostElement === undefined) {
+        return undefined
+      }
+      const nextDocument = sourceDocument()
+      const attempt = retry()
+      const initial = untrack(() => ({
+        buffering: props.buffering,
+        motionId: props.motionId,
+        parameterValues: props.parameterValues,
+        physicsPreview: props.physicsPreview,
+        resolution: resolution(),
+        resumeTime: props.resumeTime,
+      }))
+      return {attempt, hostElement, initial, nextDocument}
+    },
+    (request) => {
+      if (request === undefined) {
+        return
+      }
+      const {hostElement, nextDocument, initial} = request
+      if (pending) {
+        return
+      }
+      generation += 1
+      const activeGeneration = generation
+      notifyStatus('loading')
+      const preparedDocument = markPreparedPuppetDocument(nextDocument)
+      const currentPlayer = untrack(player)
+      try {
+        if (
+          currentPlayer !== null &&
+          applyPlayerDocument(currentPlayer, nextDocument, initial, appliedDocument)
+        ) {
+          appliedDocument = nextDocument
+          setErrorMessage(null)
+          notifyStatus('ready')
+          return
         }
-      },
-      {defer: true},
-    ),
+      } catch (error) {
+        disposePlayer()
+        setErrorMessage(
+          error instanceof Error ? error.message : '편집 데이터를 적용하지 못했습니다.',
+        )
+        notifyStatus('error')
+        return
+      }
+
+      const canvasElement = (<canvas aria-label="모델 뷰어" />) as HTMLCanvasElement
+
+      disposePlayer()
+      setErrorMessage(null)
+      hostElement.replaceChildren(canvasElement)
+      setPlayerCanvas(canvasElement)
+
+      const configuration = untrack(rendering)
+      let attemptedDocument = nextDocument
+      pending = true
+      createCanvasPlayer({
+        ...configuration,
+        ...initial,
+        canvas: canvasElement,
+        document: preparedDocument,
+        externalRendering,
+        host: hostElement,
+        onAfterRender: overlay.render,
+        onBeforeRender: overlay.prepare,
+        onBufferingChange: notifyBuffering,
+        onFrame: notifyFrame,
+      })
+        .then((createdPlayer) => {
+          pending = false
+          if (activeGeneration !== generation) {
+            createdPlayer.destroy()
+            return
+          }
+
+          initializingPlayer = createdPlayer
+          const latest = untrack(sourceDocument)
+          attemptedDocument = latest
+          if (
+            latest !== nextDocument &&
+            !untrack(() => applyPlayerDocument(createdPlayer, latest, props, nextDocument))
+          ) {
+            createdPlayer.destroy()
+            initializingPlayer = undefined
+            setRetry((value) => value + 1)
+            return
+          }
+          appliedDocument = latest
+          initializingPlayer = undefined
+          setPlayer(createdPlayer)
+          notifyPlayerChange(createdPlayer)
+          notifyRendering(createdPlayer)
+          notifyStatus('ready')
+        })
+        .catch((error: unknown) => {
+          pending = false
+          if (activeGeneration !== generation) {
+            return
+          }
+
+          initializingPlayer?.destroy()
+          initializingPlayer = undefined
+          disposePlayer()
+          if (
+            attemptedDocument !== untrack(sourceDocument) ||
+            configuration !== untrack(rendering)
+          ) {
+            setRetry((value) => value + 1)
+            return
+          }
+          setErrorMessage(
+            error instanceof Error ? error.message : '플레이어를 시작하지 못했습니다.',
+          )
+          notifyStatus('error')
+        })
+    },
+  )
+
+  createEffect(
+    rendering,
+    () => {
+      if (untrack(player) === null && !pending && untrack(errorMessage) !== null) {
+        setRetry((value) => value + 1)
+      }
+    },
+    {defer: true},
   )
 
   onCleanup(() => {

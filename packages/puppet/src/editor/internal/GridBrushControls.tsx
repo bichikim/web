@@ -1,5 +1,6 @@
 import {For, Show} from 'solid-js'
-import {Portal} from 'solid-js/web'
+import {Portal} from '@solidjs/web'
+
 import {ToggleButton} from '@kobalte/core/toggle-button'
 import {EditorNumberField} from '../../design-system'
 import type {useGridBrush} from './use-grid-brush'

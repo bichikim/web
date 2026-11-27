@@ -1,9 +1,10 @@
-import {createSignal, createUniqueId, onCleanup, onMount, Show} from 'solid-js'
-import {Portal} from 'solid-js/web'
+import {createSignal, createUniqueId, onCleanup, onSettled, Show} from 'solid-js'
+import {Portal} from '@solidjs/web'
+
 import {EditorButton, useEditorPortalMount} from '@winter-love/puppet/editor'
 import {ColorThemeFields} from './ColorThemeFields'
 import {useColorTheme} from './use-color-theme'
-import {createFocusScope} from '@kobalte/core/primitives/create-focus-scope'
+import {getFocusableTreeWalker} from '@solid-primitives/focus'
 
 interface ColorThemeDialogProps {
   /** Ends the settings session; the owner unmounts this dialog. */
@@ -17,8 +18,7 @@ export const ColorThemeDialog = (props: ColorThemeDialogProps) => {
   const theme = useColorTheme(document.documentElement)
   const titleId = createUniqueId()
   const [dialog, setDialog] = createSignal<HTMLDialogElement>()
-  createFocusScope({trapFocus: true}, dialog)
-  onMount(() => dialog()?.showModal())
+  onSettled(() => dialog()?.showModal())
   onCleanup(() => {
     dialog()?.close()
     props.onReturnFocus?.()
@@ -28,12 +28,24 @@ export const ColorThemeDialog = (props: ColorThemeDialogProps) => {
     event.preventDefault()
     handleClose()
   }
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (
-      event.key === 'Escape' &&
-      !event.defaultPrevented &&
-      dialog()?.querySelector('[popover]:popover-open') === null
-    ) {
+  const handleKeyDown = (event: KeyboardEvent & {currentTarget: HTMLDialogElement}) => {
+    const surface = event.currentTarget
+    if (event.defaultPrevented || surface.querySelector('[popover]:popover-open') !== null) {
+      return
+    }
+    if (event.key === 'Tab') {
+      const walker = getFocusableTreeWalker(surface, {tabbable: true})
+      const first = walker.firstChild()
+      walker.currentNode = surface
+      const last = walker.lastChild()
+      const boundary = event.shiftKey ? first : last
+      const next = event.shiftKey ? last : first
+      if (event.target === boundary && next instanceof HTMLElement) {
+        event.preventDefault()
+        next.focus()
+      }
+    }
+    if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
       handleClose()

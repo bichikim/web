@@ -63,7 +63,7 @@ export const EditorInspector = (props: EditorInspectorProps) => {
       class="panel inspector-panel"
       aria-label="선택 작업"
       inert={props.selectionPending}
-      aria-busy={props.selectionPending || undefined}
+      aria-busy={props.selectionPending ? 'true' : undefined}
     >
       <div class="inspector-content">
         {props.history}

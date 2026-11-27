@@ -3,7 +3,7 @@ import type {ModelCommandResult} from '../../model'
 /** @vitest-environment jsdom */
 
 import {addGlue, setGlueKeyform} from '../glue'
-import {createRoot, createSignal} from 'solid-js'
+import {createRoot, createSignal, flush} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument} from '../../../player/create-demo-document'
 import {useTemporaryForm} from '../use-temporary-form'
@@ -48,31 +48,47 @@ test('should accumulate a layer draft, hide on navigation, preview and explicitl
         })!,
       )
     }
-    edit()
-    expect(session.hasChanges()).toBe(true)
-    const first = session.form()!.parts[0]!.vertices[0]!
-    edit()
-    expect(session.form()!.parts[0]!.vertices[0]).toBe(first + 10)
-    expect(onChange).not.toHaveBeenCalled()
-    session.hide()
-    setNode('shape-diamond')
-    expect(session.form()).toBeUndefined()
-    expect(session.hasChanges()).toBe(true)
-    setNode(nodeId)
-    expect(session.form()).toBeDefined()
-    expect(session.showing()).toBe(false)
-    setValues([30, 0])
-    setKey([30, 0])
-    session.setPreview(true)
-    expect(session.showing()).toBe(true)
-    session.setPreview(false)
-    expect(session.showing()).toBe(false)
-    expect(session.save()).toBe(true)
-    expect(onChange).toHaveBeenCalledOnce()
-    expect(session.form()).toBeUndefined()
-    expect(session.hasChanges()).toBe(false)
-    dispose()
-  }))
+    return () => {
+      flush()
+      edit()
+      flush()
+      expect(session.hasChanges()).toBe(true)
+      const first = session.form()!.parts[0]!.vertices[0]!
+      edit()
+      flush()
+      expect(session.form()!.parts[0]!.vertices[0]).toBe(first + 10)
+      flush()
+      expect(onChange).not.toHaveBeenCalled()
+      session.hide()
+      setNode('shape-diamond')
+      flush()
+      expect(session.form()).toBeUndefined()
+      flush()
+      expect(session.hasChanges()).toBe(true)
+      setNode(nodeId)
+      flush()
+      expect(session.form()).toBeDefined()
+      flush()
+      expect(session.showing()).toBe(false)
+      setValues([30, 0])
+      setKey([30, 0])
+      session.setPreview(true)
+      flush()
+      expect(session.showing()).toBe(true)
+      session.setPreview(false)
+      flush()
+      expect(session.showing()).toBe(false)
+      flush()
+      expect(session.save()).toBe(true)
+      flush()
+      expect(onChange).toHaveBeenCalledOnce()
+      flush()
+      expect(session.form()).toBeUndefined()
+      flush()
+      expect(session.hasChanges()).toBe(false)
+      dispose()
+    }
+  })())
 
 test('should preserve ordinary part properties without committing the temporary key', () =>
   createRoot((dispose) => {
@@ -99,12 +115,18 @@ test('should preserve ordinary part properties without committing the temporary 
         ? {...part, properties: {...part.properties, blendMode: 'screen' as const}}
         : part,
     )
-    session.update({...working, parts})
-    expect(session.form()).toBeUndefined()
-    expect(onChange.mock.calls[0]![0].parameterBindings).toBe(document.parameterBindings)
-    expect(onChange.mock.calls[0]![0].parts[0]?.properties?.blendMode).toBe('screen')
-    dispose()
-  }))
+    return () => {
+      flush()
+      session.update({...working, parts})
+      flush()
+      expect(session.form()).toBeUndefined()
+      flush()
+      expect(onChange.mock.calls[0]![0].parameterBindings).toBe(document.parameterBindings)
+      flush()
+      expect(onChange.mock.calls[0]![0].parts[0]?.properties?.blendMode).toBe('screen')
+      dispose()
+    }
+  })())
 
 test('should retain Glue as a temporary form until explicitly saved to a selected key', () =>
   createRoot((dispose) => {
@@ -129,22 +151,30 @@ test('should retain Glue as a temporary form until explicitly saved to a selecte
       parameterValues: () => [15, 0],
     })
     const target = session.target()!
-    session.update(
-      setGlueKeyform({...target, changes: {strength: 0.4, weight: 0.5}, glueId: 'glue-1'})!,
-    )
-    expect(onChange).not.toHaveBeenCalled()
-    expect(session.form()!.parts[0]!.glue).toEqual([{id: 'glue-1', strength: 0.4, weight: 0.5}])
-    setKey([30, 0])
-    expect(session.save()).toBe(true)
-    const saved = onChange.mock.calls[0]![0]
-    expect(
-      saved.parameterBindings![0]!.keyforms.find(
-        (form) => form.values[0] === 30 && form.values[1] === 0,
-      )!.parts[0]!.glue,
-    ).toEqual([{id: 'glue-1', strength: 0.4, weight: 0.5}])
-    expect(saved.glue![0]!.strength).toBe(1)
-    dispose()
-  }))
+    return () => {
+      flush()
+      session.update(
+        setGlueKeyform({...target, changes: {strength: 0.4, weight: 0.5}, glueId: 'glue-1'})!,
+      )
+      flush()
+      expect(onChange).not.toHaveBeenCalled()
+      flush()
+      expect(session.form()!.parts[0]!.glue).toEqual([{id: 'glue-1', strength: 0.4, weight: 0.5}])
+      setKey([30, 0])
+      flush()
+      expect(session.save()).toBe(true)
+      const saved = onChange.mock.calls[0]![0]
+      flush()
+      expect(
+        saved.parameterBindings![0]!.keyforms.find(
+          (form) => form.values[0] === 30 && form.values[1] === 0,
+        )!.parts[0]!.glue,
+      ).toEqual([{id: 'glue-1', strength: 0.4, weight: 0.5}])
+      flush()
+      expect(saved.glue![0]!.strength).toBe(1)
+      dispose()
+    }
+  })())
 
 test('should retain parameter map identity on selection and propagate changed values', () =>
   createRoot((dispose) => {
@@ -166,14 +196,20 @@ test('should retain parameter map identity on selection and propagate changed va
       parameterValues: () => [0, 0],
     })
     const initial = session.valueMap()
-    setNode(document.parts[1]!.id)
-    setMap({...map()})
-    expect(session.valueMap()).toBe(initial)
-    setMap({'angle-x': 15, 'angle-y': 0})
-    expect(session.valueMap()).not.toBe(initial)
-    expect(session.valueMap()['angle-x']).toBe(15)
-    dispose()
-  }))
+    return () => {
+      flush()
+      setNode(document.parts[1]!.id)
+      setMap({...map()})
+      flush()
+      expect(session.valueMap()).toBe(initial)
+      setMap({'angle-x': 15, 'angle-y': 0})
+      flush()
+      expect(session.valueMap()).not.toBe(initial)
+      flush()
+      expect(session.valueMap()['angle-x']).toBe(15)
+      dispose()
+    }
+  })())
 
 const createDraft = (onChange: (document: PuppetDocument) => ModelCommandResult) => {
   const document = createDemoDocument()
@@ -206,9 +242,12 @@ const createDraft = (onChange: (document: PuppetDocument) => ModelCommandResult)
       })!,
     )
   }
-  edit()
-  setKey([30, 0])
-  return {edit, session}
+  const seed = () => {
+    edit()
+    setKey([30, 0])
+    flush()
+  }
+  return {edit, seed, session}
 }
 
 test('should retain a rejected draft and clear it only after a successful retry', () =>
@@ -217,28 +256,41 @@ test('should retain a rejected draft and clear it only after a successful retry'
       .fn<(document: PuppetDocument) => ModelCommandResult>()
       .mockReturnValueOnce({error: {code: 'busy'}, ok: false})
       .mockReturnValueOnce({changed: true, ok: true, revision: 1})
-    const {session} = createDraft(commit)
-    const draft = session.form()
-    expect(session.save()).toBe(false)
-    expect(session.form()).toBe(draft)
-    expect(session.save()).toBe(true)
-    expect(session.hasChanges()).toBe(false)
-    dispose()
-  }))
+    const {seed, session} = createDraft(commit)
+    return () => {
+      seed()
+      const draft = session.form()
+      expect(session.save()).toBe(false)
+      flush()
+      expect(session.form()).toBe(draft)
+      flush()
+      expect(session.save()).toBe(true)
+      flush()
+      expect(session.hasChanges()).toBe(false)
+      dispose()
+    }
+  })())
 
 test('should retain a newer draft created by a synchronous host notification', () =>
   createRoot((dispose) => {
     const commit = vi.fn<(document: PuppetDocument) => ModelCommandResult>()
-    const {edit, session} = createDraft(commit)
-    const original = session.form()
+    const {edit, seed, session} = createDraft(commit)
     commit.mockImplementation(() => {
       session.setPreview(true)
+      flush()
       edit()
       return {changed: true, ok: true, revision: 1}
     })
-    expect(session.save()).toBe(true)
-    expect(session.form()).toBeDefined()
-    expect(session.form()).not.toBe(original)
-    expect(session.hasChanges()).toBe(true)
-    dispose()
-  }))
+    return () => {
+      seed()
+      const original = session.form()
+      expect(session.save()).toBe(true)
+      flush()
+      expect(session.form()).toBeDefined()
+      flush()
+      expect(session.form()).not.toBe(original)
+      flush()
+      expect(session.hasChanges()).toBe(true)
+      dispose()
+    }
+  })())

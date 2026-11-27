@@ -41,7 +41,7 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
             {(bindingId) => {
               const binding = createMemo(() => bindingById().get(bindingId)!)
               const parameters = createMemo(() => bindingParameters(binding()))
-              const values = createMemo(() => bindingValues(binding()), undefined, {
+              const values = createMemo(() => bindingValues(binding()), {
                 equals: isEqual,
               })
               return (

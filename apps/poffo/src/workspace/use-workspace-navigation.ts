@@ -1,4 +1,4 @@
-import {type Accessor, batch, createEffect, createSignal, on, onCleanup, untrack} from 'solid-js'
+import {type Accessor, createEffect, createSignal, onCleanup, untrack} from 'solid-js'
 import {useDeferredValue} from '@winter-love/puppet/editor'
 import type {WorkspaceMode, WorkspaceNavigationResult} from './types'
 
@@ -54,11 +54,11 @@ export const useWorkspaceNavigation = (
     initialValue: untrack(options.current),
     onCommit: navigate,
   })
-  const reset = () => {
+  const reset = (mode: WorkspaceMode) => {
     cancel()
-    selection.reset(options.current())
+    selection.reset(mode)
   }
-  createEffect(on(options.current, reset, {defer: true}))
+  createEffect(options.current, reset, {defer: true})
   onCleanup(cancel)
   const select = (mode: WorkspaceMode) => {
     if (mode === selection.value()) {
@@ -66,14 +66,12 @@ export const useWorkspaceNavigation = (
     }
     cancel()
     const current = options.current()
-    batch(() => {
-      setError(null)
-      selection.reset(current)
-      if (mode !== current) {
-        request = new AbortController()
-        selection.select(mode)
-      }
-    })
+    setError(null)
+    selection.reset(current)
+    if (mode !== current) {
+      request = new AbortController()
+      selection.select(mode)
+    }
   }
   return {dismissError: () => setError(null), error, select, selected: selection.value}
 }

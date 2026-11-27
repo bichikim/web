@@ -1,5 +1,6 @@
 import {TextField} from '@kobalte/core/text-field'
-import {createMemo, createSignal, For, type JSX} from 'solid-js'
+import {createMemo, createSignal, For} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import {EditorButton, EditorRangeInput, EditorTextInput} from '../../src/design-system'
 import type {PuppetParameter} from '../../src/player/document'
 import type {ComparisonSnapshot} from './types'

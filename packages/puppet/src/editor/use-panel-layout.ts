@@ -1,5 +1,5 @@
 import {clamp} from 'es-toolkit/math'
-import {batch, createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+import {createEffect, createSignal, onCleanup} from 'solid-js'
 
 export const EDITOR_PANEL_SPECS = {
   bottom: {defaultSize: 260, maximumSize: 420, minimumSize: 180},
@@ -75,13 +75,22 @@ const getPointerPosition = (event: PointerEvent, position: EditorPanelPosition) 
 const getResizeDirection = (position: EditorPanelPosition) => (position === 'left' ? 1 : -1)
 
 export const usePanelLayout = () => {
-  const [bottomOpen, setBottomOpen] = createSignal(true)
-  const [bottomSize, setBottomSize] = createSignal<number>(EDITOR_PANEL_SPECS.bottom.defaultSize)
-  const [leftOpen, setLeftOpen] = createSignal(true)
-  const [leftSize, setLeftSize] = createSignal<number>(EDITOR_PANEL_SPECS.left.defaultSize)
+  const preference = readPanelPreference()
+  const initialSize = (position: EditorPanelPosition) => {
+    const spec = EDITOR_PANEL_SPECS[position]
+    return clamp(
+      preference?.[position].size ?? spec.defaultSize,
+      spec.minimumSize,
+      spec.maximumSize,
+    )
+  }
+  const [bottomOpen, setBottomOpen] = createSignal(preference?.bottom.open ?? true)
+  const [bottomSize, setBottomSize] = createSignal(initialSize('bottom'))
+  const [leftOpen, setLeftOpen] = createSignal(preference?.left.open ?? true)
+  const [leftSize, setLeftSize] = createSignal(initialSize('left'))
   const [resizingPosition, setResizingPosition] = createSignal<EditorPanelPosition | null>(null)
-  const [rightOpen, setRightOpen] = createSignal(true)
-  const [rightSize, setRightSize] = createSignal<number>(EDITOR_PANEL_SPECS.right.defaultSize)
+  const [rightOpen, setRightOpen] = createSignal(preference?.right.open ?? true)
+  const [rightSize, setRightSize] = createSignal(initialSize('right'))
   let stopResize: (() => void) | undefined
 
   const sizes = {bottom: bottomSize, left: leftSize, right: rightSize}
@@ -100,28 +109,14 @@ export const usePanelLayout = () => {
     resize(position, getSize(position) + delta)
   }
 
-  onMount(() => {
-    const preference = readPanelPreference()
-
-    if (preference !== undefined) {
-      batch(() => {
-        setBottomOpen(preference.bottom.open)
-        resize('bottom', preference.bottom.size)
-        setLeftOpen(preference.left.open)
-        resize('left', preference.left.size)
-        setRightOpen(preference.right.open)
-        resize('right', preference.right.size)
-      })
-    }
-
-    createEffect(() => {
-      writePanelPreference({
-        bottom: {open: bottomOpen(), size: bottomSize()},
-        left: {open: leftOpen(), size: leftSize()},
-        right: {open: rightOpen(), size: rightSize()},
-      })
-    })
-  })
+  createEffect(
+    () => ({
+      bottom: {open: bottomOpen(), size: bottomSize()},
+      left: {open: leftOpen(), size: leftSize()},
+      right: {open: rightOpen(), size: rightSize()},
+    }),
+    writePanelPreference,
+  )
 
   const startResize = (position: EditorPanelPosition, event: PointerEvent) => {
     if (event.button !== 0) {

@@ -32,12 +32,15 @@ export const EditorViewport = (props: EditorViewportProps) => {
   const [meshNotice, setMeshNotice] = createSignal<string | null>(null)
   const [meshEditing, setMeshEditing] = createSignal(false)
   const meshIssue = useViewportMeshIssue(props)
-  createEffect(() => {
-    if (props.editMode !== 'parameter' || meshIssue() !== null) {
-      setMeshEditing(false)
-      setMeshNotice(null)
-    }
-  })
+  createEffect(
+    () => props.editMode !== 'parameter' || meshIssue() !== null,
+    (disabled) => {
+      if (disabled) {
+        setMeshEditing(false)
+        setMeshNotice(null)
+      }
+    },
+  )
   const editingMesh = () => meshEditing() && props.editMode === 'parameter' && meshIssue() === null
   const editDocument = () => (editingMesh() ? props.sourceDocument : undefined) ?? props.document
   const displayDocument = createMemo(() =>

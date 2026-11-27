@@ -11,6 +11,7 @@ import {
   createAllMotionTimeline,
   createTimelineTestDocument,
   enterAllMotionView,
+  expectNoUnexpectedTimelineWarnings,
 } from './timeline/fixtures'
 
 beforeEach(() => {
@@ -19,7 +20,7 @@ beforeEach(() => {
 
 afterEach(() => {
   try {
-    expect(console.warn).not.toHaveBeenCalled()
+    expectNoUnexpectedTimelineWarnings()
   } finally {
     cleanup()
     vi.restoreAllMocks()

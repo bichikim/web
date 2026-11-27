@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render, within} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {DocumentHistoryPanel} from '../DocumentHistoryPanel'
 import type {ModelHistoryEntry as DocumentHistoryEntry} from '../../model'
@@ -27,16 +27,20 @@ test('should expose named history entries and navigate while keeping the selecte
   target.focus()
   fireEvent.click(target)
   expect(onSelect).toHaveBeenCalledWith(0)
-  setEntries((previous) =>
-    previous.map((entry) => ({...entry, state: entry.id === 0 ? 'current' : 'future'})),
+  flush(() =>
+    setEntries((previous) =>
+      previous.map((entry) => ({...entry, state: entry.id === 0 ? 'current' : 'future'})),
+    ),
   )
   expect(panel.getByRole('button', {current: 'step', name: '문서 열기'})).toBe(target)
   expect(target).toHaveFocus()
   expect(panel.getAllByText('다시 실행 가능')).toHaveLength(2)
-  setEntries((previous) => [
-    ...previous.map((entry) => ({...entry, state: 'past' as const})),
-    {id: 3, state: 'current', title: '레이어 이름 변경'},
-  ])
+  flush(() =>
+    setEntries((previous) => [
+      ...previous.map((entry) => ({...entry, state: 'past' as const})),
+      {id: 3, state: 'current', title: '레이어 이름 변경'},
+    ]),
+  )
   expect(timeline.getAllByRole('button')[0]).toHaveAccessibleName('레이어 이름 변경')
   expect(timeline.getAllByRole('button').at(-1)).toHaveAccessibleName('문서 열기')
 })

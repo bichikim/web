@@ -50,20 +50,20 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
       ]),
     )
   })
-  const handleValueChange = (values: PuppetParameterValues) => {
+  const expandTrackValues = (values: PuppetParameterValues) => {
     const bindingId = props.editor.activeBindingId()
     if (bindingId === null) {
       return
     }
-    const expanded = presentation().expandValues(
-      bindingId,
-      values,
-      props.editor.parameterValueMap(),
-    )
-    if (expanded !== undefined) {
-      props.editor.setParameterValues(expanded)
-    }
+    return presentation().expandValues(bindingId, values, props.editor.parameterValueMap())
   }
+  const applyTrackValues =
+    (apply: (values: PuppetParameterValues) => void) => (values: PuppetParameterValues) => {
+      const expanded = expandTrackValues(values)
+      if (expanded !== undefined) {
+        apply(expanded)
+      }
+    }
   const displayedValues = () =>
     presentation().projectValues(
       props.editor.activeBindingId() ?? '',
@@ -92,8 +92,8 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
       values={displayedValues()}
       onEditEnd={props.onEditEnd}
       onEditStart={props.onEditStart}
-      onKeyformAdd={props.editor.addKeyform}
-      onKeyformDelete={props.editor.deleteKeyform}
+      onKeyformAdd={applyTrackValues((values) => props.editor.addKeyform(values))}
+      onKeyformDelete={applyTrackValues((values) => props.editor.deleteKeyform(values))}
       onKeyformPlaneDelete={(bindingId, value) => {
         props.editor.selectBinding(bindingId)
         props.editor.deleteKeyformPlane(value)
@@ -119,7 +119,7 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
       onAllParametersVisibleChange={props.editor.setAllParametersVisible}
       onThreeDimensionalParameterAdd={props.editor.addThreeDimensionalParameter}
       onTwoDimensionalParameterAdd={props.editor.addTwoDimensionalParameter}
-      onValueChange={handleValueChange}
+      onValueChange={applyTrackValues((values) => props.editor.setParameterValues(values))}
     />
   )
 }

@@ -1,4 +1,4 @@
-import type {Component} from 'solid-js'
+import {type Component} from 'solid-js'
 import type {NodeProps} from '@dschz/solid-flow'
 import {EditorContextMenu} from '@winter-love/puppet/editor'
 import {useMappingGraph} from './context'

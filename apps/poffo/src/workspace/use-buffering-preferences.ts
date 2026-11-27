@@ -3,21 +3,23 @@ import {createSignal} from 'solid-js'
 const STORAGE_KEY = 'poffo:buffering:v1'
 /** Preference outside document history; borrows the supplied store or defaults to browser localStorage. */
 export const useBufferingPreferences = (storage?: Pick<Storage, 'getItem' | 'setItem'>) => {
-  const [enabled, setValue] = createSignal(true)
-  const [error, setError] = createSignal<string | null>(null)
+  let initialEnabled = true
+  let initialError: string | null = null
   try {
     const stored = (storage ?? globalThis.localStorage)?.getItem(STORAGE_KEY)
     if (stored !== null && stored !== undefined) {
       const value: unknown = JSON.parse(stored)
       if (typeof value === 'boolean') {
-        setValue(value)
+        initialEnabled = value
       }
     }
   } catch (cause) {
     if (!(cause instanceof SyntaxError)) {
-      setError('재생 버퍼 설정을 불러오지 못했습니다.')
+      initialError = '재생 버퍼 설정을 불러오지 못했습니다.'
     }
   }
+  const [enabled, setValue] = createSignal(initialEnabled)
+  const [error, setError] = createSignal<string | null>(initialError)
   const setEnabled = (value: boolean) => {
     setValue(value)
     try {

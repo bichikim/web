@@ -1,6 +1,6 @@
 import {preventInternalDismiss} from '../../design-system/prevent-internal-dismiss'
 import {Popover} from '@kobalte/core/popover'
-import {createUniqueId, For, Show} from 'solid-js'
+import {createSignal, createUniqueId, For, Show} from 'solid-js'
 import {
   EditorButton,
   EditorCheckbox,
@@ -39,6 +39,8 @@ const HANDLE_LABELS = ['핸들 1 시간', '핸들 1 값', '핸들 2 시간', '�
  */
 export const MotionSettings = (props: MotionSettingsProps) => {
   let surface: HTMLDivElement | undefined
+  const [open, setOpen] = createSignal(false)
+  let trigger: HTMLButtonElement | undefined
 
   const mount = useEditorPortalMount()
   const loopId = createUniqueId()
@@ -57,8 +59,14 @@ export const MotionSettings = (props: MotionSettingsProps) => {
   const bezier = () => getSelectedBezier(props.motion, props.selection, props.document)
 
   return (
-    <Popover placement="top-start">
-      <Popover.Trigger as={EditorButton} disabled={props.motion === undefined}>
+    <Popover open={open()} onOpenChange={setOpen} placement="top-start">
+      <Popover.Trigger
+        as={EditorButton}
+        disabled={props.motion === undefined}
+        ref={(element: HTMLButtonElement) => {
+          trigger = element
+        }}
+      >
         <span aria-hidden="true" class="puppet-icon puppet-icon-motion-settings" />
         <span>모션 설정</span>
       </Popover.Trigger>
@@ -66,6 +74,11 @@ export const MotionSettings = (props: MotionSettingsProps) => {
         <Popover.Content
           ref={(element) => {
             surface = element
+          }}
+          onEscapeKeyDown={(event) => {
+            event.preventDefault()
+            setOpen(false)
+            trigger?.focus()
           }}
           onInteractOutside={(event) => preventInternalDismiss(event, surface)}
           class="motion-settings-popover"

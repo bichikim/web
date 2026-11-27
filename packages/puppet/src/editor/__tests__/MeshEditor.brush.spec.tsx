@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument, getDocumentScene, type PuppetDocument} from '../../player'
 import {MeshEditor} from '../MeshEditor'
@@ -48,7 +48,7 @@ test.each([false, true])(
       ),
     )
     if (switchMotion) {
-      setMotionId('nod')
+      flush(() => setMotionId('nod'))
     }
     fireEvent(svg, pointer('pointerup', 0, 0))
     if (switchMotion) {
@@ -143,7 +143,7 @@ test('should discard smoothing when the selected keyform changes before release'
   ))
   const svg = prepareCanvas(view)
   fireEvent(svg, pointer('pointerdown', 576, 360))
-  setValues([0, 30])
+  flush(() => setValues([0, 30]))
   fireEvent(svg, pointer('pointerup', 0, 0))
   expect(save).not.toHaveBeenCalled()
 })
@@ -199,7 +199,7 @@ test.each(['pointercancel', 'lostpointercapture', 'blur'])(
     fireEvent(svg, pointer('pointerdown', 576, 360))
     expect(center.getAttribute('cx')).not.toBe(before)
     if (type === 'blur') {
-      globalThis.dispatchEvent(new Event('blur'))
+      fireEvent(globalThis.window, new Event('blur'))
     } else {
       fireEvent(svg, pointer(type, 0, 0))
     }
@@ -462,7 +462,7 @@ test('should discard an unfinished brush stroke when the document changes', () =
     new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 480, clientY: 360}),
   )
   fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 490, clientY: 360}))
-  setDocument({...initial})
+  flush(() => setDocument({...initial}))
   fireEvent.pointerUp(svg)
   expect(onDocumentChange).not.toHaveBeenCalled()
 })

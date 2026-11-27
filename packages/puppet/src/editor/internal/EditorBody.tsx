@@ -1,6 +1,7 @@
 import {EditorProperties} from './EditorProperties'
-import {createSignal, type JSX, onMount, Show, untrack} from 'solid-js'
-import {Portal} from 'solid-js/web'
+import {createSignal, onSettled, Show, untrack} from 'solid-js'
+import {type JSX, Portal} from '@solidjs/web'
+
 import type {PuppetEditorProps} from '../types'
 import {useEditorState} from './use-editor-state'
 import {SkinSessionContext} from './skin-session'
@@ -23,13 +24,13 @@ export const EditorBody = (props: EditorBodyProps) => {
   const [brushControlsMount, setBrushControlsMount] = createSignal<HTMLDivElement>()
   const [brushSettingsMount, setBrushSettingsMount] = createSignal<HTMLDivElement>()
   const [inspectorMount, setInspectorMount] = createSignal<HTMLDivElement>()
-  onMount(() => untrack(() => props.onControl?.(state.control)))
+  onSettled(() => untrack(() => props.onControl?.(state.control)))
   const renderHeader = () => props.header?.(state.control, {setBrushSettingsMount})
   const renderEditingControls = (controls: JSX.Element) => (
     <Show when={inspectorMount()}>{(mount) => <Portal mount={mount()}>{controls}</Portal>}</Show>
   )
   return (
-    <SkinSessionContext.Provider value={state.skinSession}>
+    <SkinSessionContext value={state.skinSession}>
       <EditorStyles />
       <EditorPanelLayout
         layout={state.layout}
@@ -138,6 +139,6 @@ export const EditorBody = (props: EditorBodyProps) => {
       />
       <EditorAutoMeshDialog autoMesh={state.autoMesh} />
       <EditorToast message={state.notice() ?? undefined} onDismiss={state.dismissNotice} />
-    </SkinSessionContext.Provider>
+    </SkinSessionContext>
   )
 }

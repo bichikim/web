@@ -1,6 +1,6 @@
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {vi} from 'vitest'
+import {expect, vi} from 'vitest'
 import {createDemoDocument, type PuppetDocument} from '../../../../player'
 import {EditorTimeline} from '../../EditorTimeline'
 
@@ -41,4 +41,14 @@ export const createAllMotionTimeline = () => {
   ))
 
   return {currentTime, document, motionId, onMotionSeek, view}
+}
+
+export const expectNoUnexpectedTimelineWarnings = () => {
+  // Solid 2 logs explicit untracked reads in the editor and its UI primitives during these flows.
+  const unexpected = vi
+    .mocked(console.warn)
+    .mock.calls.filter(
+      ([message]) => typeof message !== 'string' || !message.startsWith('[STRICT_READ_UNTRACKED]'),
+    )
+  expect(unexpected).toEqual([])
 }

@@ -22,16 +22,18 @@ export const LayerContainerIcon = (props: LayerContainerIconProps) => (
   >
     <span
       aria-hidden="true"
-      class="puppet-icon layer-container-icon puppet-layer-container-icon deformer"
-      classList={{
-        'puppet-icon-bone': props.bone && !props.rotation,
-        'puppet-icon-curve': props.curve,
-        'puppet-icon-mesh':
-          !props.curve && !props.bone && !props.pin && !props.rotation && !props.spatial,
-        'puppet-icon-pin': props.pin,
-        'puppet-icon-rotation-deformer': props.rotation,
-        'puppet-icon-spatial-deformer': props.spatial,
-      }}
+      class={[
+        'puppet-icon layer-container-icon puppet-layer-container-icon deformer',
+        {
+          'puppet-icon-bone': props.bone && !props.rotation,
+          'puppet-icon-curve': props.curve,
+          'puppet-icon-mesh':
+            !props.curve && !props.bone && !props.pin && !props.rotation && !props.spatial,
+          'puppet-icon-pin': props.pin,
+          'puppet-icon-rotation-deformer': props.rotation,
+          'puppet-icon-spatial-deformer': props.spatial,
+        },
+      ]}
       data-layer-icon="deformer"
     />
   </Show>

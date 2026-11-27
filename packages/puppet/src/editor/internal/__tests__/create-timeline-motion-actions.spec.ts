@@ -1,4 +1,4 @@
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 
 import {createDemoDocument} from '../../../player'
@@ -18,7 +18,7 @@ describe('createTimelineMotionActions', () => {
       setMotionTimes,
     })
 
-    actions.rename('blink-fast')
+    flush(() => actions.rename('blink-fast'))
 
     expect(motionTimes()).toEqual({'blink-fast': 0.75})
     expect(applyEdit).toHaveBeenCalledWith(
@@ -41,7 +41,7 @@ describe('createTimelineMotionActions', () => {
       setMotionTimes,
     })
 
-    actions.renameById('blink', 'blink-fast')
+    flush(() => actions.renameById('blink', 'blink-fast'))
 
     expect(motionTimes()).toEqual({'blink-fast': 0.75, nod: 0.25})
     expect(applyEdit).toHaveBeenCalledWith(

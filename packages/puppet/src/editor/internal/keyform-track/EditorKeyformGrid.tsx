@@ -150,7 +150,7 @@ export const EditorKeyformGrid = (props: EditorKeyformGridProps) => {
       : getParameterProgress(props.volume.parameter, props.volume.value) / VOLUME_PROJECTION.percent
   const slicePosition = () => getVolumeSlicePosition(depthProgress())
   return (
-    <div classList={{'parameter-volume-stage': props.volume !== undefined}}>
+    <div class={{'parameter-volume-stage': props.volume !== undefined}}>
       <Show when={props.volume}>
         {(volume) => <EditorKeyformVolumeSpace source={volume()} parameters={props.parameters} />}
       </Show>
@@ -158,11 +158,13 @@ export const EditorKeyformGrid = (props: EditorKeyformGridProps) => {
         ref={(element) => {
           gridElement = element
         }}
-        class="parameter-grid"
-        classList={{
-          'parameter-grid-with-scale': props.volume === undefined,
-          'parameter-volume-slice': props.volume !== undefined,
-        }}
+        class={[
+          'parameter-grid',
+          {
+            'parameter-grid-with-scale': props.volume === undefined,
+            'parameter-volume-slice': props.volume !== undefined,
+          },
+        ]}
         style={
           props.volume === undefined
             ? undefined

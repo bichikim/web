@@ -1,14 +1,5 @@
 import type {RuntimeView} from '../tracking/types'
-import {
-  type Accessor,
-  batch,
-  createEffect,
-  createMemo,
-  createSignal,
-  on,
-  onCleanup,
-  untrack,
-} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, untrack} from 'solid-js'
 import {
   attachViewNavigation,
   attachViewPan,
@@ -33,11 +24,9 @@ export const usePlaybackView = (props: UsePlaybackViewProps) => {
   const [panning, setPanning] = createSignal(false)
   const size = useElementSize(props.element)
   const navigate = (camera: ViewCamera) => {
-    batch(() => {
-      setFitted(false)
-      setCamera(camera)
-      props.onChange?.({camera, fitted: false})
-    })
+    setFitted(false)
+    setCamera(camera)
+    props.onChange?.({camera, fitted: false})
   }
   const fit = () => {
     const measured = size()
@@ -59,34 +48,39 @@ export const usePlaybackView = (props: UsePlaybackViewProps) => {
       y: (height - measured.height / zoom) / 2,
       zoom,
     }
-    batch(() => {
-      setFitted(true)
-      setCamera(next)
-      props.onChange?.({camera: next, fitted: true})
-    })
+    setFitted(true)
+    setCamera(next)
+    props.onChange?.({camera: next, fitted: true})
   }
   const saved = createMemo(() => props.saved?.())
-  createEffect(
-    on(saved, (view) => {
-      if (view !== undefined) {
-        batch(() => {
-          setCamera(view.camera)
-          setFitted(view.fitted)
-        })
-      }
-    }),
-  )
-  createEffect(() => {
-    size()
-    if (fitted()) {
-      untrack(fit)
+  createEffect(saved, (view) => {
+    if (view !== undefined) {
+      setCamera(view.camera)
+      setFitted(view.fitted)
     }
   })
-  createEffect(() => {
-    const element = props.element()
-    if (element !== null) {
-      onCleanup(attachViewNavigation({camera, element, onChange: navigate}))
-      onCleanup(attachViewPan({camera, element, onChange: navigate, onPanningChange: setPanning}))
+  createEffect(
+    () => ({fitted: fitted(), measured: size()}),
+    (view) => {
+      if (view.fitted) {
+        untrack(fit)
+      }
+    },
+  )
+  createEffect(props.element, (element) => {
+    if (element === null) {
+      return
+    }
+    const stopNavigation = attachViewNavigation({camera, element, onChange: navigate})
+    const stopPanning = attachViewPan({
+      camera,
+      element,
+      onChange: navigate,
+      onPanningChange: setPanning,
+    })
+    return () => {
+      stopPanning()
+      stopNavigation()
     }
   })
   return {camera, fit, navigate, panning}

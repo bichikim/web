@@ -1,4 +1,4 @@
-import {render} from 'solid-js/web'
+import {render} from '@solidjs/web'
 import {afterEach, describe, expect, test} from 'vitest'
 import {page} from 'vitest/browser'
 

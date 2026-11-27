@@ -1,4 +1,11 @@
-import {type Accessor, batch, createEffect, createSignal, on, onCleanup} from 'solid-js'
+import {
+  type Accessor,
+  createEffect,
+  createSignal,
+  createTrackedEffect,
+  flush,
+  onCleanup,
+} from 'solid-js'
 import type {PuppetDocument, PuppetPoint} from '../../player'
 import {getEditorPoint, getEditorViewBox} from './viewport'
 interface SkinPaintGestureOptions {
@@ -29,13 +36,11 @@ export const useSkinPaintGesture = (options: SkinPaintGestureOptions) => {
       options.onEnd?.()
     }
   }
-  createEffect(
-    on(options.context, () => {
-      stop()
-      setCursor(null)
-    }),
-  )
-  createEffect(() => {
+  createEffect(options.context, () => {
+    stop()
+    setCursor(null)
+  })
+  createTrackedEffect(() => {
     const document = options.document()
     if (paint !== undefined && expected !== document) {
       stop()
@@ -49,7 +54,7 @@ export const useSkinPaintGesture = (options: SkinPaintGestureOptions) => {
       viewBox: getEditorViewBox(options.document()),
     })
   const apply = (point: PuppetPoint) =>
-    batch(() => {
+    flush(() => {
       setCursor(point)
       paint?.(point)
       expected = options.document()

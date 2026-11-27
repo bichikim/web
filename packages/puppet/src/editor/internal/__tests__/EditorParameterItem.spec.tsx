@@ -68,12 +68,12 @@ test('should edit the independently selected name of a two-dimensional parameter
 test('should return to its origin when released before the delete threshold', () => {
   const {item, onDelete, view} = renderItem()
 
-  item.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 250}))
+  fireEvent(item, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+  fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 250}))
   expect(view.getByText('삭제')).toBeVisible()
   expect(onDelete).not.toHaveBeenCalled()
 
-  globalThis.dispatchEvent(new MouseEvent('pointerup'))
+  fireEvent(globalThis.window, new MouseEvent('pointerup'))
   expect(view.container.querySelector('.parameter-swipe-row')?.getAttribute('style')).toContain(
     '--parameter-swipe-offset: 0px',
   )
@@ -83,21 +83,21 @@ test('should return to its origin when released before the delete threshold', ()
 test('should delete only after it is dragged beyond the threshold and released', () => {
   const {item, onDelete, view} = renderItem()
 
-  item.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
+  fireEvent(item, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+  fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 280}))
   expect(view.getByText('놓아 삭제')).toBeVisible()
   expect(onDelete).not.toHaveBeenCalled()
 
-  globalThis.dispatchEvent(new MouseEvent('pointerup'))
+  fireEvent(globalThis.window, new MouseEvent('pointerup'))
   expect(onDelete).toHaveBeenCalledOnce()
 })
 
 test('should ignore a leftward swipe for deletion', () => {
   const {item, onDelete, view} = renderItem()
 
-  item.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 120}))
-  globalThis.dispatchEvent(new MouseEvent('pointerup'))
+  fireEvent(item, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+  fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 120}))
+  fireEvent(globalThis.window, new MouseEvent('pointerup'))
 
   expect(onDelete).not.toHaveBeenCalled()
   expect(view.container.querySelector('.parameter-swipe-row')?.getAttribute('style')).toContain(
@@ -113,9 +113,9 @@ test('should ignore movement from a different pointer during a swipe', () => {
     return event
   }
 
-  item.dispatchEvent(pointerEvent('pointerdown', 200, 1))
-  globalThis.dispatchEvent(pointerEvent('pointermove', 280, 2))
-  globalThis.dispatchEvent(pointerEvent('pointerup', 280, 1))
+  fireEvent(item, pointerEvent('pointerdown', 200, 1))
+  fireEvent(globalThis.window, pointerEvent('pointermove', 280, 2))
+  fireEvent(globalThis.window, pointerEvent('pointerup', 280, 1))
 
   expect(onDelete).not.toHaveBeenCalled()
 })
@@ -128,10 +128,10 @@ test('should keep the original pointer in control when another pointer starts on
     return event
   }
 
-  item.dispatchEvent(pointerEvent('pointerdown', 200, 1))
-  item.dispatchEvent(pointerEvent('pointerdown', 200, 2))
-  globalThis.dispatchEvent(pointerEvent('pointermove', 280, 1))
-  globalThis.dispatchEvent(pointerEvent('pointerup', 280, 1))
+  fireEvent(item, pointerEvent('pointerdown', 200, 1))
+  fireEvent(item, pointerEvent('pointerdown', 200, 2))
+  fireEvent(globalThis.window, pointerEvent('pointermove', 280, 1))
+  fireEvent(globalThis.window, pointerEvent('pointerup', 280, 1))
 
   expect(onDelete).toHaveBeenCalledOnce()
 })
@@ -139,10 +139,10 @@ test('should keep the original pointer in control when another pointer starts on
 test('should cancel an armed swipe when the window loses focus', () => {
   const {item, onDelete, view} = renderItem()
 
-  item.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
-  globalThis.dispatchEvent(new Event('blur'))
-  globalThis.dispatchEvent(new MouseEvent('pointerup'))
+  fireEvent(item, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+  fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 280}))
+  fireEvent(globalThis.window, new Event('blur'))
+  fireEvent(globalThis.window, new MouseEvent('pointerup'))
 
   expect(onDelete).not.toHaveBeenCalled()
   expect(view.container.querySelector('.parameter-swipe-row')?.getAttribute('style')).toContain(
@@ -193,9 +193,9 @@ test('should suppress only the first footer click after a cancelled swipe', () =
     />
   ))
   const footer = view.getByRole('button', {name: '영향도'})
-  footer.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 220}))
-  globalThis.dispatchEvent(new MouseEvent('pointerup'))
+  fireEvent(footer, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+  fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 220}))
+  fireEvent(globalThis.window, new MouseEvent('pointerup'))
   fireEvent.click(footer)
   expect(toggle).not.toHaveBeenCalled()
   fireEvent.click(footer, {detail: 0})
@@ -217,10 +217,10 @@ test.each(['surface', 'group', 'details'])(
         ? view.container.querySelector('.parameter-item-surface')!
         : view.getByText(area === 'group' ? 'Head' : 'Parameter value')
 
-    target.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
+    fireEvent(target, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 280}))
     expect(view.getByText('놓아 삭제')).toBeVisible()
-    globalThis.dispatchEvent(new MouseEvent('pointerup'))
+    fireEvent(globalThis.window, new MouseEvent('pointerup'))
     expect(onDelete).toHaveBeenCalledOnce()
   },
 )
@@ -240,9 +240,9 @@ test.each(['input', 'decrease', 'increase'])(
         ? view.getByRole('spinbutton', {name: 'Angle X 값'})
         : view.getByRole('button', {name: `Angle X 값 ${control === 'decrease' ? '감소' : '증가'}`})
 
-    target.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
-    globalThis.dispatchEvent(new MouseEvent('pointerup'))
+    fireEvent(target, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 280}))
+    fireEvent(globalThis.window, new MouseEvent('pointerup'))
     expect(onDelete).not.toHaveBeenCalled()
     expect(view.queryByText('놓아 삭제')).not.toBeInTheDocument()
     if (control === 'input') {
@@ -259,9 +259,9 @@ test('should exclude the name editing input from swipe deletion', () => {
   fireEvent.dblClick(item)
   const input = view.getByRole('textbox', {name: 'Parameter 이름'})
 
-  input.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
-  globalThis.dispatchEvent(new MouseEvent('pointerup'))
+  fireEvent(input, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+  fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 280}))
+  fireEvent(globalThis.window, new MouseEvent('pointerup'))
   expect(onDelete).not.toHaveBeenCalled()
 })
 
@@ -278,9 +278,9 @@ test('should exclude a discrete parameter value selector from swipe deletion', (
   ))
   const value = view.getByRole('button', {name: '눈동자 무늬 값 기본'})
 
-  value.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
-  globalThis.dispatchEvent(new MouseEvent('pointerup'))
+  fireEvent(value, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+  fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 280}))
+  fireEvent(globalThis.window, new MouseEvent('pointerup'))
 
   expect(onDelete).not.toHaveBeenCalled()
   expect(view.queryByText('놓아 삭제')).not.toBeInTheDocument()
@@ -326,9 +326,9 @@ test('should keep numeric header controls independent of card selection', () => 
 test('should suppress header selection after a swipe and retain keyboard deletion', () => {
   const {view, onSelect, onDelete} = renderItem()
   const header = view.getByRole('button', {name: 'Angle X 파라미터 선택'})
-  header.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
-  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 220}))
-  globalThis.dispatchEvent(new MouseEvent('pointerup'))
+  fireEvent(header, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+  fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 220}))
+  fireEvent(globalThis.window, new MouseEvent('pointerup'))
   fireEvent.click(header)
   expect(onSelect).not.toHaveBeenCalled()
   fireEvent.click(header)

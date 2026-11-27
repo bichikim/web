@@ -40,22 +40,25 @@ const readPreferences = (value: unknown): RenderingPreferences | undefined => {
 
 /** Browser-level display settings; never part of model history or recovery snapshots. */
 export const useRenderingPreferences = () => {
-  const [preferences, setPreferences] = createSignal(DEFAULT_PREFERENCES)
-  const [error, setError] = createSignal<string | null>(null)
+  let current = DEFAULT_PREFERENCES
+  let initialError: string | null = null
   try {
     const stored = globalThis.localStorage?.getItem(STORAGE_KEY)
     if (stored !== null && stored !== undefined) {
       const saved = readPreferences(JSON.parse(stored))
       if (saved !== undefined) {
-        setPreferences(saved)
+        current = saved
       }
     }
   } catch (cause) {
     if (!(cause instanceof SyntaxError)) {
-      setError('렌더링 설정을 불러오지 못했습니다.')
+      initialError = '렌더링 설정을 불러오지 못했습니다.'
     }
   }
+  const [preferences, setPreferences] = createSignal(current)
+  const [error, setError] = createSignal<string | null>(initialError)
   const update = (next: RenderingPreferences) => {
+    current = next
     setPreferences(next)
     try {
       globalThis.localStorage?.setItem(STORAGE_KEY, JSON.stringify(next))
@@ -68,7 +71,7 @@ export const useRenderingPreferences = () => {
     error,
     preferences,
     reportError: (message: string) => setError(message),
-    setAntialiasing: (antialiasing: PlayerAntialiasing) => update({...preferences(), antialiasing}),
-    setRenderer: (renderer: PlayerRendererPreference) => update({...preferences(), renderer}),
+    setAntialiasing: (antialiasing: PlayerAntialiasing) => update({...current, antialiasing}),
+    setRenderer: (renderer: PlayerRendererPreference) => update({...current, renderer}),
   }
 }

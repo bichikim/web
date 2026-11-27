@@ -1,9 +1,10 @@
 import {Dialog} from '@kobalte/core/dialog'
-import {createUniqueId, Show} from 'solid-js'
+import {createSignal, createUniqueId, Show} from 'solid-js'
 import {useKeyformTools} from './use-keyform-tools'
 import {
   EditorButton,
   EditorCheckbox,
+  EditorPortalProvider,
   EditorSegmentedField,
   useEditorPortalMount,
 } from '../../design-system'
@@ -27,6 +28,7 @@ export interface EditorKeyformToolsProps {
 
 export const EditorKeyformTools = (props: EditorKeyformToolsProps) => {
   const mount = useEditorPortalMount()
+  const [surface, setSurface] = createSignal<HTMLDivElement>()
   const overwriteId = createUniqueId()
   const {
     open,
@@ -68,87 +70,93 @@ export const EditorKeyformTools = (props: EditorKeyformToolsProps) => {
       </Dialog.Trigger>
       <Dialog.Portal mount={mount}>
         <Dialog.Overlay class="auto-mesh-dialog-overlay" />
-        <Dialog.Content class="auto-mesh-dialog-content">
-          <form onSubmit={handleSubmit}>
-            <header>
-              <div>
-                <Dialog.Title>키폼 도구</Dialog.Title>
-                <Dialog.Description>
-                  현재 파라미터에 연결된 {targetCount()}개 레이어에 적용합니다.
-                </Dialog.Description>
-              </div>
-              <Dialog.CloseButton aria-label="키폼 도구 닫기">
-                <span class="puppet-icon puppet-icon-x" aria-hidden="true" />
-              </Dialog.CloseButton>
-            </header>
-            <EditorSegmentedField
-              label="키폼 작업"
-              value={operation()}
-              onChange={setOperation}
-              options={[
-                {disabled: !hasSource(), label: '동작 반전', value: 'mirror'},
-                {
-                  disabled: (props.binding?.parameterIds.length ?? 0) < 2,
-                  label: '네 모서리 생성',
-                  value: 'corners',
-                },
-              ]}
-            />
-            <div class="auto-mesh-settings">
-              <Show
-                when={operation() === 'mirror'}
-                fallback={
-                  <KeyformCornerSettings
-                    planes={planes()}
-                    reference={reference()}
-                    volume={props.binding?.parameterIds.length === MAX_PARAMETER_DIMENSIONS}
-                    onPlanesChange={setPlanes}
-                    onReferenceChange={setReference}
+        <Dialog.Content class="auto-mesh-dialog-content" ref={setSurface}>
+          <Show when={surface()} keyed>
+            {(element) => (
+              <EditorPortalProvider mount={element}>
+                <form onSubmit={handleSubmit}>
+                  <header>
+                    <div>
+                      <Dialog.Title>키폼 도구</Dialog.Title>
+                      <Dialog.Description>
+                        현재 파라미터에 연결된 {targetCount()}개 레이어에 적용합니다.
+                      </Dialog.Description>
+                    </div>
+                    <Dialog.CloseButton aria-label="키폼 도구 닫기">
+                      <span class="puppet-icon puppet-icon-x" aria-hidden="true" />
+                    </Dialog.CloseButton>
+                  </header>
+                  <EditorSegmentedField
+                    label="키폼 작업"
+                    value={operation()}
+                    onChange={setOperation}
+                    options={[
+                      {disabled: !hasSource(), label: '동작 반전', value: 'mirror'},
+                      {
+                        disabled: (props.binding?.parameterIds.length ?? 0) < 2,
+                        label: '네 모서리 생성',
+                        value: 'corners',
+                      },
+                    ]}
                   />
-                }
-              >
-                <KeyformMirrorSettings
-                  axis={axis()}
-                  center={center()}
-                  centerReference={centerReference()}
-                  centers={props.centers}
-                  parameterId={parameterId()}
-                  parameters={parameters()}
-                  onAxisChange={handleAxisChange}
-                  onCenterChange={setCenter}
-                  onCenterReferenceChange={selectCenterReference}
-                  onParameterChange={setParameterId}
-                />
-              </Show>
-              <div class="flex items-center justify-between gap-editor-field">
-                <label for={overwriteId}>기존 키폼 덮어쓰기</label>
-                <EditorCheckbox
-                  inputId={overwriteId}
-                  label="기존 키폼 덮어쓰기"
-                  checked={overwrite()}
-                  onChange={setOverwrite}
-                />
-              </div>
-            </div>
-            <p class="auto-mesh-warning">
-              {operation() === 'mirror'
-                ? '기본값 반대편에 저장합니다. 워프·회전 디포머는 각 디포머의 중심을 기준으로 반전합니다.'
-                : '기준과 상하좌우 끝값의 키폼이 필요합니다. 기존 모서리는 덮어쓰기를 선택할 때만 바뀝니다.'}
-            </p>
-            <Show when={error()}>
-              {(message) => (
-                <p class="auto-mesh-error" role="alert">
-                  {message()}
-                </p>
-              )}
-            </Show>
-            <footer>
-              <Dialog.CloseButton class="secondary">취소</Dialog.CloseButton>
-              <EditorButton type="submit" disabled={!canApply()}>
-                {operation() === 'mirror' ? '동작 반전 적용' : '네 모서리 생성'}
-              </EditorButton>
-            </footer>
-          </form>
+                  <div class="auto-mesh-settings">
+                    <Show
+                      when={operation() === 'mirror'}
+                      fallback={
+                        <KeyformCornerSettings
+                          planes={planes()}
+                          reference={reference()}
+                          volume={props.binding?.parameterIds.length === MAX_PARAMETER_DIMENSIONS}
+                          onPlanesChange={setPlanes}
+                          onReferenceChange={setReference}
+                        />
+                      }
+                    >
+                      <KeyformMirrorSettings
+                        axis={axis()}
+                        center={center()}
+                        centerReference={centerReference()}
+                        centers={props.centers}
+                        parameterId={parameterId()}
+                        parameters={parameters()}
+                        onAxisChange={handleAxisChange}
+                        onCenterChange={setCenter}
+                        onCenterReferenceChange={selectCenterReference}
+                        onParameterChange={setParameterId}
+                      />
+                    </Show>
+                    <div class="flex items-center justify-between gap-editor-field">
+                      <label for={overwriteId}>기존 키폼 덮어쓰기</label>
+                      <EditorCheckbox
+                        inputId={overwriteId}
+                        label="기존 키폼 덮어쓰기"
+                        checked={overwrite()}
+                        onChange={setOverwrite}
+                      />
+                    </div>
+                  </div>
+                  <p class="auto-mesh-warning">
+                    {operation() === 'mirror'
+                      ? '기본값 반대편에 저장합니다. 워프·회전 디포머는 각 디포머의 중심을 기준으로 반전합니다.'
+                      : '기준과 상하좌우 끝값의 키폼이 필요합니다. 기존 모서리는 덮어쓰기를 선택할 때만 바뀝니다.'}
+                  </p>
+                  <Show when={error()}>
+                    {(message) => (
+                      <p class="auto-mesh-error" role="alert">
+                        {message()}
+                      </p>
+                    )}
+                  </Show>
+                  <footer>
+                    <Dialog.CloseButton class="secondary">취소</Dialog.CloseButton>
+                    <EditorButton type="submit" disabled={!canApply()}>
+                      {operation() === 'mirror' ? '동작 반전 적용' : '네 모서리 생성'}
+                    </EditorButton>
+                  </footer>
+                </form>
+              </EditorPortalProvider>
+            )}
+          </Show>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog>

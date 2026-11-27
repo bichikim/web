@@ -3,7 +3,7 @@
 import {createKeyedParameter3D} from './parameter-keyforms/fixtures'
 
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 
 import {isThreeDimensionalParameterBinding, type PuppetParameterValues} from '../../../deformation'
@@ -61,7 +61,7 @@ test('should select XY keys without changing the current Z', () => {
 
 test('should prevent adding keyforms from the Z track', () => {
   const {view, setValues, handlers} = renderVolume()
-  setValues([12, 7, 10])
+  flush(() => setValues([12, 7, 10]))
   const track = view.getByLabelText('Parameter 1 Z 평면 트랙')
   fireEvent.dblClick(track)
   fireEvent.contextMenu(track)
@@ -84,21 +84,21 @@ test('should retain movement and deletion of occupied Z planes', () => {
 
 test('should show no selectable XY keys between existing Z planes', () => {
   const {view, setValues, handlers} = renderVolume()
-  setValues([0, 0, 10])
+  flush(() => setValues([0, 0, 10]))
   expect(view.queryAllByRole('button', {name: /^키폼 선택: /})).toHaveLength(0)
   expect(view.queryAllByRole('button', {name: /^키폼 추가 위치: /})).toHaveLength(0)
   expect(handlers.onKeyformSelect).not.toHaveBeenCalled()
 })
 test('should preserve XY when selecting another Z plane', () => {
   const {view, setValues, handlers} = renderVolume()
-  setValues([12, 7, 0])
+  flush(() => setValues([12, 7, 0]))
   fireEvent.click(view.getByRole('button', {name: 'Parameter 1 Z -30 평면'}))
   expect(handlers.onValueChange).toHaveBeenLastCalledWith([12, 7, -30])
 })
 
 test('should add a missing XY point at the exact current Z only', () => {
   const {view, setValues, handlers} = renderVolume()
-  setValues([0, 0, 10])
+  flush(() => setValues([0, 0, 10]))
   const track = view.getByLabelText('Parameter 1 X와 Parameter 1 Y 2차원 키폼 grid')
   // 격자는 별도 역할이 없으므로 의미 있는 트랙을 찾은 뒤 직접 조작 면을 지정한다.
   const grid = track.querySelector('.parameter-grid')!
@@ -117,19 +117,20 @@ test.each([0, 27])('should retain Z reference numbers with %i keyforms', (count)
   expect(track.getAllByText('30')).toHaveLength(1)
 })
 
-test('should preserve current XY after moving a sparse Z plane', () => {
+test('should preserve current XY after moving a sparse Z plane', async () => {
   const {view, setValues, handlers} = renderVolume(1)
   handlers.onKeyformMove.mockImplementation((_bindingId, _from, to) => setValues(to))
-  setValues([12, 7, -30])
+  flush(() => setValues([12, 7, -30]))
   fireEvent.keyDown(view.getByRole('button', {name: 'Parameter 1 Z -30 평면'}), {
     key: 'ArrowRight',
   })
+  await Promise.resolve()
   expect(handlers.onValueChange).toHaveBeenLastCalledWith([12, 7, -29.5])
 })
 
 test('should retain current values when a Z-plane move is rejected', () => {
   const {view, setValues, handlers} = renderVolume()
-  setValues([12, 7, -30])
+  flush(() => setValues([12, 7, -30]))
   fireEvent.keyDown(view.getByRole('button', {name: 'Parameter 1 Z -30 평면'}), {key: 'End'})
   expect(handlers.onValueChange).toHaveBeenLastCalledWith([12, 7, -30])
 })
@@ -147,7 +148,7 @@ test.each([
 
 test('should ignore context requests on the muted volume background', () => {
   const {view, setValues, handlers} = renderVolume()
-  setValues([12, 7, 10])
+  flush(() => setValues([12, 7, 10]))
   const track = view.getByLabelText('Parameter 1 X와 Parameter 1 Y 2차원 키폼 grid')
   // 배경에는 별도 역할이 없으므로 의미 있는 트랙 안의 장식 영역을 지정한다.
   const background = track.querySelector('.parameter-volume-stage')!

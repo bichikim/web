@@ -1,5 +1,6 @@
 import {ToggleButton} from '@kobalte/core/toggle-button'
-import {createSignal, Index, type JSX, Show} from 'solid-js'
+import {createSignal, For, Show} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import {EditorParameterNameField} from './EditorParameterNameField'
 
 const DOUBLE_CLICK_INTERVAL = 400
@@ -113,7 +114,7 @@ export const EditorParameterNames = (props: EditorParameterNamesProps) => {
           </div>
         </Show>
         <div class="parameter-name-values">
-          <Index each={rows()}>
+          <For keyed={false} each={rows()}>
             {(row) => (
               <div class="parameter-name-row">
                 <Show
@@ -148,7 +149,7 @@ export const EditorParameterNames = (props: EditorParameterNamesProps) => {
                 </Show>
               </div>
             )}
-          </Index>
+          </For>
         </div>
         <span aria-hidden="true" class="puppet-icon puppet-icon-arrow-left parameter-swipe-hint" />
       </div>

@@ -1,4 +1,4 @@
-import {createEffect, createMemo, on, onCleanup} from 'solid-js'
+import {createEffect, createMemo, onCleanup} from 'solid-js'
 import type {RuntimeProfile} from '../../tracking/types'
 import type {RuntimeControls} from '../use-runtime-controls'
 import {parseStudioFile} from './parse-studio-file'
@@ -16,16 +16,14 @@ export const useStudioImport = (options: UseStudioImportOptions) => {
   let active: symbol | undefined
   const signature = createMemo(() => options.controls.profile()?.signature)
   createEffect(
-    on(
-      signature,
-      () => {
-        if (active !== undefined) {
-          active = undefined
-          options.reportError('모델이 바뀌었습니다. 스튜디오 파일을 다시 선택해 주세요.')
-        }
-      },
-      {defer: true},
-    ),
+    signature,
+    () => {
+      if (active !== undefined) {
+        active = undefined
+        options.reportError('모델이 바뀌었습니다. 스튜디오 파일을 다시 선택해 주세요.')
+      }
+    },
+    {defer: true},
   )
   onCleanup(() => {
     disposed = true

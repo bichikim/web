@@ -91,7 +91,7 @@ export const MappingEdge = (props: EdgeProps) => {
         <circle
           class="puppet-edge-handle nopan nodrag"
           role="button"
-          tabIndex={0}
+          tabindex={0}
           aria-label={input() ? '입력 연결 끝 이동' : '출력 연결 끝 이동'}
           cx={input() ? props.sourceX + HANDLE_OFFSET : props.targetX - HANDLE_OFFSET}
           cy={input() ? props.sourceY : props.targetY}

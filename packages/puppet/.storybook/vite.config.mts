@@ -1,3 +1,4 @@
+import solid from '@solidjs/vite-plugin'
 import {defineConfig} from 'vite'
 import UnoCSS from 'unocss/vite'
 import unoConfig from '../uno.config'
@@ -6,6 +7,7 @@ import {spacingTheme} from '../uno/spacing'
 
 export default defineConfig({
   plugins: [
+    solid(),
     UnoCSS({
       ...unoConfig,
       configFile: false,

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, renderHook, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {createElementModel} from '../../editor-element/create-element-model'
 import {createDemoDocument} from '../../player'
 import {PuppetEditor} from '../PuppetEditor'
@@ -42,7 +42,7 @@ test('should dispose owned resources while retaining the host document and histo
     requestId: 'edit',
     type: 'edit',
   })
-  control?.lifecycle.dispose()
+  flush(() => control?.lifecycle.dispose())
   expect(view.queryByRole('main')).toBeNull()
   expect(player.destroy).toHaveBeenCalledOnce()
   expect(model.read().undoCount).toBe(1)
@@ -99,10 +99,10 @@ test('should keep input active until a blocked deactivation can finish the trans
   await waitFor(() => expect(control?.getState().renderer).toBe('ready'))
   const origin = {ownerId: 'host', requestId: 'gesture', transactionId: 'gesture'}
   model.request({...origin, type: 'begin'})
-  activation[1](false)
+  flush(() => activation[1](false))
   expect(control?.getState().lifecycle).toBe('active')
   expect(view.getByRole('main')).toHaveProperty('inert', false)
-  model.request({...origin, type: 'commit'})
+  flush(() => model.request({...origin, type: 'commit'}))
   expect(control?.getState().lifecycle).toBe('inactive')
   expect(view.getByRole('main', {hidden: true})).toHaveProperty('inert', true)
 })

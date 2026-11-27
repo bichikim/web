@@ -1,4 +1,4 @@
-import {createEffect, createSignal, For, onCleanup, Show} from 'solid-js'
+import {createEffect, createSignal, For, Show} from 'solid-js'
 import {getRulerTicks} from './ruler'
 
 interface ViewRulerProps {
@@ -15,22 +15,25 @@ export const ViewRuler = (props: ViewRulerProps) => {
   const LABEL_OFFSET = 3
   const [host, setHost] = createSignal<SVGSVGElement>()
   const [length, setLength] = createSignal(0)
-  createEffect(() => {
-    const element = host()
-    if (element === undefined || typeof ResizeObserver === 'undefined') {
-      return
-    }
-    const update = () => setLength(props.vertical ? element.clientHeight : element.clientWidth)
-    update()
-    const observer = new ResizeObserver(update)
-    observer.observe(element)
-    onCleanup(() => observer.disconnect())
-  })
+  createEffect(
+    () => ({element: host(), vertical: props.vertical}),
+    ({element, vertical}) => {
+      if (element === undefined || typeof ResizeObserver === 'undefined') {
+        return
+      }
+      const update = () => setLength(vertical ? element.clientHeight : element.clientWidth)
+      update()
+      const observer = new ResizeObserver(update)
+      observer.observe(element)
+
+      return () => observer.disconnect()
+    },
+  )
   return (
     <svg
       ref={setHost}
       class="view-ruler"
-      data-vertical={props.vertical === true}
+      data-vertical={String(props.vertical === true)}
       role="img"
       aria-label={props.vertical ? '세로 좌표 자' : '가로 좌표 자'}
     >

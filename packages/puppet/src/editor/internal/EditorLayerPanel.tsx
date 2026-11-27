@@ -4,7 +4,7 @@ import {getContainerIds} from './scene-tree'
 import {KeyedFor} from './KeyedFor'
 import {EditorButton, EditorTextInput} from '../../design-system'
 import {TextField} from '@kobalte/core/text-field'
-import {createEffect, createMemo, createSignal, on, Show, untrack} from 'solid-js'
+import {createEffect, createMemo, createSignal, Show, untrack} from 'solid-js'
 import {getFilteredLayerIds} from './get-filtered-layer-ids'
 import {xor} from 'es-toolkit/array'
 import {getDocumentScene, type PuppetDocument, type PuppetSceneNode} from '../../player'
@@ -70,7 +70,9 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
   const filteredExpandedIds = createMemo(
     () => new Set([...getContainerIds(roots())].filter((id) => !filteredCollapsedIds().has(id))),
   )
-  createEffect(on(filter, () => setFilteredCollapsedIds(new Set<string>())))
+  createEffect(filter, () => {
+    setFilteredCollapsedIds(new Set<string>())
+  })
   const initialGroupIds = untrack(() => getContainerIds(getDocumentScene(props.document).roots))
   const [expandedGroupIds, setExpandedGroupIds] = createSignal<ReadonlySet<string>>(initialGroupIds)
   const [draggedNodeId, setDraggedNodeId] = createSignal<string | null>(null)
@@ -174,8 +176,7 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
 
   return (
     <aside
-      class="panel layers-panel"
-      classList={{'mask-picking': props.maskPickSourcePartId !== undefined}}
+      class={['panel layers-panel', {'mask-picking': props.maskPickSourcePartId !== undefined}]}
       aria-label="Layers"
       onClick={(event) => {
         if (
@@ -251,8 +252,7 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
             fallback={<p class="panel-note">PNG를 불러오세요.</p>}
           >
             <ul
-              class="layer-tree"
-              classList={{'root-drop-active': dropTarget()?.nodeId === null}}
+              class={['layer-tree', {'root-drop-active': dropTarget()?.nodeId === null}]}
               role="tree"
               aria-label="모델 레이어"
               onDragOver={(event) => {

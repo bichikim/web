@@ -1,4 +1,4 @@
-import {createSignal, lazy, Show, Suspense, untrack} from 'solid-js'
+import {createSignal, lazy, Loading, Show, untrack} from 'solid-js'
 import {EditorToast} from '@winter-love/puppet/editor'
 import type {EditorAppProps} from './EditorApp'
 import {useWorkspaceLocation} from './use-workspace-location'
@@ -61,9 +61,9 @@ export const ModelWorkspace = (props: ModelWorkspaceProps) => {
         onDismiss={() => setNavigationError(null)}
       />
       <Show when={converter()}>
-        <Suspense>
+        <Loading>
           <ConverterPage />
-        </Suspense>
+        </Loading>
       </Show>
     </>
   )

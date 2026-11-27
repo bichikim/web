@@ -1,4 +1,4 @@
-import type {Accessor, Setter} from 'solid-js'
+import {type Accessor, type Setter} from 'solid-js'
 import type {PuppetParameterValueMap, PuppetParameterValues} from '../../../deformation'
 import type {
   PuppetDocument,
@@ -37,12 +37,12 @@ export interface ParameterEditorResult {
   readonly activeKeyformValues: Accessor<PuppetParameterValues | null>
   readonly activeTargetNodeIds: Accessor<ReadonlyArray<string>>
   readonly allParametersVisible: Accessor<boolean>
-  readonly addKeyform: () => void
+  readonly addKeyform: (values?: PuppetParameterValues) => void
   readonly addParameter: () => void
   readonly addThreeDimensionalParameter: () => void
   readonly addTwoDimensionalParameter: () => void
   readonly connectSelection: () => void
-  readonly deleteKeyform: () => void
+  readonly deleteKeyform: (values?: PuppetParameterValues | null) => void
   /** Deletes the active 3D binding's plane at third value `value`. */
   readonly deleteKeyformPlane: (value: number) => void
   readonly deleteParameter: (bindingId: string) => void

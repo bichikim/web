@@ -1,4 +1,4 @@
-import {children, createEffect, createSignal, mergeProps, onCleanup} from 'solid-js'
+import {children, createSignal, createTrackedEffect, merge} from 'solid-js'
 import type {HeaderProps} from './types'
 import {useWorkspace} from './context'
 import {HeaderSurface} from './HeaderSurface'
@@ -9,7 +9,7 @@ export const BaseHeader = (props: HeaderProps) => {
   const tools = children(() => props.children)
   const navigation = children(() => props.navigation)
   const extension = children(() => props.extension)
-  const configuration = mergeProps(props, {
+  const configuration = merge(props, {
     get children() {
       return tools()
     },
@@ -24,15 +24,13 @@ export const BaseHeader = (props: HeaderProps) => {
     },
   })
   const [mount, setMount] = createSignal<HTMLDivElement>()
-  createEffect(() => {
+  createTrackedEffect(() => {
     const element = mount()
     if (element !== undefined && workspace !== undefined) {
-      onCleanup(
-        workspace.bindHeader({
-          mount: element,
-          props: configuration,
-        }),
-      )
+      return workspace.bindHeader({
+        mount: element,
+        props: configuration,
+      })
     }
   })
   return (

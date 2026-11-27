@@ -1,10 +1,10 @@
-import {ErrorBoundary} from 'solid-js'
+import {Errored} from 'solid-js'
 import {EditorButton} from '@winter-love/puppet/editor'
 import type {EditorAppProps} from './EditorApp'
 import {WorkspaceLoader} from './WorkspaceLoader'
 
 export const WorkspaceApp = (props: EditorAppProps) => (
-  <ErrorBoundary
+  <Errored
     fallback={(_error, reset) => (
       <section class="document-load-error" role="alert">
         <p>문서를 불러오지 못했습니다.</p>
@@ -13,5 +13,5 @@ export const WorkspaceApp = (props: EditorAppProps) => (
     )}
   >
     <WorkspaceLoader {...props} />
-  </ErrorBoundary>
+  </Errored>
 )

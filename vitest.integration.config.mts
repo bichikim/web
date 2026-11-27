@@ -1,4 +1,5 @@
 import {configDefaults, mergeConfig} from 'vitest/config'
+import {createPoffoTestProject, poffoTestSources} from './apps/poffo/vitest.config'
 import baseConfig from './vitest.base.config.mts'
 
 const visualRegressionProjects =
@@ -16,6 +17,7 @@ export default mergeConfig(baseConfig, {
             ...configDefaults.exclude,
             '**/.cache/**',
             '**/visual/**',
+            ...poffoTestSources.map((directory) => `${directory}/**`),
             'apps/wallpaper-web/src/**/*.integration.tsx',
           ],
           fileParallelism: false,
@@ -25,6 +27,7 @@ export default mergeConfig(baseConfig, {
           testTimeout: 20_000,
         },
       },
+      createPoffoTestProject('integration'),
       './vitest.storybook.config.mts',
       './apps/coong/vitest.storybook.config.mts',
       './apps/pomo/vitest.storybook.config.mts',

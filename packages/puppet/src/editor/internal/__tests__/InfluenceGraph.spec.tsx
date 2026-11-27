@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {expect, test} from 'vitest'
 import {InfluenceGraph} from '../InfluenceGraph'
 
@@ -24,9 +24,9 @@ test('should show the sampled input and follow input updates without normalizing
   const graph = screen.getByRole('img', {name: 'Control 영향도 곡선'})
   expect(graph.querySelector('circle')).toHaveAttribute('cx', '150')
   expect(graph.querySelector('circle')).toHaveAttribute('cy', '60')
-  setValue(100)
+  flush(() => setValue(100))
   expect(screen.getByText('현재 입력 10 → 적용량 0%')).toBeVisible()
-  setValue(Number.NaN)
+  flush(() => setValue(Number.NaN))
   expect(screen.getByText('현재 입력 0 → 적용량 80%')).toBeVisible()
 })
 test('should extend a custom curve to the full input range with constant endpoints', () => {

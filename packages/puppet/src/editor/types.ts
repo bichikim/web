@@ -1,4 +1,4 @@
-import type {JSX} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import type {ModelBinding} from './model'
 import type {EditorController} from './control'
 import type {MeshPoint} from '../mesh'

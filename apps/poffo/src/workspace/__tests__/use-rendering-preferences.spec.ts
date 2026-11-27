@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import {flush} from 'solid-js'
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, expect, test, vi} from 'vitest'
 import {useRenderingPreferences} from '../use-rendering-preferences'
@@ -12,7 +13,9 @@ test('should persist rendering choices independently and restore them in a new w
   const first = renderHook(useRenderingPreferences)
   expect(first.result.preferences()).toEqual({antialiasing: 'auto', renderer: 'auto'})
   first.result.setRenderer('pixi')
+  flush()
   first.result.setAntialiasing('msaa')
+  flush()
   first.cleanup()
   const restored = renderHook(useRenderingPreferences)
   expect(restored.result.preferences()).toEqual({antialiasing: 'msaa', renderer: 'pixi'})
@@ -43,8 +46,10 @@ test('should apply an in-memory choice and expose persistence failure when stora
     throw new DOMException('Denied', 'SecurityError')
   })
   result.setAntialiasing('ssaa')
+  flush()
   expect(result.preferences().antialiasing).toBe('ssaa')
   expect(result.error()).toBe('렌더링 설정을 저장하지 못했습니다.')
   result.dismissError()
+  flush()
   expect(result.error()).toBeNull()
 })

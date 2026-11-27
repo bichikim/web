@@ -1,5 +1,5 @@
 import {connectTooltipTarget, readTooltipLabel} from './tooltip-target'
-import {createSignal, createUniqueId, onCleanup, onMount} from 'solid-js'
+import {createSignal, createUniqueId, onSettled} from 'solid-js'
 
 const OPEN_DELAY = 400
 const CLOSE_DELAY = 150
@@ -11,7 +11,7 @@ export const useTooltip = () => {
   const [side, setSide] = createSignal('top')
   const [arrow, setArrow] = createSignal(0)
   const [surface, setSurface] = createSignal<HTMLDivElement>()
-  onMount(() => {
+  onSettled(() => {
     const content = surface()!
     const tree = content.getRootNode()
     // Portal triggers are siblings of the editor in its shadow root.
@@ -130,7 +130,8 @@ export const useTooltip = () => {
       }
     })
     observer.observe(scope, {childList: true, subtree: true})
-    onCleanup(() => {
+
+    return () => {
       close()
       observer.disconnect()
       scope.removeEventListener('pointerover', over)
@@ -142,7 +143,7 @@ export const useTooltip = () => {
       document.removeEventListener('scroll', close, true)
       document.defaultView?.removeEventListener('resize', close)
       document.defaultView?.removeEventListener('blur', close)
-    })
+    }
   })
   return {anchor, arrow, id, setSurface, side, text}
 }

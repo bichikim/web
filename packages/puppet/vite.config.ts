@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
 import UnoCSS from 'unocss/vite'
-import solidPlugin from 'vite-plugin-solid'
+import solidPlugin from '@solidjs/vite-plugin'
 import {defineConfig} from 'vite'
 
 import unoConfig from './uno.config'
@@ -64,7 +64,7 @@ export default defineConfig(({command, mode}) => {
         formats: ['es'],
       },
       rollupOptions: {
-        external: mode === 'editor' ? ['solid-js', 'solid-js/web'] : [],
+        external: mode === 'editor' ? ['solid-js', '@solidjs/web'] : [],
         output:
           mode === 'converter'
             ? {

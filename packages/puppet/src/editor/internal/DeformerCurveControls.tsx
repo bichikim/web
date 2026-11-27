@@ -75,7 +75,7 @@ export const DeformerCurveControls = (props: DeformerCurveControlsProps) => {
   }
 
   return (
-    <g class="curve-deformer-controls" classList={{blocked: !props.editable}}>
+    <g class={['curve-deformer-controls', {blocked: !props.editable}]}>
       <For each={visibleHandles()}>
         {(handle) => {
           const origin = () => props.transform(getDeformerPoint(props.deformer, handle.pointIndex))
@@ -115,7 +115,7 @@ export const DeformerCurveControls = (props: DeformerCurveControlsProps) => {
                 y2={vertical().y}
               />
               <circle
-                aria-disabled={!props.editable}
+                aria-disabled={props.editable ? 'false' : 'true'}
                 aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
                 aria-label={`격자 제어점 ${handle.pointIndex + 1} 가로 곡률 핸들`}
                 class="curve-handle"
@@ -128,7 +128,7 @@ export const DeformerCurveControls = (props: DeformerCurveControlsProps) => {
                 onPointerDown={(event) => props.onDragStart(event, handle.pointIndex, 'horizontal')}
               />
               <circle
-                aria-disabled={!props.editable}
+                aria-disabled={props.editable ? 'false' : 'true'}
                 aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
                 aria-label={`격자 제어점 ${handle.pointIndex + 1} 세로 곡률 핸들`}
                 class="curve-handle"

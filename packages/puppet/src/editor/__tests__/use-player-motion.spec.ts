@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {createRoot, createSignal} from 'solid-js'
+import {createRoot, createSignal, flush} from 'solid-js'
 import {expect, test} from 'vitest'
 import {createPlayerFixture} from './fixtures/player'
 import {usePlayerMotion} from '../use-player-motion'
@@ -11,11 +11,12 @@ test('should retain playback when an editor temporarily omits the currently sele
     usePlayerMotion({motionId, player: () => player})
     return {dispose, select}
   })
+  flush()
   expect(player.setMotion).toHaveBeenCalledExactlyOnceWith('idle')
-  fixture.select(undefined)
-  fixture.select('idle')
+  flush(() => fixture.select(undefined))
+  flush(() => fixture.select('idle'))
   expect(player.setMotion).toHaveBeenCalledTimes(1)
-  fixture.select('tap')
+  flush(() => fixture.select('tap'))
   expect(player.setMotion).toHaveBeenLastCalledWith('tap')
   fixture.dispose()
 })
@@ -28,7 +29,8 @@ test('should apply the selected motion once when the renderer replaces its playe
     usePlayerMotion({motionId: () => 'idle', player})
     return {dispose, replace}
   })
-  fixture.replace(second)
+  flush()
+  flush(() => fixture.replace(second))
   expect(first.setMotion).toHaveBeenCalledTimes(1)
   expect(second.setMotion).toHaveBeenCalledExactlyOnceWith('idle')
   fixture.dispose()

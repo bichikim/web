@@ -16,8 +16,7 @@ export const EditorContextMenuEntryView = (props: EditorContextMenuEntryProps) =
     >
       {(entry) => (
         <ContextMenu.Item
-          class="editor-context-menu-item"
-          classList={{danger: entry().tone === 'danger'}}
+          class={['editor-context-menu-item', {danger: entry().tone === 'danger'}]}
           disabled={entry().disabled || entry().onSelect === undefined}
           textValue={entry().label}
           onSelect={() => entry().onSelect?.()}

@@ -1,4 +1,5 @@
-import {createSignal, type JSX} from 'solid-js'
+import {createSignal} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 interface RuntimeSplitProps {
   readonly studio?: boolean
   readonly children: JSX.Element
@@ -63,7 +64,7 @@ export const RuntimeSplit = (props: RuntimeSplitProps) => {
       {props.children}
       <div
         role="separator"
-        tabIndex={0}
+        tabindex={0}
         aria-label={props.studio ? '모델·그래프 너비 조절' : '모델·도구 너비 조절'}
         aria-orientation="vertical"
         aria-valuemin={MINIMUM_WIDTH}

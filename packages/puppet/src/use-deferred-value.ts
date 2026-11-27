@@ -1,4 +1,4 @@
-import {batch, createSignal, onCleanup, untrack} from 'solid-js'
+import {createSignal, onCleanup, untrack} from 'solid-js'
 
 interface DeferredValueOptions<T> {
   /** Initially displayed and committed value. */
@@ -9,9 +9,17 @@ interface DeferredValueOptions<T> {
 
 /** Publishes selection feedback immediately, then commits only the latest request after a paint opportunity. */
 export const useDeferredValue = <T>(options: DeferredValueOptions<T>) => {
-  const [value, setValue] = createSignal(options.initialValue)
-  const [committed, setCommitted] = createSignal(options.initialValue)
-  const [pending, setPending] = createSignal(false)
+  const initial = untrack(() => options.initialValue)
+  let current = {committed: initial, pending: false, value: initial}
+  const [published, publish] = createSignal(current)
+  const read = () => {
+    published()
+    return current
+  }
+  const update = (changes: Partial<typeof current>) => {
+    current = {...current, ...changes}
+    publish(current)
+  }
   let revision = 0
   let frame: number | undefined
   const cancel = () => {
@@ -23,34 +31,27 @@ export const useDeferredValue = <T>(options: DeferredValueOptions<T>) => {
   }
   const reset = (next: T) => {
     cancel()
-    batch(() => {
-      setValue(() => next)
-      setCommitted(() => next)
-      setPending(false)
-    })
+    update({committed: next, pending: false, value: next})
   }
   const select = (next: T) => {
-    if (Object.is(next, committed()) || typeof globalThis.requestAnimationFrame !== 'function') {
+    if (
+      Object.is(next, current.committed) ||
+      typeof globalThis.requestAnimationFrame !== 'function'
+    ) {
       reset(next)
       untrack(() => options.onCommit?.(next))
       return
     }
     cancel()
     const requestedRevision = revision
-    batch(() => {
-      setValue(() => next)
-      setPending(true)
-    })
+    update({pending: true, value: next})
     const commit = () => {
       if (requestedRevision !== revision) {
         return
       }
       frame = undefined
-      batch(() => {
-        untrack(() => options.onCommit?.(next))
-        setCommitted(() => next)
-        setPending(false)
-      })
+      untrack(() => options.onCommit?.(next))
+      update({committed: next, pending: false})
     }
     frame = globalThis.requestAnimationFrame(() => {
       if (requestedRevision === revision) {
@@ -59,5 +60,11 @@ export const useDeferredValue = <T>(options: DeferredValueOptions<T>) => {
     })
   }
   onCleanup(cancel)
-  return {committed, pending, reset, select, value}
+  return {
+    committed: () => read().committed,
+    pending: () => read().pending,
+    reset,
+    select,
+    value: () => read().value,
+  }
 }

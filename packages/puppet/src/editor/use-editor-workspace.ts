@@ -1,4 +1,4 @@
-import {createEffect, createSignal, onMount} from 'solid-js'
+import {createEffect, createSignal} from 'solid-js'
 
 type EditorWorkspace = 'animation' | 'modeling'
 const WORKSPACE_STORAGE_KEY = 'puppet:editor-workspace:v1'
@@ -22,10 +22,9 @@ const writeWorkspaceToLocalStorage = (workspace: EditorWorkspace) => {
 }
 
 export const useEditorWorkspace = (initialWorkspace: EditorWorkspace = 'modeling') => {
-  const [workspace, setWorkspace] = createSignal(initialWorkspace)
-  onMount(() => {
-    setWorkspace(readWorkspaceFromLocalStorage() ?? initialWorkspace)
-    createEffect(() => writeWorkspaceToLocalStorage(workspace()))
-  })
+  const [workspace, setWorkspace] = createSignal(
+    readWorkspaceFromLocalStorage() ?? initialWorkspace,
+  )
+  createEffect(workspace, writeWorkspaceToLocalStorage)
   return {setWorkspace, workspace}
 }

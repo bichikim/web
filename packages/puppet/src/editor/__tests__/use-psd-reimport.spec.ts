@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {createRoot, createSignal} from 'solid-js'
+import {createRoot, createSignal, flush} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument} from '../../player'
 import type {importPsd} from '../import-psd'
@@ -7,7 +7,7 @@ import {createHistory as useDocumentHistory} from './fixtures/history'
 import {usePsdReimport} from '../use-psd-reimport'
 
 test('should ignore a cancelled import and prevent applying a stale document', async () => {
-  await createRoot(async (dispose) => {
+  const {dispose, controller, setDocument, readPsd, initial, onChange} = createRoot((dispose) => {
     const readPsd = vi.fn<typeof importPsd>()
     const initial = createDemoDocument()
     const [document, setDocument] = createSignal(initial)
@@ -18,34 +18,35 @@ test('should ignore a cancelled import and prevent applying a stale document', a
       onNotice: vi.fn(),
       readPsd,
     })
-    let resolve!: (result: Awaited<ReturnType<typeof importPsd>>) => void
-    readPsd.mockImplementationOnce(
-      () =>
-        new Promise((done) => {
-          resolve = done
-        }),
-    )
-    const loading = controller.load(new File([], 'model.psd'))
-    const signal = readPsd.mock.calls[0]![1]
-    expect(signal?.aborted).toBe(false)
-    controller.cancel()
-    expect(signal?.aborted).toBe(true)
-    resolve({document: initial, ok: true, warnings: []})
-    await loading
-    expect(controller.state().kind).toBe('idle')
-    readPsd.mockResolvedValue({document: initial, ok: true, warnings: []})
-    await controller.load(new File([], 'model.psd'))
-    expect(controller.state().kind).toBe('review')
-    setDocument({...initial})
-    controller.apply()
-    expect(controller.state().kind).toBe('error')
-    expect(onChange).not.toHaveBeenCalled()
-    dispose()
+    return {controller, dispose, initial, onChange, readPsd, setDocument}
   })
+  let resolve!: (result: Awaited<ReturnType<typeof importPsd>>) => void
+  readPsd.mockImplementationOnce(
+    () =>
+      new Promise((done) => {
+        resolve = done
+      }),
+  )
+  const loading = controller.load(new File([], 'model.psd'))
+  const signal = readPsd.mock.calls[0]![1]
+  expect(signal?.aborted).toBe(false)
+  controller.cancel()
+  expect(signal?.aborted).toBe(true)
+  resolve({document: initial, ok: true, warnings: []})
+  await loading
+  expect(controller.state().kind).toBe('idle')
+  readPsd.mockResolvedValue({document: initial, ok: true, warnings: []})
+  await controller.load(new File([], 'model.psd'))
+  expect(controller.state().kind).toBe('review')
+  flush(() => setDocument({...initial}))
+  flush(() => controller.apply())
+  expect(controller.state().kind).toBe('error')
+  expect(onChange).not.toHaveBeenCalled()
+  dispose()
 })
 
 test('should apply reviewed additions as one undoable document change', async () => {
-  await createRoot(async (dispose) => {
+  const {dispose, controller, history, readPsd, initial} = createRoot((dispose) => {
     const readPsd = vi.fn<typeof importPsd>()
     const initial = createDemoDocument()
     const history = useDocumentHistory({initialDocument: initial})
@@ -55,27 +56,28 @@ test('should apply reviewed additions as one undoable document change', async ()
       onNotice: vi.fn(),
       readPsd,
     })
-    readPsd.mockResolvedValue({document: initial, ok: true, warnings: []})
-    await controller.load(new File([], 'model.psd'))
-    controller.apply()
-    expect(history.canUndo()).toBe(false)
-    expect(controller.selection().view.count).toBe(0)
-    controller.setIncludeNew(true)
-    expect(controller.selection().view.count).toBe(3)
-    controller.apply()
-    expect(controller.state().kind).toBe('idle')
-    expect(history.document().parts).toHaveLength(6)
-    expect(history.undoCount()).toBe(1)
-    expect(history.undo()).toBe(true)
-    expect(history.document()).toEqual(initial)
-    expect(history.redo()).toBe(true)
-    expect(history.document().parts).toHaveLength(6)
-    dispose()
+    return {controller, dispose, history, initial, readPsd}
   })
+  readPsd.mockResolvedValue({document: initial, ok: true, warnings: []})
+  await controller.load(new File([], 'model.psd'))
+  flush(() => controller.apply())
+  expect(history.canUndo()).toBe(false)
+  expect(controller.selection().view.count).toBe(0)
+  flush(() => controller.setIncludeNew(true))
+  expect(controller.selection().view.count).toBe(3)
+  flush(() => controller.apply())
+  expect(controller.state().kind).toBe('idle')
+  expect(history.document().parts).toHaveLength(6)
+  expect(history.undoCount()).toBe(1)
+  expect(history.undo()).toBe(true)
+  expect(history.document()).toEqual(initial)
+  expect(history.redo()).toBe(true)
+  expect(history.document().parts).toHaveLength(6)
+  dispose()
 })
 
 test('should keep missing layers by default and delete them only when selected', async () => {
-  await createRoot(async (dispose) => {
+  const {dispose, controller, history, readPsd, original} = createRoot((dispose) => {
     const readPsd = vi.fn<typeof importPsd>()
     const demo = createDemoDocument()
     const original = {
@@ -99,29 +101,30 @@ test('should keep missing layers by default and delete them only when selected',
       onNotice: vi.fn(),
       readPsd,
     })
-    readPsd.mockResolvedValue({
-      document: {...original, parts: [original.parts[0]!]},
-      ok: true,
-      warnings: [],
-    })
-    await controller.load(new File([], 'model.psd'))
-    controller.apply()
-    expect(history.document().parts).toHaveLength(3)
-    await controller.load(new File([], 'model.psd'))
-    expect(controller.selection().view.count).toBe(1)
-    controller.setRemoveMissing(true)
-    expect(controller.selection().view.count).toBe(3)
-    expect(controller.selection().view.rows.filter((row) => row.label === '삭제')).toHaveLength(2)
-    controller.apply()
-    expect(history.document().parts).toHaveLength(1)
-    expect(history.undo()).toBe(true)
-    expect(history.document().parts).toHaveLength(3)
-    dispose()
+    return {controller, dispose, history, original, readPsd}
   })
+  readPsd.mockResolvedValue({
+    document: {...original, parts: [original.parts[0]!]},
+    ok: true,
+    warnings: [],
+  })
+  await controller.load(new File([], 'model.psd'))
+  flush(() => controller.apply())
+  expect(history.document().parts).toHaveLength(3)
+  await controller.load(new File([], 'model.psd'))
+  expect(controller.selection().view.count).toBe(1)
+  flush(() => controller.setRemoveMissing(true))
+  expect(controller.selection().view.count).toBe(3)
+  expect(controller.selection().view.rows.filter((row) => row.label === '삭제')).toHaveLength(2)
+  flush(() => controller.apply())
+  expect(history.document().parts).toHaveLength(1)
+  expect(history.undo()).toBe(true)
+  expect(history.document().parts).toHaveLength(3)
+  dispose()
 })
 
 test('should show reader failures without changing the document', async () => {
-  await createRoot(async (dispose) => {
+  const {dispose, controller, onDocumentChange} = createRoot((dispose) => {
     const document = createDemoDocument()
     const onDocumentChange = vi.fn()
     const readPsd = vi
@@ -134,21 +137,22 @@ test('should show reader failures without changing the document', async () => {
       onNotice: vi.fn(),
       readPsd,
     })
-    await controller.load(new File([], 'bad.psd'))
-    expect(controller.state()).toEqual({kind: 'error', message: 'PSD 파일을 선택하세요.'})
-    await controller.load(new File([], 'broken.psd'))
-    expect(controller.state()).toEqual({
-      kind: 'error',
-      message: 'PSD를 읽지 못했습니다. 파일을 다시 선택하세요.',
-    })
-    expect(onDocumentChange).not.toHaveBeenCalled()
-    expect(controller.selection().view.count).toBe(0)
-    dispose()
+    return {controller, dispose, onDocumentChange}
   })
+  await controller.load(new File([], 'bad.psd'))
+  expect(controller.state()).toEqual({kind: 'error', message: 'PSD 파일을 선택하세요.'})
+  await controller.load(new File([], 'broken.psd'))
+  expect(controller.state()).toEqual({
+    kind: 'error',
+    message: 'PSD를 읽지 못했습니다. 파일을 다시 선택하세요.',
+  })
+  expect(onDocumentChange).not.toHaveBeenCalled()
+  expect(controller.selection().view.count).toBe(0)
+  dispose()
 })
 
 test('should keep reviewed operations when the host rejects the commit', async () => {
-  await createRoot(async (dispose) => {
+  const {dispose, controller} = createRoot((dispose) => {
     const document = createDemoDocument()
     const controller = usePsdReimport({
       document: () => document,
@@ -156,11 +160,12 @@ test('should keep reviewed operations when the host rejects the commit', async (
       onNotice: vi.fn(),
       readPsd: vi.fn<typeof importPsd>().mockResolvedValue({document, ok: true, warnings: []}),
     })
-    await controller.load(new File([], 'model.psd'))
-    controller.setIncludeNew(true)
-    controller.apply()
-    expect(controller.state().kind).toBe('review')
-    expect(controller.selection().view.count).toBeGreaterThan(0)
-    dispose()
+    return {controller, dispose}
   })
+  await controller.load(new File([], 'model.psd'))
+  flush(() => controller.setIncludeNew(true))
+  flush(() => controller.apply())
+  expect(controller.state().kind).toBe('review')
+  expect(controller.selection().view.count).toBeGreaterThan(0)
+  dispose()
 })

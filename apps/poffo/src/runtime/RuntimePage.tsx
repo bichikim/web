@@ -5,7 +5,7 @@ import {RuntimeWorkspace} from './RuntimeWorkspace'
 import {RuntimeSplit} from './RuntimeSplit'
 import {useRuntimeControls} from './use-runtime-controls'
 import {RuntimeTools} from './RuntimeTools'
-import {createSignal, Show, Suspense} from 'solid-js'
+import {createSignal, Loading, Show} from 'solid-js'
 import {useCanvasColor} from '../color-theme/use-canvas-color'
 import {
   EditorButton,
@@ -75,7 +75,7 @@ export const RuntimePage = (props: RuntimePageProps) => {
       style={{'--viewer-background': background() ?? undefined}}
     >
       <EditorStyles />
-      <Suspense fallback={renderEmpty()}>
+      <Loading fallback={renderEmpty()}>
         <Show when={loading.document()} fallback={renderEmpty()}>
           {(current) => (
             <RuntimeWorkspace
@@ -102,7 +102,7 @@ export const RuntimePage = (props: RuntimePageProps) => {
                     <EditorButton
                       size="md"
                       disabled={!ready() || selectedMotion() === undefined}
-                      aria-pressed={playing()}
+                      aria-pressed={playing() ? 'true' : 'false'}
                       onClick={() => setPlaying((value) => !value)}
                     >
                       {playing() ? '일시정지' : '재생'}
@@ -159,7 +159,7 @@ export const RuntimePage = (props: RuntimePageProps) => {
             </RuntimeWorkspace>
           )}
         </Show>
-      </Suspense>
+      </Loading>
       <FileLoadingDialog fileName={loading.pendingFile()} onCancel={loading.cancel} />
       <Show when={message()}>
         {(message) => <EditorToast message={message()} onDismiss={handleDismiss} />}

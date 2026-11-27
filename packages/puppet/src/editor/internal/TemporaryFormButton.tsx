@@ -1,4 +1,4 @@
-import {createEffect, createSignal, onCleanup, Show} from 'solid-js'
+import {createSignal, createTrackedEffect, onCleanup, Show} from 'solid-js'
 import {EditorButton} from '../../design-system'
 
 interface TemporaryFormButtonProps {
@@ -16,7 +16,7 @@ export const TemporaryFormButton = (props: TemporaryFormButtonProps) => {
   let root: HTMLDivElement | undefined
   let dialog: HTMLDialogElement | undefined
   let trigger: HTMLButtonElement | undefined
-  createEffect(() => {
+  createTrackedEffect(() => {
     if (!removing() || root === undefined) {
       return
     }
@@ -27,7 +27,8 @@ export const TemporaryFormButton = (props: TemporaryFormButtonProps) => {
       }
     }
     document.addEventListener('pointerdown', dismiss, true)
-    onCleanup(() => document.removeEventListener('pointerdown', dismiss, true))
+
+    return () => document.removeEventListener('pointerdown', dismiss, true)
   })
   onCleanup(() => props.onPreview(false))
   return (
@@ -49,7 +50,7 @@ export const TemporaryFormButton = (props: TemporaryFormButtonProps) => {
           trigger = element
         }}
         class="temporary-form-trigger"
-        data-pending={props.selected === true}
+        data-pending={String(props.selected === true)}
         aria-label={removing() ? '진짜 삭제?' : '임시 변경'}
         title={
           props.selected

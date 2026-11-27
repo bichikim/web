@@ -64,7 +64,12 @@ const getSavedDocument = (
 }
 
 export const useTemporaryForm = (options: TemporaryFormOptions) => {
-  const [forms, setForms] = createSignal<ReadonlyMap<string, PuppetParameterKeyformBase>>(new Map())
+  let drafts: ReadonlyMap<string, PuppetParameterKeyformBase> = new Map()
+  const [forms, setForms] = createSignal(drafts)
+  const publishDrafts = (next: ReadonlyMap<string, PuppetParameterKeyformBase>) => {
+    drafts = next
+    setForms(next)
+  }
   const [editing, setEditing] = createSignal<string | null>(null)
   const [preview, setPreview] = createSignal(false)
   const pending = new Map<string, PuppetParameterKeyformBase>()
@@ -107,9 +112,9 @@ export const useTemporaryForm = (options: TemporaryFormOptions) => {
     return document === undefined ? target : {...target, document}
   })
   const remove = (nodeId = options.nodeId() ?? '') => {
-    const next = new Map(forms())
+    const next = new Map(drafts)
     next.delete(nodeId)
-    setForms(next)
+    publishDrafts(next)
     if (options.nodeId() === nodeId) {
       setEditing(null)
       setPreview(false)
@@ -125,7 +130,6 @@ export const useTemporaryForm = (options: TemporaryFormOptions) => {
   }
   const valueMap = createMemo(
     () => getTemporaryValueMap(target(), options.parameterValueMap?.() ?? {}),
-    {},
     {equals: isEqual},
   )
   return {
@@ -139,7 +143,7 @@ export const useTemporaryForm = (options: TemporaryFormOptions) => {
     },
     remove,
     reset: () => {
-      setForms(new Map())
+      publishDrafts(new Map())
       setEditing(null)
       setPreview(false)
     },
@@ -163,7 +167,7 @@ export const useTemporaryForm = (options: TemporaryFormOptions) => {
           return false
         }
         // A synchronous host notification may already have replaced or edited this local draft.
-        if (forms().get(nodeId) === draft) {
+        if (drafts.get(nodeId) === draft) {
           remove(nodeId)
         }
         return true
@@ -197,7 +201,7 @@ export const useTemporaryForm = (options: TemporaryFormOptions) => {
         return
       }
       if (draft !== undefined) {
-        setForms(new Map(forms()).set(nodeId, draft))
+        publishDrafts(new Map(drafts).set(nodeId, draft))
         setEditing(context())
       }
     },

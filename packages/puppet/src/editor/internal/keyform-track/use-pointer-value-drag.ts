@@ -1,4 +1,4 @@
-import {type Accessor, getOwner, onCleanup, runWithOwner} from 'solid-js'
+import {type Accessor, onCleanup} from 'solid-js'
 
 export interface UsePointerValueDragProps {
   readonly enabled: Accessor<boolean>
@@ -12,19 +12,13 @@ export interface UsePointerValueDragResult {
 }
 
 export const usePointerValueDrag = (props: UsePointerValueDragProps): UsePointerValueDragResult => {
-  const owner = getOwner()
   let removeListeners: (() => void) | undefined
-  const enabled = () => (owner === null ? props.enabled() : runWithOwner(owner, props.enabled))
-  const update = (event: PointerEvent, bounds: DOMRect) => {
-    const move = () => props.onMove(event, bounds)
-    return owner === null ? move() : runWithOwner(owner, move)
-  }
   const handlePointerDown = (event: PointerEvent) => {
     if (
       event.button !== 0 ||
       event.isPrimary === false ||
       removeListeners !== undefined ||
-      !enabled()
+      !props.enabled()
     ) {
       return
     }
@@ -34,13 +28,13 @@ export const usePointerValueDrag = (props: UsePointerValueDragProps): UsePointer
     }
     const {pointerId} = event
     const handlePointerMove = (moveEvent: PointerEvent) => {
-      if (!enabled()) {
+      if (!props.enabled()) {
         removeListeners?.()
         return
       }
       if (moveEvent.pointerId === pointerId) {
         moveEvent.preventDefault()
-        update(moveEvent, bounds)
+        props.onMove(moveEvent, bounds)
       }
     }
     const finishDrag = (finishEvent: PointerEvent) => {
@@ -58,7 +52,7 @@ export const usePointerValueDrag = (props: UsePointerValueDragProps): UsePointer
     if (props.stopPropagation === true) {
       event.stopPropagation()
     }
-    update(event, bounds)
+    props.onMove(event, bounds)
     // Global pointer events follow the active gesture beyond the original element.
     // eslint-disable-next-line solid/reactivity
     removeListeners = () => {

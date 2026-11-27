@@ -19,6 +19,8 @@ export interface TimelineMotionControlsProps {
 
 export const TimelineMotionControls = (props: TimelineMotionControlsProps) => {
   let surface: HTMLDivElement | undefined
+  let trigger: HTMLButtonElement | undefined
+  const [menuOpen, setMenuOpen] = createSignal(false)
 
   const mount = useEditorPortalMount()
   const [renaming, setRenaming] = createSignal(false)
@@ -47,11 +49,19 @@ export const TimelineMotionControls = (props: TimelineMotionControlsProps) => {
             >
               <span aria-hidden="true" class="puppet-icon puppet-icon-plus" />
             </EditorButton>
-            <DropdownMenu modal={false} placement="bottom-end">
+            <DropdownMenu
+              open={menuOpen()}
+              onOpenChange={setMenuOpen}
+              modal={false}
+              placement="bottom-end"
+            >
               <DropdownMenu.Trigger
                 as={EditorButton}
                 aria-label="모션 관리"
                 class="timeline-motion-manage"
+                ref={(element: HTMLButtonElement) => {
+                  trigger = element
+                }}
                 disabled={!canManage()}
               >
                 <span aria-hidden="true">•••</span>
@@ -60,6 +70,11 @@ export const TimelineMotionControls = (props: TimelineMotionControlsProps) => {
                 <DropdownMenu.Content
                   ref={(element) => {
                     surface = element
+                  }}
+                  onEscapeKeyDown={(event) => {
+                    event.preventDefault()
+                    setMenuOpen(false)
+                    trigger?.focus()
                   }}
                   onInteractOutside={(event) => preventInternalDismiss(event, surface)}
                   aria-label="모션 관리"

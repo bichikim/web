@@ -2,7 +2,8 @@ import type {ViewportView as RuntimeView} from '../viewport/types'
 import {attachViewPan} from './attach-view-pan'
 import {attachViewNavigation} from './view-navigation'
 import {ViewRuler} from './ViewRuler'
-import {createEffect, createSignal, type JSX, on, onCleanup, untrack} from 'solid-js'
+import {createEffect, createSignal, onCleanup, untrack} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import {ViewCameraControls} from './ViewCameraControls'
 import {MAXIMUM_VIEW_ZOOM, MINIMUM_VIEW_ZOOM, type ViewCamera} from './view-camera'
 import {EDITOR_VIEWPORT_PADDING} from './viewport'
@@ -38,10 +39,12 @@ export const CameraViewport = (props: CameraViewportProps) => {
   const size = useElementSize(viewport)
   const [fitted, setFitted] = createSignal(true)
   const [dragging, setDragging] = createSignal(false)
-  createEffect(() => {
-    const zoom = camera().zoom
-    untrack(() => props.onZoomChange?.(zoom))
-  })
+  createEffect(
+    () => ({listener: props.onZoomChange, zoom: camera().zoom}),
+    ({listener, zoom}) => {
+      listener?.(zoom)
+    },
+  )
   const navigate = (nextCamera: ViewCamera) => {
     setFitted(false)
     setCamera(nextCamera)
@@ -70,41 +73,48 @@ export const CameraViewport = (props: CameraViewportProps) => {
   }
   let appliedView: RuntimeView | undefined
   createEffect(
-    on(
-      () => props.view,
-      (view) => {
-        if (view !== undefined && view !== appliedView) {
-          appliedView = view
-          setCamera(view.camera)
-          setFitted(view.fitted)
-        }
-      },
-    ),
+    () => props.view,
+    (view) => {
+      if (view !== undefined && view !== appliedView) {
+        appliedView = view
+        setCamera(view.camera)
+        setFitted(view.fitted)
+      }
+    },
   )
-  createEffect(() => {
-    const measured = size()
-    if (fitted() && measured.width > 0 && measured.height > 0) {
-      untrack(fit)
+  createEffect(
+    () => ({fitted: fitted(), measured: size()}),
+    ({measured, fitted}) => {
+      if (fitted && measured.width > 0 && measured.height > 0) {
+        untrack(fit)
+      }
+    },
+  )
+  createEffect(viewport, (element) => {
+    if (element === null) {
+      return
     }
-  })
-  createEffect(() => {
-    const element = viewport()
-    if (element !== null) {
-      onCleanup(attachViewNavigation({camera, element, onChange: navigate}))
-      onCleanup(attachViewPan({camera, element, onChange: navigate, onPanningChange: setDragging}))
+    const stopNavigation = attachViewNavigation({camera, element, onChange: navigate})
+    const stopPanning = attachViewPan({
+      camera,
+      element,
+      onChange: navigate,
+      onPanningChange: setDragging,
+    })
+    return () => {
+      stopPanning()
+      stopNavigation()
     }
   })
   let fittedRevision: unknown
   createEffect(
-    on(
-      () => props.fitRevision,
-      () => {
-        if (props.fitRevision !== undefined && props.fitRevision !== fittedRevision) {
-          fittedRevision = props.fitRevision
-          untrack(fit)
-        }
-      },
-    ),
+    () => props.fitRevision,
+    () => {
+      if (props.fitRevision !== undefined && props.fitRevision !== fittedRevision) {
+        fittedRevision = props.fitRevision
+        untrack(fit)
+      }
+    },
   )
   return (
     <>
@@ -119,7 +129,7 @@ export const CameraViewport = (props: CameraViewportProps) => {
           role="region"
           aria-label="모델 보기"
           ref={setViewport}
-          data-panning={dragging()}
+          data-panning={String(dragging())}
           style={{
             '--camera-grid': `${GRID_STEP * camera().zoom}px`,
             '--camera-x': `${-camera().x * camera().zoom}px`,

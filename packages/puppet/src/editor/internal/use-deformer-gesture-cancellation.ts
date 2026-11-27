@@ -1,4 +1,4 @@
-import {batch, createEffect, createMemo, on, onCleanup, untrack} from 'solid-js'
+import {createEffect, createMemo, onCleanup, untrack} from 'solid-js'
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetDocument} from '../../player'
 import type {DeformerEditMode} from './DeformerMode'
@@ -29,27 +29,24 @@ export const useDeformerGestureCancellation = (
       props.targetNodeIds,
     ]),
   )
-  createEffect(on(context, () => cancel()))
+  createEffect(context, () => cancel())
   createEffect(
-    on(
-      () => props.document,
-      (document) => {
-        if (document !== expectedDocument) {
-          cancel()
-        }
-        expectedDocument = document
-      },
-    ),
+    () => props.document,
+    (document) => {
+      if (document !== expectedDocument) {
+        cancel()
+      }
+      expectedDocument = document
+    },
   )
   onCleanup(cancel)
   const handleBlur = () => cancel()
   globalThis.addEventListener('blur', handleBlur)
   onCleanup(() => globalThis.removeEventListener('blur', handleBlur))
   return {
-    changeDocument: (document: PuppetDocument) =>
-      batch(() => {
-        props.onDocumentChange?.(document)
-        expectedDocument = untrack(() => props.document)
-      }),
+    changeDocument: (document: PuppetDocument) => {
+      expectedDocument = document
+      props.onDocumentChange?.(document)
+    },
   }
 }

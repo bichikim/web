@@ -1,5 +1,5 @@
-import type {PointerDownOutsideEvent} from '@kobalte/core/primitives/create-interact-outside'
-import type {Accessor} from 'solid-js'
+import type {PopoverContentProps} from '@kobalte/core/popover'
+import {type Accessor} from 'solid-js'
 import {preventInternalDismiss} from '../../design-system/prevent-internal-dismiss'
 
 export const createAutoMeshDismissal = (surface: Accessor<HTMLElement | undefined>) => {
@@ -9,7 +9,9 @@ export const createAutoMeshDismissal = (surface: Accessor<HTMLElement | undefine
       internalTouches.add(event)
     }
   }
-  const onPointerDownOutside = (event: PointerDownOutsideEvent) => {
+  const onPointerDownOutside = (
+    event: Parameters<NonNullable<PopoverContentProps<'div'>['onPointerDownOutside']>>[0],
+  ) => {
     // Kobalte defers touch dismissal until click, after the original composed path is cleared.
     if (internalTouches.has(event.detail.originalEvent)) {
       event.preventDefault()

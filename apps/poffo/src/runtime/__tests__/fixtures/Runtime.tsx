@@ -1,4 +1,4 @@
-import {createResource, Show} from 'solid-js'
+import {createMemo, Show} from 'solid-js'
 import type {PuppetDocument} from '@winter-love/puppet/player'
 import {RuntimePage} from '../../RuntimePage'
 import {WorkspaceProvider} from '../../../workspace/WorkspaceProvider'
@@ -11,7 +11,7 @@ interface RuntimeFixtureProps {
 
 /** Restores the host input above the runtime page, as Poffo does in production. */
 export const RuntimeFixture = (props: RuntimeFixtureProps) => {
-  const [document] = createResource(() => props.loadInitialDocument())
+  const document = createMemo(() => props.loadInitialDocument())
   return (
     <Show when={document()}>
       {(value) => {

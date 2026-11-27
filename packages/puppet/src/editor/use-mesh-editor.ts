@@ -6,6 +6,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
+  createTrackedEffect,
   onCleanup,
   type Setter,
   untrack,
@@ -105,10 +106,6 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   const [draftPoint, setDraftPoint] = createSignal<VertexPoint | null>(null)
   const [dragStartPoint, setDragStartPoint] = createSignal<VertexPoint | null>(null)
   const [focusedPartId, setFocusedPartId] = createSignal<string | null>(null)
-  let activeDocument = untrack(() => props.document)
-  let activeMotionId = untrack(() => props.motionId)
-  let activeEditing = untrack(() => props.meshEditing)
-  let activePartId = untrack(() => props.activePartId)
   const selectedPartIds = createMemo<ReadonlyArray<string>>(() => {
     if (props.selectedPartIds !== undefined) {
       return props.selectedPartIds
@@ -183,47 +180,43 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
     return partViews().find((view) => view.partId === activePart?.id)?.triangles ?? []
   })
 
-  createEffect(() => {
-    const {activePartId: nextActivePartId, document, meshEditing, motionId} = props
+  createEffect(
+    () => [props.document, props.motionId, props.meshEditing, props.activePartId] as const,
+    (current, previous) => {
+      if (previous !== undefined && current.some((value, index) => value !== previous[index])) {
+        setDraggingVertex(null)
+        setDraggingTime(null)
+        setDraggingValues(null)
+        setDraftPoint(null)
+        setDragStartPoint(null)
+      }
+    },
+  )
 
-    if (
-      document !== activeDocument ||
-      motionId !== activeMotionId ||
-      meshEditing !== activeEditing ||
-      nextActivePartId !== activePartId
-    ) {
-      activeDocument = document
-      activeMotionId = motionId
-      activeEditing = meshEditing
-      activePartId = nextActivePartId
-      setDraggingVertex(null)
-      setDraggingTime(null)
-      setDraggingValues(null)
-      setDraftPoint(null)
-      setDragStartPoint(null)
-    }
-  })
+  createEffect(
+    () => props.selectedVertexIndex,
+    (index) => {
+      if (index !== undefined) {
+        setSelectedVertex(index)
+      }
+    },
+  )
 
-  createEffect(() => {
-    if (props.selectedVertexIndex !== undefined) {
-      setSelectedVertex(props.selectedVertexIndex)
-    }
-  })
+  createEffect(
+    () => ({activePart: part(), activeVertex: selectedVertex()}),
+    ({activePart, activeVertex}) => {
+      const missingVertex =
+        activePart === undefined ||
+        (activeVertex !== null &&
+          activeVertex >= activePart.mesh.vertices.length / COORDINATES_PER_VERTEX)
 
-  createEffect(() => {
-    const activePart = part()
-    const activeVertex = selectedVertex()
-    const missingVertex =
-      activePart === undefined ||
-      (activeVertex !== null &&
-        activeVertex >= activePart.mesh.vertices.length / COORDINATES_PER_VERTEX)
-
-    if (activeVertex !== null && missingVertex) {
-      setSelectedVertex(null)
-      setDraftPoint(null)
-      setDragStartPoint(null)
-    }
-  })
+      if (activeVertex !== null && missingVertex) {
+        setSelectedVertex(null)
+        setDraftPoint(null)
+        setDragStartPoint(null)
+      }
+    },
+  )
 
   return {
     clippedPartViews,
@@ -441,7 +434,7 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
       cancel()
     }
   }
-  createEffect(() => {
+  createTrackedEffect(() => {
     if (state.draggingVertex() === null) {
       release()
     }

@@ -1,11 +1,9 @@
 import {
   type Accessor,
-  batch,
   createEffect,
   createMemo,
   createSignal,
   createUniqueId,
-  on,
   untrack,
 } from 'solid-js'
 import {type Player, type PuppetDocument} from '../../player'
@@ -240,16 +238,16 @@ export const useEditorState = (props: UseEditorStateProps): UseEditorStateResult
     }
   }
 
-  createEffect(() => {
-    const {motions} = sourceDocument()
-    const selectedMotionId = activeMotionId()
+  createEffect(
+    () => ({motions: sourceDocument().motions, selectedMotionId: activeMotionId()}),
+    ({motions, selectedMotionId}) => {
+      if (selectedMotionId !== null && motions.some((motion) => motion.id === selectedMotionId)) {
+        return
+      }
 
-    if (selectedMotionId !== null && motions.some((motion) => motion.id === selectedMotionId)) {
-      return
-    }
-
-    setActiveMotionId(motions[0]?.id ?? null)
-  })
+      setActiveMotionId(motions[0]?.id ?? null)
+    },
+  )
   const handleDocumentEditStart = () => {
     pausePlayback()
     history.beginTransaction()
@@ -320,10 +318,8 @@ export const useEditorState = (props: UseEditorStateProps): UseEditorStateResult
     }
 
     pausePlayback()
-    batch(() => {
-      setActiveMotionId(motionId)
-      setCurrentTime(time)
-    })
+    setActiveMotionId(motionId)
+    setCurrentTime(time)
     currentPlayer.setMotion(motionId)
     currentPlayer.seek(time)
   }
@@ -335,12 +331,10 @@ export const useEditorState = (props: UseEditorStateProps): UseEditorStateResult
   const handleContainerUnwrap = () => {
     const document = unwrapSceneNodes(sourceDocument(), selectionActions().containerIds)
     if (document !== undefined) {
-      batch(() => {
-        history.setDocument(document)
-        setLayerSelection({activeNodeId: null, nodeIds: []})
-        setActiveVertexIndex(null)
-        selectionTransition.reset()
-      })
+      history.setDocument(document)
+      setLayerSelection({activeNodeId: null, nodeIds: []})
+      setActiveVertexIndex(null)
+      selectionTransition.reset()
     }
   }
   const handleMaskPick = (targetPartId: string) => {
@@ -384,43 +378,49 @@ export const useEditorState = (props: UseEditorStateProps): UseEditorStateResult
       autoMesh.onOpenChange(false)
     },
   })
-  createEffect(() => {
-    const inactive = props.active === false
-    const blocked = inactive && model.read().transaction !== null
-    if (!blocked) {
-      untrack(() => (inactive ? control.lifecycle.deactivate() : control.lifecycle.activate()))
-    }
-  })
   createEffect(
-    on(
-      model.revision,
-      () => {
-        const current = model.read()
-        const {change} = current
-        if (change === null) {
-          return
-        }
-        untrack(() => {
-          if (change.kind === 'reset' || change.historyKind === 'replace') {
-            pausePlayback()
-            temporary.reset()
-            setLayerSelection(createSceneSelection(current.document.parts[0]?.id ?? null))
-            setActiveVertexIndex(null)
-            setMaskPickSourcePartId(null)
-            deformerControlSelection.clear()
-            parameterEditor.reset(current.document)
-            setCurrentTime(0)
+    () => {
+      if (props.active !== false) {
+        return 'active'
+      }
+      return model.read().transaction === null ? 'inactive' : 'blocked'
+    },
+    (status) => {
+      if (status !== 'blocked') {
+        untrack(() =>
+          status === 'inactive' ? control.lifecycle.deactivate() : control.lifecycle.activate(),
+        )
+      }
+    },
+  )
+  createEffect(
+    model.revision,
+    () => {
+      const current = model.read()
+      const {change} = current
+      if (change === null) {
+        return
+      }
+      untrack(() => {
+        if (change.kind === 'reset' || change.historyKind === 'replace') {
+          pausePlayback()
+          temporary.reset()
+          setLayerSelection(createSceneSelection(current.document.parts[0]?.id ?? null))
+          setActiveVertexIndex(null)
+          setMaskPickSourcePartId(null)
+          deformerControlSelection.clear()
+          parameterEditor.reset(current.document)
+          setCurrentTime(0)
+          selectionTransition.reset()
+        } else {
+          setLayerSelection((selection) => reconcileSceneSelection(current.document, selection))
+          if (change.phase === 'rollback') {
             selectionTransition.reset()
-          } else {
-            setLayerSelection((selection) => reconcileSceneSelection(current.document, selection))
-            if (change.phase === 'rollback') {
-              selectionTransition.reset()
-            }
           }
-        })
-      },
-      {defer: true},
-    ),
+        }
+      })
+    },
+    {defer: true},
   )
   const handleInspectorDocumentChange = (document: PuppetDocument) => {
     if (temporary.target() === undefined) {

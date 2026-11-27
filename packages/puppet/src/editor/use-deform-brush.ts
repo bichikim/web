@@ -1,4 +1,4 @@
-import {type Accessor, createEffect, createMemo, createSignal, on, onCleanup} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
 
 import type {PuppetParameterValues} from '../deformation'
 import type {PuppetDocument, PuppetPart} from '../player/document'
@@ -127,22 +127,20 @@ const useBrushCancellation = (context: DeformBrushContext, cancel: () => void) =
     }
   }
   createEffect(
-    on(
-      () => [
-        props.document,
-        context.part()?.id,
-        props.meshEditing,
-        props.editMode,
-        props.activeBindingId,
-        props.activeKeyformValues,
-        props.parameterValues,
-        props.parameterValueMap,
-        props.motionId,
-        props.previewTime,
-      ],
-      cancel,
-      {defer: true},
-    ),
+    () => [
+      props.document,
+      context.part()?.id,
+      props.meshEditing,
+      props.editMode,
+      props.activeBindingId,
+      props.activeKeyformValues,
+      props.parameterValues,
+      props.parameterValueMap,
+      props.motionId,
+      props.previewTime,
+    ],
+    cancel,
+    {defer: true},
   )
 
   globalThis.addEventListener('keydown', handleKeyDown)

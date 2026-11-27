@@ -1,4 +1,4 @@
-import {createEffect, onCleanup, onMount} from 'solid-js'
+import {createTrackedEffect, onCleanup, onSettled} from 'solid-js'
 import type {PuppetExampleDocument} from '@winter-love/puppet/editor'
 import type {WorkspaceContextValue} from '../../workspace/types'
 import {
@@ -64,7 +64,7 @@ export const useEditorToolbarDesktopMenu = (props: UseEditorToolbarDesktopMenuPr
     }
     handlers[action]?.()
   }
-  createEffect(() => {
+  createTrackedEffect(() => {
     if (!props.desktopMenu) {
       return
     }
@@ -96,10 +96,9 @@ export const useEditorToolbarDesktopMenu = (props: UseEditorToolbarDesktopMenuPr
       setDesktopMenuItemEnabled(`example:${index}`, enabled)
     })
   })
-  onMount(() => {
+  onSettled(() => {
     if (props.desktopMenu) {
-      const unsubscribe = listenDesktopMenuAction(handleAction)
-      onCleanup(unsubscribe)
+      return listenDesktopMenuAction(handleAction)
     }
   })
   onCleanup(() => {

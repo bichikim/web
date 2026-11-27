@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 
 import {createDemoDocument, type PuppetDocument} from '../../player'
@@ -31,7 +31,7 @@ describe('MeshEditor motion', () => {
     const center = svg.querySelectorAll('circle')[4]!
     fireEvent(center, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
     fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 500, clientY: 360}))
-    setMotionId('blink')
+    flush(() => setMotionId('blink'))
     fireEvent(svg, new MouseEvent('pointerup', {bubbles: true}))
     expect(save).not.toHaveBeenCalled()
     expect(center).toHaveAttribute('cx', '384')
@@ -45,7 +45,7 @@ describe('MeshEditor motion', () => {
     ))
     const center = view.container.querySelectorAll('circle')[4]!
     expect(Number(center.getAttribute('cy'))).toBeCloseTo(227.2)
-    setMotionId('blink')
+    flush(() => setMotionId('blink'))
     expect(view.container.querySelectorAll('circle')[4]).toBe(center)
     expect(center).toHaveAttribute('cx', '384')
     expect(center).toHaveAttribute('cy', '240')
@@ -61,7 +61,7 @@ describe('MeshEditor motion', () => {
     expect(centerVertex?.getAttribute('cx')).toBe('320')
     expect(centerVertex?.getAttribute('cy')).toBe('240')
 
-    setPreviewTime(1)
+    flush(() => setPreviewTime(1))
 
     expect(view.container.querySelectorAll('circle')[4]).toBe(centerVertex)
     expect(centerVertex?.getAttribute('cy')).toBe('176')
@@ -94,7 +94,7 @@ describe('MeshEditor motion', () => {
 
     expect(view.container.querySelectorAll('circle')[4]?.getAttribute('cx')).toBe('320')
 
-    setPreviewTime(1)
+    flush(() => setPreviewTime(1))
 
     expect(view.container.querySelectorAll('circle')[4]?.getAttribute('cx')).toBe('420')
     expect(view.container.querySelectorAll('circle')[4]?.getAttribute('cy')).toBe('176')
@@ -178,7 +178,7 @@ describe('MeshEditor motion', () => {
       })
       fireEvent.pointerDown(centerVertex, {button: 0})
       fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 500, clientY: 360}))
-      setDocument({...initialDocument, viewport: {...initialDocument.viewport}})
+      flush(() => setDocument({...initialDocument, viewport: {...initialDocument.viewport}}))
       fireEvent.pointerUp(svg)
     }
 

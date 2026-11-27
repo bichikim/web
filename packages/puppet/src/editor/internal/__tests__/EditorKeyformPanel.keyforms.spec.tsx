@@ -130,25 +130,23 @@ describe('EditorKeyformPanel keyforms', () => {
     })
     const marker = view.getByRole('button', {name: 'Parameter 3 0 키폼'})
 
-    marker.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 400}))
-    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 550}))
+    fireEvent(marker, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 400}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 550}))
     expect(view.getByRole('button', {name: 'Parameter 3 15 키폼'})).toHaveClass('dragging')
     expect(onKeyformMove).not.toHaveBeenCalled()
-    globalThis.dispatchEvent(new MouseEvent('pointerup'))
+    fireEvent(globalThis.window, new MouseEvent('pointerup'))
 
     expect(onKeyformSelect).toHaveBeenCalledWith(fixture.bindingId, [0])
     expect(onKeyformMove).toHaveBeenCalledOnce()
     expect(onKeyformMove).toHaveBeenCalledWith(fixture.bindingId, [0], [15])
-    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 650}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 650}))
     expect(onKeyformMove).toHaveBeenCalledOnce()
 
     const cancelMarker = view.getByRole('button', {name: 'Parameter 3 -30 키폼'})
-    cancelMarker.dispatchEvent(
-      new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 100}),
-    )
-    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 250}))
+    fireEvent(cancelMarker, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 100}))
+    fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 250}))
     expect(view.getByRole('button', {name: 'Parameter 3 -15 키폼'})).toHaveClass('dragging')
-    globalThis.dispatchEvent(new MouseEvent('pointercancel'))
+    fireEvent(globalThis.window, new MouseEvent('pointercancel'))
     expect(view.getByRole('button', {name: 'Parameter 3 -30 키폼'})).not.toHaveClass('dragging')
     expect(onKeyformMove).toHaveBeenCalledOnce()
   })

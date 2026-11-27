@@ -2,7 +2,7 @@
 
 import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {cleanup, fireEvent, render} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createDemoDocument, type PuppetDocument} from '../../../player'
 import {createHistory as useDocumentHistory} from '../../__tests__/fixtures/history'
@@ -63,6 +63,7 @@ test.each(['surface', 'spatial'] as const)(
     expect(history.undo()).toBe(false)
     history.endTransaction()
     expect(history.undo()).toBe(true)
+    flush()
     fireEvent(svg, pointer('pointermove', {clientX: 210, clientY: 220}))
     fireEvent(svg, pointer('pointerup'))
     expect(history.document()).toBe(initial)
@@ -93,7 +94,7 @@ test('should end a spatial drag when the selected spatial deformer changes', () 
     view.getByRole('button', {name: '3D Y축 회전'}),
     pointer('pointerdown', {bubbles: true, clientX: 0}),
   )
-  setActive('group')
+  flush(() => setActive('group'))
   fireEvent(svg, pointer('pointermove', {bubbles: true, clientX: 64}))
   expect(document()).toBe(initial)
   expect(getSceneNode(document(), 'group')).toMatchObject({spatialRotation: [0, 0, 0]})
@@ -193,7 +194,7 @@ test.each(['handle', 'brush'] as const)(
       }),
     )
     const beforeSwitch = document()
-    setValues([30])
+    flush(() => setValues([30]))
     fireEvent(svg, pointer('pointermove', {bubbles: true, clientX: 210, clientY: 220}))
     fireEvent(svg, pointer('pointerup', {bubbles: true}))
     expect(document()).toBe(beforeSwitch)

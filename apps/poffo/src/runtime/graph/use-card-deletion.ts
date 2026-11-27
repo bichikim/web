@@ -1,4 +1,4 @@
-import {batch, createSignal} from 'solid-js'
+import {createSignal} from 'solid-js'
 import type {RuntimeControls} from '../use-runtime-controls'
 import {deleteGraphCard} from './delete-graph-card'
 interface UseCardDeletionProps {
@@ -13,11 +13,9 @@ export const useCardDeletion = (props: UseCardDeletionProps) => {
       return
     }
     const result = deleteGraphCard({id, profile})
-    batch(() => {
-      props.pinParameters(result.keepParameters)
-      setHiddenIds((previous) => [...new Set([...previous, id])])
-      props.controls.updateProfile(result.profile)
-    })
+    props.pinParameters(result.keepParameters)
+    setHiddenIds((previous) => [...new Set([...previous, id])])
+    props.controls.updateProfile(result.profile)
   }
   return {
     hiddenIds,

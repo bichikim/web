@@ -1,4 +1,4 @@
-import {type Accessor, onCleanup, onMount} from 'solid-js'
+import {type Accessor, onSettled} from 'solid-js'
 
 type HistoryShortcut = 'redo' | 'undo'
 
@@ -33,7 +33,7 @@ const getHistoryShortcut = (event: KeyboardEvent): HistoryShortcut | undefined =
 export const useDocumentHistoryShortcuts = (props: UseDocumentHistoryShortcutsProps) => {
   const owner = Symbol('document-history-shortcuts')
 
-  onMount(() => {
+  onSettled(() => {
     activeOwner ??= owner
     const handleKeyDown = (event: KeyboardEvent) => {
       if (activeOwner !== owner || props.active?.() === false) {
@@ -52,12 +52,13 @@ export const useDocumentHistoryShortcuts = (props: UseDocumentHistoryShortcutsPr
     }
 
     globalThis.addEventListener('keydown', handleKeyDown)
-    onCleanup(() => {
+
+    return () => {
       if (activeOwner === owner) {
         activeOwner = null
       }
       globalThis.removeEventListener('keydown', handleKeyDown)
-    })
+    }
   })
 
   return () => {

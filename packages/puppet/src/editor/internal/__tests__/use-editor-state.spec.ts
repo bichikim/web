@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, renderHook} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {createElementModel} from '../../../editor-element/create-element-model'
 import {createDemoDocument, createEmptyDocument} from '../../../player'
@@ -12,7 +12,7 @@ let frameId = 0
 const paint = () => {
   const pending = [...frames.values()]
   frames.clear()
-  pending.forEach((callback) => callback(0))
+  flush(() => pending.forEach((callback) => callback(0)))
 }
 beforeEach(() => {
   localStorage.clear()
@@ -49,12 +49,15 @@ test('should retain the starting viewport time during playback and resume live t
   const player = createPlayerFixture()
   state.handlePlayerChange(player)
   state.setCurrentTime(2)
+  flush()
   state.handlePlaybackToggle()
   state.setCurrentTime(3)
+  flush()
   expect(state.isPlaying()).toBe(true)
   expect(state.viewportTime()).toBe(2)
   expect(player.play).toHaveBeenCalledOnce()
   state.handlePlaybackToggle()
+  flush()
   expect(state.isPlaying()).toBe(false)
   expect(state.viewportTime()).toBe(3)
 })
@@ -63,13 +66,16 @@ test('should ignore missing motions and seek a valid motion after pausing playba
   const {model, state} = createFixture()
   const player = createPlayerFixture()
   state.handlePlayerChange(player)
+  flush()
   state.handleMotionChange('missing')
   state.handleMotionSeek('missing', 5)
   expect(player.setMotion).not.toHaveBeenCalled()
   expect(player.seek).not.toHaveBeenCalled()
   state.handlePlaybackToggle()
+  flush()
   const motionId = model.document().motions[0]!.id
   state.handleMotionSeek(motionId, 2.5)
+  flush()
   expect(state.isPlaying()).toBe(false)
   expect(state.activeMotionId()).toBe(motionId)
   expect(state.currentTime()).toBe(2.5)
@@ -80,6 +86,7 @@ test('should ignore missing motions and seek a valid motion after pausing playba
 test('should expose requested mode feedback before applying the deferred workspace change', async () => {
   const {state} = createFixture()
   const selected = state.control.commands.selectMode('animation')
+  flush()
   expect(selected.status).toBe('accepted')
   expect(state.control.getState().mode).toBe('animation')
   expect(state.workspace()).toBe('modeling')
@@ -112,6 +119,7 @@ test('should clear old-model selection and playback state after a host replaceme
     requestId: 'replace',
     type: 'replace',
   })
+  flush()
   expect(state.sourceDocument()).toBe(document)
   expect(state.layerSelection()).toEqual({activeNodeId: null, nodeIds: []})
   expect(state.activeVertexIndex()).toBeNull()
@@ -128,13 +136,16 @@ test('should keep an unfinished host edit active until it commits before deactiv
   state.handleDocumentEditStart()
   state.history.setDocument({...model.document(), framesPerSecond: 48})
   setActive(false)
+  flush()
   expect(state.control.getState().lifecycle).toBe('active')
   expect(model.read().transaction).not.toBeNull()
   state.history.endTransaction()
+  flush()
   expect(state.control.getState().lifecycle).toBe('inactive')
   expect(model.read().undoCount).toBe(1)
   expect(model.document().framesPerSecond).toBe(48)
   setActive(true)
+  flush()
   expect(state.control.getState().lifecycle).toBe('active')
 })
 

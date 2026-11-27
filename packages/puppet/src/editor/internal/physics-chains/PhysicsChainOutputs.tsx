@@ -1,4 +1,4 @@
-import {For, Index} from 'solid-js'
+import {For} from 'solid-js'
 import {EditorButton, EditorCheckbox, EditorNumberField, EditorSelect} from '../../../design-system'
 import {PUPPET_PHYSICS_AXES} from '../../../player'
 import {createChainOutput, patchItem} from '../physics-chains'
@@ -13,7 +13,7 @@ const OUTPUT_NUMBER_FIELDS = [
 export const PhysicsChainOutputs = (props: ChainProps) => (
   <fieldset class="entry-fields">
     <legend>출력</legend>
-    <Index each={props.chain.outputs}>
+    <For keyed={false} each={props.chain.outputs}>
       {(output, index) => (
         <div class="entry-fields">
           <EditorSelect
@@ -104,7 +104,7 @@ export const PhysicsChainOutputs = (props: ChainProps) => (
           </EditorButton>
         </div>
       )}
-    </Index>
+    </For>
     <EditorButton
       disabled={props.disabled || createChainOutput(props.document, props.chain) === undefined}
       onClick={() => {

@@ -1,5 +1,6 @@
 import {useSkinSessionControls} from './skin-session'
-import {createEffect, createMemo, createSignal, type JSX, on} from 'solid-js'
+import {createEffect, createMemo, createSignal} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import {useSkinPaintGesture} from './use-skin-paint-gesture'
 import {getDocumentScene, type PuppetDocument} from '../../player'
 import type {MeshEditorProps} from '../mesh-editor-contract'
@@ -102,15 +103,13 @@ export const useSkinningTools = (props: SkinningToolsProps) => {
     onStart: () => props.onEditStart?.(),
   })
   createEffect(
-    on(
-      () => props.activePartId,
-      () => {
-        gesture.stop()
-        setEnabled(false)
-        setSelected([])
-        setTarget(0)
-      },
-    ),
+    () => props.activePartId,
+    () => {
+      gesture.stop()
+      setEnabled(false)
+      setSelected([])
+      setTarget(0)
+    },
   )
   return {
     amount,

@@ -1,6 +1,6 @@
 import {WeightPaintControls} from './WeightPaintControls'
 import {EditorButton, EditorNumberField, EditorToggleButton} from '../../design-system'
-import {For, Index, Show} from 'solid-js'
+import {For, Show} from 'solid-js'
 import type {SelectedDeformerProps} from './DeformerEditor'
 import {useDeformerWeights} from './use-deformer-weights'
 
@@ -29,7 +29,7 @@ export const DeformerWeights = (props: SelectedDeformerProps) => {
                   {vertex().partId} · 정점 {vertex().vertexIndex + 1}
                 </legend>
                 <p class="mask-empty-state">{editor.manual() ? '수동 영향도' : '자동 영향도'}</p>
-                <Index each={editor.weights()}>
+                <For keyed={false} each={editor.weights()}>
                   {(weight, index) => (
                     <label>
                       {editor.isBone() ? `본 ${index + 1}` : '디포머'}
@@ -47,7 +47,7 @@ export const DeformerWeights = (props: SelectedDeformerProps) => {
                       />
                     </label>
                   )}
-                </Index>
+                </For>
                 <EditorButton
                   class="mask-action-button"
                   disabled={editor.locked() || !editor.manual()}
@@ -69,7 +69,7 @@ export const DeformerWeights = (props: SelectedDeformerProps) => {
           aria-label="디포머 영향도 정점 선택"
           viewBox={editor.viewBox()}
           tabindex={0}
-          classList={{'weight-paint-active': editor.tool() === 'paint'}}
+          class={{'weight-paint-active': editor.tool() === 'paint'}}
           onPointerDown={editor.brush.start}
           onPointerMove={editor.brush.move}
           onPointerUp={editor.brush.end}
@@ -102,17 +102,19 @@ export const DeformerWeights = (props: SelectedDeformerProps) => {
           <For each={editor.vertices()}>
             {(vertex) => (
               <circle
-                class="bone-weight-vertex"
-                classList={{
-                  selected: editor.isSelected(vertex),
-                }}
+                class={[
+                  'bone-weight-vertex',
+                  {
+                    selected: editor.isSelected(vertex),
+                  },
+                ]}
                 cx={vertex.x}
                 cy={vertex.y}
                 role="button"
                 tabindex={editor.tool() === 'select' ? 0 : -1}
                 style={{'--weight': editor.influence(vertex)}}
                 aria-label={`${vertex.partId} 정점 ${vertex.vertexIndex + 1}`}
-                aria-pressed={editor.isSelected(vertex)}
+                aria-pressed={editor.isSelected(vertex) ? 'true' : 'false'}
                 onClick={(event) => editor.select(vertex, event.shiftKey)}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {

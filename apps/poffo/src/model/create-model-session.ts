@@ -1,13 +1,4 @@
-import {batch, createMemo, createSignal} from 'solid-js'
-import {
-  createModelState,
-  getModelView,
-  type ModelAction,
-  type ModelBinding,
-  type ModelChange,
-  type ModelCommandResult,
-  reduceModel,
-} from '@winter-love/puppet/editor'
+import {createModelBinding, type ModelBinding, type ModelChange} from '@winter-love/puppet/editor'
 import type {PuppetDocument} from '@winter-love/puppet/player'
 
 export interface CreateModelSessionOptions {
@@ -20,27 +11,13 @@ export interface CreateModelSessionOptions {
 }
 
 /** Owns the single mutable document/history state used by Editor, Studio and Viewer. */
-export const createModelSession = (options: CreateModelSessionOptions): ModelBinding => {
-  const [state, setState] = createSignal(createModelState(options))
-  const [change, setChange] = createSignal<ModelChange | null>(null)
-  const document = createMemo(() => state().document)
-  const revision = createMemo(() => state().revision)
-  const read = createMemo(() => getModelView(state(), change()))
-  const request = (action: ModelAction): ModelCommandResult => {
-    const result = reduceModel(state(), action)
-    if (!result.ok) {
-      return result
-    }
-    batch(() => {
-      setState(result.state)
-      if (result.change !== null) {
-        setChange(result.change)
+export const createModelSession = (options: CreateModelSessionOptions): ModelBinding =>
+  createModelBinding({
+    document: options.document,
+    onApply: ({state, change}) => {
+      if (change?.phase === 'commit' && change.kind !== 'reset') {
+        options.onCommit?.(state.document, change)
       }
-      if (result.change?.phase === 'commit' && result.change.kind !== 'reset') {
-        options.onCommit?.(result.state.document, result.change)
-      }
-    })
-    return {changed: result.change !== null, ok: true, revision: result.state.revision}
-  }
-  return {document, read, request, revision}
-}
+    },
+    sessionId: options.sessionId,
+  })

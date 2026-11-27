@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render, waitFor, within} from '@solidjs/testing-library'
-import {ErrorBoundary} from 'solid-js'
+import {Errored} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {createDocumentSession} from '../create-document-session'
 import {WorkspaceApp as EditorApp} from '../WorkspaceApp'
@@ -91,9 +91,9 @@ test('should offer a retry when loading a document fails', async () => {
   })
   const loadInitialDocument = vi.fn().mockRejectedValue(new Error('network unavailable'))
   const view = render(() => (
-    <ErrorBoundary fallback={<p>Unhandled document failure</p>}>
+    <Errored fallback={<p>Unhandled document failure</p>}>
       <EditorApp loadInitialDocument={loadInitialDocument} />
-    </ErrorBoundary>
+    </Errored>
   ))
   await waitFor(() =>
     expect(view.getByRole('alert')).toHaveTextContent('문서를 불러오지 못했습니다.'),

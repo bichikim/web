@@ -1,4 +1,5 @@
-import {createUniqueId, type JSX} from 'solid-js'
+import {createUniqueId} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import {EditorParameterNames} from './EditorParameterNames'
 import {useSwipeDelete} from './use-swipe-delete'
 import {EditorParameterItemFooter} from './EditorParameterItemFooter'
@@ -36,8 +37,7 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
 
   return (
     <div
-      class="parameter-swipe-row"
-      classList={{armed: swipe.armed(), dragging: swipe.dragging()}}
+      class={['parameter-swipe-row', {armed: swipe.armed(), dragging: swipe.dragging()}]}
       style={{'--parameter-swipe-offset': `${swipe.offset()}px`}}
     >
       <div class="parameter-swipe-delete" aria-hidden="true">

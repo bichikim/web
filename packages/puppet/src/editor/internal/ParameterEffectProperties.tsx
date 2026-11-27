@@ -1,4 +1,4 @@
-import {createSignal, For, Index, Show} from 'solid-js'
+import {createEffect, createSignal, For, Show} from 'solid-js'
 
 import {EditorButton, EditorNumberField, EditorSelect} from '../../design-system'
 import type {PuppetDocument} from '../../player'
@@ -30,6 +30,16 @@ export const ParameterEffectProperties = <
   props: ParameterEffectPropertiesProps<Key, Entry>,
 ) => {
   const [addButton, setAddButton] = createSignal<HTMLButtonElement>()
+  const [focusRequested, setFocusRequested] = createSignal(false)
+  createEffect(
+    () => (focusRequested() ? addButton() : undefined),
+    (button) => {
+      if (button !== undefined) {
+        button.focus()
+        setFocusRequested(false)
+      }
+    },
+  )
   const disabled = () => props.disabled === true || props.onDocumentChange === undefined
   const commit = (document: PuppetDocument | undefined) => {
     if (document === undefined || disabled()) {
@@ -46,7 +56,7 @@ export const ParameterEffectProperties = <
     // The next entry's row takes this one's place, so focus moves to the add action instead of
     // staying on a delete button for another entry.
     if (commit(props.effect.remove(props.document, index))) {
-      addButton()?.focus()
+      setFocusRequested(true)
     }
   }
   return (
@@ -56,7 +66,7 @@ export const ParameterEffectProperties = <
       tooltip={props.effect.tooltip}
     >
       {/* Entries are addressed by position, so rows stay mounted while they are edited. */}
-      <Index each={entries()}>
+      <For keyed={false} each={entries()}>
         {(entry, index) => (
           <fieldset class="entry-fields">
             <legend>{name(entry().parameterId)}</legend>
@@ -97,7 +107,7 @@ export const ParameterEffectProperties = <
             </EditorButton>
           </fieldset>
         )}
-      </Index>
+      </For>
       <Show when={entries().length < parameterIds().length}>
         <EditorButton
           ref={setAddButton}

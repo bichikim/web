@@ -29,8 +29,8 @@ export const createSkinSession = () => {
     },
   }
 }
-export const SkinSessionContext = createContext<ReturnType<typeof createSkinSession>>()
-export const useSkinSession = () => useContext(SkinSessionContext)
+export const SkinSessionContext = createContext<ReturnType<typeof createSkinSession> | null>(null)
+export const useSkinSession = () => useContext(SkinSessionContext) ?? undefined
 
 export const useSkinSessionControls = (
   part: () => string | undefined,

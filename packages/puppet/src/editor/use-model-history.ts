@@ -1,4 +1,4 @@
-import {onCleanup} from 'solid-js'
+import {getOwner, isDisposed, onCleanup} from 'solid-js'
 import type {PuppetDocument} from '../player/document'
 import type {ModelBinding, ModelCommandResult, ModelHistoryEntry, ModelOrigin} from './model'
 
@@ -25,8 +25,9 @@ export const useModelHistory = (
   ownerId: string,
   isActive: () => boolean = () => true,
 ): ModelHistoryBinding => {
+  const owner = getOwner()
   let released = false
-  const writable = () => !released && isActive()
+  const writable = () => !released && (owner === null || !isDisposed(owner)) && isActive()
   let sequence = 0
   let transactionId: string | undefined
   const origin = (): ModelOrigin => {

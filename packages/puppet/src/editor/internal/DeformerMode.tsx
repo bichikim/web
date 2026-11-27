@@ -1,6 +1,6 @@
 import {EditorSegmentedField} from '../../design-system'
 import {Show} from 'solid-js'
-import {Portal} from 'solid-js/web'
+import {Portal} from '@solidjs/web'
 
 export type DeformerEditMode = 'rest' | 'pose'
 

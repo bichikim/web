@@ -1,4 +1,4 @@
-import {type Accessor, createEffect, createSignal, on} from 'solid-js'
+import {type Accessor, createEffect, createSignal, createTrackedEffect} from 'solid-js'
 import type {PuppetDocument} from '@winter-love/puppet/player'
 import {createRuntimeProfile} from '../tracking/create-runtime-profile'
 import {restoreRuntimeProfile} from '../tracking/restore-runtime-profile'
@@ -12,29 +12,27 @@ const storageKey = (signature: string) => `puppet:runtime-profile:v1:${signature
 export const useRuntimeProfile = (document: Accessor<PuppetDocument | undefined>) => {
   const [profile, setProfile] = createSignal<RuntimeProfile>()
   const [error, setError] = createSignal<string | null>(null)
-  createEffect(
-    on(document, (current) => {
-      if (current === undefined) {
-        setProfile(undefined)
-        return
-      }
-      const defaults = createRuntimeProfile(current)
-      try {
-        const stored =
-          sessionStorage.getItem(sessionKey(defaults.signature)) ??
-          localStorage.getItem(storageKey(defaults.signature))
-        setProfile(
-          stored === null
-            ? defaults
-            : (restoreRuntimeProfile(JSON.parse(stored), current) ?? defaults),
-        )
-      } catch (cause) {
-        setProfile(defaults)
-        setError(cause instanceof Error ? cause.message : '설정을 불러오지 못했습니다.')
-      }
-    }),
-  )
-  createEffect(() => {
+  createEffect(document, (current) => {
+    if (current === undefined) {
+      setProfile(undefined)
+      return
+    }
+    const defaults = createRuntimeProfile(current)
+    try {
+      const stored =
+        sessionStorage.getItem(sessionKey(defaults.signature)) ??
+        localStorage.getItem(storageKey(defaults.signature))
+      setProfile(
+        stored === null
+          ? defaults
+          : (restoreRuntimeProfile(JSON.parse(stored), current) ?? defaults),
+      )
+    } catch (cause) {
+      setProfile(defaults)
+      setError(cause instanceof Error ? cause.message : '설정을 불러오지 못했습니다.')
+    }
+  })
+  createTrackedEffect(() => {
     const current = profile()
     if (current !== undefined) {
       try {

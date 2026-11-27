@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {renderHook} from '@solidjs/testing-library'
+import {fireEvent, renderHook} from '@solidjs/testing-library'
 import {beforeEach, describe, expect, test} from 'vitest'
 import {usePanelLayout} from '../use-panel-layout'
 
@@ -14,13 +14,13 @@ describe('usePanelLayout', () => {
     (type) => {
       const {result, cleanup} = renderHook(usePanelLayout)
       result.startResize('left', pointer('pointerdown', 1) as PointerEvent)
-      globalThis.dispatchEvent(pointer(type, 2, 0))
+      fireEvent(globalThis.window, pointer(type, 2, 0))
       expect(result.leftSize()).toBe(300)
       expect(result.leftOpen()).toBe(true)
       expect(result.resizingPosition()).toBe('left')
-      globalThis.dispatchEvent(pointer('pointermove', 1, 320))
+      fireEvent(globalThis.window, pointer('pointermove', 1, 320))
       expect(result.leftSize()).toBe(320)
-      globalThis.dispatchEvent(pointer('pointerup', 1))
+      fireEvent(globalThis.window, pointer('pointerup', 1))
       expect(result.resizingPosition()).toBeNull()
       cleanup()
     },
@@ -29,10 +29,10 @@ describe('usePanelLayout', () => {
   test('should release resize listeners when the window loses focus', () => {
     const {result, cleanup} = renderHook(usePanelLayout)
     result.startResize('left', pointer('pointerdown', 1) as PointerEvent)
-    globalThis.dispatchEvent(new Event('blur'))
+    fireEvent(globalThis.window, new Event('blur'))
     expect(result.resizingPosition()).toBeNull()
-    globalThis.dispatchEvent(pointer('pointermove', 1, 0))
-    globalThis.dispatchEvent(pointer('pointerup', 1))
+    fireEvent(globalThis.window, pointer('pointermove', 1, 0))
+    fireEvent(globalThis.window, pointer('pointerup', 1))
     expect(result.leftSize()).toBe(300)
     expect(result.leftOpen()).toBe(true)
     cleanup()

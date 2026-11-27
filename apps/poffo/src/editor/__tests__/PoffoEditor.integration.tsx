@@ -6,7 +6,7 @@ import {isTwoDimensionalParameterBinding} from '../../../../../packages/puppet/s
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {createDemoDocument, type PuppetDocument} from '@winter-love/puppet/player'
 import {EditorFixture as PuppetEditor} from './fixtures/Editor'
@@ -180,7 +180,9 @@ describe('PuppetEditor', () => {
       ).toBe('176'),
     )
 
-    fireEvent.click(view.getByRole('button', {name: '재생'}))
+    const playback = view.getByRole('button', {name: '재생'})
+    await waitFor(() => expect(playback).toBeEnabled())
+    fireEvent.click(playback)
     expect(player.play).toHaveBeenCalledOnce()
     fireEvent.click(view.getByRole('button', {name: '정지'}))
     expect(player.pause).toHaveBeenCalledTimes(2)
@@ -188,15 +190,16 @@ describe('PuppetEditor', () => {
     await waitFor(() =>
       expect(view.getByRole('slider', {name: '재생 위치'})).toHaveAttribute('aria-valuenow', '1'),
     )
-    fireEvent.focus(view.getByRole('slider', {name: '재생 위치'}))
-    fireEvent.keyDown(view.getByRole('slider', {name: '재생 위치'}), {key: 'End'})
+    const seek = view.getByRole('slider', {name: '재생 위치'})
+    flush(() => seek.focus())
+    fireEvent.keyDown(seek, {key: 'End'})
     expect(player.seek).toHaveBeenCalledWith(2)
 
     fireEvent.keyDown(view.getByRole('button', {name: /모션 선택/}), {key: 'Enter'})
     await waitFor(() => screen.getByRole('option', {name: '모든 타임라인 보기'}))
     fireEvent.keyDown(screen.getByRole('option', {name: '모든 타임라인 보기'}), {key: 'Enter'})
     const blinkSeek = view.getByRole('slider', {name: 'blink 재생 위치'})
-    fireEvent.focus(blinkSeek)
+    flush(() => blinkSeek.focus())
     fireEvent.keyDown(blinkSeek, {key: 'End'})
 
     expect(player.setMotion).toHaveBeenLastCalledWith('blink')
@@ -227,11 +230,13 @@ describe('PuppetEditor', () => {
       view.container.querySelectorAll('[data-part-id="mesh-preview"] circle')[4]?.getAttribute('cy')
     const overlays = view.container.querySelector('.editing-overlays')
     expect(view.getByRole('group', {name: '표시 설정'})).toBeInTheDocument()
-    onFrame?.({duration: 2, motionId: 'idle-deform', time: 0.5})
+    flush(() => onFrame?.({duration: 2, motionId: 'idle-deform', time: 0.5}))
     const startPosition = vertex()
 
-    fireEvent.click(view.getByRole('button', {name: '재생'}))
-    onFrame?.({duration: 2, motionId: 'idle-deform', time: 1})
+    const playback = view.getByRole('button', {name: '재생'})
+    await waitFor(() => expect(playback).toBeEnabled())
+    fireEvent.click(playback)
+    flush(() => onFrame?.({duration: 2, motionId: 'idle-deform', time: 1}))
 
     expect(view.getByRole('slider', {name: '재생 위치'})).toHaveAttribute('aria-valuenow', '1')
     expect(vertex()).toBe(startPosition)

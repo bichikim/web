@@ -1,4 +1,4 @@
-import {render} from 'solid-js/web'
+import {render} from '@solidjs/web'
 import {ComparisonPage} from './ComparisonPage'
 
 const root = document.getElementById('comparison-root')

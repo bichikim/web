@@ -1,4 +1,3 @@
-import {getOwner, runWithOwner} from 'solid-js'
 import {EditorDiamondButton} from '../../../design-system'
 import type {PuppetParameterValues} from '../../../deformation'
 import type {PuppetParameter} from '../../../player/document'
@@ -15,7 +14,6 @@ export interface EditorParameterValueScrubberProps {
   readonly value: number
 }
 export const EditorParameterValueScrubber = (props: EditorParameterValueScrubberProps) => {
-  const owner = getOwner()
   const handleValueDrag = (event: PointerEvent, bounds: DOMRect) => {
     props.onValueChange?.([
       getParameterPointerValue(props.parameter, bounds.left, bounds.width, event.clientX),
@@ -34,12 +32,7 @@ export const EditorParameterValueScrubber = (props: EditorParameterValueScrubber
     const value = getParameterKeyboardValue(props.parameter, props.value, event.key)
     if (value !== undefined) {
       event.preventDefault()
-      const update = () => props.onValueChange?.([value])
-      if (owner === null) {
-        update()
-      } else {
-        runWithOwner(owner, update)
-      }
+      props.onValueChange?.([value])
     }
   }
   return (

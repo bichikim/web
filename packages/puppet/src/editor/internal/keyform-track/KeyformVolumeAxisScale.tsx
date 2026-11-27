@@ -33,7 +33,7 @@ export const KeyformVolumeAxisScale = (props: KeyformVolumeAxisScaleProps) => {
       props.parameter.minimum + (props.parameter.maximum - props.parameter.minimum) * value,
     )
   return (
-    <g class="parameter-volume-scale" classList={{'parameter-volume-scale-y': props.axis === 'y'}}>
+    <g class={['parameter-volume-scale', {'parameter-volume-scale-y': props.axis === 'y'}]}>
       <For each={progress()}>
         {(value) => (
           <g transform={`translate(${position(value).join(' ')})`}>

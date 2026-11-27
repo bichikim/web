@@ -19,6 +19,7 @@ export const FileAction = (props: FileActionProps) => {
   const handleChange = (event: Event & {currentTarget: HTMLInputElement}) => {
     const file = event.currentTarget.files?.[0]
     event.currentTarget.value = ''
+    props.onClose()
     props.onReturnFocus?.()
     props.onImport?.(file)
   }

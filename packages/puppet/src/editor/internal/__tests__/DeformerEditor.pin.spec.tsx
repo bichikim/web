@@ -2,7 +2,7 @@
 
 import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {fireEvent, render} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument, parseDocument, type PuppetSceneDeformerNode} from '../../../player'
 import {transformDeformerPoint} from '../../../deformation'
@@ -66,7 +66,7 @@ test('should add and delete pins without losing the pose', () => {
   fireEvent.dblClick(svg, {clientX: 750, clientY: 300})
   expect(node().pins).toHaveLength(2)
   expect(transformDeformerPoint(node(), point)).toEqual(posed)
-  setDocument(beforeAppend)
+  flush(() => setDocument(beforeAppend))
   expect(view.getByRole('button', {name: '핀 1'})).toHaveAttribute('aria-pressed', 'true')
   fireEvent.dblClick(svg, {clientX: 750, clientY: 300})
   fireEvent.keyDown(svg, {key: 'Backspace'})

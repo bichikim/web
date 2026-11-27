@@ -1,4 +1,5 @@
-import {createMemo, type JSX, Show} from 'solid-js'
+import {createMemo, Show} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import {
   isParameterTuple,
   isThreeDimensionalParameterBinding,
@@ -69,14 +70,16 @@ export const EditorKeyformTrackLabel = (props: EditorKeyformTrackLabelProps) => 
 
   return (
     <div
-      class="keyform-track-label"
+      class={[
+        'keyform-track-label',
+        {
+          'parameter-grid-label': isTwoDimensionalParameterBinding(props.binding),
+          'parameter-line-label': props.binding.parameterIds.length === 1,
+          'parameter-volume-label': isThreeDimensionalParameterBinding(props.binding),
+        },
+      ]}
       role="group"
       aria-label={`${props.parameters.map((parameter) => parameter.name).join(' / ')} 파라미터`}
-      classList={{
-        'parameter-grid-label': isTwoDimensionalParameterBinding(props.binding),
-        'parameter-line-label': props.binding.parameterIds.length === 1,
-        'parameter-volume-label': isThreeDimensionalParameterBinding(props.binding),
-      }}
     >
       <Show when={firstParameter()}>
         {(parameter) => (

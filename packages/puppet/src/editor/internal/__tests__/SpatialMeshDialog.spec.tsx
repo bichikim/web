@@ -2,7 +2,7 @@
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 
 import type {PuppetPart} from '../../../player'
 import {createSpatialEditorObject} from '../spatial-editor-objects'
@@ -36,7 +36,7 @@ test.each([
   const button = screen.getByRole('button', {name: '회전'})
   button.focus()
   const event = new KeyboardEvent('keydown', {bubbles: true, cancelable: true, ...shortcut})
-  button.dispatchEvent(event)
+  fireEvent(button, event)
   expect(onUndo).not.toHaveBeenCalled()
   expect(onRedo).not.toHaveBeenCalled()
   expect(event.defaultPrevented).toBe(true)
@@ -72,7 +72,7 @@ test.each([
       ctrlKey: true,
       key: 'z',
     })
-    input.dispatchEvent(event)
+    fireEvent(input, event)
     expect(event.defaultPrevented).toBe(false)
     expect(onUndo).not.toHaveBeenCalled()
     expect(input).toHaveFocus()
@@ -101,7 +101,7 @@ test.each([
     ctrlKey: true,
     key: 'z',
   })
-  input.dispatchEvent(event)
+  fireEvent(input, event)
   expect(event.defaultPrevented).toBe(true)
   expect(input).toHaveFocus()
   view.unmount()
@@ -194,8 +194,8 @@ test.each(['reopen', 'dispose'] as const)(
     ))
     fireEvent.change(screen.getByLabelText('GLB 메시 가져오기'), {target: {files: [file]}})
     if (end === 'reopen') {
-      setOpen(false)
-      setOpen(true)
+      flush(() => setOpen(false))
+      flush(() => setOpen(true))
     } else {
       view.unmount()
     }

@@ -1,5 +1,5 @@
 import {Collapsible} from '@kobalte/core/collapsible'
-import type {JSX} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 
 interface InfluenceEditorTriggerProps {
   readonly label?: string

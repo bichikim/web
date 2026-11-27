@@ -1,4 +1,4 @@
-import {type Accessor, createEffect, createSignal, on, onCleanup} from 'solid-js'
+import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
 import type {PuppetDocument, PuppetPoint, PuppetSceneDeformerNode} from '../../player'
 import type {DeformerEditorProps} from './DeformerEditor'
 import {getParameterEditTarget} from './parameter-edit-target'
@@ -80,7 +80,7 @@ const useStrokeCancellation = (
       cancel()
     }
   }
-  createEffect(on(() => [props.editor.document, props.editable()], cancel))
+  createEffect(() => [props.editor.document, props.editable()], cancel)
   useDeformerGestureCancellation(props.editor, cancel)
   globalThis.addEventListener('keydown', handleKeyDown)
   globalThis.addEventListener('blur', cancel)

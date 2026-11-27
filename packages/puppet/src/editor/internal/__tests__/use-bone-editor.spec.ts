@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
-import {renderHook} from '@solidjs/testing-library'
+import {flush} from 'solid-js'
+import {fireEvent, renderHook} from '@solidjs/testing-library'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument} from '../../../player'
 import {convertSceneContainers} from '../container-conversion'
@@ -28,7 +29,7 @@ const setup = () => {
     top: 0,
     width: 960,
   } as DOMRect)
-  editor.bind(svg)
+  flush(() => editor.bind(svg))
   const event = (pointerId: number) =>
     ({
       button: 0,
@@ -39,7 +40,7 @@ const setup = () => {
       preventDefault: vi.fn(),
       stopPropagation: vi.fn(),
     }) as unknown as PointerEvent
-  editor.start(event(1), 0)
+  flush(() => editor.start(event(1), 0))
   return {change, cleanup, editor, end, event}
 }
 
@@ -58,7 +59,7 @@ test('should ignore movement and release from another pointer', () => {
 
 test('should finish an active gesture on window blur and ignore later moves', () => {
   const {change, cleanup, editor, end, event} = setup()
-  globalThis.dispatchEvent(new Event('blur'))
+  fireEvent(globalThis.window, new Event('blur'))
   expect(end).toHaveBeenCalledOnce()
   editor.drag(event(1))
   expect(change).not.toHaveBeenCalled()

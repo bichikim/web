@@ -1,4 +1,4 @@
-import {batch, createEffect, createSignal, onCleanup} from 'solid-js'
+import {createEffect, createSignal, onCleanup} from 'solid-js'
 import type {
   EditorAccepted,
   EditorCancelled,
@@ -60,24 +60,32 @@ const moveHistory = (options: CreateEditorControlOptions, action: ModelMove) => 
 }
 
 export const createEditorControl = (options: CreateEditorControlOptions): EditorController => {
-  const [phase, setPhase] = createSignal<EditorLifecycle>(
-    options.initiallyActive === false ? 'inactive' : 'active',
-  )
-  const [pending, setPending] = createSignal<PendingMode | null>(null)
+  let currentPhase: EditorLifecycle = options.initiallyActive === false ? 'inactive' : 'active'
+  let currentMode: PendingMode | null = null
+  const [phase, publishPhase] = createSignal<EditorLifecycle>(currentPhase)
+  const [pending, publishMode] = createSignal<PendingMode | null>(null)
+  const setPhase = (next: EditorLifecycle) => {
+    currentPhase = next
+    publishPhase(next)
+  }
+  const setPending = (next: PendingMode | null) => {
+    currentMode = next
+    publishMode(next)
+  }
   let sequence = 0
   const origin = (): ModelOrigin => {
     sequence += 1
     return {ownerId: options.ownerId, requestId: `${options.ownerId}:control:${sequence}`}
   }
   const rejection = (): EditorRejected | null => {
-    const current = phase()
+    const current = currentPhase
     if (current === 'disposed') {
       return {reason: 'stale-instance', status: 'rejected'}
     }
     return current === 'active' ? null : {reason: 'inactive', status: 'rejected'}
   }
   const cancelMode = (reason: EditorCancelled['reason']) => {
-    const current = pending()
+    const current = currentMode
     if (current !== null) {
       setPending(null)
       options.resetSelection()
@@ -85,13 +93,13 @@ export const createEditorControl = (options: CreateEditorControlOptions): Editor
     }
   }
   const transition = (next: EditorLifecycle): EditorCommandResult => {
-    if (phase() === 'disposed') {
+    if (currentPhase === 'disposed') {
       return {reason: 'stale-instance', status: 'rejected'}
     }
-    if (phase() === next) {
+    if (currentPhase === next) {
       return {changed: false, status: 'completed'}
     }
-    if (next === 'suspended' && phase() === 'inactive') {
+    if (next === 'suspended' && currentPhase === 'inactive') {
       return {reason: 'inactive', status: 'rejected'}
     }
     if (next !== 'active' && options.model.read().transaction !== null) {
@@ -105,7 +113,7 @@ export const createEditorControl = (options: CreateEditorControlOptions): Editor
     return {changed: true, status: 'completed'}
   }
   const dispose = () => {
-    if (phase() !== 'disposed') {
+    if (currentPhase !== 'disposed') {
       setPhase('disposed')
       cancelMode('disposed')
       options.stop()
@@ -114,14 +122,15 @@ export const createEditorControl = (options: CreateEditorControlOptions): Editor
     }
   }
   onCleanup(dispose)
-  createEffect(() => {
-    const current = pending()
-    const local = options.read()
-    if (current !== null && !local.modePending) {
-      setPending(null)
-      settleMode(current, local)
-    }
-  })
+  createEffect(
+    () => ({current: pending(), local: options.read()}),
+    ({current, local}) => {
+      if (current !== null && currentMode === current && !local.modePending) {
+        setPending(null)
+        settleMode(current, local)
+      }
+    },
+  )
   const selectMode = (mode: EditorMode): EditorAccepted | EditorRejected => {
     const rejected = rejection()
     if (rejected !== null) {
@@ -133,15 +142,13 @@ export const createEditorControl = (options: CreateEditorControlOptions): Editor
     cancelMode('superseded')
     const id = origin().requestId
     const finished = new Promise<EditorModeCompleted | EditorCancelled>((resolve) => {
-      batch(() => {
-        options.selectMode(mode)
-        setPending({id, mode, resolve})
-      })
+      options.selectMode(mode)
+      setPending({id, mode, resolve})
     })
     return {
       operation: {
         cancel: () => {
-          if (pending()?.id === id) {
+          if (currentMode?.id === id) {
             cancelMode('cancelled')
           }
         },
@@ -179,11 +186,12 @@ export const createEditorControl = (options: CreateEditorControlOptions): Editor
     },
     getState: () => {
       const model = options.model.read()
+      phase()
       return {
         ...options.read(),
         canRedo: model.transaction === null && model.redoCount > 0,
         canUndo: model.transaction === null && model.undoCount > 0,
-        lifecycle: phase(),
+        lifecycle: currentPhase,
         redoCount: model.redoCount,
         revision: model.revision,
         sessionId: model.sessionId,

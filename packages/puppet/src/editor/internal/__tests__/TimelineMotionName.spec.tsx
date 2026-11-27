@@ -43,35 +43,35 @@ test.each([
 
 test('should ignore other pointers while swiping a motion name', () => {
   const {button, onDelete} = renderName()
-  button.dispatchEvent(pointer('pointerdown', 1))
-  globalThis.dispatchEvent(pointer('pointermove', 2, 100))
-  globalThis.dispatchEvent(pointer('pointerup', 2, 100))
+  fireEvent(button, pointer('pointerdown', 1))
+  fireEvent(globalThis.window, pointer('pointermove', 2, 100))
+  fireEvent(globalThis.window, pointer('pointerup', 2, 100))
   expect(onDelete).not.toHaveBeenCalled()
-  globalThis.dispatchEvent(pointer('pointermove', 1, 100))
-  globalThis.dispatchEvent(pointer('pointerup', 2, 100))
+  fireEvent(globalThis.window, pointer('pointermove', 1, 100))
+  fireEvent(globalThis.window, pointer('pointerup', 2, 100))
   expect(onDelete).not.toHaveBeenCalled()
-  globalThis.dispatchEvent(pointer('pointerup', 1, 100))
+  fireEvent(globalThis.window, pointer('pointerup', 1, 100))
   expect(onDelete).toHaveBeenCalledOnce()
 })
 
 test('should discard an armed motion swipe on window blur', () => {
   const {button, onDelete} = renderName()
-  button.dispatchEvent(pointer('pointerdown', 1))
-  globalThis.dispatchEvent(pointer('pointermove', 1, 100))
-  globalThis.dispatchEvent(new Event('blur'))
-  globalThis.dispatchEvent(pointer('pointerup', 1, 100))
+  fireEvent(button, pointer('pointerdown', 1))
+  fireEvent(globalThis.window, pointer('pointermove', 1, 100))
+  fireEvent(globalThis.window, new Event('blur'))
+  fireEvent(globalThis.window, pointer('pointerup', 1, 100))
   expect(onDelete).not.toHaveBeenCalled()
 })
 
 test('should delete on a completed leftward swipe and ignore a rightward swipe', () => {
   const {button, onDelete} = renderName()
-  button.dispatchEvent(pointer('pointerdown', 1))
-  globalThis.dispatchEvent(pointer('pointermove', 1, 300))
-  globalThis.dispatchEvent(pointer('pointerup', 1, 300))
+  fireEvent(button, pointer('pointerdown', 1))
+  fireEvent(globalThis.window, pointer('pointermove', 1, 300))
+  fireEvent(globalThis.window, pointer('pointerup', 1, 300))
   expect(onDelete).not.toHaveBeenCalled()
-  button.dispatchEvent(pointer('pointerdown', 1))
-  globalThis.dispatchEvent(pointer('pointermove', 1, 100))
-  globalThis.dispatchEvent(pointer('pointerup', 1, 100))
+  fireEvent(button, pointer('pointerdown', 1))
+  fireEvent(globalThis.window, pointer('pointermove', 1, 100))
+  fireEvent(globalThis.window, pointer('pointerup', 1, 100))
   expect(onDelete).toHaveBeenCalledOnce()
 })
 
@@ -80,14 +80,14 @@ test.each(['pointercancel', 'dispose'])('should discard an armed motion swipe on
   const view = render(() => (
     <TimelineMotionName motionId="idle" motionIds={['idle']} onDelete={onDelete} />
   ))
-  view.getByRole('button', {name: 'idle 모션 이름'}).dispatchEvent(pointer('pointerdown', 1))
-  globalThis.dispatchEvent(pointer('pointermove', 1, 100))
+  fireEvent(view.getByRole('button', {name: 'idle 모션 이름'}), pointer('pointerdown', 1))
+  fireEvent(globalThis.window, pointer('pointermove', 1, 100))
   if (reason === 'dispose') {
     view.unmount()
   } else {
-    globalThis.dispatchEvent(pointer('pointercancel', 1, 100))
+    fireEvent(globalThis.window, pointer('pointercancel', 1, 100))
   }
-  globalThis.dispatchEvent(pointer('pointerup', 1, 100))
+  fireEvent(globalThis.window, pointer('pointerup', 1, 100))
   expect(onDelete).not.toHaveBeenCalled()
 })
 
@@ -116,11 +116,11 @@ test.each(['Enter', 'F2'])('should retain renaming with %s after deletion is arm
 
 test('should cancel the entire swipe gesture on Escape before later pointer movement', () => {
   const {button, onDelete} = renderName()
-  button.dispatchEvent(pointer('pointerdown', 1))
-  globalThis.dispatchEvent(pointer('pointermove', 1, 100))
+  fireEvent(button, pointer('pointerdown', 1))
+  fireEvent(globalThis.window, pointer('pointermove', 1, 100))
   fireEvent.keyDown(button, {key: 'Escape'})
-  globalThis.dispatchEvent(pointer('pointermove', 1, 90))
-  globalThis.dispatchEvent(pointer('pointerup', 1, 90))
+  fireEvent(globalThis.window, pointer('pointermove', 1, 90))
+  fireEvent(globalThis.window, pointer('pointerup', 1, 90))
   expect(onDelete).not.toHaveBeenCalled()
 })
 
@@ -135,11 +135,11 @@ test('should cancel an active swipe when keyboard renaming starts', () => {
     />
   ))
   const button = view.getByRole('button', {name: 'idle 모션 이름'})
-  button.dispatchEvent(pointer('pointerdown', 1))
-  globalThis.dispatchEvent(pointer('pointermove', 1, 100))
+  fireEvent(button, pointer('pointerdown', 1))
+  fireEvent(globalThis.window, pointer('pointermove', 1, 100))
   fireEvent.keyDown(button, {key: 'F2'})
   expect(view.getByRole('textbox', {name: '모션 이름'})).toHaveFocus()
-  globalThis.dispatchEvent(pointer('pointermove', 1, 90))
-  globalThis.dispatchEvent(pointer('pointerup', 1, 90))
+  fireEvent(globalThis.window, pointer('pointermove', 1, 90))
+  fireEvent(globalThis.window, pointer('pointerup', 1, 90))
   expect(onDelete).not.toHaveBeenCalled()
 })

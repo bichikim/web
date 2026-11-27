@@ -1,4 +1,4 @@
-import {render} from 'solid-js/web'
+import {render} from '@solidjs/web'
 import {afterEach, expect, test, vi} from 'vitest'
 import {PlayerCanvas} from '../../src/editor/PlayerCanvas'
 import {createEmptyDocument} from '../../src/player'

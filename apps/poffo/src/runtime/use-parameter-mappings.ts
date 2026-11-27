@@ -1,4 +1,4 @@
-import type {Accessor} from 'solid-js'
+import {type Accessor} from 'solid-js'
 import type {PuppetParameter} from '@winter-love/puppet/player'
 import type {MappingValues, ParameterMapping, RuntimeProfile} from '../tracking/types'
 interface UseParameterMappingsProps {

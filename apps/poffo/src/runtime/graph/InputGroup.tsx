@@ -1,4 +1,5 @@
-import {For, type JSX, Show} from 'solid-js'
+import {For, Show} from 'solid-js'
+import {type JSX} from '@solidjs/web'
 import {Handle, Position} from '@dschz/solid-flow'
 import {EditorButton} from '@winter-love/puppet/editor'
 import {useMappingGraph} from './context'
@@ -41,7 +42,7 @@ export const InputGroup = (props: InputGroupProps) => {
         <EditorButton
           class="nodrag nopan"
           aria-label={`${props.name} ${collapsed() ? '펼치기' : '접기'}`}
-          aria-expanded={!collapsed()}
+          aria-expanded={collapsed() ? 'false' : 'true'}
           onClick={toggle}
         >
           <span

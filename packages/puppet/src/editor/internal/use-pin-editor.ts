@@ -1,5 +1,5 @@
 import {usePointerGesture} from './use-pointer-gesture'
-import {createEffect, createMemo, createSignal, on, onCleanup} from 'solid-js'
+import {createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
 import type {PuppetPoint, PuppetSceneDeformerNode} from '../../player'
 import type {DeformerEditorProps} from './DeformerEditor'
 import {editPinLayout} from './pin-editing'
@@ -91,12 +91,10 @@ export const usePinEditor = (props: PinEditorProps) => {
 
   const {stop} = gesture
   const nodeId = createMemo(() => props.node.id)
-  createEffect(
-    on(nodeId, () => {
-      stop()
-      setSelected(0)
-    }),
-  )
+  createEffect(nodeId, () => {
+    stop()
+    setSelected(0)
+  })
   onCleanup(stop)
 
   return {

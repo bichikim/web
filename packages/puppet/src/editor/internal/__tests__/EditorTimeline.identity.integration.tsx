@@ -4,6 +4,7 @@ import {createSignal, onCleanup} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createDemoDocument} from '../../../player'
 import {EditorTimeline} from '../EditorTimeline'
+import {expectNoUnexpectedTimelineWarnings} from './timeline/fixtures'
 
 afterEach(() => {
   cleanup()
@@ -13,7 +14,7 @@ afterEach(() => {
 test.each(['document', 'shadow'] as const)(
   'should retain keyframe focus through consecutive moves and crossing another keyframe in %s',
   (scope) => {
-    const warn = vi.spyOn(console, 'warn')
+    vi.spyOn(console, 'warn')
     const [document, setDocument] = createSignal(createDemoDocument())
     const host = globalThis.document.createElement('div')
     globalThis.document.body.append(host)
@@ -47,7 +48,7 @@ test.each(['document', 'shadow'] as const)(
     expect(view.getByRole('button', {name: 'Angle Y 2.00초 키프레임'})).toBe(unchanged)
     const motion = document().motions[0]!
     expect(motion.tracks[0]?.keyframes.map((keyframe) => keyframe.time)).toEqual([1, 1.5, 2])
-    expect(warn).not.toHaveBeenCalled()
+    expectNoUnexpectedTimelineWarnings()
     view.unmount()
   },
 )
