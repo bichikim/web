@@ -1,4 +1,4 @@
-import {type Accessor, createEffect, createMemo, createSignal, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal} from 'solid-js'
 import {connectStoryInput} from './connect-story-input'
 import {resolveStoryFrame, STORY_CUTS} from './frame'
 import {advanceStoryTransition, INITIAL_STORY} from './transition'
@@ -20,17 +20,21 @@ export const useDesktopStory = (props: UseDesktopStoryProps) => {
   })
   const [requested, setRequested] = createSignal(-1)
   const [state, setState] = createSignal(INITIAL_STORY)
-  createEffect(() => {
-    const chapter = requested()
-    const {animated, reducedMotion} = viewport()
-    setState((current) =>
-      advanceStoryTransition(current, {
-        chapter,
-        reducedMotion: reducedMotion || !animated,
-        type: 'request',
-      }),
-    )
-  })
+  createEffect(
+    () => {
+      const {animated, reducedMotion} = viewport()
+      return {chapter: requested(), reducedMotion: reducedMotion || !animated}
+    },
+    ({chapter, reducedMotion}) => {
+      setState((current) =>
+        advanceStoryTransition(current, {
+          chapter,
+          reducedMotion,
+          type: 'request',
+        }),
+      )
+    },
+  )
   const transition = createMemo(() => state().transition)
   const aspectRatio = createMemo(() => {
     const {height, width} = viewport()
@@ -71,53 +75,55 @@ export const useDesktopStory = (props: UseDesktopStoryProps) => {
       setRequested(Math.max(-1, Math.min(STORY_CUTS.length - 1, chapter)))
     }
   }
-  onMount(() => {
-    const stage = props.stage()
-    if (stage === null) {
-      return
-    }
-    const media = globalThis.matchMedia('(prefers-reduced-motion: reduce)')
-    const animated =
-      CSS.supports('height', '100dvh') &&
-      CSS.supports('clip-path', 'polygon(0 0,100% 0,100% 100%,0 100%)')
-    let pending: number | null = null
-    const measure = () => {
-      pending = null
-      const height = stage.clientHeight
-      const width = stage.clientWidth
-      const reducedMotion = media.matches
-      setViewport((current) =>
-        current.animated === animated &&
-        current.height === height &&
-        current.width === width &&
-        current.reducedMotion === reducedMotion
-          ? current
-          : {animated, height, reducedMotion, width},
-      )
-    }
-    const schedule = () => {
-      pending ??= requestAnimationFrame(measure)
-    }
-    const observer = new ResizeObserver(schedule)
-    observer.observe(stage)
-    media.addEventListener('change', schedule)
-    measure()
-    const disconnectInput = connectStoryInput({
-      chapter: () => state().chapter,
-      dragging: props.dragging,
-      request: requestChapter,
-      target: stage,
-      transitioning: () => transition() !== null,
-    })
-    onCleanup(() => {
-      disconnectInput()
-      observer.disconnect()
-      media.removeEventListener('change', schedule)
-      if (pending !== null) {
-        cancelAnimationFrame(pending)
+  createEffect(
+    () => props.stage(),
+    (stage) => {
+      if (stage === null) {
+        return
       }
-    })
-  })
+      const media = globalThis.matchMedia('(prefers-reduced-motion: reduce)')
+      const animated =
+        CSS.supports('height', '100dvh') &&
+        CSS.supports('clip-path', 'polygon(0 0,100% 0,100% 100%,0 100%)')
+      let pending: number | null = null
+      const measure = () => {
+        pending = null
+        const height = stage.clientHeight
+        const width = stage.clientWidth
+        const reducedMotion = media.matches
+        setViewport((current) =>
+          current.animated === animated &&
+          current.height === height &&
+          current.width === width &&
+          current.reducedMotion === reducedMotion
+            ? current
+            : {animated, height, reducedMotion, width},
+        )
+      }
+      const schedule = () => {
+        pending ??= requestAnimationFrame(measure)
+      }
+      const observer = new ResizeObserver(schedule)
+      observer.observe(stage)
+      media.addEventListener('change', schedule)
+      measure()
+      const disconnectInput = connectStoryInput({
+        chapter: () => state().chapter,
+        dragging: props.dragging,
+        request: requestChapter,
+        target: stage,
+        transitioning: () => transition() !== null,
+      })
+      return () => {
+        disconnectInput()
+        observer.disconnect()
+        media.removeEventListener('change', schedule)
+        if (pending !== null) {
+          cancelAnimationFrame(pending)
+        }
+      }
+    },
+  )
   const returnToPlayground = () => requestChapter(-1)
   const startIntroduction = () => requestChapter(0)
   return {

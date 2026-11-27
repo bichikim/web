@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, renderHook, screen} from '@solidjs/testing-library'
+import {flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createBrowserSpeechSession} from '../../features/character-speech/browser'
 import {useCharacterSpeech} from '../../features/character-speech/use-character-speech'
@@ -24,10 +25,12 @@ test('should stop a pending preset without expanding custom input', () => {
   expect(disclosure.getAttribute('aria-expanded')).toBe('false')
   const preset = screen.getByRole('button', {name: /^안녕, 나는 애시야\./})
   fireEvent.click(preset)
+  flush()
   expect(preset.hasAttribute('disabled')).toBe(true)
   const stop = screen.getByRole('button', {name: '정지'})
   stop.focus()
   fireEvent.click(stop)
+  flush()
   expect((speak.mock.calls[0]![1] as AbortSignal).aborted).toBe(true)
   expect(disclosure.getAttribute('aria-expanded')).toBe('false')
   expect(preset.hasAttribute('disabled')).toBe(false)
@@ -44,9 +47,11 @@ test('should return focus to custom input when stopping before the character is 
   const hook = renderHook(useCharacterSpeech)
   render(() => <SSpeechMenu ready={false} speech={hook.result} />)
   void hook.result.speak('안녕')
+  flush()
   const stop = screen.getByRole('button', {name: '정지'})
   stop.focus()
   fireEvent.click(stop)
+  flush()
   expect(document.activeElement).toBe(screen.getByRole('button', {name: '직접 입력'}))
   hook.cleanup()
 })
@@ -76,6 +81,7 @@ test('should speak a preset and accept custom lines without activating an empty 
   const disclosure = screen.getByRole('button', {name: '직접 입력'})
   expect(disclosure.getAttribute('aria-expanded')).toBe('false')
   fireEvent.click(disclosure)
+  flush()
   expect(disclosure.getAttribute('aria-expanded')).toBe('true')
   const submit = screen.getByRole('button', {name: '말하기'})
   expect(submit.hasAttribute('disabled')).toBe(true)
@@ -84,17 +90,22 @@ test('should speak a preset and accept custom lines without activating an empty 
   expect(fullLine.length).toBeGreaterThan(100)
   expect(fullLine.length).toBeLessThanOrEqual(150)
   fireEvent.click(preset)
+  flush()
   expect(speak.mock.calls[0]![0]).toBe(fullLine)
   await Promise.resolve()
   fireEvent.input(screen.getByRole('textbox', {name: '직접 입력'}), {
     target: {value: '오늘도 안녕!'},
   })
+  flush()
   fireEvent.submit(screen.getByRole('textbox').closest('form')!)
+  flush()
   expect(speak.mock.calls[1]![0]).toBe('오늘도 안녕!')
   await Promise.resolve()
   fireEvent.click(disclosure)
+  flush()
   expect(disclosure.getAttribute('aria-expanded')).toBe('false')
   fireEvent.click(disclosure)
+  flush()
   expect((screen.getByRole('textbox', {name: '직접 입력'}) as HTMLTextAreaElement).value).toBe(
     '오늘도 안녕!',
   )
@@ -116,8 +127,11 @@ test('should wait for the character and offer stop while speech is pending', () 
   view.unmount()
   render(() => <SSpeechMenu ready speech={hook.result} />)
   fireEvent.click(screen.getByRole('button', {name: '직접 입력'}))
+  flush()
   fireEvent.click(screen.getByRole('button', {name: /^안녕, 나는 애시야\./}))
+  flush()
   fireEvent.click(screen.getByRole('button', {name: '정지'}))
+  flush()
   expect((speak.mock.calls[0]![1] as AbortSignal).aborted).toBe(true)
   expect(screen.queryByRole('button', {name: '정지'})).toBeNull()
   expect(screen.getByRole('button', {name: '말하기'})).toBeTruthy()

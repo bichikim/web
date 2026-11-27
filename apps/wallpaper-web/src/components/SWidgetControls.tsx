@@ -1,4 +1,4 @@
-import {createSignal, onMount, Show} from 'solid-js'
+import {createSignal, onSettled, Show} from 'solid-js'
 import type {useWidgetPreview} from '../features/widget-preview'
 import type {useCharacterSpeech} from '../features/character-speech'
 import {SExpressionMenu} from './SExpressionMenu'
@@ -17,20 +17,24 @@ interface SWidgetControlsProps {
 
 export const SWidgetControls = (props: SWidgetControlsProps) => {
   const [hydrated, setHydrated] = createSignal(false)
-  onMount(() => setHydrated(true))
+  onSettled(() => {
+    setHydrated(true)
+  })
   return (
     <>
       <nav
         aria-label="체험 도구"
-        aria-hidden={props.hidden === true}
+        aria-hidden={props.hidden === true ? 'true' : 'false'}
         inert={props.hidden === true}
-        class="absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 flex
+        class={[
+          `absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 flex
           max-w-[calc(100vw-1.5rem)] -translate-x-1/2 items-center
           gap-[clamp(0.125rem,calc((100vw_-_16rem)/16),0.375rem)] rounded-full
           border border-solid border-white/80 bg-white/90 p-[clamp(0.375rem,2vw,0.5rem)]
           text-ink shadow-[0_8px_30px_-12px_#35244745]
-          [--control-size:clamp(2.25rem,12vw,2.75rem)] sm:gap-2.5"
-        classList={{'invisible pointer-events-none': props.hidden === true}}
+          [--control-size:clamp(2.25rem,12vw,2.75rem)] sm:gap-2.5`,
+          {'invisible pointer-events-none': props.hidden === true},
+        ]}
       >
         <Show when={props.preview.actionLabel()}>
           <button
@@ -52,11 +56,13 @@ export const SWidgetControls = (props: SWidgetControlsProps) => {
           onClick={() => props.preview.toggleWalking()}
           disabled={!hydrated()}
           aria-label="걷기"
-          aria-pressed={props.preview.walking()}
+          aria-pressed={props.preview.walking() ? 'true' : 'false'}
           title="걷기"
-          class="flex h-[var(--control-size)] w-[var(--control-size)] shrink-0 items-center justify-center
-            rounded-full border-0 bg-transparent hover:bg-lilac disabled:opacity-60"
-          classList={{'bg-lilac! text-violet': props.preview.walking()}}
+          class={[
+            `flex h-[var(--control-size)] w-[var(--control-size)] shrink-0 items-center justify-center
+            rounded-full border-0 bg-transparent hover:bg-lilac disabled:opacity-60`,
+            {'bg-lilac! text-violet': props.preview.walking()},
+          ]}
         >
           <SIcon name="walk" class="h-6 w-6" />
         </button>

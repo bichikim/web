@@ -1,5 +1,5 @@
-import {solidStart} from '@solidjs/start/config'
-import {nitro} from 'nitro/vite'
+import solid from '@solidjs/vite-plugin'
+import {prerender} from 'prerender-crawler/vite'
 import UnoCSS from 'unocss/vite'
 import {defineConfig} from 'vite'
 import {puppetThreadWorkers} from '@winter-love/puppet/vite/thread-workers'
@@ -7,15 +7,11 @@ import buildAssets from './build-assets.json'
 import {crossOriginIsolation} from './cross-origin-isolation'
 
 export default defineConfig({
-  nitro: {
-    prerender: {crawlLinks: true, failOnError: true, routes: ['/']},
-    preset: 'static',
-  },
   plugins: [
     crossOriginIsolation(),
-    UnoCSS({mode: 'dist-chunk'}),
-    solidStart({devOverlay: false, ssr: true}),
-    nitro(),
+    UnoCSS(),
+    solid({ssr: true, start: true}),
+    prerender({crawlLinks: false, mode: 'static', pages: ['/']}),
     puppetThreadWorkers(),
     {
       // SolidStart supplies the default directory before Vite resolves worker build options.

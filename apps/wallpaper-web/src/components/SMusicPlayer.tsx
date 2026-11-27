@@ -40,7 +40,7 @@ export const SMusicPlayer = () => {
                 : '음악 재생'
           }
           disabled={player.track() === null && player.libraryStatus() !== 'error'}
-          aria-busy={player.status() === 'loading'}
+          aria-busy={player.status() === 'loading' ? 'true' : 'false'}
           onClick={player.toggle}
           class="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-0 bg-ink
             text-white hover:bg-violet disabled:opacity-35"

@@ -13,13 +13,16 @@ interface SDesktopPreviewProps {
 export const SDesktopPreview = (props: SDesktopPreviewProps) => {
   const [albumMounted, setAlbumMounted] = createSignal(false)
   const [videoMounted, setVideoMounted] = createSignal(false)
-  createEffect(() => {
-    if (props.live) {
-      setVideoMounted(true)
-    } else {
-      setAlbumMounted(true)
-    }
-  })
+  createEffect(
+    () => props.live === true,
+    (live) => {
+      if (live) {
+        setVideoMounted(true)
+      } else {
+        setAlbumMounted(true)
+      }
+    },
+  )
   return (
     <section
       aria-label="Poffo Wallpaper 데스크톱 미리보기"

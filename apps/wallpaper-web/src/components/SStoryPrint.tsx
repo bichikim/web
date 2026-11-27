@@ -11,8 +11,10 @@ interface SStoryPrintProps {
 export const SStoryPrint = (props: SStoryPrintProps) => (
   <div
     aria-hidden="true"
-    class="pointer-events-none absolute inset-0 overflow-hidden text-ink"
-    classList={{'text-[#d5c4ee]!': props.light === true}}
+    class={[
+      'pointer-events-none absolute inset-0 overflow-hidden text-ink',
+      {'text-[#d5c4ee]!': props.light === true},
+    ]}
   >
     <Show when={props.variant !== 'halftone'}>
       <div
@@ -21,11 +23,13 @@ export const SStoryPrint = (props: SStoryPrintProps) => (
       />
     </Show>
     <div
-      class="story-print-dots absolute inset-0"
-      classList={{
-        'opacity-45 [mask-image:linear-gradient(to_right,#000,transparent_40%)]!':
-          props.variant === 'halftone',
-      }}
+      class={[
+        'story-print-dots absolute inset-0',
+        {
+          'opacity-45 [mask-image:linear-gradient(to_right,#000,transparent_40%)]!':
+            props.variant === 'halftone',
+        },
+      ]}
     />
     <Show when={props.variant !== 'halftone'}>
       <svg

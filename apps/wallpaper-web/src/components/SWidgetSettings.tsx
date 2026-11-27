@@ -45,11 +45,13 @@ export const SWidgetSettings = (props: SWidgetSettingsProps) => {
                 <button
                   type="button"
                   aria-label={`${background.name} 배경 선택`}
-                  aria-pressed={props.preview.background() === background.id}
+                  aria-pressed={props.preview.background() === background.id ? 'true' : 'false'}
                   onClick={() => props.preview.selectBackground(background.id)}
-                  class="overflow-hidden rounded-3 border-2 border-solid border-transparent bg-white p-0 text-left
-                  transition hover:border-violet/40"
-                  classList={{'border-violet!': props.preview.background() === background.id}}
+                  class={[
+                    `overflow-hidden rounded-3 border-2 border-solid border-transparent bg-white p-0 text-left
+                  transition hover:border-violet/40`,
+                    {'border-violet!': props.preview.background() === background.id},
+                  ]}
                 >
                   <img
                     src={`/images/backgrounds/${background.id}.webp`}
@@ -63,7 +65,7 @@ export const SWidgetSettings = (props: SWidgetSettingsProps) => {
                     {background.name}
                     <span
                       aria-hidden="true"
-                      classList={{'opacity-0': props.preview.background() !== background.id}}
+                      class={{'opacity-0': props.preview.background() !== background.id}}
                     >
                       <SIcon name="check" class="h-4.5 w-4.5 text-violet" />
                     </span>
@@ -103,7 +105,7 @@ export const SWidgetSettings = (props: SWidgetSettingsProps) => {
           <button
             type="button"
             onClick={() => props.preview.toggleTracking()}
-            aria-pressed={props.preview.tracking()}
+            aria-pressed={props.preview.tracking() ? 'true' : 'false'}
             class="mt-4 flex min-h-11 w-full items-center justify-between rounded-3 border border-solid
             border-ink/10 bg-white px-3 text-xs"
           >

@@ -25,23 +25,28 @@ export const SStoryArtwork = (props: SStoryArtworkProps) => {
     <>
       <SStoryPrint light={props.light} variant={props.print} />
       <div
-        class={`absolute -left-[6vw] top-1/2 w-[160vw] whitespace-nowrap text-[57.6dvh]
+        class={[
+          `absolute -left-[6vw] top-1/2 w-[160vw] whitespace-nowrap text-[57.6dvh]
         font-900 leading-[0.75] tracking-[-0.075em] text-ink
-        [font-family:Arial,Helvetica,sans-serif] ${props.class ?? ''}`}
-        classList={{
-          'animate-story-type-cover': props.transition.phase === 'cover',
-          'animate-story-type-reveal': props.transition.phase === 'reveal',
-          'text-[#bda5e7]!': props.light === true,
-        }}
+        [font-family:Arial,Helvetica,sans-serif] ${props.class ?? ''}`,
+          {
+            'animate-story-type-cover': props.transition.phase === 'cover',
+            'animate-story-type-reveal': props.transition.phase === 'reveal',
+            'text-[#bda5e7]!': props.light === true,
+          },
+        ]}
       >
         <For each={[0, 1, 2]}>
           {(row) => (
             <p
-              class="w-max"
-              classList={{
-                '-translate-x-[12%] text-transparent [-webkit-text-stroke:2px_#25232c]': row === 1,
-                '[-webkit-text-stroke:2px_#bda5e7]!': row === 1 && props.light === true,
-              }}
+              class={[
+                'w-max',
+                {
+                  '-translate-x-[12%] text-transparent [-webkit-text-stroke:2px_#25232c]':
+                    row === 1,
+                  '[-webkit-text-stroke:2px_#bda5e7]!': row === 1 && props.light === true,
+                },
+              ]}
             >
               {text()}
             </p>

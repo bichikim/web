@@ -1,4 +1,4 @@
-import {createMemo, For, on, Show} from 'solid-js'
+import {createMemo, For, Show, untrack} from 'solid-js'
 import type {StoryFrame} from '../features/desktop-story/frame'
 import {SIcon} from './SIcon'
 import {SCodexStory} from './SCodexStory'
@@ -56,7 +56,10 @@ const SAppPreview = (props: {readonly miniature?: boolean}) => (
 export const SDesktopStory = (props: SDesktopStoryProps) => {
   const chapter = () => CHAPTERS[props.frame.chapter]!
   const visibleKind = createMemo(() => (props.frame.visible ? props.frame.kind : null))
-  const animated = createMemo(on(visibleKind, () => props.animated !== false))
+  const animated = createMemo(() => {
+    visibleKind()
+    return untrack(() => props.animated !== false)
+  })
   const desktopVisible = createMemo(
     () => props.frame.kind === 'overview' || props.frame.kind === 'wallpaper',
   )
@@ -64,60 +67,66 @@ export const SDesktopStory = (props: SDesktopStoryProps) => {
   return (
     <section
       aria-label="Poffo Wallpaper 앱 소개"
-      aria-hidden={!props.frame.visible}
+      aria-hidden={props.frame.visible ? 'false' : 'true'}
       inert={!props.frame.visible || props.frame.transitioning}
       data-story-chapter={props.frame.visible ? props.frame.chapter : undefined}
       class="pointer-events-none absolute inset-0 text-ink opacity-[var(--story-visible)]"
-      style={{
-        '--story-progress': props.frame.progress,
-        '--story-visible': Number(props.frame.visible),
-      }}
+      style={{'--story-visible': Number(props.frame.visible)}}
     >
       <div
-        class="absolute inset-0 bg-[#f2effb]/90"
-        classList={{
-          'bg-[#e7e3f5]/95!': props.frame.kind === 'download',
-          'bg-[#edf5fa]/75!': props.frame.kind === 'widgets' || props.frame.kind === 'codex',
-          'bg-[#eee8f5]/65!': props.frame.kind === 'details',
-          'bg-white/30!': props.frame.kind === 'wallpaper',
-        }}
+        class={[
+          'absolute inset-0 bg-[#f2effb]/90',
+          {
+            'bg-[#e7e3f5]/95!': props.frame.kind === 'download',
+            'bg-[#edf5fa]/75!': props.frame.kind === 'widgets' || props.frame.kind === 'codex',
+            'bg-[#eee8f5]/65!': props.frame.kind === 'details',
+            'bg-white/30!': props.frame.kind === 'wallpaper',
+          },
+        ]}
       />
       <Show when={props.frame.visible ? props.frame.kind : null} keyed>
         <div
-          class="absolute left-[6%] top-[18%] w-[88%] sm:left-[7%] sm:top-[23%] sm:w-[52%]"
-          classList={{'top-[14%]! sm:top-[15%]!': desktopVisible()}}
+          class={[
+            'absolute left-[6%] top-[18%] w-[88%] sm:left-[7%] sm:top-[23%] sm:w-[52%]',
+            {'top-[14%]! sm:top-[15%]!': desktopVisible()},
+          ]}
         >
           <p
-            class="relative mb-5 w-fit text-[9px] font-750 tracking-[0.18em] sm:mb-7 sm:text-[11px]"
-            classList={{'mb-4!': desktopVisible()}}
+            class={[
+              'relative mb-5 w-fit text-[9px] font-750 tracking-[0.18em] sm:mb-7 sm:text-[11px]',
+              {'mb-4!': desktopVisible()},
+            ]}
           >
             <span
               aria-hidden="true"
-              class="story-copy-surface"
-              classList={{'animate-story-caption': animated()}}
+              class={['story-copy-surface', {'animate-story-caption': animated()}]}
             />
-            <span class="relative inline-block" classList={{'animate-story-caption': animated()}}>
+            <span class={['relative inline-block', {'animate-story-caption': animated()}]}>
               {chapter().label}
             </span>
           </p>
           <h2
-            class="relative w-fit max-w-full [font-family:Arial,Helvetica,sans-serif]
+            class={[
+              `relative w-fit max-w-full [font-family:Arial,Helvetica,sans-serif]
             text-[clamp(2.8rem,14vw,5.8rem)]
-            font-900 leading-[0.83] tracking-[-0.075em] sm:text-[clamp(5rem,9.4vw,10rem)]"
-            classList={{
-              'text-[clamp(2.5rem,11vw,5rem)]! sm:text-[clamp(3rem,min(7vw,10dvh),8rem)]!':
-                desktopVisible(),
-            }}
+            font-900 leading-[0.83] tracking-[-0.075em] sm:text-[clamp(5rem,9.4vw,10rem)]`,
+              {
+                'text-[clamp(2.5rem,11vw,5rem)]! sm:text-[clamp(3rem,min(7vw,10dvh),8rem)]!':
+                  desktopVisible(),
+              },
+            ]}
           >
             <span aria-hidden="true" class="story-copy-surface" />
             <For each={chapter().lines}>
               {(line, index) => (
                 <span
-                  class="relative block w-max max-w-full"
-                  classList={{
-                    'animate-story-title': animated() && index() === 0,
-                    'animate-story-title-alt': animated() && index() !== 0,
-                  }}
+                  class={[
+                    'relative block w-max max-w-full',
+                    {
+                      'animate-story-title': animated() && index() === 0,
+                      'animate-story-title-alt': animated() && index() !== 0,
+                    },
+                  ]}
                 >
                   {line}
                 </span>
@@ -125,13 +134,11 @@ export const SDesktopStory = (props: SDesktopStoryProps) => {
             </For>
           </h2>
           <div
-            class="relative mt-6 w-fit max-w-95 sm:mt-9"
-            classList={{'mt-4! sm:mt-5!': desktopVisible()}}
+            class={['relative mt-6 w-fit max-w-95 sm:mt-9', {'mt-4! sm:mt-5!': desktopVisible()}]}
           >
             <div
               aria-hidden="true"
-              class="story-copy-surface"
-              classList={{'animate-story-caption': animated()}}
+              class={['story-copy-surface', {'animate-story-caption': animated()}]}
             />
             <SStoryCopy
               chapter={props.frame.chapter}
@@ -172,18 +179,6 @@ export const SDesktopStory = (props: SDesktopStoryProps) => {
           playing={!props.frame.transitioning}
         />
       </Show>
-      <div
-        aria-hidden="true"
-        class="absolute bottom-6 left-[6%] right-[6%] flex items-center gap-4 sm:left-[7%] sm:right-[7%]"
-      >
-        <span class="text-[10px] font-700 tabular-nums">
-          0{props.frame.chapter + 1} / 0{CHAPTERS.length}
-        </span>
-        <span class="h-px flex-1 bg-ink/15">
-          <span class="block h-px origin-left scale-x-[var(--story-progress)] bg-ink" />
-        </span>
-        <span class="text-[9px] font-700 tracking-widest">SCROLL TO EXPLORE ↓</span>
-      </div>
     </section>
   )
 }

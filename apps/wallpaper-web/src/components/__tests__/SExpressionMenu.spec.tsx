@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, renderHook, screen} from '@solidjs/testing-library'
+import {flush} from 'solid-js'
 import {afterEach, expect, test} from 'vitest'
 import {useWidgetPreview} from '../../features/widget-preview'
 import {SExpressionMenu} from '../SExpressionMenu'
@@ -17,10 +18,12 @@ test('should offer 27 Korean presets and none without the removed watermark acti
   expect(choices.every((choice) => /[가-힣]/.test(choice.textContent ?? ''))).toBe(true)
   const coffee = screen.getByRole('menuitemradio', {name: '커피 들기'})
   fireEvent.click(coffee)
+  flush()
   expect(hook.result.expressionId()).toBe('커피 들기')
   expect(coffee.getAttribute('aria-checked')).toBe('true')
   expect(coffee.getAttribute('popovertargetaction')).toBe('hide')
   fireEvent.click(screen.getByRole('menuitemradio', {name: '없음'}))
+  flush()
   expect(hook.result.expressionId()).toBeNull()
   hook.cleanup()
 })
@@ -51,13 +54,17 @@ test('should toggle the coat without clearing another action or resetting it wit
   const hook = renderHook(useWidgetPreview)
   render(() => <SExpressionMenu preview={hook.result} />)
   fireEvent.click(screen.getByRole('menuitemradio', {name: '손하트'}))
+  flush()
   const coat = screen.getByRole('menuitemcheckbox', {name: '외투 벗기'})
   fireEvent.click(coat)
+  flush()
   expect(coat.getAttribute('aria-checked')).toBe('true')
   expect(hook.result.expressionId()).toBe('손하트')
   fireEvent.click(screen.getByRole('menuitemradio', {name: '없음'}))
+  flush()
   expect(coat.getAttribute('aria-checked')).toBe('true')
   fireEvent.click(coat)
+  flush()
   expect(coat.getAttribute('aria-checked')).toBe('false')
   hook.cleanup()
 })

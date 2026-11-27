@@ -20,6 +20,7 @@ export const resolveCharacterPresentation = (
   return {
     ...frame.character,
     expressionId: frame.visible ? frame.character.expressionId : preview.expressionId,
+    fit: frame.visible ? frame.character.fit : undefined,
     motionId: frame.visible ? frame.character.motionId : preview.motionId,
     playing: !frame.transitioning && (frame.visible ? frame.character.playing : preview.playing),
     scale: preview.scale * (1 - entrance) + frame.character.scale * entrance,

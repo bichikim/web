@@ -3,7 +3,7 @@ import buildAssets from './build-assets.json'
 import isolationHeaders from './isolation-headers.json'
 
 const attachHeaders = ({middlewares}: Pick<ViteDevServer, 'middlewares'>): void => {
-  // Set the headers before Vite can return a cached response or forward the request to Nitro.
+  // Set the headers before Vite can return a cached response or render the page.
   middlewares.use((_request, response, next) => {
     for (const [name, value] of Object.entries(isolationHeaders)) {
       response.setHeader(name, value)

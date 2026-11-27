@@ -1,4 +1,5 @@
-import {createMemo, createSignal, createUniqueId, type JSX} from 'solid-js'
+import type {JSX} from '@solidjs/web'
+import {createMemo, createSignal, createUniqueId} from 'solid-js'
 import {SPEECH_LIMIT} from '../features/character-speech'
 import {SIcon} from './SIcon'
 
@@ -34,14 +35,16 @@ export const SSpeechComposer = (props: SSpeechComposerProps) => {
       <button
         id={`${id}-heading`}
         type="button"
-        aria-expanded={expanded()}
+        aria-expanded={expanded() ? 'true' : 'false'}
         aria-controls={`${id}-content`}
         onClick={handleToggle}
-        class="flex min-h-11 w-full items-center justify-between gap-3 rounded-4
+        class={[
+          `flex min-h-11 w-full items-center justify-between gap-3 rounded-4
           border-0 border-b border-solid border-transparent bg-transparent px-3 text-xs font-600 text-ink
           transition-colors hover:bg-lilac/70 focus-visible:outline-2 focus-visible:outline-offset-2
-          [&[aria-expanded=true]>svg]:-rotate-90"
-        classList={{'rounded-b-0 border-ink/8!': expanded()}}
+          [&[aria-expanded=true]>svg]:-rotate-90`,
+          {'rounded-b-0 border-ink/8!': expanded()},
+        ]}
       >
         직접 입력
         <SIcon
@@ -52,9 +55,11 @@ export const SSpeechComposer = (props: SSpeechComposerProps) => {
       <div
         id={`${id}-content`}
         inert={!expanded()}
-        aria-hidden={!expanded()}
-        class="speech-composer grid grid-rows-[0fr] opacity-0"
-        classList={{'grid-rows-[1fr]! opacity-100!': expanded()}}
+        aria-hidden={expanded() ? 'false' : 'true'}
+        class={[
+          'speech-composer grid grid-rows-[0fr] opacity-0',
+          {'grid-rows-[1fr]! opacity-100!': expanded()},
+        ]}
       >
         <div class="min-h-0 overflow-hidden">
           <form onSubmit={handleSubmit} class="p-3">
@@ -65,7 +70,7 @@ export const SSpeechComposer = (props: SSpeechComposerProps) => {
               id={`${id}-text`}
               value={text()}
               onInput={(event) => setText(event.currentTarget.value)}
-              maxLength={SPEECH_LIMIT}
+              maxlength={SPEECH_LIMIT}
               rows={3}
               placeholder="듣고 싶은 대사를 적어 주세요"
               class="block w-full resize-none rounded-3 border border-solid border-ink/10

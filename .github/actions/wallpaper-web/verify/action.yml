@@ -28,4 +28,4 @@ runs:
       shell: bash
       env:
         NODE_OPTIONS: --no-experimental-webstorage
-      run: pnpm exec vitest run --project=unit apps/wallpaper-web/src
+      run: pnpm exec vitest run --project=unit-wallpaper-web

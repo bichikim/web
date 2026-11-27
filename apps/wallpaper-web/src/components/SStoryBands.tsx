@@ -1,4 +1,5 @@
-import {For, type JSX} from 'solid-js'
+import type {JSX} from '@solidjs/web'
+import {For} from 'solid-js'
 import {SStoryArtwork} from './SStoryArtwork'
 import type {StoryPanelProps} from './story-panel-props'
 
@@ -19,12 +20,14 @@ export const SStoryBands = (props: StoryPanelProps) => (
           <div class="relative min-h-0 overflow-hidden">
             <div
               onAnimationEnd={handleEnd}
-              class={`story-cut-panel absolute inset-y-0 -left-[20vmax] w-[calc(100%+40vmax)]
-                overflow-hidden ${COLORS[index % COLORS.length]}`}
-              classList={{
-                'animate-story-band-cover': props.transition.phase === 'cover',
-                'animate-story-band-reveal': props.transition.phase === 'reveal',
-              }}
+              class={[
+                `story-cut-panel absolute inset-y-0 -left-[20vmax] w-[calc(100%+40vmax)]
+                overflow-hidden ${COLORS[index % COLORS.length]}`,
+                {
+                  'animate-story-band-cover': props.transition.phase === 'cover',
+                  'animate-story-band-reveal': props.transition.phase === 'reveal',
+                },
+              ]}
               style={{
                 '--band-direction': (index % 2 === 0 ? 1 : -1) * props.transition.direction,
                 '--band-index': index,

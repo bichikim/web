@@ -3,7 +3,7 @@ import path from 'node:path'
 import buildAssets from '../build-assets.json' with {type: 'json'}
 import isolationHeaders from '../isolation-headers.json' with {type: 'json'}
 
-const [, , source = 'apps/wallpaper-web/.output/public', target = '.vercel/output'] = process.argv
+const [, , source = 'apps/wallpaper-web/dist/client', target = '.vercel/output'] = process.argv
 const required = [
   'index.html',
   'favicon.png',

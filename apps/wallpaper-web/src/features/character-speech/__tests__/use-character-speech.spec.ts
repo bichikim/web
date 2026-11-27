@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, renderHook} from '@solidjs/testing-library'
+import {flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createBrowserSpeechSession} from '../browser'
 import {useCharacterSpeech} from '../use-character-speech'
@@ -29,8 +30,10 @@ test('should load speech only on demand, update mouth, finish and reuse the sess
   expect(speak.mock.calls[0]![0]).toBe('안녕')
   const observer: SpeechObserver = speak.mock.calls[0]![2]
   observer.onStatus({percent: 20, phase: 'downloading'})
+  flush()
   expect(hook.result.status()).toEqual({percent: 20, phase: 'downloading'})
   observer.onMouth({form: 1, open: 0.5})
+  flush()
   expect(hook.result.mouth()).toEqual({form: 1, open: 0.5})
   expect(hook.result.busy()).toBe(true)
   first.resolve({ok: true})
@@ -65,6 +68,7 @@ test('should cancel obsolete speech and ignore late mouth or status callbacks', 
   expect(hook.result.mouth()).toBeNull()
   expect(hook.result.status()).toEqual({phase: 'preparing'})
   hook.result.stop()
+  flush()
   expect((speak.mock.calls[1]![1] as AbortSignal).aborted).toBe(true)
   second.resolve({ok: true})
   await next

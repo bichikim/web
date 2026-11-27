@@ -23,8 +23,10 @@ export default function SAnimatedBackdrop(props: SAnimatedBackdropProps) {
   return (
     <div
       ref={setHost}
-      class="absolute inset-0 opacity-0 transition-opacity duration-500"
-      classList={{'opacity-100': background.ready()}}
+      class={[
+        'absolute inset-0 opacity-0 transition-opacity duration-500',
+        {'opacity-100': background.ready()},
+      ]}
     >
       <canvas
         ref={setCanvas}

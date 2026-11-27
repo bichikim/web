@@ -1,4 +1,4 @@
-import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+import {createEffect, createSignal, untrack} from 'solid-js'
 import {useCharacterPreview} from '../features/character-preview'
 import type {MouthPose} from '../features/character-speech/types'
 import type {CharacterHitTest} from '../features/character-preview/types'
@@ -33,13 +33,15 @@ export default function SPuppetCharacter(props: SPuppetCharacterProps) {
     preview.lookAt({x: event.clientX, y: event.clientY})
   }
   const handleLeave = () => preview.lookAt()
-  createEffect(() => {
-    if (props.tracking === false) {
-      handleLeave()
-    }
-  })
-  onMount(() => {
-    const element = canvas()
+  createEffect(
+    () => props.tracking === false,
+    (trackingDisabled) => {
+      if (trackingDisabled) {
+        untrack(handleLeave)
+      }
+    },
+  )
+  createEffect(canvas, (element) => {
     if (element === null || element.parentElement === null) {
       return
     }
@@ -47,15 +49,15 @@ export default function SPuppetCharacter(props: SPuppetCharacterProps) {
     observer.observe(element.parentElement)
     const owner = element.ownerDocument
     const view = owner.defaultView
-    view?.addEventListener('pointermove', handleLook, {capture: true, passive: true})
-    owner.addEventListener('pointerleave', handleLeave)
-    view?.addEventListener('blur', handleLeave)
-    onCleanup(() => {
+    const subscription = new AbortController()
+    const {signal} = subscription
+    view?.addEventListener('pointermove', handleLook, {capture: true, passive: true, signal})
+    owner.addEventListener('pointerleave', handleLeave, {signal})
+    view?.addEventListener('blur', handleLeave, {signal})
+    return () => {
       observer.disconnect()
-      view?.removeEventListener('pointermove', handleLook, {capture: true})
-      owner.removeEventListener('pointerleave', handleLeave)
-      view?.removeEventListener('blur', handleLeave)
-    })
+      subscription.abort()
+    }
   })
   return (
     <canvas ref={setCanvas} aria-label="흰 고양이 캐릭터 실시간 렌더링" class="h-full w-full" />

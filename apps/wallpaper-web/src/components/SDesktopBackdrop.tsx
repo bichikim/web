@@ -1,4 +1,4 @@
-import {clientOnly} from '@solidjs/start'
+import {clientOnly} from '@solidjs/web'
 import {createMemo, createSignal, Show} from 'solid-js'
 import {useBackgroundSource} from '../features/animated-background/use-background-source'
 import {WIDGET_BACKGROUNDS, type WidgetBackground} from '../features/widget-preview'

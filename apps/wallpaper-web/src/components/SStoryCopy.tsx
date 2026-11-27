@@ -14,7 +14,7 @@ interface SStoryCopyProps {
 export const SStoryCopy = (props: SStoryCopyProps) => {
   const chapter = () => chapters[props.chapter]!
   return (
-    <div class="relative" classList={{'animate-story-caption': props.animated}}>
+    <div class={['relative', {'animate-story-caption': props.animated}]}>
       <div class="flex items-start gap-2">
         <p class="min-w-0 text-[clamp(0.8rem,3.5vw,1rem)] font-700 leading-6 sm:text-lg">
           {chapter().title}

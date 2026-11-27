@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, renderHook} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {resolveStoryFrame, STORY_CUTS} from '../frame'
 import {useStoryNarration} from '../use-story-narration'
@@ -19,17 +19,23 @@ test('should narrate the overview once after entrance and character readiness, w
   renderHook(() => useStoryNarration({frame, ready, speech}))
   expect(speech.speak).not.toHaveBeenCalled()
   setFrame({...frame(), transitioning: false})
+  flush()
   expect(speech.speak).not.toHaveBeenCalled()
   setReady(true)
+  flush()
   expect(speech.speak).toHaveBeenCalledExactlyOnceWith(overview.description)
   setFrame(resolveStoryFrame({distance: 1, height: 720, width: 390}))
+  flush()
   expect(speech.speak).toHaveBeenCalledOnce()
   speech.stop.mockClear()
   setFrame({...frame(), transitioning: true})
+  flush()
   expect(speech.stop).toHaveBeenCalledOnce()
   setFrame(resolveStoryFrame({distance: 1.8, height: 720, width: 390}))
+  flush()
   expect(speech.speak).toHaveBeenCalledTimes(2)
   setFrame(resolveStoryFrame({distance: 1, height: 720, width: 390}))
+  flush()
   expect(speech.speak).toHaveBeenCalledTimes(3)
 })
 
@@ -49,8 +55,10 @@ test('should narrate every introduction in both directions and leave the playgro
   for (const cut of [...STORY_CUTS, ...STORY_CUTS.toReversed().slice(1)]) {
     const next = resolveStoryFrame({distance: cut, height: 900, width: 1440})
     setFrame({...next, transitioning: true})
+    flush()
     const called = speech.speak.mock.calls.length
     setFrame(next)
+    flush()
     const chapter = chapters[next.chapter]!
     expect(speech.speak).toHaveBeenCalledTimes(called + 1)
     expect(speech.speak).toHaveBeenLastCalledWith(chapter.description)
@@ -58,6 +66,7 @@ test('should narrate every introduction in both directions and leave the playgro
   const called = speech.speak.mock.calls.length
   speech.stop.mockClear()
   setFrame(resolveStoryFrame({distance: 0, height: 900, width: 1440}))
+  flush()
   expect(speech.stop).toHaveBeenCalledOnce()
   expect(speech.speak).toHaveBeenCalledTimes(called)
 })

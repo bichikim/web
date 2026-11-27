@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, renderHook, waitFor} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {createPlayer, type Player, preparePuppetDocument} from '@winter-love/puppet/player'
 import {useCharacterPreview} from '..'
@@ -126,11 +126,14 @@ test('should keep clothing separate from the selected expression', async () => {
   )
   await waitFor(() => expect(createPlayer).toHaveBeenCalledOnce(), {interval: 1})
   setCoatOff(true)
+  flush()
   expect(player.setExpressionLayer).toHaveBeenLastCalledWith('outfit', '외투 벗기')
   expect(player.setExpression).toHaveBeenLastCalledWith('손하트')
   setExpression('커피 들기')
+  flush()
   expect(player.setExpressionLayer).toHaveBeenLastCalledWith('outfit', '외투 벗기')
   setCoatOff(false)
+  flush()
   expect(player.setExpressionLayer).toHaveBeenLastCalledWith('outfit', undefined)
   expect(player.setExpression).toHaveBeenLastCalledWith('커피 들기')
   hook.cleanup()

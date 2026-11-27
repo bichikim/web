@@ -1,6 +1,6 @@
 import {playwright} from '@vitest/browser-playwright'
 import {fileURLToPath} from 'node:url'
-import solid from 'vite-plugin-solid'
+import solid from '@solidjs/vite-plugin'
 import UnoCSS from 'unocss/vite'
 import {normalizePath} from 'vite'
 import {defineConfig} from 'vitest/config'
@@ -32,7 +32,7 @@ export default defineConfig({
       },
     },
     UnoCSS(uno),
-    solid({hot: false}),
+    solid({refresh: false}),
   ],
   root: fileURLToPath(new URL('.', import.meta.url)),
   test: {

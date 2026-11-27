@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {createRoot, createSignal} from 'solid-js'
+import {createRoot, createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {useAudioPlayback} from '../use-audio-playback'
 
@@ -9,13 +9,15 @@ const setup = () => {
   vi.spyOn(audio, 'pause').mockImplementation(() => {})
   vi.spyOn(audio, 'load').mockImplementation(() => {})
   const [source, setSource] = createSignal<string | null>('/music/first.mp3')
-  return createRoot((dispose) => ({
+  const player = createRoot((dispose) => ({
     audio,
     dispose,
     play,
     playback: useAudioPlayback({element: () => audio, source}),
     setSource,
   }))
+  flush()
+  return player
 }
 
 afterEach(() => vi.restoreAllMocks())
@@ -26,6 +28,7 @@ test('should ignore a rejected play request after the selected source changes', 
   player.play.mockReturnValueOnce(request.promise)
   player.playback.play()
   player.setSource('/music/second.mp3')
+  flush()
   request.reject(new Error('Old request failed'))
   await request.promise.catch(() => {})
   expect(player.playback.error()).toBeNull()
@@ -38,6 +41,7 @@ test('should expose a playback failure that the user can retry', async () => {
   player.play.mockRejectedValueOnce(new Error('Playback blocked'))
   player.playback.play()
   await Promise.resolve()
+  flush()
   expect(player.playback.status()).toBe('error')
   expect(player.playback.error()).toBe('playback')
   player.dispose()

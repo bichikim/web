@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, render, screen, within} from '@solidjs/testing-library'
-import {batch, createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {resolveStoryFrame} from '../../features/desktop-story/frame'
 import {SDesktopStory} from '../SDesktopStory'
@@ -20,6 +20,7 @@ test('should introduce live wallpaper in the wallpaper chapter', () => {
   expect(screen.getByText('움직이는 배경화면도 추가하세요.')).toBeDefined()
   expect(screen.getByText(/사진·동영상, 웹사이트와 라이브 배경/)).toBeDefined()
   setFrame({...frame(), transitioning: false})
+  flush()
   expect(screen.getByRole('heading', {name: /CHANGE.*THE VIEW/})).toBeDefined()
 })
 
@@ -33,13 +34,13 @@ test('should not restart a masked chapter entrance after the wipe completes', ()
   const title = screen.getByRole('heading', {name: /YOUR.*DESKTOP/})
   const line = within(title).getByText('YOUR', {exact: true})
   expect(line.classList.contains('animate-story-title')).toBe(false)
-  batch(() => {
-    setAnimated(true)
-    setFrame({...frame(), transitioning: false})
-  })
+  setAnimated(true)
+  setFrame({...frame(), transitioning: false})
+  flush()
   expect(within(title).getByText('YOUR', {exact: true})).toBe(line)
   expect(line.classList.contains('animate-story-title')).toBe(false)
   setFrame(resolveStoryFrame({distance: 1.8, height: 900, width: 1440}))
+  flush()
   expect(
     within(screen.getByRole('heading', {name: /CHANGE.*THE VIEW/}))
       .getByText('CHANGE', {exact: true})
@@ -55,6 +56,7 @@ test('should introduce Codex speech after details and retain the final download 
   expect(screen.getByRole('heading', {name: /HELLO,.*CODEX/})).toBeDefined()
   expect(screen.getByRole('complementary', {name: 'Codex 연결 예시'})).toBeDefined()
   setFrame(resolveStoryFrame({distance: 7, height: 900, width: 1440}))
+  flush()
   expect(screen.queryByRole('complementary', {name: 'Codex 연결 예시'})).toBeNull()
   expect(screen.getByRole('button', {name: /앱 다운로드/})).toBeDefined()
 })

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {SSpeechComposer} from '../SSpeechComposer'
 
@@ -11,13 +11,17 @@ test('should retain an editable draft without readiness or unrelated speech capa
   render(() => <SSpeechComposer speech={{busy: () => false, speak}} />)
   const disclosure = screen.getByRole('button', {name: '직접 입력'})
   fireEvent.click(disclosure)
+  flush()
   const input = screen.getByRole('textbox', {name: '직접 입력'})
   fireEvent.input(input, {target: {value: '오늘도 안녕!'}})
+  flush()
   expect(screen.getByRole('button', {name: '말하기'}).hasAttribute('disabled')).toBe(true)
   fireEvent.submit(input.closest('form')!)
   expect(speak).not.toHaveBeenCalled()
   fireEvent.click(disclosure)
+  flush()
   fireEvent.click(disclosure)
+  flush()
   expect((screen.getByRole('textbox', {name: '직접 입력'}) as HTMLTextAreaElement).value).toBe(
     '오늘도 안녕!',
   )
@@ -29,13 +33,17 @@ test('should submit a draft when readiness arrives and reject submission while b
   const speak = vi.fn()
   render(() => <SSpeechComposer ready={ready()} speech={{busy, speak}} />)
   fireEvent.click(screen.getByRole('button', {name: '직접 입력'}))
+  flush()
   const input = screen.getByRole('textbox', {name: '직접 입력'})
   fireEvent.input(input, {target: {value: '안녕하세요'}})
+  flush()
   setReady(true)
+  flush()
   expect(screen.getByRole('button', {name: '말하기'}).hasAttribute('disabled')).toBe(false)
   fireEvent.submit(input.closest('form')!)
   expect(speak).toHaveBeenCalledExactlyOnceWith('안녕하세요')
   setBusy(true)
+  flush()
   expect(screen.getByRole('button', {name: '말하기'}).hasAttribute('disabled')).toBe(true)
   fireEvent.submit(input.closest('form')!)
   expect(speak).toHaveBeenCalledTimes(1)

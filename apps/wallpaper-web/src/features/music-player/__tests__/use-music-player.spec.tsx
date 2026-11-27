@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {useMusicPlayer} from '../use-music-player'
 
@@ -58,11 +58,14 @@ test('should shuffle tracks across every album and repeat without immediate dupl
   await screen.findByText('부츠 끈')
   const visited = [screen.getByRole('status').textContent]
   fireEvent.click(screen.getByRole('button', {name: '다음'}))
+  flush()
   visited.push(screen.getByRole('status').textContent)
   fireEvent.click(screen.getByRole('button', {name: '다음'}))
+  flush()
   visited.push(screen.getByRole('status').textContent)
   expect([...visited].sort()).toEqual(['가로등', '부츠 끈', '창문'])
   fireEvent.click(screen.getByRole('button', {name: '다음'}))
+  flush()
   expect(screen.getByRole('status').textContent).not.toBe(visited.at(-1))
   expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled()
 })
@@ -71,6 +74,7 @@ test('should continue playback automatically after a track ends', async () => {
   render(() => <Player />)
   await screen.findByText('부츠 끈')
   fireEvent.ended(screen.getByLabelText('음원'))
+  flush()
   expect(screen.getByRole('status').textContent).toBe('가로등')
   expect(HTMLMediaElement.prototype.play).toHaveBeenCalled()
 })

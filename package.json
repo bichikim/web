@@ -33,8 +33,8 @@
     "test:storybook:ui": "vitest --config vitest.integration.config.mts --ui --watch --project='storybook*'",
     "test:storybook:watch": "vitest --config vitest.integration.config.mts --project='storybook*'",
     "test:ui": "vitest --ui --watch",
-    "test:vitest": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project=unit --reporter=default",
-    "test:vitest:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest watch --project=unit"
+    "test:vitest": "NODE_OPTIONS=--no-experimental-webstorage vitest run --project='unit*' --reporter=default",
+    "test:vitest:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest watch --project='unit*'"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "4.1.2",

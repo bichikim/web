@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, renderHook, waitFor} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {type AlbumPreview, createAlbumPreview} from '../create-album-preview'
 import {useDesktopAlbum} from '../use-desktop-album'
@@ -47,6 +47,7 @@ test('should start each display deadline only after the app transition completes
     }),
   )
   hook.setSource('/second.webp')
+  flush()
   expect(presented).not.toHaveBeenCalled()
   expect(renderer.cancelPending).toHaveBeenCalledOnce()
   finish!(true)

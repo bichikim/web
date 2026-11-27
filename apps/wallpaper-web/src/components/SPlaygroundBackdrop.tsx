@@ -30,11 +30,14 @@ export const SPlaygroundBackdrop = (props: SPlaygroundBackdropProps) => {
       background() === 'street-front' ||
       Boolean(mask() && props.previousBackground === 'street-front'),
   )
-  createEffect(() => {
-    if (props.prepareStreet || streetVisible()) {
-      setStreetMounted(true)
-    }
-  })
+  createEffect(
+    () => props.prepareStreet === true || streetVisible(),
+    (prepareStreet) => {
+      if (prepareStreet) {
+        setStreetMounted(true)
+      }
+    },
+  )
   return (
     <>
       <SStoryMask

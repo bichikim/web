@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {renderHook, waitFor} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, flush} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {createPlayer, preparePuppetDocument} from '@winter-love/puppet/player'
 import {useAnimatedBackground} from '..'
@@ -62,10 +62,13 @@ test('should pause a retained background without fetching or preparing its scene
   )
   await waitFor(() => expect(player.resume).toHaveBeenCalledOnce(), {interval: 1})
   vi.mocked(createPlayer).mock.calls[0]![0].onFrame?.({duration: 0, motionId: null, time: 0})
+  flush()
   expect(hook.result.ready()).toBe(true)
   setPlaying(false)
+  flush()
   expect(player.pause).toHaveBeenCalledOnce()
   setPlaying(true)
+  flush()
   expect(player.resume).toHaveBeenCalledTimes(2)
   expect(fetch).toHaveBeenCalledOnce()
   expect(createPlayer).toHaveBeenCalledOnce()

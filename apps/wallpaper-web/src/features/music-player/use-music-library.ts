@@ -1,4 +1,4 @@
-import {createSignal, onCleanup, onMount} from 'solid-js'
+import {createSignal, onSettled} from 'solid-js'
 import {parseLibrary} from './parse-library'
 import type {MusicLibrary} from './types'
 
@@ -27,8 +27,10 @@ export const useMusicLibrary = () => {
       }
     }
   }
-  onMount(load)
-  onCleanup(() => cancellation?.abort())
+  onSettled(() => {
+    load()
+    return () => cancellation?.abort()
+  })
   return {
     library,
     retry: load,

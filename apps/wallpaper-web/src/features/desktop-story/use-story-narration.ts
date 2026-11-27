@@ -1,4 +1,4 @@
-import {type Accessor, createEffect, createMemo, on, onCleanup} from 'solid-js'
+import {type Accessor, createEffect, createMemo, onCleanup} from 'solid-js'
 import type {useCharacterSpeech} from '../character-speech'
 import {getStoryNarration} from './get-story-narration'
 import type {StoryFrame} from './frame'
@@ -16,14 +16,12 @@ export const useStoryNarration = (props: UseStoryNarrationProps) => {
       ? getStoryNarration(frame.chapter)
       : null
   })
-  createEffect(
-    on(entering, (text) => {
-      if (text === null) {
-        props.speech.stop()
-      } else {
-        props.speech.speak(text)
-      }
-    }),
-  )
+  createEffect(entering, (text) => {
+    if (text === null) {
+      props.speech.stop()
+    } else {
+      props.speech.speak(text)
+    }
+  })
   onCleanup(() => props.speech.stop())
 }
