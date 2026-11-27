@@ -177,17 +177,25 @@ const renderPartMasks = (options: RenderPartMasksOptions) => {
 const createApplication = async (options: CreatePlayerRendererOptions) => {
   const application = new Application()
   const resizeTarget = options.resizeTo ?? options.canvas.parentElement
+  // Pixi allocates the initial surface before its resize plugin runs.
+  const initialSize =
+    resizeTarget === null
+      ? options.document.viewport
+      : {
+          height: Math.max(1, resizeTarget.clientHeight),
+          width: Math.max(1, resizeTarget.clientWidth),
+        }
   await application.init({
     antialias: options.antialiasing !== 'ssaa',
     autoDensity: true,
     backgroundAlpha: 0,
     canvas: options.canvas,
-    height: options.document.viewport.height,
+    height: initialSize.height,
     preference: getRendererPreference(options),
     resolution: options.resolution ?? Math.min(window.devicePixelRatio, 2),
     // WebGL reads the drawn scene for backdrop blending only through a back buffer.
     useBackBuffer: documentUsesBackdropBlend(options.document),
-    width: options.document.viewport.width,
+    width: initialSize.width,
     ...(resizeTarget === null ? {} : {resizeTo: resizeTarget}),
   })
   if (documentUsesBackdropBlend(options.document)) {

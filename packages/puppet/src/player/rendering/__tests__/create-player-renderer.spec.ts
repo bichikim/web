@@ -60,6 +60,40 @@ afterEach(() => {
 })
 
 describe('createPlayerRenderer', () => {
+  test.each([
+    {height: 480, initialHeight: 480, width: 384, initialWidth: 384},
+    {height: 0, initialHeight: 1, width: 0, initialWidth: 1},
+  ])(
+    'should size the initial render surface for a $width × $height host',
+    async ({height, width, initialHeight, initialWidth}) => {
+      const host = document.createElement('div')
+      vi.spyOn(host, 'clientHeight', 'get').mockReturnValue(height)
+      vi.spyOn(host, 'clientWidth', 'get').mockReturnValue(width)
+      const canvas = document.createElement('canvas')
+      host.append(canvas)
+      const renderer = await createPlayerRenderer({
+        canvas,
+        document: {...createEmptyDocument(), viewport: {height: 6000, width: 4800}},
+        resolution: 2.25,
+      })
+      expect(application.init).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({height: initialHeight, resizeTo: host, width: initialWidth}),
+      )
+      renderer.destroy()
+    },
+  )
+
+  test('should use the document viewport to initialize a standalone canvas', async () => {
+    const renderer = await createPlayerRenderer({
+      canvas: document.createElement('canvas'),
+      document: {...createEmptyDocument(), viewport: {height: 600, width: 480}},
+    })
+    expect(application.init).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({height: 600, width: 480}),
+    )
+    renderer.destroy()
+  })
+
   test('should release a mask-only mesh that never entered the display tree', async () => {
     const mesh = {destroy: vi.fn(), parent: null}
     vi.spyOn(initialization, 'initializeRuntimeParts').mockImplementation(async ({partById}) => {
