@@ -33,6 +33,31 @@ const frame = {
 }
 const image = () => ({close: vi.fn(), height: 1, width: 1}) satisfies ImageBitmap
 
+test('should transfer a texture batch to the worker and await its upload response', async () => {
+  const {client, respond, worker} = setup()
+  const bitmap = image()
+  const uploaded = client.uploadTextures([bitmap])
+  const [request, transfer] = worker.postMessage.mock.calls[0]!
+  expect(request).toEqual({id: 1, kind: 'upload-textures', textures: [bitmap]})
+  expect(transfer).toEqual([bitmap])
+  respond({id: request.id, kind: 'textures-uploaded'})
+  await expect(uploaded).resolves.toBeUndefined()
+  expect(bitmap.close).not.toHaveBeenCalled()
+  client.destroy()
+})
+
+test('should close textures whose transfer fails', async () => {
+  const {client, worker} = setup()
+  const failure = new DOMException('Cannot transfer the bitmaps', 'DataCloneError')
+  worker.postMessage.mockImplementationOnce(() => {
+    throw failure
+  })
+  const bitmap = image()
+  await expect(client.uploadTextures([bitmap])).rejects.toThrow(failure.message)
+  expect(bitmap.close).toHaveBeenCalledOnce()
+  client.destroy()
+})
+
 test('should reserve a due alpha sample for a frame selected for display', async () => {
   const size = {height: 1, width: 2}
   const requestSize = vi.fn().mockReturnValueOnce(size)

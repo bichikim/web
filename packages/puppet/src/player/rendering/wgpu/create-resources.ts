@@ -40,32 +40,26 @@ export const createGpuResources = async (
   const sources = [...new Set(document.parts.map((part) => part.texture.src))]
   const concurrency = 4
   const samples = 4
-  const load = limitAsync(loadTextureImage, concurrency)
-  const decoded = await Promise.all(sources.map(load))
-  const images = new Map(sources.map((source, index) => [source, decoded[index]!]))
   const metadata = describeMeshes(document, sources)
   const client = createGpuClient(options.alphaCapture, direct ? 'direct' : 'bitmap')
-  let pendingTextures: readonly ImageBitmap[] = []
   try {
-    const textures = await convertTextures(decoded)
-    pendingTextures = textures
     if (direct) {
       options.canvas.width = size.width
       options.canvas.height = size.height
     }
     const surface = direct ? options.canvas.transferControlToOffscreen() : undefined
-    const initialized = client.initialize({
+    await client.initialize({
       ...size,
       alphaCapture: options.alphaCapture !== undefined,
       kind: 'initialize',
       metadata,
       samples: options.antialiasing === 'ssaa' ? 1 : samples,
       ...(surface === undefined ? {} : {surface}),
-      textures,
     })
-    // The client transfers or disposes this batch when initialization settles.
-    pendingTextures = []
-    await initialized
+    const load = limitAsync(loadTextureImage, concurrency)
+    const decoded = await Promise.all(sources.map(load))
+    await client.uploadTextures(await convertTextures(decoded))
+    const images = new Map(sources.map((source, index) => [source, decoded[index]!]))
     if (surface !== undefined) {
       return {client, context: null, images}
     }
@@ -75,7 +69,6 @@ export const createGpuResources = async (
     }
     return {client, context, images}
   } catch (cause) {
-    pendingTextures.forEach((texture) => texture.close())
     client.destroy()
     throw cause
   }

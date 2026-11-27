@@ -7,6 +7,7 @@ export interface GpuClient {
   readonly connectGeometry: () => Promise<GeometryConnection>
   readonly releaseGeometry: (token: GeometryToken) => void
   readonly initialize: (command: InitializeGpu) => Promise<void>
+  readonly uploadTextures: (textures: readonly ImageBitmap[]) => Promise<void>
   readonly draw: (command: DrawGpu) => Promise<ImageBitmap | null>
   readonly prefetch?: (command: DrawGpu) => Promise<ImageBitmap | null> | undefined
   readonly destroy: () => void
@@ -67,27 +68,36 @@ const createAlphaRequests = (capture?: PlayerAlphaCapture) => {
   }
 }
 
-const initializeClient = async (
-  request: (command: GpuCommand, transfer: Transferable[]) => Promise<GpuResponse>,
-  command: InitializeGpu,
+const expectAcknowledgement = async (
+  pending: Promise<GpuResponse>,
+  kind: 'connected' | 'initialized' | 'textures-uploaded',
+  error: string,
 ) => {
-  try {
-    const transfer = [
-      ...command.textures,
-      ...(command.surface === undefined ? [] : [command.surface]),
-    ]
-    const response = await request(command, transfer)
-    if (response.kind !== 'initialized') {
-      if (response.kind === 'rendered') {
-        response.bitmap?.close()
-      }
-      throw new Error('Unexpected GPU initialization response')
+  const response = await pending
+  if (response.kind !== kind) {
+    if (response.kind === 'rendered') {
+      response.bitmap?.close()
     }
-  } catch (cause) {
-    command.textures.forEach((image) => image.close())
-    throw cause
+    throw new Error(error)
   }
 }
+type RequestGpu = (command: GpuCommand, transfer: Transferable[]) => Promise<GpuResponse>
+const createInitializationRequests = (
+  request: RequestGpu,
+): Pick<GpuClient, 'initialize' | 'uploadTextures'> => ({
+  initialize: (command) =>
+    expectAcknowledgement(
+      request(command, command.surface === undefined ? [] : [command.surface]),
+      'initialized',
+      'Unexpected GPU initialization response',
+    ),
+  uploadTextures: (textures) =>
+    expectAcknowledgement(
+      request({kind: 'upload-textures', textures}, [...textures]),
+      'textures-uploaded',
+      'Unexpected GPU texture upload response',
+    ),
+})
 const prepareDraw = (
   command: DrawGpu,
   geometry: GeometryToken | undefined,
@@ -169,10 +179,16 @@ export const createGpuClient = (
     }
     request.resolve(data)
   }
-  const request = (command: GpuCommand, transfer: Transferable[]) =>
+  const request: RequestGpu = (command, transfer) =>
     new Promise<GpuResponse>((resolve, reject) => {
+      const rejectUnsent = (error: Error) => {
+        if (command.kind === 'upload-textures') {
+          command.textures.forEach((image) => image.close())
+        }
+        reject(error)
+      }
       if (disposed || failure !== undefined) {
-        reject(failure ?? new Error('GPU Worker disposed'))
+        rejectUnsent(failure ?? new Error('GPU Worker disposed'))
         return
       }
       sequence += 1
@@ -186,19 +202,16 @@ export const createGpuClient = (
       } catch (cause) {
         alpha.clear(id)
         pending.delete(id)
-        reject(cause instanceof Error ? cause : new Error(String(cause)))
+        rejectUnsent(cause instanceof Error ? cause : new Error(String(cause)))
       }
     })
   const connections = createGeometryConnections({
-    async connect(connection, port) {
-      const response = await request({connection, kind: 'connect', owner, port}, [port])
-      if (response.kind !== 'connected') {
-        if (response.kind === 'rendered') {
-          response.bitmap?.close()
-        }
-        throw new Error('Unexpected geometry connection response')
-      }
-    },
+    connect: (connection, port) =>
+      expectAcknowledgement(
+        request({connection, kind: 'connect', owner, port}, [port]),
+        'connected',
+        'Unexpected geometry connection response',
+      ),
     disconnect(connection) {
       if (!disposed && failure === undefined) {
         worker.postMessage({connection, id: 0, kind: 'disconnect-geometry'})
@@ -233,6 +246,7 @@ export const createGpuClient = (
     return response.bitmap
   }
   return {
+    ...createInitializationRequests(request),
     cancelAlpha: alpha.cancel,
     connectGeometry: connections.connect,
     destroy() {
@@ -250,7 +264,6 @@ export const createGpuClient = (
       }
     },
     draw: (command) => drawFrame(command, alpha.claim()),
-    initialize: (command) => initializeClient(request, command),
     prefetch: (command) =>
       mode === 'bitmap' && alpha.canPrefetch() ? drawFrame(command, undefined) : undefined,
     releaseGeometry(token) {
