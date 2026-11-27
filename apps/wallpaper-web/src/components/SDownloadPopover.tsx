@@ -54,34 +54,26 @@ export const SDownloadPopover = () => {
         }
       >
         {(downloads) => (
-          <>
-            <p class="mt-2 text-xs text-muted">
-              {downloads().isBeta ? '베타 ' : '버전 '}
-              {downloads().version}
-            </p>
-            <Show when={downloads().isBeta}>
-              <p class="mt-2 text-xs leading-6 text-muted">
-                설치 시 macOS 공증 또는 Windows 게시자 확인 경고가 표시될 수 있어요.
-              </p>
-            </Show>
-            <div class="mt-5 grid gap-3">
-              <For each={downloads().files}>
-                {(download) => (
-                  <a
-                    href={download.href}
-                    class="flex min-h-15 items-center justify-between gap-3 rounded-3 bg-ink px-4 text-xs
-                      text-white"
-                  >
+          <div class="mt-5 grid gap-3">
+            <For each={downloads().files}>
+              {(download) => (
+                <a
+                  href={download.href}
+                  class="flex min-h-15 items-center justify-between gap-3 rounded-3 bg-ink px-4 text-xs
+                    text-white"
+                >
+                  <span class="grid gap-1">
                     <span class="font-550">{download.platform}</span>
-                    <span class="flex items-center gap-2">
-                      {download.megabytes} MB
-                      <SIcon name="download" />
-                    </span>
-                  </a>
-                )}
-              </For>
-            </div>
-          </>
+                    <span class="text-[11px] text-white/75">v{downloads().version}</span>
+                  </span>
+                  <span class="flex shrink-0 items-center gap-2">
+                    {download.megabytes} MB
+                    <SIcon name="download" />
+                  </span>
+                </a>
+              )}
+            </For>
+          </div>
         )}
       </Show>
     </section>
