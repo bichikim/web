@@ -1,5 +1,6 @@
 import {cp, mkdir, open, stat, writeFile} from 'node:fs/promises'
 import path from 'node:path'
+import buildAssets from '../build-assets.json' with {type: 'json'}
 import isolationHeaders from '../isolation-headers.json' with {type: 'json'}
 
 const [, , source = 'apps/wallpaper-web/.output/public', target = '.vercel/output'] = process.argv
@@ -45,6 +46,10 @@ await mkdir(path.dirname(target), {recursive: true})
 // A fresh destination prevents old deployment files from being shipped with this build.
 await mkdir(target)
 await cp(source, path.join(target, 'static'), {recursive: true})
-const routes = [{continue: true, headers: isolationHeaders, src: '/.*'}, {handle: 'filesystem'}]
+const routes = [
+  {continue: true, headers: isolationHeaders, src: '/.*'},
+  {continue: true, headers: buildAssets.headers, src: `/${buildAssets.directory}/.*`},
+  {handle: 'filesystem'},
+]
 await writeFile(path.join(target, 'config.json'), `${JSON.stringify({routes, version: 3})}\n`)
 console.log(`Prepared static deployment in ${target}`)

@@ -31,10 +31,12 @@ test('should retry an embedded image through a Blob URL and revoke the URL after
 test('should revoke the Blob URL even when its image also fails to decode', async () => {
   const revoke = vi.fn()
   vi.stubGlobal('URL', {createObjectURL: vi.fn(() => 'blob:atlas'), revokeObjectURL: revoke})
-  const failure = new Error('Corrupt image')
+  const failure = new DOMException('Corrupt image', 'EncodingError')
   vi.stubGlobal(
     'Image',
     class {
+      complete = true
+      naturalWidth = 0
       src = ''
       decode = vi.fn().mockRejectedValue(failure)
     },
@@ -42,6 +44,25 @@ test('should revoke the Blob URL even when its image also fails to decode', asyn
   await expect(loadTextureImage('data:image/png;base64,AQID')).rejects.toBe(failure)
   expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:atlas')
 })
+
+test('should use a loaded texture when asynchronous decoding reports an encoding error', async () => {
+  const create = vi.fn(() => 'blob:atlas')
+  vi.stubGlobal('URL', {createObjectURL: create, revokeObjectURL: vi.fn()})
+  const source = 'data:image/webp;base64,AQID'
+  vi.stubGlobal(
+    'Image',
+    class {
+      complete = true
+      naturalWidth = 4096
+      src = ''
+      decode = vi.fn().mockRejectedValue(new DOMException('Cannot decode image', 'EncodingError'))
+    },
+  )
+
+  await expect(loadTextureImage(source)).resolves.toMatchObject({src: source})
+  expect(create).not.toHaveBeenCalled()
+})
+
 test('should preserve failures for external sources without retrying or allocating a Blob', async () => {
   const failure = new Error('Missing image')
   vi.stubGlobal(
