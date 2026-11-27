@@ -13,6 +13,7 @@ const BUILD_TARGETS = {
   player: {
     native: './src/native/index.ts',
     player: './src/player/index.ts',
+    'prepare-document': './src/player/prepare-puppet-document.ts',
   },
 } as const
 

@@ -2,9 +2,11 @@
 import {cleanup, renderHook, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
-import {createPlayer, type Player, preparePuppetDocument} from '@winter-love/puppet/player'
+import {createPlayer, type Player} from '@winter-love/puppet/player'
+import {preparePuppetDocument} from '@winter-love/puppet/prepare-document'
 import {useCharacterPreview} from '..'
 import {connectCharacterBlink} from '../blink'
+import {startInitialCharacterDocument} from '../model'
 
 const player = vi.hoisted(() => ({
   clearParameterValues: vi.fn(),
@@ -24,8 +26,8 @@ const player = vi.hoisted(() => ({
 }))
 vi.mock('@winter-love/puppet/player', () => ({
   createPlayer: vi.fn(),
-  preparePuppetDocument: vi.fn(),
 }))
+vi.mock('@winter-love/puppet/prepare-document', () => ({preparePuppetDocument: vi.fn()}))
 vi.mock('../blink', () => ({connectCharacterBlink: vi.fn()}))
 const releaseBlink = vi.fn()
 const preparedDocument = {
@@ -54,8 +56,8 @@ const settle = () => {
   }
 }
 
-const actual = await vi.importActual<typeof import('@winter-love/puppet/player')>(
-  '@winter-love/puppet/player',
+const actual = await vi.importActual<typeof import('@winter-love/puppet/prepare-document')>(
+  '@winter-love/puppet/prepare-document',
 )
 const prepared = await actual.preparePuppetDocument({document: preparedDocument})
 if (!prepared.ok) {
@@ -170,20 +172,26 @@ test('should hit only a painted part using canvas-local pointer coordinates', as
   hook.cleanup()
 })
 
-test('should not create a player when unmounted while its Blob is being prepared', async () => {
-  const prepared = await preparePuppetDocument({document: preparedDocument})
-  vi.mocked(preparePuppetDocument).mockClear()
-  const pending = Promise.withResolvers<Awaited<ReturnType<typeof preparePuppetDocument>>>()
-  vi.mocked(preparePuppetDocument).mockReturnValueOnce(pending.promise)
-  const hook = setup()
-  await waitFor(() => expect(preparePuppetDocument).toHaveBeenCalledOnce(), {interval: 1})
-  const options = vi.mocked(preparePuppetDocument).mock.calls[0]![0]
-  hook.cleanup()
-  expect(options.signal?.aborted).toBe(true)
-  pending.resolve(prepared)
-  await pending.promise
-  expect(createPlayer).not.toHaveBeenCalled()
-})
+test.each([false, true])(
+  'should cancel pending preparation on unmount when the model started before mounting is %s',
+  async (startedEarly) => {
+    const pending = Promise.withResolvers<Awaited<ReturnType<typeof preparePuppetDocument>>>()
+    vi.mocked(preparePuppetDocument).mockReturnValueOnce(pending.promise)
+    if (startedEarly) {
+      startInitialCharacterDocument()
+      await waitFor(() => expect(preparePuppetDocument).toHaveBeenCalledOnce(), {interval: 1})
+    }
+    const hook = setup()
+    await waitFor(() => expect(preparePuppetDocument).toHaveBeenCalledOnce(), {interval: 1})
+    expect(fetch).toHaveBeenCalledOnce()
+    const options = vi.mocked(preparePuppetDocument).mock.calls[0]![0]
+    hook.cleanup()
+    expect(options.signal?.aborted).toBe(true)
+    pending.resolve(prepared)
+    await pending.promise
+    expect(createPlayer).not.toHaveBeenCalled()
+  },
+)
 
 test('should aim around the translated face in canvas CSS pixels and reset on pointer exit', async () => {
   const canvas = document.createElement('canvas')

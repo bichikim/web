@@ -5,6 +5,27 @@ test.describe('touch startup order', () => {
 
   const profileModel = /\/models\/profile\/(?:.*\/)?model\.poffo$/
 
+  test('starts model preparation while the character renderer module is loading', async ({
+    page,
+  }) => {
+    const renderer = /\/SPuppetCharacter-[\w-]+\.js$/
+    const releaseRenderer = Promise.withResolvers<void>()
+    await page.route(renderer, async (route) => {
+      await releaseRenderer.promise
+      await route.continue()
+    })
+    const requested = page.waitForRequest(renderer)
+    const prepared = page.waitForResponse(/\/prepare-puppet-document-worker-[\w-]+\.js$/)
+    try {
+      await page.goto('/', {waitUntil: 'commit'})
+      await requested
+      expect((await prepared).ok()).toBe(true)
+    } finally {
+      releaseRenderer.resolve()
+    }
+    await expect(page.getByRole('button', {exact: true, name: '일시 정지'})).toBeVisible()
+  })
+
   test('loads the animated background after the first character frame', async ({page}) => {
     const pause = page.getByRole('button', {exact: true, name: '일시 정지'})
     let characterWasVisible = false

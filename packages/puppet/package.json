@@ -22,6 +22,11 @@
       "development": "./src/player/index.ts",
       "import": "./dist/player.js"
     },
+    "./prepare-document": {
+      "types": "./dist/types/player/prepare-puppet-document.d.ts",
+      "development": "./src/player/prepare-puppet-document.ts",
+      "import": "./dist/prepare-document.js"
+    },
     "./native": {
       "types": "./dist/types/native/index.d.ts",
       "development": "./src/native/index.ts",
