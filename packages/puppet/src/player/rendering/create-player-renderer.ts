@@ -17,7 +17,7 @@ import type {MotionMix} from '../playback'
 import {canReuseLayerResources, canReusePartResources} from '../internal/render-plan'
 import {layoutPlayerRoot, type PuppetFit, type PuppetFraming} from '../internal/layout-player-root'
 import type {RenderOverrides} from '../internal/render-overrides'
-import {createNativeDeformation} from '../internal/create-native-deformation'
+import {deferNativeDeformation} from '../internal/create-native-deformation'
 import {applyRenderFrame} from './apply-render-frame'
 import {replaceBackBufferPresentation} from './back-buffer-presentation'
 import {documentUsesBackdropBlend} from './part-blend-filter'
@@ -263,7 +263,7 @@ export const createPlayerRenderer = async (
   let {document} = options
   let fit = options.fit ?? 'contain'
   let pendingDocument: PuppetDocument | undefined
-  let native = createNativeDeformation(document)
+  let getNative = deferNativeDeformation(document)
   let camera: PlayerViewCamera | undefined
   let paintOrder: ReadonlyArray<string> = []
   let destroyed = false
@@ -280,7 +280,7 @@ export const createPlayerRenderer = async (
     }
     destroyed = true
     options.canvas.removeEventListener('webglcontextrestored', restoreContext)
-    native = undefined
+    getNative = () => undefined
     destroyRuntimeFilters([...partById.values(), ...layerById.values()])
     for (const {mesh} of partById.values()) {
       // Mask-only parts never enter the display tree destroyed by Application.
@@ -309,7 +309,7 @@ export const createPlayerRenderer = async (
   const commitDocument = (nextDocument: PuppetDocument) => {
     document = nextDocument
     pendingDocument = undefined
-    native = createNativeDeformation(document)
+    getNative = deferNativeDeformation(document)
     updatePartGeometry(document, partById)
   }
   const commitPending = () => {
@@ -400,7 +400,7 @@ export const createPlayerRenderer = async (
         layerById,
         layoutRoot,
         mix,
-        native,
+        native: getNative(),
         overrides,
         parameterValues,
         partById,
@@ -417,7 +417,6 @@ export const createPlayerRenderer = async (
         layerById,
         layoutRoot,
         mix: emptyMix,
-        native,
         parameterValues: {},
         partById,
         prepared,
