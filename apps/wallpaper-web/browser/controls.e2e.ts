@@ -74,19 +74,21 @@ test('supports keyboard menu selection, Escape and restored trigger focus', asyn
 
 test('downloads the chosen desktop installer from the latest release', async ({page}) => {
   const origin = 'https://wallpaper-files.pomofi.io'
-  const base = `${origin}/releases/0.1.0/100-1`
+  const version = '1.2.3'
+  const base = `${origin}/releases/${version}/100-1`
   await page.route(`${origin}/releases/latest.json`, (route) =>
     route.fulfill({
       headers: {'access-control-allow-origin': '*'},
       json: {
         build: '100-1',
         channel: 'beta',
+        macosNotarized: true,
         sizes: {
           'macos-arm64': 95_000_000,
           'macos-x64': 96_000_000,
           'windows-x64': 97_000_000,
         },
-        version: '0.1.0',
+        version,
       },
     }),
   )
@@ -95,23 +97,28 @@ test('downloads the chosen desktop installer from the latest release', async ({p
     return route.fulfill({
       body: 'installer fixture',
       contentType: 'application/octet-stream',
-      headers: {'content-disposition': `attachment; filename="${name}"`},
+      headers: {'content-disposition': `attachment; filename="Poffo-Wallpaper-${version}-${name}"`},
     })
   })
 
   await page.goto('/')
   await page.getByRole('button', {exact: true, name: '다운로드'}).click()
   const dialog = page.getByRole('dialog', {name: 'Poffo Wallpaper 다운로드'})
-  await expect(dialog.getByText('베타 0.1.0')).toBeVisible()
-  const arm = dialog.getByRole('link', {name: /Apple Silicon/u})
-  const intel = dialog.getByRole('link', {name: /Intel/u})
-  const windows = dialog.getByRole('link', {name: /Windows/u})
-  await Promise.all([
-    expect(arm).toHaveAttribute('href', `${base}/macos-arm64.dmg`),
-    expect(intel).toHaveAttribute('href', `${base}/macos-x64.dmg`),
-    expect(windows).toHaveAttribute('href', `${base}/windows-x64.exe`),
-  ])
+  const installers = [
+    {file: 'macos-arm64.dmg', platform: 'macOS · Apple Silicon', size: 95},
+    {file: 'macos-x64.dmg', platform: 'macOS · Intel', size: 96},
+    {file: 'windows-x64.exe', platform: 'Windows · 64비트', size: 97},
+  ]
+  await expect(dialog.getByRole('link')).toHaveCount(installers.length)
+  await expect(dialog.getByText(/베타|공증|게시자 확인/u)).toHaveCount(0)
+  await Promise.all(
+    installers.map(({file, platform, size}) =>
+      expect(
+        dialog.getByRole('link', {exact: true, name: `${platform} v${version} ${size} MB`}),
+      ).toHaveAttribute('href', `${base}/${file}`),
+    ),
+  )
   const downloading = page.waitForEvent('download')
-  await arm.click()
-  expect((await downloading).suggestedFilename()).toBe('macos-arm64.dmg')
+  await dialog.getByRole('link', {name: /Apple Silicon/u}).click()
+  expect((await downloading).suggestedFilename()).toBe(`Poffo-Wallpaper-${version}-macos-arm64.dmg`)
 })
