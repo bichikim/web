@@ -15,8 +15,6 @@ interface Download {
 }
 
 export interface ReleaseDownloads {
-  readonly isBeta: boolean
-  readonly macosNotarized: boolean
   readonly version: string
   readonly files: readonly Download[]
 }
@@ -51,12 +49,7 @@ export const parseReleaseDownloads = (data: unknown): ReleaseDownloads | null =>
       platform: target.platform,
     })
   }
-  return {
-    files,
-    isBeta: 'channel' in data && data.channel === 'beta',
-    macosNotarized: 'macosNotarized' in data && data.macosNotarized === true,
-    version: data.version,
-  }
+  return {files, version: data.version}
 }
 
 export const fetchReleaseDownloads = async (): Promise<ReleaseDownloads | null> => {
