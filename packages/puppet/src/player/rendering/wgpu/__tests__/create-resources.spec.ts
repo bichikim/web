@@ -13,6 +13,14 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+const deferred = <T>() => {
+  let resolve: (value: T) => void = () => {}
+  const promise = new Promise<T>((complete) => {
+    resolve = complete
+  })
+  return {promise, resolve}
+}
+
 const mockClient = () => {
   const client = {
     cancelAlpha: vi.fn(),
@@ -59,9 +67,9 @@ test('should skip texture preparation and leave the canvas available when WebGPU
 
 test('should decode only after WebGPU initializes and present only after texture upload finishes', async () => {
   const client = mockClient()
-  const initialized = Promise.withResolvers<void>()
-  const uploading = Promise.withResolvers<void>()
-  const uploaded = Promise.withResolvers<void>()
+  const initialized = deferred<void>()
+  const uploading = deferred<void>()
+  const uploaded = deferred<void>()
   client.initialize.mockReturnValue(initialized.promise)
   client.uploadTextures.mockImplementation(() => {
     uploading.resolve()
@@ -73,10 +81,9 @@ test('should decode only after WebGPU initializes and present only after texture
   vi.stubGlobal('createImageBitmap', createBitmap)
   vi.mocked(loadTextureImage).mockResolvedValue(image)
   const canvas = document.createElement('canvas')
-  const context = {transferFromImageBitmap: vi.fn()}
-  const getContext = vi
-    .spyOn(canvas, 'getContext')
-    .mockReturnValue(context as ImageBitmapRenderingContext)
+  const context = {canvas, transferFromImageBitmap: vi.fn()} satisfies ImageBitmapRenderingContext
+  const getContext = vi.fn(() => context)
+  Object.assign(canvas, {getContext})
 
   const resources = createGpuResources(
     {canvas, document: documentWithTextures('atlas', 'atlas')},
@@ -98,22 +105,16 @@ test('should decode only after WebGPU initializes and present only after texture
 test('should close a bitmap that finishes after another texture conversion fails', async () => {
   const failure = new Error('Bitmap cannot be converted')
   const bitmap = {close: vi.fn(), height: 1, width: 1} satisfies ImageBitmap
-  let start = () => {}
-  const started = new Promise<void>((resolve) => {
-    start = resolve
-  })
-  let complete = (_bitmap: ImageBitmap) => {}
-  const decoded = new Promise<ImageBitmap>((resolve) => {
-    complete = resolve
-  })
+  const started = deferred<void>()
+  const decoded = deferred<ImageBitmap>()
   vi.stubGlobal(
     'createImageBitmap',
     vi
       .fn()
       .mockRejectedValueOnce(failure)
       .mockImplementationOnce(() => {
-        start()
-        return decoded
+        started.resolve()
+        return decoded.promise
       }),
   )
   vi.mocked(loadTextureImage).mockImplementation(async () => new Image())
@@ -126,10 +127,10 @@ test('should close a bitmap that finishes after another texture conversion fails
     {height: 16, width: 16},
   )
   const rejected = expect(result).rejects.toBe(failure)
-  await started
+  await started.promise
   await rejected
-  complete(bitmap)
-  await decoded
+  decoded.resolve(bitmap)
+  await decoded.promise
   expect(bitmap.close).toHaveBeenCalledOnce()
   expect(client.uploadTextures).not.toHaveBeenCalled()
   expect(client.destroy).toHaveBeenCalledOnce()
