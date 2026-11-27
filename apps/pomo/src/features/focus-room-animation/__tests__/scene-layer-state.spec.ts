@@ -13,6 +13,147 @@ import {getPSceneLayer} from '../scene-layer-catalog'
 import {createFocusRoomLayerState} from '../scene-layer-state'
 
 describe('createFocusRoomLayerState', () => {
+  it('should return every own channel in viseme, bridge and jaw order with explicit zeros', () => {
+    const state = createFocusRoomLayerState('open', false)
+    const channels = state.channels!
+
+    expect(Reflect.ownKeys(channels)).toEqual([
+      'mouth-rest',
+      'mouth-closed',
+      'mouth-open',
+      'mouth-wide',
+      'mouth-round',
+      'mouth-narrow',
+      'mouth-transition-release',
+      'mouth-transition-small-open',
+      'mouth-transition-half-open',
+      'mouth-transition-closed-wide-early',
+      'mouth-transition-closed-wide-late',
+      'mouth-transition-closed-round-early',
+      'mouth-transition-closed-round-late',
+      'mouth-transition-open-round-early',
+      'mouth-transition-open-round-middle',
+      'mouth-transition-open-round-late',
+      'mouth-transition-open-wide-early',
+      'mouth-transition-open-wide-late',
+      'mouth-transition-narrow-wide-early',
+      'mouth-transition-narrow-wide-middle',
+      'mouth-transition-narrow-wide-late',
+      'mouth-transition-narrow-round-early',
+      'mouth-transition-narrow-round-middle',
+      'mouth-transition-narrow-round-late',
+      'jaw',
+    ])
+    for (const [channel, value] of Object.entries(channels)) {
+      expect(Object.getOwnPropertyDescriptor(channels, channel)).toEqual({
+        configurable: true,
+        enumerable: true,
+        value,
+        writable: true,
+      })
+      if (channel !== FOCUS_ROOM_JAW_CHANNEL) {
+        expect(value).toEqual({
+          opacity: channel === FOCUS_ROOM_MOUTH_CHANNELS.open ? 1 : 0,
+          visible: channel === FOCUS_ROOM_MOUTH_CHANNELS.open,
+        })
+      }
+    }
+  })
+
+  it('should create independent states and channel records for each scene composition', () => {
+    const transition = {from: 'closed', progress: 0.375, to: 'open'} as const
+    const first = createFocusRoomLayerState('open', false, transition)
+    const second = createFocusRoomLayerState('open', false, transition)
+    const firstChannels = first.channels!
+    const secondChannels = second.channels!
+
+    expect(first).not.toBe(second)
+    expect(firstChannels).not.toBe(secondChannels)
+    expect(new Set(Object.values(firstChannels)).size).toBe(25)
+    for (const channel of Object.keys(firstChannels)) {
+      expect(firstChannels[channel]).not.toBe(secondChannels[channel])
+    }
+    Reflect.set(firstChannels[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS.release]!, 'opacity', 0.25)
+    expect(secondChannels[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS.release]?.opacity).toBe(Math.SQRT1_2)
+    expect(firstChannels[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS['small-open']]?.opacity).toBe(
+      Math.SQRT1_2,
+    )
+    expect(createFocusRoomLayerState('open', false, transition)).toEqual(second)
+  })
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    'should use the initial frame and jaw for non-finite progress %s',
+    (progress) => {
+      const bridge = createFocusRoomLayerState('open', false, {
+        from: 'closed',
+        progress,
+        to: 'open',
+      })
+      const fallback = createFocusRoomLayerState('rest', false, {
+        from: 'open',
+        progress,
+        to: 'rest',
+      })
+
+      expect(bridge.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.closed]).toEqual({
+        opacity: 1,
+        visible: true,
+      })
+      expect(bridge.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.open]).toEqual({
+        opacity: 0,
+        visible: false,
+      })
+      expect(bridge.channels?.[FOCUS_ROOM_JAW_CHANNEL]).toEqual({pixelPushProgress: 0})
+      expect(fallback.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.open]).toEqual({
+        opacity: 1,
+        visible: true,
+      })
+      expect(fallback.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.rest]).toEqual({
+        opacity: 0,
+        visible: false,
+      })
+      expect(fallback.channels?.[FOCUS_ROOM_JAW_CHANNEL]).toEqual({pixelPushProgress: 1})
+    },
+  )
+
+  it('should retain positive zero channel values for negative zero progress', () => {
+    const state = createFocusRoomLayerState('narrow', false, {
+      from: 'open',
+      progress: -0,
+      to: 'narrow',
+    })
+
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.narrow]).toEqual({opacity: 0, visible: false})
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.rest]).toEqual({opacity: 0, visible: false})
+    expect(state.channels?.[FOCUS_ROOM_JAW_CHANNEL]).toEqual({pixelPushProgress: 1})
+  })
+
+  it('should read the current channel catalogs on each call', () => {
+    const restChannel = FOCUS_ROOM_MOUTH_CHANNELS.rest
+    const releaseChannel = FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS.release
+    const before = createFocusRoomLayerState('rest', false)
+
+    try {
+      Reflect.set(FOCUS_ROOM_MOUTH_CHANNELS, 'rest', 'mouth-current-rest')
+      Reflect.set(FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS, 'release', 'mouth-current-release')
+      const rest = createFocusRoomLayerState('rest', false)
+      const bridge = createFocusRoomLayerState('open', false, {
+        from: 'closed',
+        progress: 0.25,
+        to: 'open',
+      })
+
+      expect(rest.channels?.['mouth-current-rest']).toEqual({opacity: 1, visible: true})
+      expect(bridge.channels?.['mouth-current-release']).toEqual({opacity: 1, visible: true})
+      expect(Object.hasOwn(rest.channels!, restChannel)).toBe(false)
+      expect(Object.hasOwn(bridge.channels!, releaseChannel)).toBe(false)
+      expect(before.channels?.[restChannel]).toEqual({opacity: 1, visible: true})
+    } finally {
+      Reflect.set(FOCUS_ROOM_MOUTH_CHANNELS, 'rest', restChannel)
+      Reflect.set(FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS, 'release', releaseChannel)
+    }
+  })
+
   it('should inspect each bridge frame once while composing all mouth channels', () => {
     const supportsStage = vi.fn<(stage: string) => boolean>(() => true)
     const transition = Object.freeze({from: 'closed', progress: 0.375, to: 'open'} as const)
