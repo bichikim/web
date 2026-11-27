@@ -20,6 +20,7 @@ export const SWidgetPlayground = () => {
   const speech = useCharacterSpeech()
   const [runway, setRunway] = createSignal<HTMLElement | null>(null)
   const [stage, setStage] = createSignal<HTMLDivElement | null>(null)
+  const [backdropStarted, setBackdropStarted] = createSignal(false)
   const story = useDesktopStory({dragging: preview.dragging, onRequest: speech.unlock, stage})
   const introductionActive = createMemo(() => story.frame().active)
   useStoryNarration({frame: story.frame, ready: () => preview.phase() === 'ready', speech})
@@ -45,7 +46,18 @@ export const SWidgetPlayground = () => {
       }
     }),
   )
-  onMount(preview.activate)
+  createEffect(() => {
+    const phase = preview.phase()
+    if (phase === 'ready' || phase === 'error') {
+      setBackdropStarted(true)
+    }
+  })
+  onMount(() => {
+    if (!globalThis.matchMedia?.('(pointer: coarse)').matches) {
+      setBackdropStarted(true)
+    }
+    preview.activate()
+  })
   return (
     <main
       ref={setRunway}
@@ -61,21 +73,23 @@ export const SWidgetPlayground = () => {
           '--story-width': `${story.viewportWidth()}px`,
         }}
       >
-        <SPlaygroundBackdrop
-          background={
-            story.scenes().incoming.visible
-              ? story.scenes().incoming.background
-              : preview.background()
-          }
-          previousBackground={
-            story.scenes().outgoing?.visible
-              ? story.scenes().outgoing?.background
-              : preview.background()
-          }
-          playing={!story.frame().transitioning}
-          prepareStreet={story.frame().active && !story.frame().transitioning}
-          transition={story.scenes().transition}
-        />
+        <Show when={backdropStarted()}>
+          <SPlaygroundBackdrop
+            background={
+              story.scenes().incoming.visible
+                ? story.scenes().incoming.background
+                : preview.background()
+            }
+            previousBackground={
+              story.scenes().outgoing?.visible
+                ? story.scenes().outgoing?.background
+                : preview.background()
+            }
+            playing={!story.frame().transitioning}
+            prepareStreet={story.frame().active && !story.frame().transitioning}
+            transition={story.scenes().transition}
+          />
+        </Show>
         <SStoryMask outgoing transition={story.scenes().transition}>
           <Show when={story.scenes().outgoing} keyed>
             {(frame) => <SDesktopStory animated={false} frame={frame} />}

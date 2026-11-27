@@ -17,9 +17,7 @@ export const createByteReader = (bytes: Uint8Array) => {
       return bytes.subarray(position, position + length)
     },
     ended: () => offset === bytes.length,
-    float32: () => view.getFloat32(take(Float32Array.BYTES_PER_ELEMENT), true),
     float64: () => view.getFloat64(take(Float64Array.BYTES_PER_ELEMENT), true),
-    int32: () => view.getInt32(take(Int32Array.BYTES_PER_ELEMENT), true),
     length(minimumBytes: number) {
       const length = view.getUint32(take(Uint32Array.BYTES_PER_ELEMENT), true)
       if (length > (bytes.length - offset) / minimumBytes) {
@@ -27,7 +25,6 @@ export const createByteReader = (bytes: Uint8Array) => {
       }
       return length
     },
-    uint16: () => view.getUint16(take(Uint16Array.BYTES_PER_ELEMENT), true),
     uint32: () => view.getUint32(take(Uint32Array.BYTES_PER_ELEMENT), true),
   }
 }

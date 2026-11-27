@@ -3,19 +3,19 @@ import {basename, posix} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {normalizePath, type Plugin} from 'vite'
 
-/** Copy these assets beside Puppet's prebuilt Rust Worker, preserving their filenames. */
+/** Copy these assets beside Puppet's prebuilt Workers, preserving their filenames. */
 export const PUPPET_THREAD_WORKERS = normalizePath(
-  fileURLToPath(new URL('../dist/assets/workerHelpers-*.js', import.meta.url)),
+  fileURLToPath(new URL('../dist/assets/{workerHelpers-*,puppet-worker-*}.js', import.meta.url)),
 )
 
-/** Emits the prebuilt Rust thread entries beside the client build's numerical Worker. */
+/** Emits the prebuilt Worker dependencies beside the client build's Worker entries. */
 export const puppetThreadWorkers = (): Plugin => ({
   apply: 'build',
   applyToEnvironment: (environment) => environment.name === 'client',
   generateBundle() {
     const workers = globSync(PUPPET_THREAD_WORKERS)
     if (workers.length === 0) {
-      this.error('Build @winter-love/puppet before bundling its Rust thread Workers.')
+      this.error('Build @winter-love/puppet before bundling its Worker dependencies.')
     }
     const directory = this.environment.config.build.assetsDir
     for (const worker of workers) {

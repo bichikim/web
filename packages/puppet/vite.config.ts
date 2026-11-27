@@ -74,5 +74,13 @@ export default defineConfig(({command, mode}) => {
       },
     },
     plugins,
+    ...(mode === 'player'
+      ? {
+          worker: {
+            format: 'es',
+            rolldownOptions: {output: {chunkFileNames: 'assets/puppet-worker-[name]-[hash].js'}},
+          },
+        }
+      : {}),
   }
 })

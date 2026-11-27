@@ -36,6 +36,25 @@ test('should reject non-finite encoded scalars', () => {
   expect(() => decodeValue({assets: [], bytes})).toThrow(SyntaxError)
 })
 
+test('should retain an own prototype-named key without changing the object prototype', () => {
+  const value = JSON.parse('{"__proto__":{"visible":true},"constructor":"example"}')
+  const restored = decodeValue({assets: [], bytes: encoded(value)})
+  expect(restored).toStrictEqual(value)
+  expect(Object.getPrototypeOf(restored)).toBe(Object.prototype)
+  expect(Object.hasOwn(restored as object, '__proto__')).toBe(true)
+})
+
+test('should retain signed zero and reject non-finite packed coordinates', () => {
+  const bytes = new Uint8Array(13)
+  bytes.set([8, 2, 0, 0, 0])
+  const view = new DataView(bytes.buffer)
+  view.setFloat32(5, -0, true)
+  view.setFloat32(9, 1.5, true)
+  expect(decodeValue({assets: [], bytes})).toEqual([-0, 1.5])
+  view.setFloat32(9, Infinity, true)
+  expect(() => decodeValue({assets: [], bytes})).toThrow(SyntaxError)
+})
+
 test.each([0, 1, 4294967295])('should reject unresolved v2 numeric array reference %i', (index) => {
   const bytes = new Uint8Array(5)
   bytes[0] = 16

@@ -4,7 +4,7 @@ mod bindings;
 mod masks;
 mod scene;
 
-use bindings::{compile_binding, compile_glue_bindings};
+use bindings::{compile_binding, compile_glue_bindings, compile_part_bindings};
 use masks::MaskPlans;
 pub use masks::{MaskPlan, MaskSource};
 pub(crate) use scene::{CompiledSkin, SceneTree};
@@ -199,21 +199,23 @@ impl Model {
         }
         let mut deformers = Vec::new();
         let mut deformer_index = HashMap::new();
-        let scene = compile_scene(
-            &document.scene_roots(),
-            &part_index,
-            &mut deformers,
-            &mut deformer_index,
-        );
+        let default_roots;
+        let roots = match &document.scene {
+            Some(scene) => scene.roots.as_slice(),
+            None => {
+                default_roots = document.scene_roots();
+                &default_roots
+            }
+        };
+        let scene = compile_scene(roots, &part_index, &mut deformers, &mut deformer_index);
         let mut scene_order = Vec::new();
         flatten_scene(&scene, true, &mut scene_order);
-        let roots = document.scene_roots();
-        let scene_groups = layers::scene_groups(&roots);
+        let scene_groups = layers::scene_groups(roots);
         let mut paths: HashMap<&str, GroupPath> = scene_groups.parts.into_iter().collect();
         let groups = layers::compile_groups(&document, &scene_groups.groups);
         let part_ids: Vec<&str> = document.parts.iter().map(|p| p.id.as_str()).collect();
         let visibility = crate::visibility::SceneVisibility::new(
-            &roots,
+            roots,
             &scene_groups.groups,
             &part_ids,
             &parameter_index,
@@ -235,7 +237,7 @@ impl Model {
             .map(|g| g.id().to_owned())
             .collect();
         let draw_order = crate::draw_order::compile(
-            &roots,
+            roots,
             &part_index,
             &group_ids,
             crate::draw_order::uses_draw_order(&document, &groups),
@@ -269,44 +271,19 @@ impl Model {
             .chain(&layer_mask_ids)
             .filter_map(|id| part_index.get(id).copied())
             .collect();
+        let part_bindings = compile_part_bindings(&document, &bindings);
         let parts = document
             .parts
             .iter()
+            .zip(part_bindings)
             .enumerate()
-            .map(|(index, part)| CompiledPart {
+            .map(|(index, (part, bindings))| CompiledPart {
                 rest: part.mesh.vertices.clone(),
                 rest_properties: PartProperties::of(part),
                 // Only bindings that key this part's vertices in some keyform move them
                 // (`getPartBindings`); the rest would add zero deltas.
-                vertex_bindings: bindings
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, b)| match &b.explicit_parts {
-                        Some(targets) => targets.contains(&index),
-                        None => b.part_entries.contains_key(&index),
-                    })
-                    .filter(|(i, b)| {
-                        let keyforms = &document.parameter_bindings[*i].keyforms;
-                        b.part_entries.get(&index).is_some_and(|entries| {
-                            entries.iter().zip(keyforms).any(|(entry, keyform)| {
-                                entry
-                                    .and_then(|e| keyform.parts.get(e))
-                                    .is_some_and(|p| !p.vertices.is_empty())
-                            })
-                        })
-                    })
-                    .map(|(i, _)| i)
-                    .collect(),
-                property_bindings: bindings
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, b)| {
-                        b.explicit_parts
-                            .as_ref()
-                            .is_some_and(|t| t.contains(&index))
-                    })
-                    .map(|(i, _)| i)
-                    .collect(),
+                vertex_bindings: bindings.vertices,
+                property_bindings: bindings.properties,
                 mask: masks.part(index),
                 used_as_mask: used_as_mask.contains(&index),
                 path: paths

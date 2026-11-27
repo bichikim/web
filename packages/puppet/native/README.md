@@ -43,9 +43,10 @@ The `index` output name is required by wasm-bindgen-rayon's generated Worker hel
 `cpu-parallel.integration.tsx` for bit-exact serial/threaded evaluation of the real model.
 Applications bundling the prebuilt library with Vite can add
 [`puppetThreadWorkers()`](../vite/thread-workers.ts) from `@winter-love/puppet/vite/thread-workers`
-to their plugins. It emits the Rust thread Workers beside the numerical Worker with their
-original filenames. Applications with their own copy pipeline can use `PUPPET_THREAD_WORKERS`
-from the same module. A build from Puppet source includes the helpers through its Worker graph.
+to their plugins. It emits the Rust thread Workers and their dynamically loaded chunks beside
+the client Workers with their original filenames. Custom copy pipelines should include
+`PUPPET_THREAD_WORKERS` from the same module. A build from Puppet source includes these
+dependencies through its Worker graph.
 
 Verify native changes with `cargo test`, `cargo clippy --all-targets -- -D warnings` and `cargo fmt --all --check`, each using the same manifest path. Run the Wasm adapter unit tests and `parity.integration.ts` after regenerating the binary. The latter accepts `MODEL`, `FRAMES` and `PARITY_OUTPUT` for a local model comparison. Its frame, checkpoint and vertex checks exercise the generated binary rather than the host Rust target.
 

@@ -33,10 +33,15 @@ export const decodeValue = (options: DecodeValueOptions): unknown => {
     return value
   }
   const packedArray = (tag: number) => {
-    const format = numberReader(reader, tag)
+    const format = numberReader(tag)
     const length = reader.length(format.width)
     reserveNumbers(length)
-    const values = Array.from({length}, () => finiteNumber(format.read()))
+    const bytes = reader.bytes(length * format.width)
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+    const values: number[] = []
+    for (let index = 0; index < length; index += 1) {
+      values.push(format.read(view, index * format.width))
+    }
     numberArrays.push(values)
     return values
   }
@@ -77,10 +82,8 @@ export const decodeValue = (options: DecodeValueOptions): unknown => {
       }
       case VALUE_TAG.asset:
         return definedString(definedReference(options.assets, reader.uint32()))
-      case VALUE_TAG.array: {
-        const length = reader.length(1)
-        return Array.from({length}, () => read(depth + 1))
-      }
+      case VALUE_TAG.array:
+        return readArray(reader.length(1), () => read(depth + 1))
       case VALUE_TAG.object: {
         const length = reader.length(2)
         const value: Record<string, unknown> = {}
@@ -89,12 +92,7 @@ export const decodeValue = (options: DecodeValueOptions): unknown => {
           if (typeof key !== 'string' || Object.hasOwn(value, key)) {
             throw new SyntaxError('Invalid Poffo object key')
           }
-          Object.defineProperty(value, key, {
-            configurable: true,
-            enumerable: true,
-            value: read(depth + 1),
-            writable: true,
-          })
+          setField(value, key, read(depth + 1))
         }
         return value
       }
@@ -117,20 +115,47 @@ const definedReference = (values: ReadonlyArray<string>, index: number): string 
   return value
 }
 
-const numberReader = (reader: ReturnType<typeof createByteReader>, tag: number) => {
+const setField = (object: Record<string, unknown>, key: string, value: unknown) => {
+  if (Object.hasOwn(Object.prototype, key)) {
+    Object.defineProperty(object, key, {
+      configurable: true,
+      enumerable: true,
+      value,
+      writable: true,
+    })
+  } else {
+    object[key] = value
+  }
+}
+
+const readArray = (length: number, read: () => unknown): unknown[] => {
+  const values: unknown[] = []
+  for (let index = 0; index < length; index += 1) {
+    values.push(read())
+  }
+  return values
+}
+
+const numberReader = (tag: number) => {
   switch (tag) {
     case VALUE_TAG.uint8:
-      return {read: reader.byte, width: Uint8Array.BYTES_PER_ELEMENT}
+      return {read: (view: DataView, offset: number) => view.getUint8(offset), width: 1}
     case VALUE_TAG.uint16:
-      return {read: reader.uint16, width: Uint16Array.BYTES_PER_ELEMENT}
+      return {read: (view: DataView, offset: number) => view.getUint16(offset, true), width: 2}
     case VALUE_TAG.uint32:
-      return {read: reader.uint32, width: Uint32Array.BYTES_PER_ELEMENT}
+      return {read: (view: DataView, offset: number) => view.getUint32(offset, true), width: 4}
     case VALUE_TAG.int32:
-      return {read: reader.int32, width: Int32Array.BYTES_PER_ELEMENT}
+      return {read: (view: DataView, offset: number) => view.getInt32(offset, true), width: 4}
     case VALUE_TAG.float32:
-      return {read: reader.float32, width: Float32Array.BYTES_PER_ELEMENT}
+      return {
+        read: (view: DataView, offset: number) => finiteNumber(view.getFloat32(offset, true)),
+        width: 4,
+      }
     case VALUE_TAG.float64:
-      return {read: reader.float64, width: Float64Array.BYTES_PER_ELEMENT}
+      return {
+        read: (view: DataView, offset: number) => finiteNumber(view.getFloat64(offset, true)),
+        width: 8,
+      }
     default:
       throw new SyntaxError('Unknown Poffo numeric tag')
   }
