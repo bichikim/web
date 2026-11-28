@@ -39,13 +39,18 @@ export const createBlobArchive = async (files: readonly NamedBlob[]): Promise<Bl
     chunks.push(new Uint8Array(data))
   })
   const names = new Set<string>()
+  const suffixes = new Map<string, number>()
   for (const file of files) {
     const normalizedName = file.name.replaceAll(/[<>:"|?*]/gu, '_')
     let name = normalizedName
-    let suffix = 1
+    let suffix = suffixes.get(normalizedName) ?? 1
     while (names.has(name)) {
       name = `${suffix}-${normalizedName}`
       suffix += 1
+    }
+    if (name !== normalizedName) {
+      // 이전 번호는 names에 계속 예약되어 있으므로 다시 탐색하지 않는다.
+      suffixes.set(normalizedName, suffix)
     }
     names.add(name)
     // oxlint-disable-next-line no-await-in-loop -- 순차 스트리밍으로 하나의 리더만 활성화하고 입력 메모리 사용량을 제한한다.
