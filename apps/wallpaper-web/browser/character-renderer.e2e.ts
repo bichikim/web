@@ -5,34 +5,48 @@ test.describe('touch startup order', () => {
 
   const profileModel = /\/models\/profile\/(?:.*\/)?model\.poffo$/
 
-  test('renders the landing character with the selected JavaScript Worker', async ({page}) => {
-    await page.route(profileModel, (route) => route.abort())
-    await page.addInitScript(() => {
-      const frameTimes: number[] = []
-      Object.defineProperty(globalThis, 'characterWorkerFrameTimes', {value: frameTimes})
-      const WorkerConstructor = Worker
-      globalThis.Worker = class extends WorkerConstructor {
-        constructor(url: string | URL, options?: WorkerOptions) {
-          super(url, options)
-          if (/\/worker-[\w-]+\.js$/.test(new URL(url, location.href).pathname)) {
-            this.addEventListener('message', ({data}) => {
-              if (data?.kind === 'produced' && data.frame.kind === 'frame') {
-                frameTimes.push(data.frame.time)
-              }
-            })
+  for (const scenario of [
+    {
+      description: 'on Android by default',
+      url: '/',
+      userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36',
+    },
+    {description: 'when requested in the URL', url: '/?worker=javascript'},
+  ]) {
+    test(`renders the landing character with the JavaScript Worker ${scenario.description}`, async ({
+      page,
+    }) => {
+      await page.route(profileModel, (route) => route.abort())
+      await page.addInitScript((userAgent) => {
+        if (userAgent !== undefined) {
+          Object.defineProperty(navigator, 'userAgent', {value: userAgent})
+        }
+        const frameTimes: number[] = []
+        Object.defineProperty(globalThis, 'characterWorkerFrameTimes', {value: frameTimes})
+        const WorkerConstructor = Worker
+        globalThis.Worker = class extends WorkerConstructor {
+          constructor(url: string | URL, options?: WorkerOptions) {
+            super(url, options)
+            if (/\/worker-[\w-]+\.js$/.test(new URL(url, location.href).pathname)) {
+              this.addEventListener('message', ({data}) => {
+                if (data?.kind === 'produced' && data.frame.kind === 'frame') {
+                  frameTimes.push(data.frame.time)
+                }
+              })
+            }
           }
         }
-      }
-    })
+      }, scenario.userAgent)
 
-    await page.goto('/?worker=javascript')
-    await expect(page.getByRole('button', {exact: true, name: '일시 정지'})).toBeVisible()
-    await expect
-      .poll(() =>
-        page.evaluate(() => new Set(Reflect.get(globalThis, 'characterWorkerFrameTimes')).size),
-      )
-      .toBeGreaterThan(1)
-  })
+      await page.goto(scenario.url)
+      await expect(page.getByRole('button', {exact: true, name: '일시 정지'})).toBeVisible()
+      await expect
+        .poll(() =>
+          page.evaluate(() => new Set(Reflect.get(globalThis, 'characterWorkerFrameTimes')).size),
+        )
+        .toBeGreaterThan(1)
+    })
+  }
 
   test('starts model preparation while the character renderer module is loading', async ({
     page,

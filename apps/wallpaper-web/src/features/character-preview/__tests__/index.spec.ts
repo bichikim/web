@@ -100,12 +100,20 @@ const setup = () => {
   return renderHook(() => useCharacterPreview({canvas: () => canvas, playing: () => true}))
 }
 
+const androidUserAgent = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36'
+const desktopUserAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
+
 test.each([
-  ['/?worker=javascript', 'javascript'],
-  ['/', 'rust'],
-  ['/?worker=rust', 'rust'],
-  ['/?worker=unknown', 'rust'],
-])('should select the playback Worker for %s', async (url, workerRuntime) => {
+  {platform: 'Android', url: '/', workerRuntime: 'javascript'},
+  {platform: 'desktop', url: '/', workerRuntime: 'rust'},
+  {platform: 'desktop', url: '/?worker=javascript', workerRuntime: 'javascript'},
+  {platform: 'Android', url: '/?worker=rust', workerRuntime: 'rust'},
+  {platform: 'Android', url: '/?worker=unknown', workerRuntime: 'javascript'},
+  {platform: 'desktop', url: '/?worker=unknown', workerRuntime: 'rust'},
+])('should select $workerRuntime for $url on $platform', async ({platform, url, workerRuntime}) => {
+  vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(
+    platform === 'Android' ? androidUserAgent : desktopUserAgent,
+  )
   const previousUrl = location.href
   history.replaceState(history.state, '', url)
   try {

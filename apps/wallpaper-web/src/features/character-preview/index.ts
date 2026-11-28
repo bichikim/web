@@ -60,9 +60,15 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
     if (canvas === null) {
       return
     }
-    const search = canvas.ownerDocument.defaultView?.location.search
+    const view = canvas.ownerDocument.defaultView
+    const requestedWorker = new URLSearchParams(view?.location.search).get('worker')
+    const defaultWorker = /\bAndroid\b/iu.test(view?.navigator.userAgent ?? '')
+      ? 'javascript'
+      : 'rust'
     const workerRuntime =
-      new URLSearchParams(search).get('worker') === 'javascript' ? 'javascript' : 'rust'
+      requestedWorker === 'javascript' || requestedWorker === 'rust'
+        ? requestedWorker
+        : defaultWorker
     const cancellation = new AbortController()
     let active: Player | null = null
     let gaze: ReturnType<typeof connectCharacterLook> | null = null
