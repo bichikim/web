@@ -5,6 +5,35 @@ test.describe('touch startup order', () => {
 
   const profileModel = /\/models\/profile\/(?:.*\/)?model\.poffo$/
 
+  test('renders the landing character with the selected JavaScript Worker', async ({page}) => {
+    await page.route(profileModel, (route) => route.abort())
+    await page.addInitScript(() => {
+      const frameTimes: number[] = []
+      Object.defineProperty(globalThis, 'characterWorkerFrameTimes', {value: frameTimes})
+      const WorkerConstructor = Worker
+      globalThis.Worker = class extends WorkerConstructor {
+        constructor(url: string | URL, options?: WorkerOptions) {
+          super(url, options)
+          if (/\/worker-[\w-]+\.js$/.test(new URL(url, location.href).pathname)) {
+            this.addEventListener('message', ({data}) => {
+              if (data?.kind === 'produced' && data.frame.kind === 'frame') {
+                frameTimes.push(data.frame.time)
+              }
+            })
+          }
+        }
+      }
+    })
+
+    await page.goto('/?worker=javascript')
+    await expect(page.getByRole('button', {exact: true, name: '일시 정지'})).toBeVisible()
+    await expect
+      .poll(() =>
+        page.evaluate(() => new Set(Reflect.get(globalThis, 'characterWorkerFrameTimes')).size),
+      )
+      .toBeGreaterThan(1)
+  })
+
   test('starts model preparation while the character renderer module is loading', async ({
     page,
   }) => {

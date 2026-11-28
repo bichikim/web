@@ -100,6 +100,23 @@ const setup = () => {
   return renderHook(() => useCharacterPreview({canvas: () => canvas, playing: () => true}))
 }
 
+test.each([
+  ['/?worker=javascript', 'javascript'],
+  ['/', 'rust'],
+  ['/?worker=rust', 'rust'],
+  ['/?worker=unknown', 'rust'],
+])('should select the playback Worker for %s', async (url, workerRuntime) => {
+  const previousUrl = location.href
+  history.replaceState(history.state, '', url)
+  try {
+    setup()
+    await waitFor(() => expect(createPlayer).toHaveBeenCalledOnce(), {interval: 1})
+    expect(createPlayer).toHaveBeenCalledWith(expect.objectContaining({workerRuntime}))
+  } finally {
+    history.replaceState(history.state, '', previousUrl)
+  }
+})
+
 test('should pass the native Poffo download to its validation Worker without gzip or JSON text', async () => {
   const text = vi.spyOn(Response.prototype, 'text')
   const hook = setup()

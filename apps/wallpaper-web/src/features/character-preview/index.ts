@@ -60,6 +60,9 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
     if (canvas === null) {
       return
     }
+    const search = canvas.ownerDocument.defaultView?.location.search
+    const workerRuntime =
+      new URLSearchParams(search).get('worker') === 'javascript' ? 'javascript' : 'rust'
     const cancellation = new AbortController()
     let active: Player | null = null
     let gaze: ReturnType<typeof connectCharacterLook> | null = null
@@ -77,7 +80,7 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
         onFrame: ready.render,
         renderGeometryOnly: true,
         resolution: Math.min(devicePixelRatio, RESOLUTION_LIMIT) * RENDER_SCALE,
-        workerRuntime: 'rust',
+        workerRuntime,
       })
       if (cancellation.signal.aborted) {
         created.destroy()
