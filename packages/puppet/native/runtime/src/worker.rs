@@ -1,11 +1,12 @@
 //! Complete numerical playback Worker. Browser memory and message APIs stay in the host.
 mod checkpoint;
+mod coordinate_groups;
 mod frame;
 mod geometry;
 mod json;
 mod model;
 use crate::{Player, Sound};
-use model::coordinate_groups;
+use coordinate_groups::coordinate_groups;
 use poffo_format::PoffoFile;
 use serde::Serialize;
 use serde_json::{Value, json};

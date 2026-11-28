@@ -1,7 +1,7 @@
 import type {PlayerRenderer} from '../create-player-renderer'
 import type {PuppetDocument} from '../../document'
 import {type ComputedRenderFrame, computeRenderFrame} from '../../internal/compute-render-frame'
-import {createNativeDeformation} from '../../internal/create-native-deformation'
+import {deferNativeDeformation} from '../../internal/create-native-deformation'
 import {findHitArea} from '../../internal/hit-area'
 import {canReusePartResources} from '../../internal/render-plan'
 import {supportsWgpuDocument} from './supports-document'
@@ -25,7 +25,7 @@ const reusableGeometry = (document: PuppetDocument, next: PuppetDocument) =>
 /** Keeps displayed geometry owned after the numeric Worker recycles its frame buffers. */
 export const createGpuFrameStore = (initial: PuppetDocument) => {
   let document = initial
-  let native = createNativeDeformation(document)
+  let getNative = deferNativeDeformation(document)
   let candidate: ComputedRenderFrame | undefined
   let prepared: ComputedRenderFrame | undefined
   let displayed: ComputedRenderFrame | undefined
@@ -50,7 +50,7 @@ export const createGpuFrameStore = (initial: PuppetDocument) => {
   )
   const replace = (next: PuppetDocument) => {
     document = next
-    native = createNativeDeformation(next)
+    getNative = deferNativeDeformation(next)
   }
   const commit = () => {
     if (pending !== undefined) {
@@ -68,7 +68,7 @@ export const createGpuFrameStore = (initial: PuppetDocument) => {
     const frame = computeRenderFrame({
       document,
       mix,
-      native,
+      native: getNative(),
       overrides,
       parameterValues,
       poseOpacityByPartId,

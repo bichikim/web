@@ -1,4 +1,3 @@
-import initialize from './runtime.wasm?init'
 import {createWasmWorker, type WasmWorker} from './create-worker'
 const MINIMUM_PARTS = 128
 const MINIMUM_CORES = 4
@@ -24,5 +23,6 @@ export const loadWasmWorker = async (partCount = 0): Promise<WasmWorker> => {
     const exports = await parallelExports()
     return {...createWasmWorker({exports: {...exports}}), threads: exports.worker_thread_count()}
   }
+  const {default: initialize} = await import('./runtime.wasm?init')
   return {...createWasmWorker(await initialize()), threads: 1}
 }

@@ -17,7 +17,7 @@ import type {MotionMix} from '../playback'
 import {canReuseLayerResources, canReusePartResources} from '../internal/render-plan'
 import {layoutPlayerRoot, type PuppetFit, type PuppetFraming} from '../internal/layout-player-root'
 import type {RenderOverrides} from '../internal/render-overrides'
-import {createNativeDeformation} from '../internal/create-native-deformation'
+import {deferNativeDeformation} from '../internal/create-native-deformation'
 import {applyRenderFrame} from './apply-render-frame'
 import {replaceBackBufferPresentation} from './back-buffer-presentation'
 import {documentUsesBackdropBlend} from './part-blend-filter'
@@ -177,17 +177,25 @@ const renderPartMasks = (options: RenderPartMasksOptions) => {
 const createApplication = async (options: CreatePlayerRendererOptions) => {
   const application = new Application()
   const resizeTarget = options.resizeTo ?? options.canvas.parentElement
+  // Pixi allocates the initial surface before its resize plugin runs.
+  const initialSize =
+    resizeTarget === null
+      ? options.document.viewport
+      : {
+          height: Math.max(1, resizeTarget.clientHeight),
+          width: Math.max(1, resizeTarget.clientWidth),
+        }
   await application.init({
     antialias: options.antialiasing !== 'ssaa',
     autoDensity: true,
     backgroundAlpha: 0,
     canvas: options.canvas,
-    height: options.document.viewport.height,
+    height: initialSize.height,
     preference: getRendererPreference(options),
     resolution: options.resolution ?? Math.min(window.devicePixelRatio, 2),
     // WebGL reads the drawn scene for backdrop blending only through a back buffer.
     useBackBuffer: documentUsesBackdropBlend(options.document),
-    width: options.document.viewport.width,
+    width: initialSize.width,
     ...(resizeTarget === null ? {} : {resizeTo: resizeTarget}),
   })
   if (documentUsesBackdropBlend(options.document)) {
@@ -255,7 +263,7 @@ export const createPlayerRenderer = async (
   let {document} = options
   let fit = options.fit ?? 'contain'
   let pendingDocument: PuppetDocument | undefined
-  let native = createNativeDeformation(document)
+  let getNative = deferNativeDeformation(document)
   let camera: PlayerViewCamera | undefined
   let paintOrder: ReadonlyArray<string> = []
   let destroyed = false
@@ -272,7 +280,7 @@ export const createPlayerRenderer = async (
     }
     destroyed = true
     options.canvas.removeEventListener('webglcontextrestored', restoreContext)
-    native = undefined
+    getNative = () => undefined
     destroyRuntimeFilters([...partById.values(), ...layerById.values()])
     for (const {mesh} of partById.values()) {
       // Mask-only parts never enter the display tree destroyed by Application.
@@ -301,7 +309,7 @@ export const createPlayerRenderer = async (
   const commitDocument = (nextDocument: PuppetDocument) => {
     document = nextDocument
     pendingDocument = undefined
-    native = createNativeDeformation(document)
+    getNative = deferNativeDeformation(document)
     updatePartGeometry(document, partById)
   }
   const commitPending = () => {
@@ -392,7 +400,7 @@ export const createPlayerRenderer = async (
         layerById,
         layoutRoot,
         mix,
-        native,
+        native: getNative(),
         overrides,
         parameterValues,
         partById,
@@ -409,7 +417,6 @@ export const createPlayerRenderer = async (
         layerById,
         layoutRoot,
         mix: emptyMix,
-        native,
         parameterValues: {},
         partById,
         prepared,

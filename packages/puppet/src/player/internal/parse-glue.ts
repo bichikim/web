@@ -49,20 +49,23 @@ export const isBoundaryReference = (
   )
 }
 
-const hasMeshVertex = (reference: PuppetVertexReference, parts: ReadonlyArray<PuppetPart>) => {
-  const part = parts.find((candidate) => candidate.id === reference.partId)
+const hasMeshVertex = (
+  reference: PuppetVertexReference,
+  parts: ReadonlyMap<string, PuppetPart>,
+) => {
+  const part = parts.get(reference.partId)
   return part !== undefined && reference.vertexIndex * 2 + 1 < part.mesh.vertices.length
 }
 
 const isEdgeReference = (
   value: PuppetVertexReference,
-  parts: ReadonlyArray<PuppetPart>,
+  parts: ReadonlyMap<string, PuppetPart>,
 ): value is PuppetEdgeReference => {
   if (!('edge' in value) || !isRecord(value.edge) || !isRatio(value.edge.position)) {
     return false
   }
   const {edge} = value
-  const part = parts.find((part) => part.id === value.partId)
+  const part = parts.get(value.partId)
   return (
     part !== undefined &&
     getBoundaryEdges(part.mesh).some(
@@ -76,14 +79,14 @@ const isEdgeReference = (
 const validTarget = (
   reference: PuppetVertexReference,
   weight: unknown,
-  parts: ReadonlyArray<PuppetPart>,
+  parts: ReadonlyMap<string, PuppetPart>,
 ) => !('edge' in reference) || (isEdgeReference(reference, parts) && weight === 1)
 
 const hasValidRotation = (
   value: Record<string, unknown>,
   first: PuppetVertexReference,
   second: PuppetVertexReference,
-  parts: ReadonlyArray<PuppetPart>,
+  parts: ReadonlyMap<string, PuppetPart>,
 ) => {
   const {rotation} = value
   if (rotation === undefined) {
@@ -100,7 +103,10 @@ const hasValidRotation = (
   )
 }
 
-const isGlueConnection = (value: unknown, parts: ReadonlyArray<PuppetPart>): value is PuppetGlue =>
+const isGlueConnection = (
+  value: unknown,
+  parts: ReadonlyMap<string, PuppetPart>,
+): value is PuppetGlue =>
   isRecord(value) &&
   typeof value.id === 'string' &&
   value.id.length > 0 &&
@@ -126,6 +132,12 @@ export const hasValidGlue = (
   if (!Array.isArray(value)) {
     return false
   }
+  const partsById = new Map<string, PuppetPart>()
+  for (const part of parts) {
+    if (!partsById.has(part.id)) {
+      partsById.set(part.id, part)
+    }
+  }
   const ids = new Set<string>()
   const references = new Set<string>()
   const sequential = new Set<string>()
@@ -136,7 +148,7 @@ export const hasValidGlue = (
     composition === undefined &&
     (targets.has(key) || (references.has(key) && (mode !== 'sequential' || !sequential.has(key))))
   return value.every((connection: unknown) => {
-    if (!isGlueConnection(connection, parts) || ids.has(connection.id)) {
+    if (!isGlueConnection(connection, partsById) || ids.has(connection.id)) {
       return false
     }
     const edge = 'edge' in connection.second ? connection.second.edge : undefined
@@ -146,12 +158,12 @@ export const hasValidGlue = (
     )
     if (
       keys.some((key) => hasVertexConflict(key, connection.composition)) ||
-      !hasMeshVertex(connection.first, parts) ||
-      !hasMeshVertex(connection.second, parts)
+      !hasMeshVertex(connection.first, partsById) ||
+      !hasMeshVertex(connection.second, partsById)
     ) {
       return false
     }
-    if (isEdgeReference(connection.second, parts)) {
+    if (isEdgeReference(connection.second, partsById)) {
       const target = connection.second
       const targetKeys = [target.vertexIndex, target.edge.endIndex].map((index) =>
         JSON.stringify([target.partId, index]),

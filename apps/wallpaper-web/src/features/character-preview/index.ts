@@ -1,5 +1,5 @@
 import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
-import {createPlayer, type Player, preparePuppetDocument} from '@winter-love/puppet/player'
+import {createPlayer, type Player} from '@winter-love/puppet/player'
 import type {MouthPose} from '../character-speech/types'
 import {connectCharacterBlink} from './blink'
 import {getCharacterLook} from './get-character-look'
@@ -7,6 +7,7 @@ import {connectCharacterLook} from './look'
 import {createPartHitTest} from './create-part-hit-test'
 import geometry from '../../data/character-look.json'
 import type {CharacterHitTest, CharacterPoint} from './types'
+import {loadCharacterDocument} from './model'
 
 export * from './blink'
 export * from './create-canvas-hit-test'
@@ -59,21 +60,20 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
     if (canvas === null) {
       return
     }
+    const view = canvas.ownerDocument.defaultView
+    const requestedWorker = new URLSearchParams(view?.location.search).get('worker')
+    const defaultWorker = /\bAndroid\b/iu.test(view?.navigator.userAgent ?? '')
+      ? 'javascript'
+      : 'rust'
+    const workerRuntime =
+      requestedWorker === 'javascript' || requestedWorker === 'rust'
+        ? requestedWorker
+        : defaultWorker
     const cancellation = new AbortController()
     let active: Player | null = null
     let gaze: ReturnType<typeof connectCharacterLook> | null = null
     const load = async () => {
-      const response = await fetch('/models/white-cat/model.poffo', {
-        signal: cancellation.signal,
-      })
-      if (!response.ok) {
-        throw new Error('Character download failed')
-      }
-      const source = await response.blob()
-      const prepared = await preparePuppetDocument({signal: cancellation.signal, source})
-      if (!prepared.ok) {
-        throw new Error('Character document is invalid')
-      }
+      const document = await loadCharacterDocument(cancellation.signal)
       if (cancellation.signal.aborted) {
         return
       }
@@ -81,12 +81,12 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
       const created = await createPlayer({
         buffering: true,
         canvas,
-        document: prepared.document,
+        document,
         framing: 'viewport',
         onFrame: ready.render,
         renderGeometryOnly: true,
         resolution: Math.min(devicePixelRatio, RESOLUTION_LIMIT) * RENDER_SCALE,
-        workerRuntime: 'rust',
+        workerRuntime,
       })
       if (cancellation.signal.aborted) {
         created.destroy()
@@ -98,7 +98,7 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
           cancel: (handle) => cancelAnimationFrame(handle),
           request: (callback) => requestAnimationFrame(callback),
         },
-        parameters: prepared.document.parameters ?? [],
+        parameters: document.parameters ?? [],
         player: created,
       })
       setLook(gaze)

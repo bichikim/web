@@ -13,6 +13,7 @@ const BUILD_TARGETS = {
   player: {
     native: './src/native/index.ts',
     player: './src/player/index.ts',
+    'prepare-document': './src/player/prepare-puppet-document.ts',
   },
 } as const
 
@@ -74,5 +75,13 @@ export default defineConfig(({command, mode}) => {
       },
     },
     plugins,
+    ...(mode === 'player'
+      ? {
+          worker: {
+            format: 'es',
+            rolldownOptions: {output: {chunkFileNames: 'assets/puppet-worker-[name]-[hash].js'}},
+          },
+        }
+      : {}),
   }
 })

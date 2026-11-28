@@ -1,7 +1,7 @@
 import {createGeometryService} from './create-geometry-service'
 import {createGpuQueue} from './create-queue'
 import initialize, {CanvasRenderer} from './wasm/runtime'
-import type {AlphaResponse, DrawRequest, GpuRequest, GpuResponse} from './types'
+import type {AlphaResponse, DrawRequest, GpuRequest, GpuResponse, InitializeGpu} from './types'
 let renderer: CanvasRenderer | undefined
 let canvas: OffscreenCanvas | undefined
 let direct = false
@@ -34,34 +34,47 @@ const sendAlpha = async (active: CanvasRenderer, request: DrawRequest) => {
     self.postMessage(data)
   }
 }
+const initializeRenderer = async (message: InitializeGpu) => {
+  await initialize()
+  geometry.destroy()
+  await run(() => renderer?.free())
+  renderer = undefined
+  const surface = message.surface ?? new OffscreenCanvas(message.width, message.height)
+  canvas = surface
+  direct = message.surface !== undefined
+  configuredView = undefined
+  renderer = await run(() =>
+    CanvasRenderer.create(
+      surface,
+      message.width,
+      message.height,
+      message.metadata,
+      message.samples,
+      message.alphaCapture,
+    ),
+  )
+}
+const uploadTextures = async (textures: readonly ImageBitmap[]) => {
+  try {
+    const active = renderer
+    if (active === undefined) {
+      throw new Error('GPU renderer is not initialized')
+    }
+    await run(() => textures.forEach((image) => active.texture(image)))
+  } finally {
+    textures.forEach((image) => image.close())
+  }
+}
 const handle = async (message: GpuRequest) => {
   switch (message.kind) {
-    case 'initialize': {
-      try {
-        await initialize()
-        geometry.destroy()
-        await run(() => renderer?.free())
-        canvas = message.surface ?? new OffscreenCanvas(message.width, message.height)
-        direct = message.surface !== undefined
-        configuredView = undefined
-        renderer = await run(() =>
-          CanvasRenderer.create(
-            canvas,
-            message.width,
-            message.height,
-            message.metadata,
-            message.samples,
-            message.alphaCapture,
-          ),
-        )
-        message.textures.forEach((image) => renderer!.texture(image))
-        const response: GpuResponse = {id: message.id, kind: 'initialized'}
-        self.postMessage(response)
-      } finally {
-        message.textures.forEach((image) => image.close())
-      }
+    case 'initialize':
+      await initializeRenderer(message)
+      self.postMessage({id: message.id, kind: 'initialized'} satisfies GpuResponse)
       return
-    }
+    case 'upload-textures':
+      await uploadTextures(message.textures)
+      self.postMessage({id: message.id, kind: 'textures-uploaded'} satisfies GpuResponse)
+      return
     case 'draw': {
       if (renderer === undefined || canvas === undefined) {
         throw new Error('GPU renderer is not initialized')

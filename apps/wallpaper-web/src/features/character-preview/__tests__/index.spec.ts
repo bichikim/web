@@ -2,9 +2,11 @@
 import {cleanup, renderHook, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
-import {createPlayer, type Player, preparePuppetDocument} from '@winter-love/puppet/player'
+import {createPlayer, type Player} from '@winter-love/puppet/player'
+import {preparePuppetDocument} from '@winter-love/puppet/prepare-document'
 import {useCharacterPreview} from '..'
 import {connectCharacterBlink} from '../blink'
+import {startInitialCharacterDocument} from '../model'
 
 const player = vi.hoisted(() => ({
   clearParameterValues: vi.fn(),
@@ -24,8 +26,8 @@ const player = vi.hoisted(() => ({
 }))
 vi.mock('@winter-love/puppet/player', () => ({
   createPlayer: vi.fn(),
-  preparePuppetDocument: vi.fn(),
 }))
+vi.mock('@winter-love/puppet/prepare-document', () => ({preparePuppetDocument: vi.fn()}))
 vi.mock('../blink', () => ({connectCharacterBlink: vi.fn()}))
 const releaseBlink = vi.fn()
 const preparedDocument = {
@@ -54,8 +56,8 @@ const settle = () => {
   }
 }
 
-const actual = await vi.importActual<typeof import('@winter-love/puppet/player')>(
-  '@winter-love/puppet/player',
+const actual = await vi.importActual<typeof import('@winter-love/puppet/prepare-document')>(
+  '@winter-love/puppet/prepare-document',
 )
 const prepared = await actual.preparePuppetDocument({document: preparedDocument})
 if (!prepared.ok) {
@@ -97,6 +99,31 @@ const setup = () => {
   const canvas = document.createElement('canvas')
   return renderHook(() => useCharacterPreview({canvas: () => canvas, playing: () => true}))
 }
+
+const androidUserAgent = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36'
+const desktopUserAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
+
+test.each([
+  {platform: 'Android', url: '/', workerRuntime: 'javascript'},
+  {platform: 'desktop', url: '/', workerRuntime: 'rust'},
+  {platform: 'desktop', url: '/?worker=javascript', workerRuntime: 'javascript'},
+  {platform: 'Android', url: '/?worker=rust', workerRuntime: 'rust'},
+  {platform: 'Android', url: '/?worker=unknown', workerRuntime: 'javascript'},
+  {platform: 'desktop', url: '/?worker=unknown', workerRuntime: 'rust'},
+])('should select $workerRuntime for $url on $platform', async ({platform, url, workerRuntime}) => {
+  vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(
+    platform === 'Android' ? androidUserAgent : desktopUserAgent,
+  )
+  const previousUrl = location.href
+  history.replaceState(history.state, '', url)
+  try {
+    setup()
+    await waitFor(() => expect(createPlayer).toHaveBeenCalledOnce(), {interval: 1})
+    expect(createPlayer).toHaveBeenCalledWith(expect.objectContaining({workerRuntime}))
+  } finally {
+    history.replaceState(history.state, '', previousUrl)
+  }
+})
 
 test('should pass the native Poffo download to its validation Worker without gzip or JSON text', async () => {
   const text = vi.spyOn(Response.prototype, 'text')
@@ -170,20 +197,26 @@ test('should hit only a painted part using canvas-local pointer coordinates', as
   hook.cleanup()
 })
 
-test('should not create a player when unmounted while its Blob is being prepared', async () => {
-  const prepared = await preparePuppetDocument({document: preparedDocument})
-  vi.mocked(preparePuppetDocument).mockClear()
-  const pending = Promise.withResolvers<Awaited<ReturnType<typeof preparePuppetDocument>>>()
-  vi.mocked(preparePuppetDocument).mockReturnValueOnce(pending.promise)
-  const hook = setup()
-  await waitFor(() => expect(preparePuppetDocument).toHaveBeenCalledOnce(), {interval: 1})
-  const options = vi.mocked(preparePuppetDocument).mock.calls[0]![0]
-  hook.cleanup()
-  expect(options.signal?.aborted).toBe(true)
-  pending.resolve(prepared)
-  await pending.promise
-  expect(createPlayer).not.toHaveBeenCalled()
-})
+test.each([false, true])(
+  'should cancel pending preparation on unmount when the model started before mounting is %s',
+  async (startedEarly) => {
+    const pending = Promise.withResolvers<Awaited<ReturnType<typeof preparePuppetDocument>>>()
+    vi.mocked(preparePuppetDocument).mockReturnValueOnce(pending.promise)
+    if (startedEarly) {
+      startInitialCharacterDocument()
+      await waitFor(() => expect(preparePuppetDocument).toHaveBeenCalledOnce(), {interval: 1})
+    }
+    const hook = setup()
+    await waitFor(() => expect(preparePuppetDocument).toHaveBeenCalledOnce(), {interval: 1})
+    expect(fetch).toHaveBeenCalledOnce()
+    const options = vi.mocked(preparePuppetDocument).mock.calls[0]![0]
+    hook.cleanup()
+    expect(options.signal?.aborted).toBe(true)
+    pending.resolve(prepared)
+    await pending.promise
+    expect(createPlayer).not.toHaveBeenCalled()
+  },
+)
 
 test('should aim around the translated face in canvas CSS pixels and reset on pointer exit', async () => {
   const canvas = document.createElement('canvas')

@@ -12,7 +12,7 @@ import {applySceneNodeDeformers} from '../../deformation/vertices'
 import {getDocumentScene} from '../scene'
 import {createWarpGridSampler} from '../../deformation/sample-warp-grid'
 import {createDeferredParentSpaceTransform} from '../../deformation/parent-space'
-import {getNativeTransformKey} from './get-native-transform-key'
+import {createNativeTransformKey} from './create-native-transform-key'
 import {getVertexInfluence} from '../../deformation/weights'
 import type {
   PuppetDocument,
@@ -299,13 +299,14 @@ const compileNodes = (
   const transforms: NativeTransform[] = []
   const parts: CompiledPart[] = []
   const shared = new Map<NativeTransform | undefined, Map<string, NativeTransform>>()
+  const transformKey = createNativeTransformKey(document.parameterBindings ?? [])
   const transformOf = (node: PuppetSceneDeformerNode, parent: NativeTransform | undefined) => {
     let group = shared.get(parent)
     if (group === undefined) {
       group = new Map()
       shared.set(parent, group)
     }
-    const key = getNativeTransformKey(document, node)
+    const key = transformKey(node)
     let transform = group.get(key)
     if (transform === undefined) {
       transform = factory?.(node, parent) ?? createNativeTransform(document, node, parent)
@@ -436,5 +437,14 @@ export const createNativeDeformation = (
         }
       }
     },
+  }
+}
+
+/** Compiles transforms on the first locally evaluated frame and saves the result for this document. */
+export const deferNativeDeformation = (document: PuppetDocument) => {
+  let prepared: {readonly evaluator: NativeDeformation | undefined} | undefined
+  return () => {
+    prepared ??= {evaluator: createNativeDeformation(document)}
+    return prepared.evaluator
   }
 }

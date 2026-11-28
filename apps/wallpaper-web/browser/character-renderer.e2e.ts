@@ -1,5 +1,99 @@
 import {expect, test} from 'playwright/test'
 
+test.describe('touch startup order', () => {
+  test.use({hasTouch: true, isMobile: true, viewport: {height: 844, width: 390}})
+
+  const profileModel = /\/models\/profile\/(?:.*\/)?model\.poffo$/
+
+  for (const scenario of [
+    {
+      description: 'on Android by default',
+      url: '/',
+      userAgent: 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36',
+    },
+    {description: 'when requested in the URL', url: '/?worker=javascript'},
+  ]) {
+    test(`renders the landing character with the JavaScript Worker ${scenario.description}`, async ({
+      page,
+    }) => {
+      await page.route(profileModel, (route) => route.abort())
+      await page.addInitScript((userAgent) => {
+        if (userAgent !== undefined) {
+          Object.defineProperty(navigator, 'userAgent', {value: userAgent})
+        }
+        const frameTimes: number[] = []
+        Object.defineProperty(globalThis, 'characterWorkerFrameTimes', {value: frameTimes})
+        const WorkerConstructor = Worker
+        globalThis.Worker = class extends WorkerConstructor {
+          constructor(url: string | URL, options?: WorkerOptions) {
+            super(url, options)
+            if (/\/worker-[\w-]+\.js$/.test(new URL(url, location.href).pathname)) {
+              this.addEventListener('message', ({data}) => {
+                if (data?.kind === 'produced' && data.frame.kind === 'frame') {
+                  frameTimes.push(data.frame.time)
+                }
+              })
+            }
+          }
+        }
+      }, scenario.userAgent)
+
+      await page.goto(scenario.url)
+      await expect(page.getByRole('button', {exact: true, name: '일시 정지'})).toBeVisible()
+      await expect
+        .poll(() =>
+          page.evaluate(() => new Set(Reflect.get(globalThis, 'characterWorkerFrameTimes')).size),
+        )
+        .toBeGreaterThan(1)
+    })
+  }
+
+  test('starts model preparation while the character renderer module is loading', async ({
+    page,
+  }) => {
+    const renderer = /\/SPuppetCharacter-[\w-]+\.js$/
+    const releaseRenderer = Promise.withResolvers<void>()
+    await page.route(renderer, async (route) => {
+      await releaseRenderer.promise
+      await route.continue()
+    })
+    const requested = page.waitForRequest(renderer)
+    const prepared = page.waitForResponse(/\/prepare-puppet-document-worker-[\w-]+\.js$/)
+    try {
+      await page.goto('/', {waitUntil: 'commit'})
+      await requested
+      expect((await prepared).ok()).toBe(true)
+    } finally {
+      releaseRenderer.resolve()
+    }
+    await expect(page.getByRole('button', {exact: true, name: '일시 정지'})).toBeVisible()
+  })
+
+  test('loads the animated background after the first character frame', async ({page}) => {
+    const pause = page.getByRole('button', {exact: true, name: '일시 정지'})
+    let characterWasVisible = false
+    await page.route(profileModel, async (route) => {
+      characterWasVisible = await pause.isVisible()
+      await route.continue()
+    })
+
+    const background = page.waitForResponse(profileModel)
+    await page.goto('/')
+    expect((await background).ok()).toBe(true)
+    expect(characterWasVisible).toBe(true)
+    await expect(pause).toBeVisible()
+    await expect(page.getByLabel('움직이는 프로필 배경').locator('..')).toHaveCSS('opacity', '1')
+  })
+
+  test('starts the animated background if the character fails to load', async ({page}) => {
+    await page.route('**/models/white-cat/model.poffo', (route) => route.abort())
+    const background = page.waitForResponse(profileModel)
+    await page.goto('/')
+    await expect(page.getByRole('alert')).toContainText('캐릭터를 불러오지 못했어요.')
+    expect((await background).ok()).toBe(true)
+  })
+})
+
 test('renders the character on a return visit with the browser cache enabled', async ({page}) => {
   const worker = page.waitForResponse((response) =>
     /\/prepare-puppet-document-worker-[\w-]+\.js$/.test(new URL(response.url()).pathname),

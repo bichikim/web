@@ -2,6 +2,7 @@
 import {Application, Container, Ticker, UPDATE_PRIORITY} from 'pixi.js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {createEmptyDocument} from '../../create-empty-document'
+import * as transformKeys from '../../internal/create-native-transform-key'
 import {createPlayerRenderer} from '../create-player-renderer'
 
 vi.mock('pixi.js', async () => {
@@ -12,6 +13,13 @@ vi.mock('pixi.js', async () => {
 const rendering = {
   frame: {layers: new Map(), plans: [], spatialPoses: new Map()},
   vertices: new Float32Array(),
+}
+const motionMix = {
+  groupOpacitySamples: new Map(),
+  modelOpacity: 1,
+  motionParameterValues: {},
+  parameterValues: {},
+  vertexSamples: new Map(),
 }
 let ticker: Ticker
 const render = vi.fn()
@@ -39,6 +47,30 @@ beforeEach(() => {
 afterEach(() => {
   ticker.destroy()
   vi.clearAllMocks()
+})
+
+test('should compile local transforms only when it evaluates a frame for the current document', async () => {
+  const compile = vi.spyOn(transformKeys, 'createNativeTransformKey')
+  const source = createEmptyDocument()
+  const renderer = await createPlayerRenderer({
+    canvas: document.createElement('canvas'),
+    document: source,
+  })
+  try {
+    renderer.applyPreparedFrame(rendering)
+    expect(compile).not.toHaveBeenCalled()
+    renderer.applyFrame(motionMix, {})
+    renderer.applyFrame(motionMix, {})
+    expect(compile).toHaveBeenCalledOnce()
+
+    expect(renderer.updateDocument({...source}, true)).toBe(true)
+    renderer.applyPreparedFrame(rendering)
+    expect(compile).toHaveBeenCalledOnce()
+    renderer.applyFrame(motionMix, {})
+    expect(compile).toHaveBeenCalledTimes(2)
+  } finally {
+    compile.mockRestore()
+  }
 })
 
 test('should draw a completed Worker frame once while idle ticker callbacks keep advancing', async () => {

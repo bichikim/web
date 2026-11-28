@@ -9,6 +9,9 @@ export interface InitializeGpu {
   readonly samples: number
   /** Transferred display surface. When omitted, the worker returns a bitmap for each draw. */
   readonly surface?: OffscreenCanvas
+}
+export interface UploadGpuTextures {
+  readonly kind: 'upload-textures'
   readonly textures: ReadonlyArray<ImageBitmap>
 }
 export interface DrawGpu {
@@ -22,6 +25,9 @@ export interface DrawGpu {
   readonly display: Float32Array
 }
 export interface InitializeRequest extends InitializeGpu {
+  readonly id: number
+}
+export interface UploadTexturesRequest extends UploadGpuTextures {
   readonly id: number
 }
 export interface DrawRequest extends DrawGpu {
@@ -44,14 +50,24 @@ export interface DisconnectGpu {
   readonly id: number
   readonly connection: number
 }
-export type GpuCommand = InitializeGpu | DrawGpu | Omit<ConnectGpu, 'id'>
-export type GpuRequest = InitializeRequest | DrawRequest | ConnectGpu | ReleaseGpu | DisconnectGpu
+export type GpuCommand = InitializeGpu | UploadGpuTextures | DrawGpu | Omit<ConnectGpu, 'id'>
+export type GpuRequest =
+  | InitializeRequest
+  | UploadTexturesRequest
+  | DrawRequest
+  | ConnectGpu
+  | ReleaseGpu
+  | DisconnectGpu
 export interface ConnectedGpu {
   readonly kind: 'connected'
   readonly id: number
 }
 export interface InitializedGpu {
   readonly kind: 'initialized'
+  readonly id: number
+}
+export interface UploadedGpuTextures {
+  readonly kind: 'textures-uploaded'
   readonly id: number
 }
 export interface RenderedGpu {
@@ -82,4 +98,10 @@ interface FailedAlpha {
 }
 
 export type AlphaResponse = SampledAlpha | FailedAlpha
-export type GpuResponse = InitializedGpu | RenderedGpu | FailedGpu | ConnectedGpu | AlphaResponse
+export type GpuResponse =
+  | InitializedGpu
+  | UploadedGpuTextures
+  | RenderedGpu
+  | FailedGpu
+  | ConnectedGpu
+  | AlphaResponse

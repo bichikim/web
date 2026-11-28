@@ -5,6 +5,41 @@ use crate::keyform::KeyformSpace;
 use poffo_format::document::{Document, Parameter, ParameterBinding};
 use std::collections::{HashMap, HashSet};
 
+#[derive(Clone, Default)]
+pub(super) struct PartBindings {
+    pub(super) vertices: Vec<usize>,
+    pub(super) properties: Vec<usize>,
+}
+
+pub(super) fn compile_part_bindings(
+    document: &Document,
+    bindings: &[CompiledBinding],
+) -> Vec<PartBindings> {
+    let mut parts = vec![PartBindings::default(); document.parts.len()];
+    for (index, binding) in bindings.iter().enumerate() {
+        for &part in binding.explicit_parts.iter().flatten() {
+            parts[part].properties.push(index);
+        }
+
+        let keyforms = &document.parameter_bindings[index].keyforms;
+        for (&part, entries) in &binding.part_entries {
+            if binding
+                .explicit_parts
+                .as_ref()
+                .is_none_or(|targets| targets.contains(&part))
+                && entries.iter().zip(keyforms).any(|(entry, keyform)| {
+                    entry
+                        .and_then(|entry| keyform.parts.get(entry))
+                        .is_some_and(|sample| !sample.vertices.is_empty())
+                })
+            {
+                parts[part].vertices.push(index);
+            }
+        }
+    }
+    parts
+}
+
 pub(super) fn compile_binding(
     binding: &ParameterBinding,
     parameter_index: &HashMap<String, usize>,
@@ -107,34 +142,33 @@ pub(super) fn compile_glue_bindings(document: &Document) -> Vec<Vec<GlueBinding>
                     .collect()
             });
         candidates.extend(direct.into_iter().filter_map(|id| indices.get(id).copied()));
-        for index in candidates {
-            let glue = &document.glue[index];
-            let coordinates: Vec<_> = binding
-                .keyforms
-                .iter()
-                .map(|f| {
-                    f.glue
-                        .iter()
-                        .flatten()
-                        .find(|g| g.id == glue.id)
-                        .or_else(|| {
-                            f.parts
-                                .iter()
-                                .find(|p| p.part_id == glue.first.part_id)?
-                                .glue
-                                .as_ref()?
-                                .iter()
-                                .find(|g| g.id == glue.id)
-                        })
-                        .map(|g| [g.weight, g.strength])
-                })
-                .collect();
-            if coordinates.iter().any(Option::is_some) {
-                result[index].push(GlueBinding {
-                    binding: b,
-                    coordinates,
-                });
+        let mut coordinates = HashMap::<usize, Vec<Option<[f64; 2]>>>::new();
+        for (frame, keyform) in binding.keyforms.iter().enumerate() {
+            let mut record = |sample: &poffo_format::document::GlueKeyform, owner: Option<&str>| {
+                if let Some(&index) = indices.get(sample.id.as_str())
+                    && candidates.contains(&index)
+                    && owner.is_none_or(|owner| owner == document.glue[index].first.part_id)
+                {
+                    coordinates
+                        .entry(index)
+                        .or_insert_with(|| vec![None; binding.keyforms.len()])[frame]
+                        .get_or_insert([sample.weight, sample.strength]);
+                }
+            };
+            for sample in keyform.glue.iter().flatten() {
+                record(sample, None);
             }
+            for part in &keyform.parts {
+                for sample in part.glue.iter().flatten() {
+                    record(sample, Some(&part.part_id));
+                }
+            }
+        }
+        for (index, coordinates) in coordinates {
+            result[index].push(GlueBinding {
+                binding: b,
+                coordinates,
+            });
         }
     }
     result
