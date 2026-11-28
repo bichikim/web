@@ -32,12 +32,7 @@ const isAfterLastSupportedLunarDate = (date: LunarDate): boolean => {
   return date.day > LAST_SUPPORTED_LUNAR_DATE.day
 }
 
-export const solarToLunar = (value: string): LunarDate | null => {
-  const date = parseDate(normalizePasteNumericInput(value))
-  if (date === null || date.year < FIRST_YEAR || date.year > LAST_YEAR) {
-    return null
-  }
-  const calendar = new KoreanLunarCalendar()
+const convertSolarDate = (date: CivilDate, calendar: KoreanLunarCalendar): LunarDate | null => {
   if (!calendar.setSolarDate(date.year, date.month, date.day)) {
     return null
   }
@@ -49,6 +44,15 @@ export const solarToLunar = (value: string): LunarDate | null => {
     year: result.year,
   }
 }
+
+export const solarToLunar = (value: string): LunarDate | null => {
+  const date = parseDate(normalizePasteNumericInput(value))
+  if (date === null || date.year < FIRST_YEAR || date.year > LAST_YEAR) {
+    return null
+  }
+  return convertSolarDate(date, new KoreanLunarCalendar())
+}
+
 const getLunarToSolarResultWithCalendar = (
   date: LunarDate,
   calendar: KoreanLunarCalendar,
@@ -121,12 +125,13 @@ export const getMovingDays = (year: number, month: number): ReadonlyArray<string
   ) {
     return []
   }
-  return Array.from({length: daysInMonth(year, month)}, (_, index) =>
-    formatDate({day: index + 1, month, year}),
-  ).filter((date) => {
-    const lunar = solarToLunar(date)
-    return (
-      lunar !== null && (lunar.day % DAY_CYCLE === FIRST_MOVING_DAY || lunar.day % DAY_CYCLE === 0)
-    )
-  })
+  const calendar = new KoreanLunarCalendar()
+  return Array.from({length: daysInMonth(year, month)}, (_, index) => {
+    const date = {day: index + 1, month, year}
+    const lunar = convertSolarDate(date, calendar)
+    return lunar !== null &&
+      (lunar.day % DAY_CYCLE === FIRST_MOVING_DAY || lunar.day % DAY_CYCLE === 0)
+      ? formatDate(date)
+      : null
+  }).filter((date) => date !== null)
 }
