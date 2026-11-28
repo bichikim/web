@@ -90,25 +90,35 @@ export function assembleJoin(plan: JoinPlan, generated: StereoAudio): Blob {
   const start = Math.round((CONNECTION_CONTEXT_SECONDS - plan.connectionSeconds / 2) * SAMPLE_RATE)
   const end = Math.round((CONNECTION_CONTEXT_SECONDS + plan.connectionSeconds / 2) * SAMPLE_RATE)
   const blend = Math.round(EDGE_RAMP_SECONDS * SAMPLE_RATE)
-  const channels = [plan.left.slice(), plan.right.slice()]
   const patches = [generated.left, generated.right]
-  for (let channel = 0; channel < 2; channel += 1) {
+  // Reject invalid patches before allocating or scanning the full source PCM.
+  for (const patch of patches) {
     for (let index = start; index < end; index += 1) {
-      const weight = clampUnit(Math.min((index - start) / blend, (end - 1 - index) / blend), {
-        fallback: 0,
-      })
-      const target = plan.offset + index
-      const sample = patches[channel][index]
-      if (!Number.isFinite(sample)) {
+      if (!Number.isFinite(patch[index])) {
         throw new Error('연결음에 유효하지 않은 샘플이 있습니다.')
       }
-      channels[channel][target] = channels[channel][target] * (1 - weight) + sample * weight
     }
   }
   const pcm = new Int32Array(plan.left.length * 2)
   for (let index = 0; index < plan.left.length; index += 1) {
-    pcm[index * 2] = Math.round(channels[0][index] * PCM_SCALE)
-    pcm[index * 2 + 1] = Math.round(channels[1][index] * PCM_SCALE)
+    pcm[index * 2] = Math.round(plan.left[index] * PCM_SCALE)
+    pcm[index * 2 + 1] = Math.round(plan.right[index] * PCM_SCALE)
+  }
+  const channels = [plan.left, plan.right]
+  for (let channel = 0; channel < 2; channel += 1) {
+    for (let index = start; index < end; index += 1) {
+      const target = plan.offset + index
+      if (Number.isInteger(target) && target >= 0 && target < channels[channel].length) {
+        const weight = clampUnit(Math.min((index - start) / blend, (end - 1 - index) / blend), {
+          fallback: 0,
+        })
+        // Preserve the Float32 store that preceded PCM quantization.
+        const sample = Math.fround(
+          channels[channel][target] * (1 - weight) + patches[channel][index] * weight,
+        )
+        pcm[target * 2 + channel] = Math.round(sample * PCM_SCALE)
+      }
+    }
   }
   return createStereoWave(pcm, plan.left.length)
 }
