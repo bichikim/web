@@ -21,6 +21,35 @@ export interface ShownFrame {
   readonly companionId: string | null
 }
 
+const MIN_INDEXED_CANDIDATES = 64
+const MIN_INDEXED_ITEMS = 64
+
+const resolveCandidates = (items: readonly BackgroundMedia[], ids: readonly string[]) => {
+  if (ids.length < MIN_INDEXED_CANDIDATES || items.length < MIN_INDEXED_ITEMS) {
+    return ids.flatMap((id) => {
+      const candidate = items.find((entry) => entry.id === id)
+      return candidate === undefined ? [] : [candidate]
+    })
+  }
+
+  const requested = new Set(ids)
+  const matches = new Map<string, BackgroundMedia>()
+  for (const entry of items) {
+    const {id} = entry
+    if (requested.delete(id)) {
+      matches.set(id, entry)
+      if (requested.size === 0) {
+        break
+      }
+    }
+  }
+
+  return ids.flatMap((id) => {
+    const candidate = matches.get(id)
+    return candidate === undefined ? [] : [candidate]
+  })
+}
+
 /** Shows the primary media and an eligible companion; null denotes an interrupted load. */
 const prepareFrame = async (options: ShowFrameOptions): Promise<ShownFrame | null> => {
   const {renderer, background, item, signal} = options
@@ -40,10 +69,7 @@ const prepareFrame = async (options: ShowFrameOptions): Promise<ShownFrame | nul
   }
   options.sizes.set(item.id, first)
   const items = background.items()
-  const candidates = options.candidates().flatMap((id) => {
-    const candidate = items.find((entry) => entry.id === id)
-    return candidate === undefined ? [] : [candidate]
-  })
+  const candidates = resolveCandidates(items, options.candidates())
   const companion = await findCompanion({
     candidates,
     first,
